@@ -14,8 +14,30 @@ import os
 import json
 import logging
 import warnings
+from pathlib import Path
 from typing import Dict, List, Optional, Any
 from datetime import datetime, timezone
+
+
+def _load_env_file() -> None:
+    """Load .env from current working directory or script directory."""
+    for base in (Path.cwd(), Path(__file__).resolve().parent):
+        env_path = base / ".env"
+        if env_path.exists():
+            try:
+                with open(env_path, encoding="utf-8") as f:
+                    for line in f:
+                        line = line.strip()
+                        if line and not line.startswith("#") and "=" in line:
+                            key, _, value = line.partition("=")
+                            key = key.strip()
+                            value = value.strip().strip('"').strip("'")
+                            if key and key not in os.environ:
+                                os.environ[key] = value
+            except Exception:
+                pass
+            break
+
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -99,6 +121,66 @@ def is_incremental_column(col_info: dict, col_type: str) -> bool:
         return True
     
     return False
+
+
+# Date/time type keywords for detection
+_DATETIME_TYPE_KEYWORDS = ("timestamp", "datetime", "date", "time", "smalldatetime", "datetimeoffset")
+
+# TZ-aware types by dialect: these store timezone info or are internally UTC
+_TZ_AWARE_TYPES = {
+    "postgresql": ("timestamptz", "timestamp with time zone", "timetz", "time with time zone"),
+    "mysql": ("timestamp",),       # MySQL TIMESTAMP is stored as UTC internally
+    "mssql": ("datetimeoffset",),  # datetimeoffset carries its own offset per row
+}
+
+# For TZ-aware types, what timezone the stored values represent
+_TZ_AWARE_INTERPRETATION = {
+    "postgresql": "UTC",          # Postgres stores timestamptz as UTC internally
+    "mysql": "UTC",               # MySQL stores TIMESTAMP as UTC internally
+    "mssql": "offset_embedded",   # datetimeoffset: each value carries its own offset
+}
+
+
+def get_column_timezone(col_type_str: str, dialect: str, server_timezone: str) -> Optional[str]:
+    """Determine the effective timezone of a date/timestamp column.
+
+    Returns:
+        - The timezone string for timestamp/datetime columns (e.g. "UTC", "Europe/Warsaw", "offset_embedded")
+        - None for non-date/time columns or pure date columns (field should be omitted from output)
+
+    Rules:
+        - Pure date columns (DATE with no time component): Returns None — timezone
+          is not meaningful without a time-of-day.
+        - TZ-aware types (timestamptz, MySQL TIMESTAMP, datetimeoffset):
+          Returns how the DB stores them ("UTC" or "offset_embedded").
+        - TZ-naive types (timestamp, datetime):
+          Returns the server timezone as the assumed interpretation.
+        - SQLite: Returns "unknown" (no native TZ support).
+        - Non-date/time columns: Returns None.
+    """
+    col_type_lower = col_type_str.lower().strip()
+
+    # Check if this is a date/time type at all
+    is_datetime = any(kw in col_type_lower for kw in _DATETIME_TYPE_KEYWORDS)
+    if not is_datetime:
+        return None
+
+    # Pure date columns have no time component — timezone is not meaningful
+    if col_type_lower == "date":
+        return None
+
+    # Check if it's a TZ-aware type for this dialect
+    aware_types = _TZ_AWARE_TYPES.get(dialect, ())
+    is_tz_aware = any(tz_type in col_type_lower for tz_type in aware_types)
+
+    if is_tz_aware:
+        return _TZ_AWARE_INTERPRETATION.get(dialect, server_timezone)
+
+    # TZ-naive date/time column: assume server timezone
+    if dialect == "sqlite":
+        return "unknown"
+
+    return server_timezone
 
 
 def fetch_tables(database_url: str, schema: Optional[str] = None) -> List[str]:
@@ -310,6 +392,98 @@ def fetch_database_timezone(database_url: str) -> str:
             return "Unknown"
 
 
+# Types where MIN/MAX is meaningless or unsupported
+_RANGE_SKIP_TYPES = (
+    "json", "jsonb", "bytea", "xml", "tsvector", "tsquery",
+    "point", "line", "lseg", "box", "path", "polygon", "circle",
+    "array", "user-defined", "bool",  # PostgreSQL has no min(boolean)
+)
+
+
+def fetch_column_statistics(
+    engine, table_name: str, columns: List[Dict],
+    schema: str = None, row_count: int = 0,
+) -> Dict[str, Dict]:
+    """Fetch cardinality, null count, and data range for all columns in a table.
+
+    Returns:
+        Dict mapping column name to stats dict:
+        - cardinality (int): number of distinct values
+        - null_count (int): number of NULL values
+        - data_range (dict, optional): {"min": str, "max": str} for range-compatible types
+    """
+    empty_stats = {
+        col["name"]: {"cardinality": 0, "null_count": 0}
+        for col in columns
+    }
+    if not columns or row_count == 0:
+        return empty_stats
+
+    # Build a single query that computes all column stats in one table scan
+    stats_parts = []
+    range_columns = set()
+
+    for col in columns:
+        col_name = col["name"]
+        col_type = col.get("type", "").lower()
+        quoted = f'"{col_name}"'
+
+        stats_parts.append(f'COUNT(DISTINCT {quoted}) AS "{col_name}__card"')
+        stats_parts.append(
+            f'SUM(CASE WHEN {quoted} IS NULL THEN 1 ELSE 0 END) AS "{col_name}__nulls"'
+        )
+
+        # MIN/MAX only for types that support comparison
+        skip = any(s in col_type for s in _RANGE_SKIP_TYPES)
+        if not skip:
+            stats_parts.append(f'MIN({quoted}) AS "{col_name}__min"')
+            stats_parts.append(f'MAX({quoted}) AS "{col_name}__max"')
+            range_columns.add(col_name)
+
+    select_clause = ", ".join(stats_parts)
+    if schema:
+        from_clause = f'"{schema}"."{table_name}"'
+    else:
+        from_clause = f'"{table_name}"'
+
+    query = f"SELECT {select_clause} FROM {from_clause}"
+
+    try:
+        with engine.connect() as conn:
+            result = conn.execute(text(query))
+            row = result.fetchone()
+
+        if not row:
+            return empty_stats
+
+        row_dict = dict(row._mapping)
+        stats = {}
+
+        for col in columns:
+            col_name = col["name"]
+            col_stats = {
+                "cardinality": int(row_dict.get(f"{col_name}__card", 0) or 0),
+                "null_count": int(row_dict.get(f"{col_name}__nulls", 0) or 0),
+            }
+
+            if col_name in range_columns:
+                min_val = row_dict.get(f"{col_name}__min")
+                max_val = row_dict.get(f"{col_name}__max")
+                if min_val is not None or max_val is not None:
+                    col_stats["data_range"] = {
+                        "min": str(min_val) if min_val is not None else None,
+                        "max": str(max_val) if max_val is not None else None,
+                    }
+
+            stats[col_name] = col_stats
+
+        return stats
+
+    except Exception as e:
+        logger.warning(f"Could not fetch column statistics for '{table_name}': {e}")
+        return empty_stats
+
+
 # ============================================================================
 # Metadata Detection Functions
 # ============================================================================
@@ -511,6 +685,198 @@ def classify_field(col_name: str) -> Optional[str]:
     return None
 
 
+# ============================================================================
+# Join Candidate and Data Category Detection
+# ============================================================================
+
+_JOIN_CANDIDATE_SUFFIXES = ("_id", "_key", "_code", "_ref", "_fk")
+
+# Columns ending with a join-candidate suffix but are NOT FK candidates
+_JOIN_CANDIDATE_EXCLUDE = {
+    "postal_code", "zip_code", "area_code", "country_code", "currency_code",
+    "language_code", "phone_code", "dialing_code", "iban_code", "swift_code",
+    "barcode", "qr_code", "hash_code", "auth_code", "verification_code",
+    "access_code", "promo_code", "discount_code", "coupon_code", "voucher_code",
+    "error_code", "status_code", "exit_code", "response_code",
+}
+
+_ORDINAL_NAME_PATTERNS = [
+    "priority", "grade", "rank", "rating", "severity",
+    "score", "stage", "phase", "tier", "step", "order_num",
+    "sequence", "position",
+]
+
+# Only match "level" when it's the whole name or a standalone word boundary
+# (e.g. "priority_level", "access_level") but not "reorder_level"
+_ORDINAL_LEVEL_EXCLUDE_PREFIXES = ("reorder", "stock", "inventory", "fill", "min", "max")
+
+
+def _is_ordinal_by_name(col_name_lower: str) -> bool:
+    """Check if a column name suggests ordinal data, with guards against false positives."""
+    # Direct pattern match (non-level patterns)
+    if any(p in col_name_lower for p in _ORDINAL_NAME_PATTERNS):
+        return True
+
+    # Special "level" handling: match only when not preceded by quantity-like prefixes
+    if "level" in col_name_lower:
+        for prefix in _ORDINAL_LEVEL_EXCLUDE_PREFIXES:
+            if col_name_lower.startswith(prefix):
+                return False
+        return True
+
+    return False
+
+
+def detect_join_candidates(
+    table_name: str,
+    columns: List[Dict],
+    pk_columns: List[str],
+    fk_columns: List[Dict],
+    all_tables_pks: Dict[str, List[str]],
+) -> List[Dict[str, str]]:
+    """Detect columns that are candidates for JOIN operations.
+
+    Looks for columns following FK naming patterns (e.g. user_id, product_code)
+    and tries to match them to other tables' primary keys.
+    Skips columns that already have explicit FK constraints.
+
+    Returns:
+        List of dicts with keys: column, target_table, target_column, confidence
+    """
+    explicit_fk_cols = {fk["column"] for fk in fk_columns}
+
+    candidates = []
+    for col in columns:
+        name = col["name"]
+        name_lower = name.lower()
+
+        # Skip own PK columns, columns with existing FK constraints, and known non-FK names
+        if name in pk_columns or name in explicit_fk_cols:
+            continue
+        if name_lower in _JOIN_CANDIDATE_EXCLUDE:
+            continue
+
+        # Check for join-candidate suffixes
+        matched_suffix = None
+        for suffix in _JOIN_CANDIDATE_SUFFIXES:
+            if name_lower.endswith(suffix):
+                matched_suffix = suffix
+                break
+
+        if not matched_suffix:
+            continue
+
+        prefix = name_lower[: -len(matched_suffix)]
+        if not prefix:
+            continue
+
+        # Try to find a matching table by name
+        matched = False
+        for other_table, other_pks in all_tables_pks.items():
+            if other_table == table_name:
+                continue
+            other_lower = other_table.lower()
+
+            # Match patterns: user_id -> users / user, customer_id -> customers
+            if (
+                other_lower == prefix
+                or other_lower == prefix + "s"
+                or other_lower == prefix + "es"
+                or other_lower.rstrip("s") == prefix
+                or other_lower.rstrip("es") == prefix
+            ):
+                # Find the matching PK column
+                suffix_base = matched_suffix.lstrip("_")  # "id", "key", "code"
+                target_col = None
+                for pk in other_pks:
+                    if pk.lower() == suffix_base or pk.lower() == name_lower:
+                        target_col = pk
+                        break
+                if target_col is None and other_pks:
+                    target_col = other_pks[0]
+
+                candidates.append({
+                    "column": name,
+                    "target_table": other_table,
+                    "target_column": target_col,
+                    "confidence": "high",
+                })
+                matched = True
+                break
+
+        if not matched:
+            candidates.append({
+                "column": name,
+                "target_table": None,
+                "target_column": None,
+                "confidence": "low",
+            })
+
+    return candidates
+
+
+def classify_data_category(
+    col_type_str: str, col_name: str,
+    cardinality: int = 0, row_count: int = 0,
+) -> Optional[str]:
+    """Classify a column into a statistical data category.
+
+    Categories:
+        - continuous: Measurable values (float, decimal, money, timestamps)
+        - discrete: Countable values (integer types, boolean)
+        - ordinal: Ordered categories (detected by name patterns + type)
+        - nominal: Unordered categories (text/varchar, uuid, enum)
+        - None: Cannot classify (complex types like json, binary)
+    """
+    col_type = col_type_str.lower().strip()
+    col_name_lower = col_name.lower()
+
+    # Skip complex types
+    if any(t in col_type for t in ("json", "jsonb", "bytea", "xml", "tsvector")):
+        return None
+
+    # --- Continuous ---
+    if any(t in col_type for t in ("float", "double", "real", "money")):
+        return "continuous"
+    if "numeric" in col_type or "decimal" in col_type:
+        # Has fractional scale -> continuous
+        if "," in col_type:
+            try:
+                scale = int(col_type.split(",")[-1].rstrip(")").strip())
+                if scale > 0:
+                    return "continuous"
+            except ValueError:
+                pass
+        return "continuous"
+    # Date/time types are continuous
+    if any(t in col_type for t in ("timestamp", "datetime", "date", "time", "interval")):
+        return "continuous"
+
+    # --- Discrete / Ordinal for integers ---
+    if "bool" in col_type:
+        return "discrete"
+    if any(t in col_type for t in ("int", "serial")):
+        if _is_ordinal_by_name(col_name_lower):
+            return "ordinal"
+        return "discrete"
+
+    # --- Nominal / Ordinal for text ---
+    if any(t in col_type for t in ("varchar", "char", "text", "citext", "name")):
+        if _is_ordinal_by_name(col_name_lower):
+            return "ordinal"
+        return "nominal"
+
+    # UUID, inet, macaddr, enum
+    if any(t in col_type for t in ("uuid", "inet", "macaddr")):
+        return "nominal"
+    if "enum" in col_type:
+        if _is_ordinal_by_name(col_name_lower):
+            return "ordinal"
+        return "nominal"
+
+    return None
+
+
 def analyze_database_to_json(
     database_url: str,
     output_path: str,
@@ -545,6 +911,7 @@ def analyze_database_to_json(
     
     # Use a single shared engine for all DB access
     engine = get_engine(database_url)
+    dialect = engine.dialect.name
 
     try:
         # Fetch basic metadata
@@ -632,19 +999,59 @@ def analyze_database_to_json(
                 except Exception:
                     cdc_enabled = False
 
+                # Column-level statistics: cardinality, null counts, data range
+                try:
+                    col_statistics = fetch_column_statistics(
+                        engine, table_name, table_columns,
+                        schema=table_schema, row_count=row_count,
+                    )
+                except Exception:
+                    col_statistics = {}
+
+                # Join candidates (implicit FKs not covered by explicit constraints)
+                join_candidates = detect_join_candidates(
+                    table_name, table_columns, pk_columns, fk_columns, all_pks,
+                )
+
+                # Build enriched columns with all column-level metadata
+                enriched_columns = []
+                for col in table_columns:
+                    col_dict = {
+                        "name": col["name"],
+                        "type": col["type"],
+                        "nullable": col.get("nullable", True),
+                        "is_incremental": col.get("is_incremental", False),
+                    }
+
+                    # Timezone for date/time columns
+                    col_tz = get_column_timezone(col["type"], dialect, db_timezone)
+                    if col_tz is not None:
+                        col_dict["column_timezone"] = col_tz
+
+                    # Column statistics (cardinality, null_count, data_range)
+                    stats = col_statistics.get(col["name"], {})
+                    if stats:
+                        col_dict["cardinality"] = stats.get("cardinality", 0)
+                        col_dict["null_count"] = stats.get("null_count", 0)
+                        if "data_range" in stats:
+                            col_dict["data_range"] = stats["data_range"]
+
+                    # Data category (nominal, ordinal, discrete, continuous)
+                    data_cat = classify_data_category(
+                        col["type"], col["name"],
+                        cardinality=stats.get("cardinality", 0),
+                        row_count=row_count,
+                    )
+                    if data_cat:
+                        col_dict["data_category"] = data_cat
+
+                    enriched_columns.append(col_dict)
+
                 # Build table entry
                 table_entry = {
                     "table": table_name,
                     "schema": table_schema,
-                    "columns": [
-                        {
-                            "name": col["name"],
-                            "type": col["type"],
-                            "nullable": col.get("nullable", True),
-                            "is_incremental": col.get("is_incremental", False),
-                        }
-                        for col in table_columns
-                    ],
+                    "columns": enriched_columns,
                     "primary_keys": pk_columns,
                     "foreign_keys": [
                         {
@@ -658,6 +1065,7 @@ def analyze_database_to_json(
                     "sensitive_fields": sensitive_fields,
                     "incremental_columns": incremental_columns,
                     "partition_columns": partition_columns,
+                    "join_candidates": join_candidates,
                     "cdc_enabled": cdc_enabled,
                     "has_primary_key": len(pk_columns) > 0,
                     "has_foreign_keys": len(fk_columns) > 0,
@@ -704,13 +1112,20 @@ def analyze_database_to_json(
 
 if __name__ == "__main__":
     import sys
-    
+
+    _load_env_file()
+
     if len(sys.argv) < 3:
         print("Usage: python database_analyzer.py <database_url> <output_json_path> [schema]")
+        print("  schema can also be set via DATABASE_SCHEMA or SCHEMA in .env")
         sys.exit(1)
-    
+
     database_url = sys.argv[1]
     output_path = sys.argv[2]
-    schema = sys.argv[3] if len(sys.argv) > 3 else None
-    
+    schema = (
+        sys.argv[3]
+        if len(sys.argv) > 3
+        else os.environ.get("DATABASE_SCHEMA") or os.environ.get("SCHEMA") or None
+    )
+
     analyze_database_to_json(database_url, output_path, schema=schema)

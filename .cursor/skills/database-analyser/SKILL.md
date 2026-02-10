@@ -27,6 +27,7 @@ This skill provides a simple tool for analyzing database schemas and producing a
    - `DB_URL`
    - `POSTGRES_URL` (for PostgreSQL)
    - `DB_CONNECTION_STRING`
+   - `DATABASE_SCHEMA` or `SCHEMA` — schema name to filter tables (script reads from .env)
    
    Example: `os.environ.get('DATABASE_URL')`
 
@@ -85,6 +86,9 @@ Example:
 # Using environment variable
 export DATABASE_URL="postgresql://user:pass@host/db"
 .venv/bin/python .cursor/skills/database-analyser/scripts/database_analyzer.py "$DATABASE_URL" schema.json public
+
+# Schema from .env (add DATABASE_SCHEMA=public or SCHEMA=public to .env; script loads .env automatically)
+.venv/bin/python .cursor/skills/database-analyser/scripts/database_analyzer.py "$DATABASE_URL" schema.json
 ```
 
 ## Function Reference
@@ -111,6 +115,10 @@ export DATABASE_URL="postgresql://user:pass@host/db"
    - Sensitive fields detection (PII, financial, credentials)
    - Incremental columns (for ETL watermarking)
    - Partition columns (for date partitioning)
+   - Column timezone (effective timezone of date/time columns)
+   - Column statistics (cardinality, null counts, data range)
+   - Join candidates (implicit FK detection via naming patterns)
+   - Data categories (nominal, ordinal, discrete, continuous)
    - CDC status (change data capture configuration)
 4. Saves everything to JSON file
 
@@ -143,13 +151,42 @@ The generated JSON file has this structure:
           "name": "id",
           "type": "integer",
           "nullable": false,
-          "is_incremental": true
+          "is_incremental": true,
+          "cardinality": 50000,
+          "null_count": 0,
+          "data_range": {"min": "1", "max": "50000"},
+          "data_category": "discrete"
         },
         {
           "name": "email",
           "type": "varchar(255)",
           "nullable": false,
-          "is_incremental": false
+          "is_incremental": false,
+          "cardinality": 49500,
+          "null_count": 0,
+          "data_range": {"min": "alice@example.com", "max": "zoe@example.com"},
+          "data_category": "nominal"
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp without time zone",
+          "nullable": false,
+          "is_incremental": false,
+          "column_timezone": "UTC",
+          "cardinality": 48000,
+          "null_count": 0,
+          "data_range": {"min": "2024-01-01 00:00:00", "max": "2026-02-10 11:00:00"},
+          "data_category": "continuous"
+        },
+        {
+          "name": "store_id",
+          "type": "integer",
+          "nullable": false,
+          "is_incremental": false,
+          "cardinality": 12,
+          "null_count": 0,
+          "data_range": {"min": "1", "max": "12"},
+          "data_category": "discrete"
         }
       ],
       "primary_keys": ["id"],
@@ -164,6 +201,14 @@ The generated JSON file has this structure:
       },
       "incremental_columns": ["id", "updated_at"],
       "partition_columns": ["created_at"],
+      "join_candidates": [
+        {
+          "column": "store_id",
+          "target_table": "stores",
+          "target_column": "id",
+          "confidence": "high"
+        }
+      ],
       "cdc_enabled": false,
       "has_primary_key": true,
       "has_foreign_keys": false,
@@ -206,6 +251,57 @@ Identifies columns suitable for incremental/watermark loads:
 Detects columns suitable for date/range partitioning:
 - Date/timestamp columns with time-series naming patterns
 - For Postgres: queries system catalogs for actual partition keys
+
+### Column Timezone
+
+For every date/time column, `column_timezone` tells you what timezone the stored values represent. This field is only present on date/time columns (timestamp, datetime, date, time, etc.).
+
+**Rules by dialect:**
+
+| Database | TZ-aware types | `column_timezone` | TZ-naive types | `column_timezone` |
+|---|---|---|---|---|
+| PostgreSQL | `timestamptz`, `timetz` | `"UTC"` | `timestamp`, `date`, `time` | server timezone (e.g. `"Europe/Warsaw"`) |
+| MySQL | `TIMESTAMP` | `"UTC"` | `DATETIME`, `DATE`, `TIME` | server timezone |
+| SQL Server | `datetimeoffset` | `"offset_embedded"` | `datetime`, `datetime2`, `date` | server timezone |
+| SQLite | (none) | — | all date/time types | `"unknown"` |
+
+**How to use it:**
+- `"UTC"` — values are in UTC, convert directly to target timezone
+- `"offset_embedded"` — each value carries its own offset, use as-is or normalize
+- A named timezone (e.g. `"Europe/Warsaw"`) — values are in that timezone, convert from it
+- `"unknown"` — timezone cannot be determined, requires manual investigation
+
+### Column Statistics
+
+Each column includes statistics computed from a single table scan:
+
+- **`cardinality`** (int): Number of distinct values in the column
+- **`null_count`** (int): Number of NULL values in the column
+- **`data_range`** (object, optional): Min and max values as strings. Only present for types that support comparison (numeric, date/time, text). Omitted for JSON, binary, and other complex types.
+
+These statistics help you understand data distribution, detect sparse or low-cardinality columns, assess data quality (null prevalence), and make informed decisions about indexing and partitioning.
+
+### Join Candidates
+
+Detects columns that could be used for JOIN operations but don't have explicit FK constraints:
+
+- Looks for naming patterns: `*_id`, `*_key`, `*_code`, `*_ref`, `*_fk`
+- Tries to match to other tables' primary keys (e.g. `user_id` → `users.id`)
+- Skips columns that already have explicit FK constraints
+- Reports confidence: `"high"` when a matching table is found, `"low"` when only the naming pattern matches
+
+This helps discover implicit relationships in databases where FK constraints are not enforced at the schema level.
+
+### Data Categories
+
+Classifies each column into one of four statistical data categories:
+
+- **continuous**: Measurable values — float, decimal, money, timestamps, dates
+- **discrete**: Countable values — integers, booleans, serial types
+- **ordinal**: Ordered categories — detected by name patterns (priority, level, grade, rank, rating, severity, score, stage, phase, tier)
+- **nominal**: Unordered categories — text, varchar, uuid, enum, inet
+
+This classification helps with downstream analytics, visualization choices, and data modeling decisions. Only present for columns where a category can be determined; complex types (json, binary, xml) are skipped.
 
 ### CDC Status
 
@@ -293,5 +389,9 @@ See `.cursor/skills/database-analyser/scripts/database_analyzer.py` for implemen
 - `detect_partition_columns()` - Find partition candidates
 - `detect_incremental_columns()` - Find incremental load columns
 - `detect_cdc_enabled()` - Check CDC configuration
+- `get_column_timezone()` - Determine effective timezone for date/time columns
+- `fetch_column_statistics()` - Compute cardinality, null counts, data range per column
+- `detect_join_candidates()` - Find implicit FK / join candidate columns
+- `classify_data_category()` - Classify columns as nominal, ordinal, discrete, or continuous
 - `parse_connection_info()` - Extract connection details
 - `classify_field()` - Classify field by naming pattern

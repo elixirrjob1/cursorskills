@@ -5,30 +5,34 @@ A collection of reusable Cursor AI skills for database analysis, data quality as
 ## Quick Start
 
 ```bash
-# 1. Clone and set up
+# 1. Clone and install skills globally (recommended)
 git clone <repo-url> && cd skills
+mkdir -p ~/.cursor/skills
+cp -r .cursor/skills/* ~/.cursor/skills/
+
+# 2. Set up Python env in your project (the one with your database)
+cd /path/to/your/project
 python3 -m venv .venv
 .venv/bin/pip install sqlalchemy psycopg2-binary
 
-# 2. Configure your database connection
+# 3. Configure your database connection
 cp .env.example .env
 # Edit .env with your DATABASE_URL and SCHEMA
 
-# 3. Run any skill
-.venv/bin/python .cursor/skills/database-analyser/scripts/database_analyzer.py "$DATABASE_URL" schema.json public
-.venv/bin/python .cursor/skills/data-quality/scripts/data_quality.py "$DATABASE_URL" data_quality_report.json public schema.json
-.venv/bin/python .cursor/skills/volume-projection/scripts/collector.py "$DATABASE_URL" --setup && \
-.venv/bin/python .cursor/skills/volume-projection/scripts/collector.py "$DATABASE_URL" --collect
-.venv/bin/python .cursor/skills/volume-projection/scripts/predictor.py "$DATABASE_URL" capacity_report.json
+# 4. Run any skill (from your project dir)
+.venv/bin/python ~/.cursor/skills/source-system-analyser/scripts/source_system_analyzer.py "$DATABASE_URL" schema.json public
+.venv/bin/python ~/.cursor/skills/volume-projection/scripts/collector.py "$DATABASE_URL" --setup && \
+.venv/bin/python ~/.cursor/skills/volume-projection/scripts/collector.py "$DATABASE_URL" --collect
+.venv/bin/python ~/.cursor/skills/volume-projection/scripts/predictor.py "$DATABASE_URL" capacity_report.json
 ```
 
 Or just ask Cursor: *"Analyze my database"*, *"Run a data quality check"*, *"Project storage growth"* — skills are picked up automatically.
 
 ## Available Skills
 
-### 1. Database Analyzer
+### 1. Source System Analyser
 
-Connects to a PostgreSQL database and produces a fully enriched `schema.json` with comprehensive column-level metadata.
+Connects to a PostgreSQL database and produces a combined `schema.json` with full schema metadata and data quality findings in one pass.
 
 | Feature | What It Provides |
 |---------|-----------------|
@@ -40,60 +44,24 @@ Connects to a PostgreSQL database and produces a fully enriched `schema.json` wi
 | Join candidates | Implicit FK detection via naming patterns |
 | ETL metadata | Incremental columns, partition columns, CDC status |
 | Timezone | Per-column effective timezone (UTC, server TZ, offset) |
+| Data quality | 9 checks: controlled values, constraints, format, delete management, late-arriving data, timezone |
 
 **Usage:**
 
 ```bash
-.venv/bin/python .cursor/skills/database-analyser/scripts/database_analyzer.py \
+.venv/bin/python ~/.cursor/skills/source-system-analyser/scripts/source_system_analyzer.py \
   <database_url> <output_json> [schema]
 
 # Example
-.venv/bin/python .cursor/skills/database-analyser/scripts/database_analyzer.py \
+.venv/bin/python ~/.cursor/skills/source-system-analyser/scripts/source_system_analyzer.py \
   "$DATABASE_URL" schema.json public
 ```
 
-**Output:** `schema.json` — one JSON file with everything. Used as input by the other skills.
+**Output:** `schema.json` — one JSON file with schema metadata and `data_quality` section (findings, summary, recommendations). Used as input by Volume Projection.
 
 ---
 
-### 2. Data Quality Analyzer
-
-Assesses data integrity and quality of a source database. Produces a `data_quality_report.json` with actionable findings, severity levels, and recommendations.
-
-Runs **9 checks**:
-
-| # | Check | Severity | What It Finds |
-|---|-------|----------|---------------|
-| 1 | **Controlled Value Candidates** | warning | Text columns with few distinct values but no CHECK/ENUM/FK constraint — should use a controlled value list |
-| 2 | **Nullable But Never Null** | info | Nullable columns that have zero NULLs — candidates for NOT NULL |
-| 3 | **Missing Primary Keys** | critical | Tables without a primary key |
-| 4 | **Missing Foreign Keys** | warning/critical | FK-patterned columns without FK constraints; detects orphaned references |
-| 5 | **Format Inconsistency** | warning | Text columns with mixed format patterns (emails, phones, dates) |
-| 6 | **Range Violations** | warning | Negative prices or quantities |
-| 7 | **Delete Management** | warning/info | Per-table soft-delete vs hard-delete strategy; CDC detection; audit trail detection |
-| 8 | **Late-Arriving Data** | warning/info | Lag between business dates and insertion timestamps; recommended lookback windows |
-| 9 | **Timezone** | warning/info | Per-table and cross-database timezone assessment; TZ-aware vs TZ-naive; mixed-TZ warnings |
-
-**Usage:**
-
-```bash
-.venv/bin/python .cursor/skills/data-quality/scripts/data_quality.py \
-  <database_url> <output_json> [schema] [schema_json]
-
-# Standalone (scans schema itself)
-.venv/bin/python .cursor/skills/data-quality/scripts/data_quality.py \
-  "$DATABASE_URL" data_quality_report.json public
-
-# With existing schema.json (faster — skips re-scanning)
-.venv/bin/python .cursor/skills/data-quality/scripts/data_quality.py \
-  "$DATABASE_URL" data_quality_report.json public schema.json
-```
-
-**Output:** `data_quality_report.json` — findings with severity, detail, recommendations, plus summary sections for controlled value candidates, delete management, late-arriving data, and timezone.
-
----
-
-### 3. Volume Projection
+### 2. Volume Projection
 
 Collects table sizes, churn metrics, and growth history from PostgreSQL, stores them in a `prediction` schema, and generates capacity forecasts for 6/12/24 month horizons.
 
@@ -108,15 +76,15 @@ Two components:
 
 ```bash
 # One-time setup (creates prediction schema and tables)
-.venv/bin/python .cursor/skills/volume-projection/scripts/collector.py \
+.venv/bin/python ~/.cursor/skills/volume-projection/scripts/collector.py \
   "$DATABASE_URL" --setup
 
 # Collect metrics (run regularly, e.g. monthly)
-.venv/bin/python .cursor/skills/volume-projection/scripts/collector.py \
+.venv/bin/python ~/.cursor/skills/volume-projection/scripts/collector.py \
   "$DATABASE_URL" --collect --schema public
 
 # Generate capacity report
-.venv/bin/python .cursor/skills/volume-projection/scripts/predictor.py \
+.venv/bin/python ~/.cursor/skills/volume-projection/scripts/predictor.py \
   "$DATABASE_URL" capacity_report.json
 ```
 
@@ -127,12 +95,9 @@ Two components:
 Run the skills in this order for a complete source system assessment:
 
 ```
-1. Database Analyzer  →  schema.json           (understand the schema)
-2. Data Quality       →  data_quality_report.json  (assess readiness)
-3. Volume Projection  →  capacity_report.json   (plan capacity)
+1. Source System Analyser  →  schema.json         (schema + data quality in one pass)
+2. Volume Projection       →  capacity_report.json (plan capacity)
 ```
-
-The Data Quality skill accepts `schema.json` as input to avoid re-scanning — so running the Database Analyzer first makes everything faster.
 
 ## Feature Coverage
 
@@ -140,61 +105,37 @@ These skills address the following source system preparation concerns:
 
 | Concern | Skill | Status |
 |---------|-------|--------|
-| Column-level metadata (cardinality, ranges, nulls, joins, data categories) | Database Analyzer | Done |
-| Data integrity / quality (controlled values, constraints, format) | Data Quality (#1–6) | Done |
-| Delete management (soft-delete, hard-delete, CDC) | Data Quality (#7) | Done |
-| Late-arriving data (lag analysis, lookback windows) | Data Quality (#8) | Done |
-| Timezone (server TZ, per-column TZ, mixed-TZ detection) | Data Quality (#9) | Done |
+| Column-level metadata (cardinality, ranges, nulls, joins, data categories) | Source System Analyser | Done |
+| Data integrity / quality (controlled values, constraints, format) | Source System Analyser | Done |
+| Delete management (soft-delete, hard-delete, CDC) | Source System Analyser | Done |
+| Late-arriving data (lag analysis, lookback windows) | Source System Analyser | Done |
+| Timezone (server TZ, per-column TZ, mixed-TZ detection) | Source System Analyser | Done |
 | Volume / size projection (growth trends, capacity forecasts) | Volume Projection | Done |
 
 ## Installation
 
-### Global (Available in Every Project)
-
-Copy the skills to your home directory. Cursor automatically picks up skills from `~/.cursor/skills/`, so they'll be available in every project you open — no per-project setup needed.
+**Always install skills globally.** Copy them to `~/.cursor/skills/` — Cursor picks them up automatically and they’ll be available in every project. Global install keeps skills outside the agent’s workspace, so the agent won’t try to modify them.
 
 ```bash
-# Copy all skills globally
+# Install globally (recommended)
 mkdir -p ~/.cursor/skills
 cp -r .cursor/skills/* ~/.cursor/skills/
 
-# Verify they're in place
+# Verify
 ls ~/.cursor/skills/
-# database-analyser/  data-quality/  volume-projection/
+# source-system-analyser/  volume-projection/
 ```
 
-After copying, open any project in Cursor and the skills are immediately available. Just ask: *"Analyze my database"*, *"Run a data quality check"*, etc.
+Then open your project in Cursor and ask: *"Analyze my database"*, *"Run a data quality check"*, etc.
 
-To update global skills later, just re-copy from this repo:
-
+To update skills later:
 ```bash
-cp -r .cursor/skills/* ~/.cursor/skills/
+cd /path/to/skills-repo && cp -r .cursor/skills/* ~/.cursor/skills/
 ```
 
-### Per-Project
+### Per-Project (Not Recommended)
 
-If you only want skills available in a specific project, copy them into that project's `.cursor/skills/` folder:
-
-```bash
-# Copy all skills into a project
-mkdir -p /path/to/your/project/.cursor/skills
-cp -r .cursor/skills/* /path/to/your/project/.cursor/skills/
-
-# Or copy just one skill
-mkdir -p /path/to/your/project/.cursor/skills
-cp -r .cursor/skills/data-quality /path/to/your/project/.cursor/skills/
-```
-
-### Global vs Per-Project
-
-| | Global (`~/.cursor/skills/`) | Per-Project (`.cursor/skills/`) |
-|---|---|---|
-| **Scope** | Every project you open in Cursor | Only that one project |
-| **Team sharing** | Only on your machine | Commit to git, whole team gets it |
-| **Updates** | Re-copy from this repo | Pull from git |
-| **Best for** | Personal use, trying skills out | Team projects, CI/CD |
-
-You can use both at the same time. Per-project skills take precedence if there's a name conflict.
+Per-project install (`.cursor/skills/` in your project) puts skills inside the agent’s workspace; the agent may try to edit them. Use global install instead. If you must use per-project, this repo includes rules and `.cursorignore` to reduce that risk when the repo itself is the opened project.
 
 ### Requirements
 
@@ -223,22 +164,21 @@ All scripts load `.env` automatically. You can also pass the connection string d
 ```
 .cursor/
   └── skills/
-      ├── database-analyser/
+      ├── source-system-analyser/
       │   ├── README.md
       │   ├── SKILL.md
       │   └── scripts/
-      │       └── database_analyzer.py
-      ├── data-quality/
-      │   ├── README.md
-      │   ├── SKILL.md
-      │   └── scripts/
-      │       └── data_quality.py
+      │       └── source_system_analyzer.py
       └── volume-projection/
           ├── SKILL.md
           └── scripts/
               ├── collector.py
               └── predictor.py
 ```
+
+## Agent Usage
+
+Skills in `.cursor/skills/` are **read-only**. The Cursor agent is instructed to use them but never modify them (via `.cursor/rules/skills-readonly.mdc` and `.cursorignore`). To customize or extend a skill, copy it elsewhere or contribute upstream.
 
 ## Contributing
 

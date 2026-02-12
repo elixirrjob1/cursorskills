@@ -25,7 +25,7 @@ The skill has two components:
 
 ## Obtaining the Database Connection String
 
-Follow the same priority as the database-analyser skill:
+Follow the same priority as the source-system-analyser skill:
 
 1. User-provided connection string
 2. Environment variables: `DATABASE_URL`, `DB_URL`, `POSTGRES_URL`, `DB_CONNECTION_STRING`
@@ -40,7 +40,7 @@ Follow the same priority as the database-analyser skill:
 - `sqlalchemy` — Database connectivity
 - `psycopg2-binary` — PostgreSQL driver
 
-Same as database-analyser. If `.venv` exists with those packages, no extra setup needed.
+Same as source-system-analyser. If `.venv` exists with those packages, no extra setup needed.
 
 ## Running the Collector
 

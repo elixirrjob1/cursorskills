@@ -1,10 +1,11 @@
 {
   "metadata": {
-    "generated_at": "2026-02-10T12:54:02.510909+00:00",
+    "generated_at": "2026-02-12T11:11:49.177925+00:00",
     "database_url": "aws-1-eu-west-1.pooler.supabase.com:5432/postgres",
     "schema_filter": "public",
     "total_tables": 10,
-    "total_rows": 35
+    "total_rows": 35,
+    "total_findings": 43
   },
   "connection": {
     "host": "aws-1-eu-west-1.pooler.supabase.com",
@@ -12,6 +13,23 @@
     "database": "postgres",
     "driver": "postgresql",
     "timezone": "UTC"
+  },
+  "data_quality_summary": {
+    "critical": 0,
+    "warning": 18,
+    "info": 25,
+    "by_check": {
+      "controlled_value_candidate": 7,
+      "nullable_but_never_null": 13,
+      "delete_management": 10,
+      "late_arriving_data": 3,
+      "timezone": 10
+    },
+    "constraints_found": {
+      "check_constraints": 0,
+      "enum_columns": 0,
+      "unique_constraints": 10
+    }
   },
   "tables": [
     {
@@ -132,12 +150,104 @@
         "created_at",
         "updated_at"
       ],
-      "partition_columns": [],
+      "partition_columns": [
+        "created_at",
+        "updated_at"
+      ],
       "join_candidates": [],
       "cdc_enabled": false,
       "has_primary_key": true,
       "has_foreign_keys": false,
-      "has_sensitive_fields": true
+      "has_sensitive_fields": true,
+      "data_quality": {
+        "nullable_but_never_null": [
+          {
+            "column": "email",
+            "detail": "Column is nullable but has 0 NULLs across 3 row(s)",
+            "severity": "info"
+          },
+          {
+            "column": "phone",
+            "detail": "Column is nullable but has 0 NULLs across 3 row(s)",
+            "severity": "info"
+          }
+        ],
+        "delete_management": {
+          "delete_strategy": "hard_delete",
+          "soft_delete_column": null,
+          "soft_delete_type": null,
+          "cdc_enabled": false,
+          "has_audit_trail": false,
+          "severity": "warning",
+          "detail": "No soft-delete column detected and CDC is not enabled. Table likely uses hard deletes invisible to incremental ingestion.",
+          "recommendation": "Consider: (1) Add soft-delete column, (2) Enable CDC via ALTER TABLE \u2026 REPLICA IDENTITY FULL, or (3) Plan periodic full-load syncs."
+        },
+        "timezone": {
+          "server_timezone": "UTC",
+          "distinct_timezones": [
+            "UTC"
+          ],
+          "tz_aware_count": 0,
+          "tz_naive_count": 2,
+          "severity": "info",
+          "recommendation": "Treat all timestamps as 'UTC' during ingestion."
+        },
+        "findings": [
+          {
+            "column": "email",
+            "check": "nullable_but_never_null",
+            "severity": "info",
+            "detail": "Column is nullable but has 0 NULLs across 3 row(s)",
+            "recommendation": "Consider adding a NOT NULL constraint if the column should always have a value"
+          },
+          {
+            "column": "phone",
+            "check": "nullable_but_never_null",
+            "severity": "info",
+            "detail": "Column is nullable but has 0 NULLs across 3 row(s)",
+            "recommendation": "Consider adding a NOT NULL constraint if the column should always have a value"
+          },
+          {
+            "column": null,
+            "check": "delete_management",
+            "severity": "warning",
+            "detail": "No soft-delete column detected and CDC is not enabled. Table likely uses hard deletes invisible to incremental ingestion.",
+            "recommendation": "Consider: (1) Add soft-delete column, (2) Enable CDC via ALTER TABLE \u2026 REPLICA IDENTITY FULL, or (3) Plan periodic full-load syncs.",
+            "delete_strategy": "hard_delete",
+            "soft_delete_column": null,
+            "soft_delete_type": null,
+            "cdc_enabled": false,
+            "has_audit_trail": false
+          },
+          {
+            "column": null,
+            "check": "timezone",
+            "severity": "info",
+            "detail": "All 2 date/time column(s) use timezone 'UTC'.",
+            "recommendation": "Treat all timestamps as 'UTC' during ingestion.",
+            "server_timezone": "UTC",
+            "columns": [
+              {
+                "column": "created_at",
+                "type": "timestamp",
+                "effective_timezone": "UTC",
+                "is_tz_aware": false
+              },
+              {
+                "column": "updated_at",
+                "type": "timestamp",
+                "effective_timezone": "UTC",
+                "is_tz_aware": false
+              }
+            ],
+            "distinct_timezones": [
+              "UTC"
+            ],
+            "tz_aware_count": 0,
+            "tz_naive_count": 2
+          }
+        ]
+      }
     },
     {
       "table": "employees",
@@ -286,12 +396,146 @@
         "created_at",
         "updated_at"
       ],
-      "partition_columns": [],
+      "partition_columns": [
+        "hire_date",
+        "created_at",
+        "updated_at"
+      ],
       "join_candidates": [],
       "cdc_enabled": false,
       "has_primary_key": true,
       "has_foreign_keys": true,
-      "has_sensitive_fields": true
+      "has_sensitive_fields": true,
+      "data_quality": {
+        "controlled_value_candidates": [
+          {
+            "column": "role",
+            "distinct_values": [
+              "Cashier",
+              "Inventory Clerk",
+              "Store Manager"
+            ],
+            "cardinality": 3,
+            "severity": "warning",
+            "recommendation": "Add a CHECK constraint, convert to an ENUM type, or create a lookup/reference table to prevent invalid values"
+          }
+        ],
+        "delete_management": {
+          "delete_strategy": "hard_delete",
+          "soft_delete_column": null,
+          "soft_delete_type": null,
+          "cdc_enabled": false,
+          "has_audit_trail": false,
+          "severity": "warning",
+          "detail": "No soft-delete column detected and CDC is not enabled. Table likely uses hard deletes invisible to incremental ingestion.",
+          "recommendation": "Consider: (1) Add soft-delete column, (2) Enable CDC via ALTER TABLE \u2026 REPLICA IDENTITY FULL, or (3) Plan periodic full-load syncs."
+        },
+        "late_arriving_data": [
+          {
+            "column": "hire_date",
+            "business_date_column": "hire_date",
+            "system_ts_column": "created_at",
+            "lag_stats": {
+              "total_rows_compared": 3,
+              "min_lag_hours": 23510.81,
+              "avg_lag_hours": 31518.81,
+              "p95_lag_hours": 36626.81,
+              "max_lag_hours": 36902.81,
+              "max_lag_days": 1537.6,
+              "rows_late_over_1d": 3,
+              "rows_late_over_7d": 3
+            },
+            "recommended_lookback_days": 1539,
+            "severity": "warning",
+            "detail": "Significant late-arriving data \u2014 max lag 1537.6 day(s). 3 of 3 row(s) arrived >7 days late.",
+            "recommendation": "'hire_date' is NOT safe as a watermark. Use 'created_at' for incremental loads. If 'hire_date' must be used, apply a 1539-day lookback window."
+          }
+        ],
+        "timezone": {
+          "server_timezone": "UTC",
+          "distinct_timezones": [
+            "UTC"
+          ],
+          "tz_aware_count": 0,
+          "tz_naive_count": 2,
+          "severity": "info",
+          "recommendation": "Treat all timestamps as 'UTC' during ingestion."
+        },
+        "findings": [
+          {
+            "column": "role",
+            "check": "controlled_value_candidate",
+            "severity": "warning",
+            "detail": "Text column with 3 distinct value(s) ('Cashier', 'Inventory Clerk', 'Store Manager') but no CHECK, ENUM, or FK constraint",
+            "recommendation": "Add a CHECK constraint, convert to an ENUM type, or create a lookup/reference table to prevent invalid values",
+            "distinct_values": [
+              "Cashier",
+              "Inventory Clerk",
+              "Store Manager"
+            ],
+            "cardinality": 3
+          },
+          {
+            "column": null,
+            "check": "delete_management",
+            "severity": "warning",
+            "detail": "No soft-delete column detected and CDC is not enabled. Table likely uses hard deletes invisible to incremental ingestion.",
+            "recommendation": "Consider: (1) Add soft-delete column, (2) Enable CDC via ALTER TABLE \u2026 REPLICA IDENTITY FULL, or (3) Plan periodic full-load syncs.",
+            "delete_strategy": "hard_delete",
+            "soft_delete_column": null,
+            "soft_delete_type": null,
+            "cdc_enabled": false,
+            "has_audit_trail": false
+          },
+          {
+            "column": "hire_date",
+            "check": "late_arriving_data",
+            "severity": "warning",
+            "detail": "Significant late-arriving data \u2014 max lag 1537.6 day(s). 3 of 3 row(s) arrived >7 days late.",
+            "recommendation": "'hire_date' is NOT safe as a watermark. Use 'created_at' for incremental loads. If 'hire_date' must be used, apply a 1539-day lookback window.",
+            "business_date_column": "hire_date",
+            "system_ts_column": "created_at",
+            "lag_stats": {
+              "total_rows_compared": 3,
+              "min_lag_hours": 23510.81,
+              "avg_lag_hours": 31518.81,
+              "p95_lag_hours": 36626.81,
+              "max_lag_hours": 36902.81,
+              "max_lag_days": 1537.6,
+              "rows_late_over_1d": 3,
+              "rows_late_over_7d": 3
+            },
+            "recommended_lookback_days": 1539
+          },
+          {
+            "column": null,
+            "check": "timezone",
+            "severity": "info",
+            "detail": "All 2 date/time column(s) use timezone 'UTC'.",
+            "recommendation": "Treat all timestamps as 'UTC' during ingestion.",
+            "server_timezone": "UTC",
+            "columns": [
+              {
+                "column": "created_at",
+                "type": "timestamp",
+                "effective_timezone": "UTC",
+                "is_tz_aware": false
+              },
+              {
+                "column": "updated_at",
+                "type": "timestamp",
+                "effective_timezone": "UTC",
+                "is_tz_aware": false
+              }
+            ],
+            "distinct_timezones": [
+              "UTC"
+            ],
+            "tz_aware_count": 0,
+            "tz_naive_count": 2
+          }
+        ]
+      }
     },
     {
       "table": "inventory",
@@ -430,12 +674,99 @@
         "created_at",
         "updated_at"
       ],
-      "partition_columns": [],
+      "partition_columns": [
+        "last_restocked_at",
+        "created_at",
+        "updated_at"
+      ],
       "join_candidates": [],
       "cdc_enabled": false,
       "has_primary_key": true,
       "has_foreign_keys": true,
-      "has_sensitive_fields": false
+      "has_sensitive_fields": false,
+      "data_quality": {
+        "nullable_but_never_null": [
+          {
+            "column": "last_restocked_at",
+            "detail": "Column is nullable but has 0 NULLs across 6 row(s)",
+            "severity": "info"
+          }
+        ],
+        "delete_management": {
+          "delete_strategy": "hard_delete",
+          "soft_delete_column": null,
+          "soft_delete_type": null,
+          "cdc_enabled": false,
+          "has_audit_trail": false,
+          "severity": "warning",
+          "detail": "No soft-delete column detected and CDC is not enabled. Table likely uses hard deletes invisible to incremental ingestion.",
+          "recommendation": "Consider: (1) Add soft-delete column, (2) Enable CDC via ALTER TABLE \u2026 REPLICA IDENTITY FULL, or (3) Plan periodic full-load syncs."
+        },
+        "timezone": {
+          "server_timezone": "UTC",
+          "distinct_timezones": [
+            "UTC"
+          ],
+          "tz_aware_count": 0,
+          "tz_naive_count": 3,
+          "severity": "info",
+          "recommendation": "Treat all timestamps as 'UTC' during ingestion."
+        },
+        "findings": [
+          {
+            "column": "last_restocked_at",
+            "check": "nullable_but_never_null",
+            "severity": "info",
+            "detail": "Column is nullable but has 0 NULLs across 6 row(s)",
+            "recommendation": "Consider adding a NOT NULL constraint if the column should always have a value"
+          },
+          {
+            "column": null,
+            "check": "delete_management",
+            "severity": "warning",
+            "detail": "No soft-delete column detected and CDC is not enabled. Table likely uses hard deletes invisible to incremental ingestion.",
+            "recommendation": "Consider: (1) Add soft-delete column, (2) Enable CDC via ALTER TABLE \u2026 REPLICA IDENTITY FULL, or (3) Plan periodic full-load syncs.",
+            "delete_strategy": "hard_delete",
+            "soft_delete_column": null,
+            "soft_delete_type": null,
+            "cdc_enabled": false,
+            "has_audit_trail": false
+          },
+          {
+            "column": null,
+            "check": "timezone",
+            "severity": "info",
+            "detail": "All 3 date/time column(s) use timezone 'UTC'.",
+            "recommendation": "Treat all timestamps as 'UTC' during ingestion.",
+            "server_timezone": "UTC",
+            "columns": [
+              {
+                "column": "last_restocked_at",
+                "type": "timestamp",
+                "effective_timezone": "UTC",
+                "is_tz_aware": false
+              },
+              {
+                "column": "created_at",
+                "type": "timestamp",
+                "effective_timezone": "UTC",
+                "is_tz_aware": false
+              },
+              {
+                "column": "updated_at",
+                "type": "timestamp",
+                "effective_timezone": "UTC",
+                "is_tz_aware": false
+              }
+            ],
+            "distinct_timezones": [
+              "UTC"
+            ],
+            "tz_aware_count": 0,
+            "tz_naive_count": 3
+          }
+        ]
+      }
     },
     {
       "table": "products",
@@ -593,12 +924,106 @@
         "created_at",
         "updated_at"
       ],
-      "partition_columns": [],
+      "partition_columns": [
+        "created_at",
+        "updated_at"
+      ],
       "join_candidates": [],
       "cdc_enabled": false,
       "has_primary_key": true,
       "has_foreign_keys": true,
-      "has_sensitive_fields": false
+      "has_sensitive_fields": false,
+      "data_quality": {
+        "controlled_value_candidates": [
+          {
+            "column": "category",
+            "distinct_values": [
+              "Bakery",
+              "Dairy",
+              "Grocery",
+              "Produce"
+            ],
+            "cardinality": 4,
+            "severity": "warning",
+            "recommendation": "Add a CHECK constraint, convert to an ENUM type, or create a lookup/reference table to prevent invalid values"
+          }
+        ],
+        "delete_management": {
+          "delete_strategy": "soft_delete",
+          "soft_delete_column": "active",
+          "soft_delete_type": "active_flag",
+          "cdc_enabled": false,
+          "has_audit_trail": false,
+          "severity": "info",
+          "detail": "Active-flag column 'active' (boolean) detected \u2014 rows with active=false are logically deleted. Current distribution: True=5.",
+          "recommendation": "Filter on \"active\" = true for current records during ingestion."
+        },
+        "timezone": {
+          "server_timezone": "UTC",
+          "distinct_timezones": [
+            "UTC"
+          ],
+          "tz_aware_count": 0,
+          "tz_naive_count": 2,
+          "severity": "info",
+          "recommendation": "Treat all timestamps as 'UTC' during ingestion."
+        },
+        "findings": [
+          {
+            "column": "category",
+            "check": "controlled_value_candidate",
+            "severity": "warning",
+            "detail": "Text column with 4 distinct value(s) ('Bakery', 'Dairy', 'Grocery', 'Produce') but no CHECK, ENUM, or FK constraint",
+            "recommendation": "Add a CHECK constraint, convert to an ENUM type, or create a lookup/reference table to prevent invalid values",
+            "distinct_values": [
+              "Bakery",
+              "Dairy",
+              "Grocery",
+              "Produce"
+            ],
+            "cardinality": 4
+          },
+          {
+            "column": "active",
+            "check": "delete_management",
+            "severity": "info",
+            "detail": "Active-flag column 'active' (boolean) detected \u2014 rows with active=false are logically deleted. Current distribution: True=5.",
+            "recommendation": "Filter on \"active\" = true for current records during ingestion.",
+            "delete_strategy": "soft_delete",
+            "soft_delete_column": "active",
+            "soft_delete_type": "active_flag",
+            "cdc_enabled": false,
+            "has_audit_trail": false
+          },
+          {
+            "column": null,
+            "check": "timezone",
+            "severity": "info",
+            "detail": "All 2 date/time column(s) use timezone 'UTC'.",
+            "recommendation": "Treat all timestamps as 'UTC' during ingestion.",
+            "server_timezone": "UTC",
+            "columns": [
+              {
+                "column": "created_at",
+                "type": "timestamp",
+                "effective_timezone": "UTC",
+                "is_tz_aware": false
+              },
+              {
+                "column": "updated_at",
+                "type": "timestamp",
+                "effective_timezone": "UTC",
+                "is_tz_aware": false
+              }
+            ],
+            "distinct_timezones": [
+              "UTC"
+            ],
+            "tz_aware_count": 0,
+            "tz_naive_count": 2
+          }
+        ]
+      }
     },
     {
       "table": "purchase_order_items",
@@ -724,12 +1149,78 @@
         "created_at",
         "updated_at"
       ],
-      "partition_columns": [],
+      "partition_columns": [
+        "created_at",
+        "updated_at"
+      ],
       "join_candidates": [],
       "cdc_enabled": false,
       "has_primary_key": true,
       "has_foreign_keys": true,
-      "has_sensitive_fields": false
+      "has_sensitive_fields": false,
+      "data_quality": {
+        "delete_management": {
+          "delete_strategy": "hard_delete",
+          "soft_delete_column": null,
+          "soft_delete_type": null,
+          "cdc_enabled": false,
+          "has_audit_trail": false,
+          "severity": "warning",
+          "detail": "No soft-delete column detected and CDC is not enabled. Table likely uses hard deletes invisible to incremental ingestion.",
+          "recommendation": "Consider: (1) Add soft-delete column, (2) Enable CDC via ALTER TABLE \u2026 REPLICA IDENTITY FULL, or (3) Plan periodic full-load syncs."
+        },
+        "timezone": {
+          "server_timezone": "UTC",
+          "distinct_timezones": [
+            "UTC"
+          ],
+          "tz_aware_count": 0,
+          "tz_naive_count": 2,
+          "severity": "info",
+          "recommendation": "Treat all timestamps as 'UTC' during ingestion."
+        },
+        "findings": [
+          {
+            "column": null,
+            "check": "delete_management",
+            "severity": "warning",
+            "detail": "No soft-delete column detected and CDC is not enabled. Table likely uses hard deletes invisible to incremental ingestion.",
+            "recommendation": "Consider: (1) Add soft-delete column, (2) Enable CDC via ALTER TABLE \u2026 REPLICA IDENTITY FULL, or (3) Plan periodic full-load syncs.",
+            "delete_strategy": "hard_delete",
+            "soft_delete_column": null,
+            "soft_delete_type": null,
+            "cdc_enabled": false,
+            "has_audit_trail": false
+          },
+          {
+            "column": null,
+            "check": "timezone",
+            "severity": "info",
+            "detail": "All 2 date/time column(s) use timezone 'UTC'.",
+            "recommendation": "Treat all timestamps as 'UTC' during ingestion.",
+            "server_timezone": "UTC",
+            "columns": [
+              {
+                "column": "created_at",
+                "type": "timestamp",
+                "effective_timezone": "UTC",
+                "is_tz_aware": false
+              },
+              {
+                "column": "updated_at",
+                "type": "timestamp",
+                "effective_timezone": "UTC",
+                "is_tz_aware": false
+              }
+            ],
+            "distinct_timezones": [
+              "UTC"
+            ],
+            "tz_aware_count": 0,
+            "tz_naive_count": 2
+          }
+        ]
+      }
     },
     {
       "table": "purchase_orders",
@@ -867,12 +1358,159 @@
         "created_at",
         "updated_at"
       ],
-      "partition_columns": [],
+      "partition_columns": [
+        "order_date",
+        "expected_date",
+        "created_at",
+        "updated_at"
+      ],
       "join_candidates": [],
       "cdc_enabled": false,
       "has_primary_key": true,
       "has_foreign_keys": true,
-      "has_sensitive_fields": false
+      "has_sensitive_fields": false,
+      "data_quality": {
+        "controlled_value_candidates": [
+          {
+            "column": "status",
+            "distinct_values": [
+              "Approved",
+              "Received"
+            ],
+            "cardinality": 2,
+            "severity": "warning",
+            "recommendation": "Add a CHECK constraint, convert to an ENUM type, or create a lookup/reference table to prevent invalid values"
+          }
+        ],
+        "nullable_but_never_null": [
+          {
+            "column": "expected_date",
+            "detail": "Column is nullable but has 0 NULLs across 2 row(s)",
+            "severity": "info"
+          }
+        ],
+        "delete_management": {
+          "delete_strategy": "hard_delete",
+          "soft_delete_column": null,
+          "soft_delete_type": null,
+          "cdc_enabled": false,
+          "has_audit_trail": false,
+          "severity": "warning",
+          "detail": "No soft-delete column detected and CDC is not enabled. Table likely uses hard deletes invisible to incremental ingestion.",
+          "recommendation": "Consider: (1) Add soft-delete column, (2) Enable CDC via ALTER TABLE \u2026 REPLICA IDENTITY FULL, or (3) Plan periodic full-load syncs."
+        },
+        "late_arriving_data": [
+          {
+            "column": "order_date",
+            "business_date_column": "order_date",
+            "system_ts_column": "created_at",
+            "lag_stats": {
+              "total_rows_compared": 2,
+              "min_lag_hours": 2198.81,
+              "avg_lag_hours": 2246.81,
+              "p95_lag_hours": 2290.01,
+              "max_lag_hours": 2294.81,
+              "max_lag_days": 95.6,
+              "rows_late_over_1d": 2,
+              "rows_late_over_7d": 2
+            },
+            "recommended_lookback_days": 97,
+            "severity": "warning",
+            "detail": "Significant late-arriving data \u2014 max lag 95.6 day(s). 2 of 2 row(s) arrived >7 days late.",
+            "recommendation": "'order_date' is NOT safe as a watermark. Use 'created_at' for incremental loads. If 'order_date' must be used, apply a 97-day lookback window."
+          }
+        ],
+        "timezone": {
+          "server_timezone": "UTC",
+          "distinct_timezones": [
+            "UTC"
+          ],
+          "tz_aware_count": 0,
+          "tz_naive_count": 2,
+          "severity": "info",
+          "recommendation": "Treat all timestamps as 'UTC' during ingestion."
+        },
+        "findings": [
+          {
+            "column": "status",
+            "check": "controlled_value_candidate",
+            "severity": "warning",
+            "detail": "Text column with 2 distinct value(s) ('Approved', 'Received') but no CHECK, ENUM, or FK constraint",
+            "recommendation": "Add a CHECK constraint, convert to an ENUM type, or create a lookup/reference table to prevent invalid values",
+            "distinct_values": [
+              "Approved",
+              "Received"
+            ],
+            "cardinality": 2
+          },
+          {
+            "column": "expected_date",
+            "check": "nullable_but_never_null",
+            "severity": "info",
+            "detail": "Column is nullable but has 0 NULLs across 2 row(s)",
+            "recommendation": "Consider adding a NOT NULL constraint if the column should always have a value"
+          },
+          {
+            "column": null,
+            "check": "delete_management",
+            "severity": "warning",
+            "detail": "No soft-delete column detected and CDC is not enabled. Table likely uses hard deletes invisible to incremental ingestion.",
+            "recommendation": "Consider: (1) Add soft-delete column, (2) Enable CDC via ALTER TABLE \u2026 REPLICA IDENTITY FULL, or (3) Plan periodic full-load syncs.",
+            "delete_strategy": "hard_delete",
+            "soft_delete_column": null,
+            "soft_delete_type": null,
+            "cdc_enabled": false,
+            "has_audit_trail": false
+          },
+          {
+            "column": "order_date",
+            "check": "late_arriving_data",
+            "severity": "warning",
+            "detail": "Significant late-arriving data \u2014 max lag 95.6 day(s). 2 of 2 row(s) arrived >7 days late.",
+            "recommendation": "'order_date' is NOT safe as a watermark. Use 'created_at' for incremental loads. If 'order_date' must be used, apply a 97-day lookback window.",
+            "business_date_column": "order_date",
+            "system_ts_column": "created_at",
+            "lag_stats": {
+              "total_rows_compared": 2,
+              "min_lag_hours": 2198.81,
+              "avg_lag_hours": 2246.81,
+              "p95_lag_hours": 2290.01,
+              "max_lag_hours": 2294.81,
+              "max_lag_days": 95.6,
+              "rows_late_over_1d": 2,
+              "rows_late_over_7d": 2
+            },
+            "recommended_lookback_days": 97
+          },
+          {
+            "column": null,
+            "check": "timezone",
+            "severity": "info",
+            "detail": "All 2 date/time column(s) use timezone 'UTC'.",
+            "recommendation": "Treat all timestamps as 'UTC' during ingestion.",
+            "server_timezone": "UTC",
+            "columns": [
+              {
+                "column": "created_at",
+                "type": "timestamp",
+                "effective_timezone": "UTC",
+                "is_tz_aware": false
+              },
+              {
+                "column": "updated_at",
+                "type": "timestamp",
+                "effective_timezone": "UTC",
+                "is_tz_aware": false
+              }
+            ],
+            "distinct_timezones": [
+              "UTC"
+            ],
+            "tz_aware_count": 0,
+            "tz_naive_count": 2
+          }
+        ]
+      }
     },
     {
       "table": "sales_order_items",
@@ -998,12 +1636,78 @@
         "created_at",
         "updated_at"
       ],
-      "partition_columns": [],
+      "partition_columns": [
+        "created_at",
+        "updated_at"
+      ],
       "join_candidates": [],
       "cdc_enabled": false,
       "has_primary_key": true,
       "has_foreign_keys": true,
-      "has_sensitive_fields": false
+      "has_sensitive_fields": false,
+      "data_quality": {
+        "delete_management": {
+          "delete_strategy": "hard_delete",
+          "soft_delete_column": null,
+          "soft_delete_type": null,
+          "cdc_enabled": false,
+          "has_audit_trail": false,
+          "severity": "warning",
+          "detail": "No soft-delete column detected and CDC is not enabled. Table likely uses hard deletes invisible to incremental ingestion.",
+          "recommendation": "Consider: (1) Add soft-delete column, (2) Enable CDC via ALTER TABLE \u2026 REPLICA IDENTITY FULL, or (3) Plan periodic full-load syncs."
+        },
+        "timezone": {
+          "server_timezone": "UTC",
+          "distinct_timezones": [
+            "UTC"
+          ],
+          "tz_aware_count": 0,
+          "tz_naive_count": 2,
+          "severity": "info",
+          "recommendation": "Treat all timestamps as 'UTC' during ingestion."
+        },
+        "findings": [
+          {
+            "column": null,
+            "check": "delete_management",
+            "severity": "warning",
+            "detail": "No soft-delete column detected and CDC is not enabled. Table likely uses hard deletes invisible to incremental ingestion.",
+            "recommendation": "Consider: (1) Add soft-delete column, (2) Enable CDC via ALTER TABLE \u2026 REPLICA IDENTITY FULL, or (3) Plan periodic full-load syncs.",
+            "delete_strategy": "hard_delete",
+            "soft_delete_column": null,
+            "soft_delete_type": null,
+            "cdc_enabled": false,
+            "has_audit_trail": false
+          },
+          {
+            "column": null,
+            "check": "timezone",
+            "severity": "info",
+            "detail": "All 2 date/time column(s) use timezone 'UTC'.",
+            "recommendation": "Treat all timestamps as 'UTC' during ingestion.",
+            "server_timezone": "UTC",
+            "columns": [
+              {
+                "column": "created_at",
+                "type": "timestamp",
+                "effective_timezone": "UTC",
+                "is_tz_aware": false
+              },
+              {
+                "column": "updated_at",
+                "type": "timestamp",
+                "effective_timezone": "UTC",
+                "is_tz_aware": false
+              }
+            ],
+            "distinct_timezones": [
+              "UTC"
+            ],
+            "tz_aware_count": 0,
+            "tz_naive_count": 2
+          }
+        ]
+      }
     },
     {
       "table": "sales_orders",
@@ -1160,12 +1864,164 @@
         "created_at",
         "updated_at"
       ],
-      "partition_columns": [],
+      "partition_columns": [
+        "order_date",
+        "created_at",
+        "updated_at"
+      ],
       "join_candidates": [],
       "cdc_enabled": false,
       "has_primary_key": true,
       "has_foreign_keys": true,
-      "has_sensitive_fields": false
+      "has_sensitive_fields": false,
+      "data_quality": {
+        "controlled_value_candidates": [
+          {
+            "column": "status",
+            "distinct_values": [
+              "Completed",
+              "Pending"
+            ],
+            "cardinality": 2,
+            "severity": "warning",
+            "recommendation": "Add a CHECK constraint, convert to an ENUM type, or create a lookup/reference table to prevent invalid values"
+          }
+        ],
+        "nullable_but_never_null": [
+          {
+            "column": "customer_id",
+            "detail": "Column is nullable but has 0 NULLs across 3 row(s)",
+            "severity": "info"
+          }
+        ],
+        "delete_management": {
+          "delete_strategy": "hard_delete",
+          "soft_delete_column": null,
+          "soft_delete_type": null,
+          "cdc_enabled": false,
+          "has_audit_trail": false,
+          "severity": "warning",
+          "detail": "No soft-delete column detected and CDC is not enabled. Table likely uses hard deletes invisible to incremental ingestion.",
+          "recommendation": "Consider: (1) Add soft-delete column, (2) Enable CDC via ALTER TABLE \u2026 REPLICA IDENTITY FULL, or (3) Plan periodic full-load syncs."
+        },
+        "late_arriving_data": [
+          {
+            "column": "order_date",
+            "business_date_column": "order_date",
+            "system_ts_column": "created_at",
+            "lag_stats": {
+              "total_rows_compared": 3,
+              "min_lag_hours": 3.0,
+              "avg_lag_hours": 11.0,
+              "p95_lag_hours": 22.2,
+              "max_lag_hours": 24.0,
+              "max_lag_days": 1.0,
+              "rows_late_over_1d": 0,
+              "rows_late_over_7d": 0
+            },
+            "recommended_lookback_days": 2,
+            "severity": "info",
+            "detail": "Minor arrival delay \u2014 max lag between 'order_date' and 'created_at' is 24.0h (avg 11.0h, P95 22.2h).",
+            "recommendation": "Use 'created_at' as the watermark (preferred). If using 'order_date', add a 1\u20132 day lookback buffer."
+          }
+        ],
+        "timezone": {
+          "server_timezone": "UTC",
+          "distinct_timezones": [
+            "UTC"
+          ],
+          "tz_aware_count": 0,
+          "tz_naive_count": 3,
+          "severity": "info",
+          "recommendation": "Treat all timestamps as 'UTC' during ingestion."
+        },
+        "findings": [
+          {
+            "column": "status",
+            "check": "controlled_value_candidate",
+            "severity": "warning",
+            "detail": "Text column with 2 distinct value(s) ('Completed', 'Pending') but no CHECK, ENUM, or FK constraint",
+            "recommendation": "Add a CHECK constraint, convert to an ENUM type, or create a lookup/reference table to prevent invalid values",
+            "distinct_values": [
+              "Completed",
+              "Pending"
+            ],
+            "cardinality": 2
+          },
+          {
+            "column": "customer_id",
+            "check": "nullable_but_never_null",
+            "severity": "info",
+            "detail": "Column is nullable but has 0 NULLs across 3 row(s)",
+            "recommendation": "Consider adding a NOT NULL constraint if the column should always have a value"
+          },
+          {
+            "column": null,
+            "check": "delete_management",
+            "severity": "warning",
+            "detail": "No soft-delete column detected and CDC is not enabled. Table likely uses hard deletes invisible to incremental ingestion.",
+            "recommendation": "Consider: (1) Add soft-delete column, (2) Enable CDC via ALTER TABLE \u2026 REPLICA IDENTITY FULL, or (3) Plan periodic full-load syncs.",
+            "delete_strategy": "hard_delete",
+            "soft_delete_column": null,
+            "soft_delete_type": null,
+            "cdc_enabled": false,
+            "has_audit_trail": false
+          },
+          {
+            "column": "order_date",
+            "check": "late_arriving_data",
+            "severity": "info",
+            "detail": "Minor arrival delay \u2014 max lag between 'order_date' and 'created_at' is 24.0h (avg 11.0h, P95 22.2h).",
+            "recommendation": "Use 'created_at' as the watermark (preferred). If using 'order_date', add a 1\u20132 day lookback buffer.",
+            "business_date_column": "order_date",
+            "system_ts_column": "created_at",
+            "lag_stats": {
+              "total_rows_compared": 3,
+              "min_lag_hours": 3.0,
+              "avg_lag_hours": 11.0,
+              "p95_lag_hours": 22.2,
+              "max_lag_hours": 24.0,
+              "max_lag_days": 1.0,
+              "rows_late_over_1d": 0,
+              "rows_late_over_7d": 0
+            },
+            "recommended_lookback_days": 2
+          },
+          {
+            "column": null,
+            "check": "timezone",
+            "severity": "info",
+            "detail": "All 3 date/time column(s) use timezone 'UTC'.",
+            "recommendation": "Treat all timestamps as 'UTC' during ingestion.",
+            "server_timezone": "UTC",
+            "columns": [
+              {
+                "column": "order_date",
+                "type": "timestamp",
+                "effective_timezone": "UTC",
+                "is_tz_aware": false
+              },
+              {
+                "column": "created_at",
+                "type": "timestamp",
+                "effective_timezone": "UTC",
+                "is_tz_aware": false
+              },
+              {
+                "column": "updated_at",
+                "type": "timestamp",
+                "effective_timezone": "UTC",
+                "is_tz_aware": false
+              }
+            ],
+            "distinct_timezones": [
+              "UTC"
+            ],
+            "tz_aware_count": 0,
+            "tz_naive_count": 3
+          }
+        ]
+      }
     },
     {
       "table": "stores",
@@ -1324,12 +2180,208 @@
         "created_at",
         "updated_at"
       ],
-      "partition_columns": [],
+      "partition_columns": [
+        "created_at",
+        "updated_at"
+      ],
       "join_candidates": [],
       "cdc_enabled": false,
       "has_primary_key": true,
       "has_foreign_keys": false,
-      "has_sensitive_fields": true
+      "has_sensitive_fields": true,
+      "data_quality": {
+        "controlled_value_candidates": [
+          {
+            "column": "city",
+            "distinct_values": [
+              "Cork",
+              "Dublin"
+            ],
+            "cardinality": 2,
+            "severity": "warning",
+            "recommendation": "Add a CHECK constraint, convert to an ENUM type, or create a lookup/reference table to prevent invalid values"
+          },
+          {
+            "column": "state",
+            "distinct_values": [
+              "Leinster",
+              "Munster"
+            ],
+            "cardinality": 2,
+            "severity": "warning",
+            "recommendation": "Add a CHECK constraint, convert to an ENUM type, or create a lookup/reference table to prevent invalid values"
+          },
+          {
+            "column": "postal_code",
+            "distinct_values": [
+              "D01",
+              "T12"
+            ],
+            "cardinality": 2,
+            "severity": "warning",
+            "recommendation": "Add a CHECK constraint, convert to an ENUM type, or create a lookup/reference table to prevent invalid values"
+          }
+        ],
+        "nullable_but_never_null": [
+          {
+            "column": "address",
+            "detail": "Column is nullable but has 0 NULLs across 2 row(s)",
+            "severity": "info"
+          },
+          {
+            "column": "city",
+            "detail": "Column is nullable but has 0 NULLs across 2 row(s)",
+            "severity": "info"
+          },
+          {
+            "column": "state",
+            "detail": "Column is nullable but has 0 NULLs across 2 row(s)",
+            "severity": "info"
+          },
+          {
+            "column": "postal_code",
+            "detail": "Column is nullable but has 0 NULLs across 2 row(s)",
+            "severity": "info"
+          },
+          {
+            "column": "phone",
+            "detail": "Column is nullable but has 0 NULLs across 2 row(s)",
+            "severity": "info"
+          }
+        ],
+        "delete_management": {
+          "delete_strategy": "hard_delete",
+          "soft_delete_column": null,
+          "soft_delete_type": null,
+          "cdc_enabled": false,
+          "has_audit_trail": false,
+          "severity": "warning",
+          "detail": "No soft-delete column detected and CDC is not enabled. Table likely uses hard deletes invisible to incremental ingestion.",
+          "recommendation": "Consider: (1) Add soft-delete column, (2) Enable CDC via ALTER TABLE \u2026 REPLICA IDENTITY FULL, or (3) Plan periodic full-load syncs."
+        },
+        "timezone": {
+          "server_timezone": "UTC",
+          "distinct_timezones": [
+            "UTC"
+          ],
+          "tz_aware_count": 0,
+          "tz_naive_count": 2,
+          "severity": "info",
+          "recommendation": "Treat all timestamps as 'UTC' during ingestion."
+        },
+        "findings": [
+          {
+            "column": "city",
+            "check": "controlled_value_candidate",
+            "severity": "warning",
+            "detail": "Text column with 2 distinct value(s) ('Cork', 'Dublin') but no CHECK, ENUM, or FK constraint",
+            "recommendation": "Add a CHECK constraint, convert to an ENUM type, or create a lookup/reference table to prevent invalid values",
+            "distinct_values": [
+              "Cork",
+              "Dublin"
+            ],
+            "cardinality": 2
+          },
+          {
+            "column": "state",
+            "check": "controlled_value_candidate",
+            "severity": "warning",
+            "detail": "Text column with 2 distinct value(s) ('Leinster', 'Munster') but no CHECK, ENUM, or FK constraint",
+            "recommendation": "Add a CHECK constraint, convert to an ENUM type, or create a lookup/reference table to prevent invalid values",
+            "distinct_values": [
+              "Leinster",
+              "Munster"
+            ],
+            "cardinality": 2
+          },
+          {
+            "column": "postal_code",
+            "check": "controlled_value_candidate",
+            "severity": "warning",
+            "detail": "Text column with 2 distinct value(s) ('D01', 'T12') but no CHECK, ENUM, or FK constraint",
+            "recommendation": "Add a CHECK constraint, convert to an ENUM type, or create a lookup/reference table to prevent invalid values",
+            "distinct_values": [
+              "D01",
+              "T12"
+            ],
+            "cardinality": 2
+          },
+          {
+            "column": "address",
+            "check": "nullable_but_never_null",
+            "severity": "info",
+            "detail": "Column is nullable but has 0 NULLs across 2 row(s)",
+            "recommendation": "Consider adding a NOT NULL constraint if the column should always have a value"
+          },
+          {
+            "column": "city",
+            "check": "nullable_but_never_null",
+            "severity": "info",
+            "detail": "Column is nullable but has 0 NULLs across 2 row(s)",
+            "recommendation": "Consider adding a NOT NULL constraint if the column should always have a value"
+          },
+          {
+            "column": "state",
+            "check": "nullable_but_never_null",
+            "severity": "info",
+            "detail": "Column is nullable but has 0 NULLs across 2 row(s)",
+            "recommendation": "Consider adding a NOT NULL constraint if the column should always have a value"
+          },
+          {
+            "column": "postal_code",
+            "check": "nullable_but_never_null",
+            "severity": "info",
+            "detail": "Column is nullable but has 0 NULLs across 2 row(s)",
+            "recommendation": "Consider adding a NOT NULL constraint if the column should always have a value"
+          },
+          {
+            "column": "phone",
+            "check": "nullable_but_never_null",
+            "severity": "info",
+            "detail": "Column is nullable but has 0 NULLs across 2 row(s)",
+            "recommendation": "Consider adding a NOT NULL constraint if the column should always have a value"
+          },
+          {
+            "column": null,
+            "check": "delete_management",
+            "severity": "warning",
+            "detail": "No soft-delete column detected and CDC is not enabled. Table likely uses hard deletes invisible to incremental ingestion.",
+            "recommendation": "Consider: (1) Add soft-delete column, (2) Enable CDC via ALTER TABLE \u2026 REPLICA IDENTITY FULL, or (3) Plan periodic full-load syncs.",
+            "delete_strategy": "hard_delete",
+            "soft_delete_column": null,
+            "soft_delete_type": null,
+            "cdc_enabled": false,
+            "has_audit_trail": false
+          },
+          {
+            "column": null,
+            "check": "timezone",
+            "severity": "info",
+            "detail": "All 2 date/time column(s) use timezone 'UTC'.",
+            "recommendation": "Treat all timestamps as 'UTC' during ingestion.",
+            "server_timezone": "UTC",
+            "columns": [
+              {
+                "column": "created_at",
+                "type": "timestamp",
+                "effective_timezone": "UTC",
+                "is_tz_aware": false
+              },
+              {
+                "column": "updated_at",
+                "type": "timestamp",
+                "effective_timezone": "UTC",
+                "is_tz_aware": false
+              }
+            ],
+            "distinct_timezones": [
+              "UTC"
+            ],
+            "tz_aware_count": 0,
+            "tz_naive_count": 2
+          }
+        ]
+      }
     },
     {
       "table": "suppliers",
@@ -1449,12 +2501,116 @@
         "created_at",
         "updated_at"
       ],
-      "partition_columns": [],
+      "partition_columns": [
+        "created_at",
+        "updated_at"
+      ],
       "join_candidates": [],
       "cdc_enabled": false,
       "has_primary_key": true,
       "has_foreign_keys": false,
-      "has_sensitive_fields": true
+      "has_sensitive_fields": true,
+      "data_quality": {
+        "nullable_but_never_null": [
+          {
+            "column": "contact_name",
+            "detail": "Column is nullable but has 0 NULLs across 2 row(s)",
+            "severity": "info"
+          },
+          {
+            "column": "email",
+            "detail": "Column is nullable but has 0 NULLs across 2 row(s)",
+            "severity": "info"
+          },
+          {
+            "column": "phone",
+            "detail": "Column is nullable but has 0 NULLs across 2 row(s)",
+            "severity": "info"
+          }
+        ],
+        "delete_management": {
+          "delete_strategy": "hard_delete",
+          "soft_delete_column": null,
+          "soft_delete_type": null,
+          "cdc_enabled": false,
+          "has_audit_trail": false,
+          "severity": "warning",
+          "detail": "No soft-delete column detected and CDC is not enabled. Table likely uses hard deletes invisible to incremental ingestion.",
+          "recommendation": "Consider: (1) Add soft-delete column, (2) Enable CDC via ALTER TABLE \u2026 REPLICA IDENTITY FULL, or (3) Plan periodic full-load syncs."
+        },
+        "timezone": {
+          "server_timezone": "UTC",
+          "distinct_timezones": [
+            "UTC"
+          ],
+          "tz_aware_count": 0,
+          "tz_naive_count": 2,
+          "severity": "info",
+          "recommendation": "Treat all timestamps as 'UTC' during ingestion."
+        },
+        "findings": [
+          {
+            "column": "contact_name",
+            "check": "nullable_but_never_null",
+            "severity": "info",
+            "detail": "Column is nullable but has 0 NULLs across 2 row(s)",
+            "recommendation": "Consider adding a NOT NULL constraint if the column should always have a value"
+          },
+          {
+            "column": "email",
+            "check": "nullable_but_never_null",
+            "severity": "info",
+            "detail": "Column is nullable but has 0 NULLs across 2 row(s)",
+            "recommendation": "Consider adding a NOT NULL constraint if the column should always have a value"
+          },
+          {
+            "column": "phone",
+            "check": "nullable_but_never_null",
+            "severity": "info",
+            "detail": "Column is nullable but has 0 NULLs across 2 row(s)",
+            "recommendation": "Consider adding a NOT NULL constraint if the column should always have a value"
+          },
+          {
+            "column": null,
+            "check": "delete_management",
+            "severity": "warning",
+            "detail": "No soft-delete column detected and CDC is not enabled. Table likely uses hard deletes invisible to incremental ingestion.",
+            "recommendation": "Consider: (1) Add soft-delete column, (2) Enable CDC via ALTER TABLE \u2026 REPLICA IDENTITY FULL, or (3) Plan periodic full-load syncs.",
+            "delete_strategy": "hard_delete",
+            "soft_delete_column": null,
+            "soft_delete_type": null,
+            "cdc_enabled": false,
+            "has_audit_trail": false
+          },
+          {
+            "column": null,
+            "check": "timezone",
+            "severity": "info",
+            "detail": "All 2 date/time column(s) use timezone 'UTC'.",
+            "recommendation": "Treat all timestamps as 'UTC' during ingestion.",
+            "server_timezone": "UTC",
+            "columns": [
+              {
+                "column": "created_at",
+                "type": "timestamp",
+                "effective_timezone": "UTC",
+                "is_tz_aware": false
+              },
+              {
+                "column": "updated_at",
+                "type": "timestamp",
+                "effective_timezone": "UTC",
+                "is_tz_aware": false
+              }
+            ],
+            "distinct_timezones": [
+              "UTC"
+            ],
+            "tz_aware_count": 0,
+            "tz_naive_count": 2
+          }
+        ]
+      }
     }
   ]
 }

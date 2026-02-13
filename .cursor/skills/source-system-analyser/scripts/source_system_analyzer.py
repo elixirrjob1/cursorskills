@@ -144,104 +144,72 @@ def get_column_timezone(col_type_str: str, dialect: str, server_timezone: str) -
     return server_timezone
 
 
-def fetch_tables(database_url: str, schema: Optional[str] = None) -> List[str]:
-    """Fetch all table names from the database."""
-    engine = get_engine(database_url)
-    inspector = inspect(engine)
-    schemas = inspector.get_schema_names()
-    tables = []
-    if schema:
-        if schema in schemas:
-            tables.extend(inspector.get_table_names(schema=schema))
-    else:
-        for schema_name in schemas:
-            tables.extend(inspector.get_table_names(schema=schema_name))
-    return sorted(tables)
+def fetch_schema_metadata(engine: Engine, schema: Optional[str] = None) -> Dict[str, Any]:
+    """Fetch tables, columns, primary keys, and foreign keys in a single inspector pass.
 
-
-def fetch_columns(database_url: str, table_names: List[str] = None, schema: str = None) -> Dict[str, List[Dict]]:
-    """Fetch column information for specified tables."""
-    engine = get_engine(database_url)
+    Returns a dict with keys: 'tables', 'columns', 'primary_keys', 'foreign_keys'.
+    """
     inspector = inspect(engine)
-    columns_by_table: Dict[str, List[Dict]] = {}
-    target_tables = {}
     schemas_to_check = [schema] if schema else inspector.get_schema_names()
+
+    target_tables: Dict[str, str] = {}
     for sch in schemas_to_check:
+        if schema and sch != schema:
+            continue
         for table_name in inspector.get_table_names(schema=sch):
-            if table_names is None or table_name in table_names:
-                target_tables[table_name] = sch
+            target_tables[table_name] = sch
+
+    table_names = sorted(target_tables.keys())
+    columns_by_table: Dict[str, List[Dict]] = {}
+    pk_by_table: Dict[str, List[str]] = {}
+    fk_by_table: Dict[str, List[Dict]] = {}
 
     with warnings.catch_warnings():
         warnings.filterwarnings('ignore', category=SAWarning, message='Did not recognize type')
-        for table_name, table_schema in target_tables.items():
+        for table_name in table_names:
+            table_schema = target_tables[table_name]
             try:
                 columns = inspector.get_columns(table_name, schema=table_schema)
-                columns_by_table[table_name] = []
-                for col in columns:
-                    col_type_str = format_type(col['type'], col)
-                    columns_by_table[table_name].append({
+                columns_by_table[table_name] = [
+                    {
                         "name": col['name'],
-                        "type": col_type_str,
+                        "type": format_type(col['type'], col),
                         "nullable": col.get('nullable', True),
                         "default": str(col.get('default', '')) if col.get('default') is not None else None,
                         "is_incremental": is_incremental_column(col, col['type']),
-                    })
+                    }
+                    for col in columns
+                ]
             except Exception:
-                continue
-    return columns_by_table
+                columns_by_table[table_name] = []
+
+            try:
+                pk_constraint = inspector.get_pk_constraint(table_name, schema=table_schema)
+                if pk_constraint and pk_constraint.get('constrained_columns'):
+                    pk_by_table[table_name] = pk_constraint['constrained_columns']
+            except Exception:
+                pass
+
+            try:
+                foreign_keys = inspector.get_foreign_keys(table_name, schema=table_schema)
+                fk_by_table[table_name] = [
+                    {"column": local_col, "references": f"{fk['referred_table']}.{ref_col}"}
+                    for fk in foreign_keys
+                    for local_col, ref_col in zip(fk['constrained_columns'], fk['referred_columns'])
+                ]
+            except Exception:
+                pass
+
+    return {
+        "tables": table_names,
+        "columns": columns_by_table,
+        "primary_keys": pk_by_table,
+        "foreign_keys": fk_by_table,
+    }
 
 
-def fetch_primary_keys(database_url: str, table_names: List[str] = None, schema: str = None) -> Dict[str, List[str]]:
-    """Fetch primary key information for specified tables."""
-    engine = get_engine(database_url)
-    inspector = inspect(engine)
-    pk_by_table: Dict[str, List[str]] = {}
-    target_tables = {}
-    schemas_to_check = [schema] if schema else inspector.get_schema_names()
-    for sch in schemas_to_check:
-        for table_name in inspector.get_table_names(schema=sch):
-            if table_names is None or table_name in table_names:
-                target_tables[table_name] = sch
-
-    for table_name, table_schema in target_tables.items():
-        try:
-            pk_constraint = inspector.get_pk_constraint(table_name, schema=table_schema)
-            if pk_constraint and pk_constraint.get('constrained_columns'):
-                pk_by_table[table_name] = pk_constraint['constrained_columns']
-        except Exception:
-            continue
-    return pk_by_table
-
-
-def fetch_foreign_keys(database_url: str, table_names: List[str] = None, schema: str = None) -> Dict[str, List[Dict]]:
-    """Fetch foreign key information for specified tables."""
-    engine = get_engine(database_url)
-    inspector = inspect(engine)
-    fk_by_table: Dict[str, List[Dict]] = {}
-    target_tables = {}
-    schemas_to_check = [schema] if schema else inspector.get_schema_names()
-    for sch in schemas_to_check:
-        for table_name in inspector.get_table_names(schema=sch):
-            if table_names is None or table_name in table_names:
-                target_tables[table_name] = sch
-
-    for table_name, table_schema in target_tables.items():
-        try:
-            foreign_keys = inspector.get_foreign_keys(table_name, schema=table_schema)
-            fk_by_table[table_name] = []
-            for fk in foreign_keys:
-                for local_col, ref_col in zip(fk['constrained_columns'], fk['referred_columns']):
-                    fk_by_table[table_name].append(
-                        {"column": local_col, "references": f"{fk['referred_table']}.{ref_col}"}
-                    )
-        except Exception:
-            continue
-    return fk_by_table
-
-
-def fetch_sample_rows(database_url: str, table: str, limit: int):
+def fetch_sample_rows(engine: Engine, table: str, limit: int):
     """Fetch sample rows from a table."""
-    engine = get_engine(database_url)
     with engine.connect() as conn:
         try:
             metadata = MetaData()
@@ -254,9 +222,8 @@ def fetch_sample_rows(database_url: str, table: str, limit: int):
             return list(result.keys()), result.fetchall()
 
 
-def fetch_row_counts(database_url: str, table_names: List[str], schema: str = None) -> Dict[str, int]:
+def fetch_row_counts(engine: Engine, table_names: List[str], schema: str = None) -> Dict[str, int]:
     """Fetch row counts for all specified tables."""
-    engine = get_engine(database_url)
     row_counts = {}
     with engine.connect() as conn:
         for table_name in table_names:
@@ -269,9 +236,8 @@ def fetch_row_counts(database_url: str, table_names: List[str], schema: str = No
     return row_counts
 
 
-def fetch_database_timezone(database_url: str) -> str:
+def fetch_database_timezone(engine: Engine) -> str:
     """Fetch the database server timezone."""
-    engine = get_engine(database_url)
     dialect = engine.dialect.name
     with engine.connect() as conn:
         try:
@@ -427,10 +393,8 @@ def detect_incremental_columns(columns: List[Dict], pk_columns: List[str]) -> Li
     return inc_cols
 
 
-def detect_cdc_enabled(database_url: str, table_name: str, schema: str = "public", engine=None) -> bool:
+def detect_cdc_enabled(engine: Engine, table_name: str, schema: str = "public") -> bool:
     """Check if a table has CDC-friendly settings (Postgres: REPLICA IDENTITY != DEFAULT)."""
-    if engine is None:
-        engine = get_engine(database_url)
     if engine.dialect.name != "postgresql":
         return False
     try:
@@ -445,9 +409,8 @@ def detect_cdc_enabled(database_url: str, table_name: str, schema: str = "public
         return False
 
 
-def parse_connection_info(database_url: str) -> Dict[str, str]:
+def parse_connection_info(engine: Engine) -> Dict[str, str]:
     """Extract host, port, database name, and driver from a database URL."""
-    engine = get_engine(database_url)
     url = engine.url
     return {
         "host": str(url.host or ""),
@@ -873,18 +836,6 @@ _ACTIVE_FLAG = ("is_active", "active", "enabled", "is_enabled")
 _AUDIT_TRAIL_SUFFIXES = ("_history", "_audit", "_log", "_archive", "_changelog")
 
 
-def _check_cdc(engine: Engine, table_name: str, schema: str) -> bool:
-    try:
-        with engine.connect() as conn:
-            row = conn.execute(text(
-                "SELECT c.relreplident FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace "
-                "WHERE n.nspname = :schema AND c.relname = :table"
-            ), {"schema": schema, "table": table_name}).fetchone()
-            return row and row[0] in ('f', 'i')
-    except Exception:
-        return False
-
-
 def check_delete_management(engine: Engine, tables: List[Dict], schema: str) -> List[Dict]:
     findings = []
     all_table_names = {t["table"].lower() for t in tables}
@@ -907,7 +858,7 @@ def check_delete_management(engine: Engine, tables: List[Dict], schema: str) -> 
                 soft_col, soft_type = col["name"], "active_flag"
                 break
 
-        cdc_enabled = tbl.get("cdc_enabled", _check_cdc(engine, table_name, schema))
+        cdc_enabled = tbl.get("cdc_enabled", False)
         has_audit = False
         audit_table = None
         for sfx in _AUDIT_TRAIL_SUFFIXES:
@@ -950,7 +901,7 @@ def check_delete_management(engine: Engine, tables: List[Dict], schema: str) -> 
             detail += f" Audit-trail table '{audit_table}' exists."
 
         finding = {"table": table_name, "column": soft_col, "check": "delete_management", "severity": severity, "detail": detail, "recommendation": recommendation,
-                   "delete_strategy": strategy, "soft_delete_column": soft_col, "soft_delete_type": soft_type, "cdc_enabled": cdc_enabled, "has_audit_trail": has_audit}
+                   "delete_strategy": strategy, "soft_delete_column": soft_col, "soft_delete_type": soft_type, "has_audit_trail": has_audit}
         if audit_table:
             finding["audit_trail_table"] = audit_table
         findings.append(finding)
@@ -1130,115 +1081,9 @@ def check_timezone(engine: Engine, tables: List[Dict], schema: str) -> List[Dict
 def _build_table_data_quality(findings: List[Dict]) -> Dict[str, Any]:
     """Build a per-table data_quality object from that table's findings.
 
-    Groups findings by check type into dedicated keys, removing duplication.
-    Each finding already has the 'table' key stripped before reaching here.
+    Returns a single flat findings list — the canonical representation.
     """
-    result: Dict[str, Any] = {}
-
-    # Partition findings by check type
-    by_check: Dict[str, List[Dict]] = {}
-    for f in findings:
-        by_check.setdefault(f["check"], []).append(f)
-
-    # ---- controlled_value_candidates ----
-    cvc = by_check.get("controlled_value_candidate", [])
-    if cvc:
-        result["controlled_value_candidates"] = [
-            {"column": f["column"], "distinct_values": f.get("distinct_values", []),
-             "cardinality": f.get("cardinality", 0), "severity": f["severity"],
-             "recommendation": f["recommendation"]}
-            for f in cvc
-        ]
-
-    # ---- nullable_but_never_null ----
-    nbn = by_check.get("nullable_but_never_null", [])
-    if nbn:
-        result["nullable_but_never_null"] = [
-            {"column": f["column"], "detail": f["detail"], "severity": f["severity"]}
-            for f in nbn
-        ]
-
-    # ---- missing_primary_key ----
-    mpk = by_check.get("missing_primary_key", [])
-    if mpk:
-        result["missing_primary_key"] = {
-            "severity": mpk[0]["severity"],
-            "recommendation": mpk[0]["recommendation"],
-        }
-
-    # ---- missing_foreign_key ----
-    mfk = by_check.get("missing_foreign_key", [])
-    if mfk:
-        result["missing_foreign_keys"] = [
-            {k: v for k, v in f.items() if k not in ("check",)}
-            for f in mfk
-        ]
-
-    # ---- format_inconsistency ----
-    fi = by_check.get("format_inconsistency", [])
-    if fi:
-        result["format_inconsistencies"] = [
-            {k: v for k, v in f.items() if k not in ("check",)}
-            for f in fi
-        ]
-
-    # ---- range_violation ----
-    rv = by_check.get("range_violation", [])
-    if rv:
-        result["range_violations"] = [
-            {k: v for k, v in f.items() if k not in ("check",)}
-            for f in rv
-        ]
-
-    # ---- delete_management (one per table) ----
-    dm = by_check.get("delete_management", [])
-    if dm:
-        f = dm[0]
-        result["delete_management"] = {
-            "delete_strategy": f.get("delete_strategy"),
-            "soft_delete_column": f.get("soft_delete_column"),
-            "soft_delete_type": f.get("soft_delete_type"),
-            "cdc_enabled": f.get("cdc_enabled"),
-            "has_audit_trail": f.get("has_audit_trail"),
-            "severity": f["severity"],
-            "detail": f["detail"],
-            "recommendation": f["recommendation"],
-        }
-        if f.get("audit_trail_table"):
-            result["delete_management"]["audit_trail_table"] = f["audit_trail_table"]
-
-    # ---- late_arriving_data ----
-    lad = by_check.get("late_arriving_data", [])
-    if lad:
-        result["late_arriving_data"] = [
-            {"column": f["column"],
-             "business_date_column": f.get("business_date_column"),
-             "system_ts_column": f.get("system_ts_column"),
-             "lag_stats": f.get("lag_stats"),
-             "recommended_lookback_days": f.get("recommended_lookback_days"),
-             "severity": f["severity"],
-             "detail": f["detail"],
-             "recommendation": f["recommendation"]}
-            for f in lad
-        ]
-
-    # ---- timezone (one per table) ----
-    tz = by_check.get("timezone", [])
-    if tz:
-        f = tz[0]
-        result["timezone"] = {
-            "server_timezone": f.get("server_timezone"),
-            "distinct_timezones": f.get("distinct_timezones"),
-            "tz_aware_count": f.get("tz_aware_count"),
-            "tz_naive_count": f.get("tz_naive_count"),
-            "severity": f["severity"],
-            "recommendation": f["recommendation"],
-        }
-
-    # ---- flat findings list (for programmatic access) ----
-    result["findings"] = findings
-
-    return result
+    return {"findings": findings}
 
 
 # ============================================================================
@@ -1259,19 +1104,21 @@ def analyze_source_system(
     dialect = engine.dialect.name
 
     try:
-        tables = fetch_tables(database_url, schema=schema)
+        schema_meta = fetch_schema_metadata(engine, schema=schema)
+        tables = schema_meta["tables"]
+        all_columns = schema_meta["columns"]
+        all_pks = schema_meta["primary_keys"]
+        all_fks = schema_meta["foreign_keys"]
+
         if not tables:
             logger.warning("No tables found to analyze.")
             return {"error": "No tables found"}
 
         logger.info(f"Found {len(tables)} tables")
 
-        connection_info = parse_connection_info(database_url)
-        db_timezone = fetch_database_timezone(database_url)
-        row_counts = fetch_row_counts(database_url, tables, schema=schema)
-        all_columns = fetch_columns(database_url, table_names=tables, schema=schema)
-        all_pks = fetch_primary_keys(database_url, table_names=tables, schema=schema)
-        all_fks = fetch_foreign_keys(database_url, table_names=tables, schema=schema)
+        connection_info = parse_connection_info(engine)
+        db_timezone = fetch_database_timezone(engine)
+        row_counts = fetch_row_counts(engine, tables, schema=schema)
 
         enriched_tables = []
         total_rows = 0
@@ -1289,7 +1136,7 @@ def analyze_source_system(
                 sample_data = None
                 if include_sample_data:
                     try:
-                        colnames, rows = fetch_sample_rows(database_url, table_name, limit=10)
+                        colnames, rows = fetch_sample_rows(engine, table_name, limit=10)
                         sample_data = {col: [row[i] for row in rows] for i, col in enumerate(colnames)}
                     except Exception:
                         pass
@@ -1298,7 +1145,7 @@ def analyze_source_system(
                 sensitive_fields = detect_sensitive_fields(table_columns)
                 partition_columns = detect_partition_columns(table_columns, table_name=table_name, schema=table_schema, engine=engine)
                 incremental_columns = detect_incremental_columns(table_columns, pk_columns)
-                cdc_enabled = detect_cdc_enabled(database_url, table_name, schema=table_schema, engine=engine)
+                cdc_enabled = detect_cdc_enabled(engine, table_name, schema=table_schema)
                 col_statistics = fetch_column_statistics(engine, table_name, table_columns, schema=table_schema, row_count=row_count)
                 join_candidates = detect_join_candidates(table_name, table_columns, pk_columns, fk_columns, all_pks)
 
@@ -1383,7 +1230,15 @@ def analyze_source_system(
                 "critical": severity_counts.get("critical", 0),
                 "warning": severity_counts.get("warning", 0),
                 "info": severity_counts.get("info", 0),
-                "by_check": dict(check_counts),
+                "by_check": {
+                    check: check_counts.get(check, 0)
+                    for check in (
+                        "controlled_value_candidate", "nullable_but_never_null",
+                        "missing_primary_key", "missing_foreign_key",
+                        "format_inconsistency", "range_violation",
+                        "delete_management", "late_arriving_data", "timezone",
+                    )
+                },
                 "constraints_found": {
                     "check_constraints": sum(len(v) for v in check_constraints.values()),
                     "enum_columns": sum(len(v) for v in enum_cols.values()),

@@ -1,0 +1,25 @@
+# Local Oracle XE for schema mirroring and source system analysis
+# Usage: docker compose up -d oracle
+# Wait ~2 min for first-time init, then: scripts/schema_json_to_oracle.py
+
+services:
+  oracle:
+    image: gvenzl/oracle-xe:latest
+    container_name: skills-oracle
+    ports:
+      - "1521:1521"
+    environment:
+      ORACLE_PASSWORD: "${ORACLE_PASSWORD:-OraclePassword1}"
+      APP_USER: app
+      APP_USER_PASSWORD: "${ORACLE_APP_PASSWORD:-AppPassword1}"
+    volumes:
+      - oracle-data:/opt/oracle/oradata
+    healthcheck:
+      test: ["CMD", "healthcheck.sh"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 120s
+
+volumes:
+  oracle-data:

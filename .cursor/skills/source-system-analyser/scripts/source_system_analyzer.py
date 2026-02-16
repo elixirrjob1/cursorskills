@@ -26,6 +26,13 @@ from sqlalchemy import create_engine, inspect, text, MetaData, Table, select
 from sqlalchemy.engine import Engine
 from sqlalchemy.exc import SAWarning
 
+# Import dialect adapters
+import sys
+_script_dir = Path(__file__).resolve().parent
+if str(_script_dir) not in sys.path:
+    sys.path.insert(0, str(_script_dir))
+from databases import get_adapter, get_adapter_for_engine
+
 
 def _load_env_file() -> None:
     """Load .env from current working directory or script directory."""
@@ -57,14 +64,10 @@ logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 
 def get_engine(database_url: str) -> Engine:
     """Create a SQLAlchemy engine from a database URL with connection pooling."""
-    return create_engine(
-        database_url,
-        pool_size=5,
-        max_overflow=10,
-        pool_pre_ping=True,
-        connect_args={"connect_timeout": 10},
-        echo=False,
-    )
+    kwargs = dict(pool_size=5, max_overflow=10, pool_pre_ping=True, echo=False)
+    if "oracle" not in (database_url or "").lower():
+        kwargs["connect_args"] = {"connect_timeout": 10}
+    return create_engine(database_url, **kwargs)
 
 
 # ============================================================================
@@ -122,11 +125,13 @@ _TZ_AWARE_TYPES = {
     "postgresql": ("timestamptz", "timestamp with time zone", "timetz", "time with time zone"),
     "mysql": ("timestamp",),
     "mssql": ("datetimeoffset",),
+    "oracle": ("timestamp with time zone", "timestamp with local time zone"),
 }
 _TZ_AWARE_INTERPRETATION = {
     "postgresql": "UTC",
     "mysql": "UTC",
     "mssql": "offset_embedded",
+    "oracle": "UTC",
 }
 
 
@@ -208,7 +213,7 @@ def fetch_schema_metadata(engine: Engine, schema: Optional[str] = None) -> Dict[
     }
 
 
-def fetch_sample_rows(engine: Engine, table: str, limit: int):
+def fetch_sample_rows(engine: Engine, table: str, limit: int, schema: str = None, adapter=None):
     """Fetch sample rows from a table."""
     with engine.connect() as conn:
         try:
@@ -218,17 +223,27 @@ def fetch_sample_rows(engine: Engine, table: str, limit: int):
             rows = result.fetchall()
             return list(result.keys()), rows
         except Exception:
-            result = conn.execute(text(f'SELECT * FROM "{table}" LIMIT :limit'), {"limit": limit})
+            if adapter:
+                sch = schema or adapter.default_schema()
+                qstr, params = adapter.build_select_limit_query(sch, table, limit)
+                result = conn.execute(text(qstr), params)
+            else:
+                qt = f'"{schema}"."{table}"' if schema else f'"{table}"'
+                result = conn.execute(text(f"SELECT * FROM {qt} LIMIT :limit"), {"limit": limit})
             return list(result.keys()), result.fetchall()
 
 
-def fetch_row_counts(engine: Engine, table_names: List[str], schema: str = None) -> Dict[str, int]:
+def fetch_row_counts(engine: Engine, table_names: List[str], schema: str = None, adapter=None) -> Dict[str, int]:
     """Fetch row counts for all specified tables."""
     row_counts = {}
     with engine.connect() as conn:
         for table_name in table_names:
             try:
-                q = f'SELECT COUNT(*) FROM "{schema}"."{table_name}"' if schema else f'SELECT COUNT(*) FROM "{table_name}"'
+                if adapter:
+                    qt = adapter.quote_table(schema or "", table_name)
+                else:
+                    qt = f'"{schema}"."{table_name}"' if schema else f'"{table_name}"'
+                q = f"SELECT COUNT(*) FROM {qt}"
                 count = conn.execute(text(q)).scalar()
                 row_counts[table_name] = count if count is not None else 0
             except Exception:
@@ -236,19 +251,17 @@ def fetch_row_counts(engine: Engine, table_names: List[str], schema: str = None)
     return row_counts
 
 
-def fetch_database_timezone(engine: Engine) -> str:
-    """Fetch the database server timezone."""
+def fetch_database_timezone(engine: Engine, adapter=None) -> str:
+    """Fetch the database server timezone. Uses adapter when available."""
+    if adapter:
+        return adapter.fetch_database_timezone(engine)
     dialect = engine.dialect.name
     with engine.connect() as conn:
         try:
-            if dialect == "postgresql":
-                return conn.execute(text("SHOW timezone")).scalar() or "Unknown"
-            elif dialect == "mysql":
+            if dialect == "mysql":
                 return conn.execute(text("SELECT @@global.time_zone")).scalar() or "Unknown"
-            elif dialect == "sqlite":
+            if dialect == "sqlite":
                 return "UTC (SQLite default)"
-            elif dialect == "mssql":
-                return conn.execute(text("SELECT CURRENT_TIMEZONE()")).scalar() or "Unknown"
             return f"Unknown ({dialect})"
         except Exception:
             return "Unknown"
@@ -257,11 +270,13 @@ def fetch_database_timezone(engine: Engine) -> str:
 _RANGE_SKIP_TYPES = (
     "json", "jsonb", "bytea", "xml", "tsvector", "tsquery",
     "point", "line", "lseg", "box", "path", "polygon", "circle",
-    "array", "user-defined", "bool",
+    "array", "user-defined", "bool", "bit",
 )
+# Oracle NUMBER(1,0) = boolean; match precisely to avoid skipping number(19,0)
+_RANGE_SKIP_ORACLE_BOOL = re.compile(r"number\s*\(\s*1\s*,\s*0\s*\)")
 
 
-def fetch_column_statistics(engine, table_name: str, columns: List[Dict], schema: str = None, row_count: int = 0) -> Dict[str, Dict]:
+def fetch_column_statistics(engine, table_name: str, columns: List[Dict], schema: str = None, row_count: int = 0, adapter=None) -> Dict[str, Dict]:
     """Fetch cardinality, null count, and data range for all columns in a table."""
     empty_stats = {col["name"]: {"cardinality": 0, "null_count": 0} for col in columns}
     if not columns or row_count == 0:
@@ -272,15 +287,17 @@ def fetch_column_statistics(engine, table_name: str, columns: List[Dict], schema
     for col in columns:
         col_name = col["name"]
         col_type = col.get("type", "").lower()
-        quoted = f'"{col_name}"'
-        stats_parts.append(f'COUNT(DISTINCT {quoted}) AS "{col_name}__card"')
+        quoted = adapter.quote_column(col_name) if adapter else f'"{col_name}"'
+        suffix = "__card"
+        stats_parts.append(f'COUNT(DISTINCT {quoted}) AS "{col_name}{suffix}"')
         stats_parts.append(f'SUM(CASE WHEN {quoted} IS NULL THEN 1 ELSE 0 END) AS "{col_name}__nulls"')
-        if not any(s in col_type for s in _RANGE_SKIP_TYPES):
+        skip_range = any(s in col_type for s in _RANGE_SKIP_TYPES) or _RANGE_SKIP_ORACLE_BOOL.search(col_type)
+        if not skip_range:
             stats_parts.append(f'MIN({quoted}) AS "{col_name}__min"')
             stats_parts.append(f'MAX({quoted}) AS "{col_name}__max"')
             range_columns.add(col_name)
 
-    from_clause = f'"{schema}"."{table_name}"' if schema else f'"{table_name}"'
+    from_clause = adapter.quote_table(schema or "", table_name) if adapter else (f'"{schema}"."{table_name}"' if schema else f'"{table_name}"')
     query = f"SELECT {', '.join(stats_parts)} FROM {from_clause}"
 
     try:
@@ -289,15 +306,17 @@ def fetch_column_statistics(engine, table_name: str, columns: List[Dict], schema
         if not row:
             return empty_stats
         row_dict = dict(row._mapping)
+        # Oracle returns keys in uppercase; normalize for case-insensitive lookup
+        row_lower = {str(k).lower(): v for k, v in row_dict.items()} if row_dict else {}
         stats = {}
         for col in columns:
             col_name = col["name"]
             col_stats = {
-                "cardinality": int(row_dict.get(f"{col_name}__card", 0) or 0),
-                "null_count": int(row_dict.get(f"{col_name}__nulls", 0) or 0),
+                "cardinality": int(row_lower.get(f"{col_name}__card", 0) or 0),
+                "null_count": int(row_lower.get(f"{col_name}__nulls", 0) or 0),
             }
             if col_name in range_columns:
-                mn, mx = row_dict.get(f"{col_name}__min"), row_dict.get(f"{col_name}__max")
+                mn, mx = row_lower.get(f"{col_name}__min"), row_lower.get(f"{col_name}__max")
                 if mn is not None or mx is not None:
                     col_stats["data_range"] = {
                         "min": str(mn) if mn is not None else None,
@@ -326,13 +345,6 @@ _SENSITIVE_PATTERNS: List[tuple] = [
     ("token", "credential"), ("api_key", "credential"),
 ]
 _SENSITIVE_TYPES = {"inet": "network_identity", "cidr": "network_identity", "macaddr": "network_identity"}
-_PARTITION_NAME_HINTS = [
-    "order_date", "event_time", "event_date", "payment_date", "transaction_date",
-    "created_at", "changed_at", "log_date", "partition_date", "report_date",
-]
-_PARTITION_TYPE_PREFIXES = ("date", "timestamp", "timestamptz")
-
-
 def detect_sensitive_fields(columns: List[Dict]) -> Dict[str, str]:
     """Return {col_name: sensitivity_category} for columns that look sensitive."""
     result = {}
@@ -351,32 +363,13 @@ def detect_sensitive_fields(columns: List[Dict]) -> Dict[str, str]:
     return result
 
 
-def detect_partition_columns(columns: List[Dict], table_name: Optional[str] = None, schema: str = "public", engine=None) -> List[str]:
+def detect_partition_columns(columns: List[Dict], table_name: Optional[str] = None, schema: str = "public", engine=None, adapter=None) -> List[str]:
     """Detect partition key columns for a table."""
-    if engine and table_name:
-        try:
-            q = text("""
-                SELECT a.attname FROM pg_partitioned_table pt
-                JOIN pg_class c ON c.oid = pt.partrelid
-                JOIN pg_namespace n ON n.oid = c.relnamespace
-                JOIN pg_attribute a ON a.attrelid = c.oid AND a.attnum = ANY(pt.partattrs::smallint[])
-                WHERE c.relname = :tbl AND n.nspname = :sch
-                ORDER BY a.attnum
-            """)
-            with engine.connect() as conn:
-                rows = conn.execute(q, {"tbl": table_name, "sch": schema}).fetchall()
-            if rows:
-                return [r[0] for r in rows]
-        except Exception:
-            pass
-    candidates = []
-    for col in columns:
-        name_lower = col["name"].lower()
-        col_type = col.get("type", "").lower()
-        if any(col_type.startswith(p) for p in _PARTITION_TYPE_PREFIXES):
-            if name_lower in _PARTITION_NAME_HINTS or any(h in name_lower for h in ["_date", "_time", "_at"]):
-                candidates.append(col["name"])
-    return candidates
+    if adapter and engine and table_name:
+        return adapter.detect_partition_columns(engine, table_name, schema, columns)
+    if adapter:
+        return adapter.detect_partition_columns(engine or object(), table_name or "", schema, columns)
+    return []  # No adapter: use heuristic from base
 
 
 def detect_incremental_columns(columns: List[Dict], pk_columns: List[str]) -> List[str]:
@@ -391,22 +384,6 @@ def detect_incremental_columns(columns: List[Dict], pk_columns: List[str]) -> Li
         elif name_lower == "created_at":
             inc_cols.append(col["name"])
     return inc_cols
-
-
-def detect_cdc_enabled(engine: Engine, table_name: str, schema: str = "public") -> bool:
-    """Check if a table has CDC-friendly settings (Postgres: REPLICA IDENTITY != DEFAULT)."""
-    if engine.dialect.name != "postgresql":
-        return False
-    try:
-        with engine.connect() as conn:
-            row = conn.execute(text(
-                "SELECT c.relreplident FROM pg_class c "
-                "JOIN pg_namespace n ON n.oid = c.relnamespace "
-                "WHERE n.nspname = :schema AND c.relname = :table"
-            ), {"schema": schema, "table": table_name}).fetchone()
-            return row and row[0] in ('f', 'i')
-    except Exception:
-        return False
 
 
 def parse_connection_info(engine: Engine) -> Dict[str, str]:
@@ -504,9 +481,14 @@ def classify_data_category(col_type_str: str, col_name: str, cardinality: int = 
         return "continuous"
     if "numeric" in col_type or "decimal" in col_type:
         return "continuous"
+    # Oracle NUMBER(p,0) is integer-like -> discrete; NUMBER(p,s) with s>0 -> continuous
+    if "number" in col_type and re.search(r",\s*0\s*\)", col_type):
+        return "ordinal" if _is_ordinal_by_name(col_name_lower) else "discrete"
+    if "number" in col_type:
+        return "continuous"
     if any(t in col_type for t in ("timestamp", "datetime", "date", "time", "interval")):
         return "continuous"
-    if "bool" in col_type:
+    if "bool" in col_type or "bit" in col_type:
         return "discrete"
     if any(t in col_type for t in ("int", "serial")):
         return "ordinal" if _is_ordinal_by_name(col_name_lower) else "discrete"
@@ -517,67 +499,6 @@ def classify_data_category(col_type_str: str, col_name: str, cardinality: int = 
     if "enum" in col_type:
         return "ordinal" if _is_ordinal_by_name(col_name_lower) else "nominal"
     return None
-
-
-# ============================================================================
-# Data quality: constraint introspection (PostgreSQL)
-# ============================================================================
-
-def fetch_check_constraints(engine: Engine, schema: str) -> Dict[str, List[Dict]]:
-    """Fetch CHECK constraints grouped by table."""
-    result = {}
-    query = text("""
-        SELECT tc.table_name, ccu.column_name, tc.constraint_name, cc.check_clause
-        FROM information_schema.table_constraints tc
-        JOIN information_schema.check_constraints cc ON tc.constraint_name = cc.constraint_name AND tc.constraint_schema = cc.constraint_schema
-        JOIN information_schema.constraint_column_usage ccu ON tc.constraint_name = ccu.constraint_name AND tc.constraint_schema = ccu.constraint_schema
-        WHERE tc.constraint_type = 'CHECK' AND tc.table_schema = :schema AND tc.constraint_name NOT LIKE '%_not_null'
-    """)
-    try:
-        with engine.connect() as conn:
-            for row in conn.execute(query, {"schema": schema}).fetchall():
-                result.setdefault(row[0], []).append({"column": row[1], "constraint_name": row[2], "check_clause": row[3]})
-    except Exception as e:
-        logger.warning(f"Could not fetch CHECK constraints: {e}")
-    return result
-
-
-def fetch_enum_columns(engine: Engine, schema: str) -> Dict[str, Dict[str, List[str]]]:
-    """Fetch columns using ENUM types and their allowed values."""
-    result = {}
-    query = text("""
-        SELECT c.table_name, c.column_name, c.udt_name, array_agg(e.enumlabel ORDER BY e.enumsortorder) AS enum_values
-        FROM information_schema.columns c
-        JOIN pg_type t ON t.typname = c.udt_name
-        JOIN pg_enum e ON e.enumtypid = t.oid
-        WHERE c.table_schema = :schema AND c.data_type = 'USER-DEFINED'
-        GROUP BY c.table_name, c.column_name, c.udt_name
-    """)
-    try:
-        with engine.connect() as conn:
-            for row in conn.execute(query, {"schema": schema}).fetchall():
-                result.setdefault(row[0], {})[row[1]] = list(row[3])
-    except Exception as e:
-        logger.warning(f"Could not fetch ENUM columns: {e}")
-    return result
-
-
-def fetch_unique_constraints(engine: Engine, schema: str) -> Dict[str, Set[str]]:
-    """Fetch columns that have UNIQUE constraints."""
-    result = {}
-    query = text("""
-        SELECT tc.table_name, kcu.column_name
-        FROM information_schema.table_constraints tc
-        JOIN information_schema.key_column_usage kcu ON tc.constraint_name = kcu.constraint_name AND tc.table_schema = kcu.table_schema
-        WHERE tc.constraint_type = 'UNIQUE' AND tc.table_schema = :schema
-    """)
-    try:
-        with engine.connect() as conn:
-            for row in conn.execute(query, {"schema": schema}).fetchall():
-                result.setdefault(row[0], set()).add(row[1])
-    except Exception as e:
-        logger.warning(f"Could not fetch UNIQUE constraints: {e}")
-    return result
 
 
 # ============================================================================
@@ -626,7 +547,7 @@ def _is_freeform_column(col_name: str) -> bool:
 # Data quality: 9 check functions
 # ============================================================================
 
-def check_controlled_value_candidates(engine: Engine, tables: List[Dict], check_constraints: Dict, enum_columns: Dict, unique_constraints: Dict[str, Set[str]], schema: str) -> List[Dict]:
+def check_controlled_value_candidates(engine: Engine, tables: List[Dict], check_constraints: Dict, enum_columns: Dict, unique_constraints: Dict[str, Set[str]], schema: str, adapter=None) -> List[Dict]:
     findings = []
     for tbl in tables:
         table_name = tbl["table"]
@@ -649,9 +570,20 @@ def check_controlled_value_candidates(engine: Engine, tables: List[Dict], check_
 
             distinct_values = []
             try:
-                q = text(f'SELECT DISTINCT "{col_name}" FROM "{schema}"."{table_name}" WHERE "{col_name}" IS NOT NULL ORDER BY "{col_name}" LIMIT 25')
-                with engine.connect() as conn:
-                    distinct_values = [str(r[0]) for r in conn.execute(q).fetchall()]
+                if adapter:
+                    qc = adapter.quote_column(col_name)
+                    qt = adapter.quote_table(schema, table_name)
+                    lc = adapter.limit_clause(25)
+                    if "TOP " in lc:
+                        qstr = f'SELECT DISTINCT {lc} {qc} FROM {qt} WHERE {qc} IS NOT NULL ORDER BY {qc}'
+                    else:
+                        qstr = f'SELECT DISTINCT {qc} FROM {qt} WHERE {qc} IS NOT NULL ORDER BY {qc} {lc}'
+                    with engine.connect() as conn:
+                        distinct_values = [str(r[0]) for r in conn.execute(text(qstr)).fetchall()]
+                else:
+                    q = text(f'SELECT DISTINCT "{col_name}" FROM "{schema}"."{table_name}" WHERE "{col_name}" IS NOT NULL ORDER BY "{col_name}" LIMIT 25')
+                    with engine.connect() as conn:
+                        distinct_values = [str(r[0]) for r in conn.execute(q).fetchall()]
             except Exception:
                 pass
 
@@ -693,7 +625,7 @@ def check_missing_primary_keys(tables: List[Dict]) -> List[Dict]:
     return findings
 
 
-def check_missing_foreign_keys(engine: Engine, tables: List[Dict], all_pks: Dict[str, List[str]], schema: str) -> List[Dict]:
+def check_missing_foreign_keys(engine: Engine, tables: List[Dict], all_pks: Dict[str, List[str]], schema: str, adapter=None) -> List[Dict]:
     findings = []
     for tbl in tables:
         table_name = tbl["table"]
@@ -731,13 +663,22 @@ def check_missing_foreign_keys(engine: Engine, tables: List[Dict], all_pks: Dict
             orphan_sample = []
             if row_count > 0 and target_column:
                 try:
-                    q = text(f'''
-                        SELECT DISTINCT s."{col_name}" FROM "{schema}"."{table_name}" s
-                        LEFT JOIN "{schema}"."{target_table}" t ON s."{col_name}" = t."{target_column}"
-                        WHERE s."{col_name}" IS NOT NULL AND t."{target_column}" IS NULL LIMIT 10
-                    ''')
-                    with engine.connect() as conn:
-                        orphan_sample = [str(r[0]) for r in conn.execute(q).fetchall()]
+                    if adapter:
+                        qs = adapter.quote_column(col_name)
+                        qt_s = adapter.quote_table(schema, table_name)
+                        qt_t = adapter.quote_table(schema, target_table)
+                        qt_col = adapter.quote_column(target_column)
+                        lc = adapter.limit_clause(10)
+                        if "TOP " in lc:
+                            qstr = f'SELECT DISTINCT {lc} s.{qs} FROM {qt_s} s LEFT JOIN {qt_t} t ON s.{qs} = t.{qt_col} WHERE s.{qs} IS NOT NULL AND t.{qt_col} IS NULL'
+                        else:
+                            qstr = f'SELECT DISTINCT s.{qs} FROM {qt_s} s LEFT JOIN {qt_t} t ON s.{qs} = t.{qt_col} WHERE s.{qs} IS NOT NULL AND t.{qt_col} IS NULL {lc}'
+                        with engine.connect() as conn:
+                            orphan_sample = [str(r[0]) for r in conn.execute(text(qstr)).fetchall()]
+                    else:
+                        q = text(f'SELECT DISTINCT s."{col_name}" FROM "{schema}"."{table_name}" s LEFT JOIN "{schema}"."{target_table}" t ON s."{col_name}" = t."{target_column}" WHERE s."{col_name}" IS NOT NULL AND t."{target_column}" IS NULL LIMIT 10')
+                        with engine.connect() as conn:
+                            orphan_sample = [str(r[0]) for r in conn.execute(q).fetchall()]
                 except Exception:
                     pass
 
@@ -758,7 +699,7 @@ def check_missing_foreign_keys(engine: Engine, tables: List[Dict], all_pks: Dict
     return findings
 
 
-def check_format_inconsistency(engine: Engine, tables: List[Dict], schema: str, sample_size: int = 200) -> List[Dict]:
+def check_format_inconsistency(engine: Engine, tables: List[Dict], schema: str, sample_size: int = 200, adapter=None) -> List[Dict]:
     findings = []
     patterns = {"email": _EMAIL_RE, "phone": _PHONE_RE, "date_as_text": _DATE_TEXT_RE, "url": _URL_RE, "numeric_as_text": _NUMERIC_TEXT_RE}
     for tbl in tables:
@@ -769,9 +710,20 @@ def check_format_inconsistency(engine: Engine, tables: List[Dict], schema: str, 
             if not _is_text_type(col.get("type", "")) or col.get("cardinality", 0) <= _CONTROLLED_VALUE_MAX_CARDINALITY:
                 continue
             try:
-                q = text(f'SELECT "{col["name"]}" FROM "{schema}"."{table_name}" WHERE "{col["name"]}" IS NOT NULL LIMIT :lim')
-                with engine.connect() as conn:
-                    values = [str(r[0]) for r in conn.execute(q, {"lim": sample_size}).fetchall() if r[0] is not None]
+                if adapter:
+                    qc = adapter.quote_column(col["name"])
+                    qt = adapter.quote_table(schema, table_name)
+                    lc = adapter.limit_clause(sample_size)
+                    if "TOP " in lc:
+                        qstr = f'SELECT {lc} {qc} FROM {qt} WHERE {qc} IS NOT NULL'
+                    else:
+                        qstr = f'SELECT {qc} FROM {qt} WHERE {qc} IS NOT NULL {lc}'
+                    with engine.connect() as conn:
+                        values = [str(r[0]) for r in conn.execute(text(qstr)).fetchall() if r[0] is not None]
+                else:
+                    q = text(f'SELECT "{col["name"]}" FROM "{schema}"."{table_name}" WHERE "{col["name"]}" IS NOT NULL LIMIT :lim')
+                    with engine.connect() as conn:
+                        values = [str(r[0]) for r in conn.execute(q, {"lim": sample_size}).fetchall() if r[0] is not None]
             except Exception:
                 continue
             if not values:
@@ -790,7 +742,7 @@ def check_format_inconsistency(engine: Engine, tables: List[Dict], schema: str, 
     return findings
 
 
-def check_range_violations(engine: Engine, tables: List[Dict], schema: str) -> List[Dict]:
+def check_range_violations(engine: Engine, tables: List[Dict], schema: str, adapter=None) -> List[Dict]:
     findings = []
     for tbl in tables:
         table_name = tbl["table"]
@@ -805,9 +757,15 @@ def check_range_violations(engine: Engine, tables: List[Dict], schema: str) -> L
                 continue
             name_lower = col_name.lower()
             try:
+                if adapter:
+                    qt = adapter.quote_table(schema, table_name)
+                    qc = adapter.quote_column(col_name)
+                    count_q = f'SELECT COUNT(*) FROM {qt} WHERE {qc} < 0'
+                else:
+                    count_q = f'SELECT COUNT(*) FROM "{schema}"."{table_name}" WHERE "{col_name}" < 0'
                 if any(p in name_lower for p in _PRICING_PATTERNS) and _is_numeric_type(col_type) and float(min_val_str) < 0:
                     with engine.connect() as conn:
-                        neg_count = conn.execute(text(f'SELECT COUNT(*) FROM "{schema}"."{table_name}" WHERE "{col_name}" < 0')).scalar() or 0
+                        neg_count = conn.execute(text(count_q)).scalar() or 0
                     if neg_count > 0:
                         findings.append({
                             "table": table_name, "column": col_name, "check": "range_violation", "severity": "warning",
@@ -817,7 +775,7 @@ def check_range_violations(engine: Engine, tables: List[Dict], schema: str) -> L
                         })
                 if any(p in name_lower for p in _QUANTITY_PATTERNS) and _is_numeric_type(col_type) and float(min_val_str) < 0:
                     with engine.connect() as conn:
-                        neg_count = conn.execute(text(f'SELECT COUNT(*) FROM "{schema}"."{table_name}" WHERE "{col_name}" < 0')).scalar() or 0
+                        neg_count = conn.execute(text(count_q)).scalar() or 0
                     if neg_count > 0:
                         findings.append({
                             "table": table_name, "column": col_name, "check": "range_violation", "severity": "warning",
@@ -836,7 +794,7 @@ _ACTIVE_FLAG = ("is_active", "active", "enabled", "is_enabled")
 _AUDIT_TRAIL_SUFFIXES = ("_history", "_audit", "_log", "_archive", "_changelog")
 
 
-def check_delete_management(engine: Engine, tables: List[Dict], schema: str) -> List[Dict]:
+def check_delete_management(engine: Engine, tables: List[Dict], schema: str, adapter=None) -> List[Dict]:
     findings = []
     all_table_names = {t["table"].lower() for t in tables}
     for tbl in tables:
@@ -854,7 +812,7 @@ def check_delete_management(engine: Engine, tables: List[Dict], schema: str) -> 
             if cn in _SOFT_DELETE_BOOLEAN:
                 soft_col, soft_type = col["name"], "boolean"
                 break
-            if cn in _ACTIVE_FLAG and "bool" in ct:
+            if cn in _ACTIVE_FLAG and ("bool" in ct or "bit" in ct or "number(1" in ct):
                 soft_col, soft_type = col["name"], "active_flag"
                 break
 
@@ -870,9 +828,21 @@ def check_delete_management(engine: Engine, tables: List[Dict], schema: str) -> 
         value_info = ""
         if soft_col and row_count > 0:
             try:
-                q = text(f'SELECT "{soft_col}", COUNT(*) FROM "{schema}"."{table_name}" GROUP BY "{soft_col}" ORDER BY "{soft_col}" NULLS FIRST LIMIT 10')
-                with engine.connect() as conn:
-                    rows = conn.execute(q).fetchall()
+                if adapter:
+                    qc = adapter.quote_column(soft_col)
+                    qt = adapter.quote_table(schema, table_name)
+                    order_by = adapter.order_by_nullable_first(soft_col)
+                    lc = adapter.limit_clause(10)
+                    if "TOP " in lc:
+                        qstr = f'SELECT {lc} {qc}, COUNT(*) FROM {qt} GROUP BY {qc} ORDER BY {order_by}'
+                    else:
+                        qstr = f'SELECT {qc}, COUNT(*) FROM {qt} GROUP BY {qc} ORDER BY {order_by} {lc}'
+                    with engine.connect() as conn:
+                        rows = conn.execute(text(qstr)).fetchall()
+                else:
+                    q = text(f'SELECT "{soft_col}", COUNT(*) FROM "{schema}"."{table_name}" GROUP BY "{soft_col}" ORDER BY "{soft_col}" NULLS FIRST LIMIT 10')
+                    with engine.connect() as conn:
+                        rows = conn.execute(q).fetchall()
                 value_info = f" Current distribution: {', '.join(f'{r[0]}={r[1]}' for r in rows)}."
             except Exception:
                 pass
@@ -912,7 +882,7 @@ _BUSINESS_DATE_PATTERNS = ("order_date", "transaction_date", "payment_date", "ev
 _SYSTEM_TS_PATTERNS = ("created_at", "inserted_at", "created_date", "record_created_at", "insert_date", "insert_timestamp", "ingested_at")
 
 
-def check_late_arriving_data(engine: Engine, tables: List[Dict], schema: str) -> List[Dict]:
+def check_late_arriving_data(engine: Engine, tables: List[Dict], schema: str, adapter=None) -> List[Dict]:
     findings = []
     for tbl in tables:
         table_name = tbl["table"]
@@ -934,17 +904,29 @@ def check_late_arriving_data(engine: Engine, tables: List[Dict], schema: str) ->
         biz_name = biz_col["name"]
         sys_name = sys_col["name"]
         biz_type = biz_col.get("type", "").lower()
-        biz_expr = f'"{biz_name}"'
-        if "date" in biz_type and "timestamp" not in biz_type:
-            biz_expr = f'"{biz_name}"::timestamp'
-
-        lag_query = text(f"""
-            SELECT COUNT(*) AS total, COUNT(*) FILTER (WHERE lh > 24) AS late_1d, COUNT(*) FILTER (WHERE lh > 168) AS late_7d,
-                   ROUND(MIN(lh)::numeric, 2) AS min_h, ROUND(AVG(lh)::numeric, 2) AS avg_h,
-                   ROUND(PERCENTILE_CONT(0.95) WITHIN GROUP (ORDER BY lh)::numeric, 2) AS p95_h, ROUND(MAX(lh)::numeric, 2) AS max_h
-            FROM (SELECT EXTRACT(EPOCH FROM ("{sys_name}" - {biz_expr}))/3600.0 AS lh FROM "{schema}"."{table_name}" WHERE "{sys_name}" IS NOT NULL AND "{biz_name}" IS NOT NULL) sub
-            WHERE lh >= 0
-        """)
+        if adapter and not adapter.supports_late_arriving_check():
+            continue
+        if adapter:
+            custom_expr = adapter.get_late_arriving_biz_expr(biz_name, biz_type)
+            if custom_expr is not None:
+                biz_expr = custom_expr
+            elif "date" in biz_type and "timestamp" not in biz_type:
+                biz_expr = f'CAST({adapter.quote_column(biz_name)} AS TIMESTAMP)'
+            else:
+                biz_expr = adapter.quote_column(biz_name)
+            lag_query_str = adapter.build_late_arriving_query(table_name, schema, biz_name, sys_name, biz_expr)
+            lag_query = text(lag_query_str)
+        else:
+            biz_expr = f'"{biz_name}"'
+            if "date" in biz_type and "timestamp" not in biz_type:
+                biz_expr = f'"{biz_name}"::timestamp'
+            lag_query = text(f"""
+                SELECT COUNT(*) AS total, COUNT(*) FILTER (WHERE lh > 24) AS late_1d, COUNT(*) FILTER (WHERE lh > 168) AS late_7d,
+                       ROUND(MIN(lh)::numeric, 2) AS min_h, ROUND(AVG(lh)::numeric, 2) AS avg_h,
+                       ROUND(PERCENTILE_CONT(0.95) WITHIN GROUP (ORDER BY lh)::numeric, 2) AS p95_h, ROUND(MAX(lh)::numeric, 2) AS max_h
+                FROM (SELECT EXTRACT(EPOCH FROM ("{sys_name}" - {biz_expr}))/3600.0 AS lh FROM "{schema}"."{table_name}" WHERE "{sys_name}" IS NOT NULL AND "{biz_name}" IS NOT NULL) sub
+                WHERE lh >= 0
+            """)
         try:
             with engine.connect() as conn:
                 row = conn.execute(lag_query).fetchone()
@@ -989,29 +971,21 @@ def check_late_arriving_data(engine: Engine, tables: List[Dict], schema: str) ->
 
 
 _TZ_DATETIME_KEYWORDS = ("timestamp", "datetime", "date", "time", "smalldatetime", "datetimeoffset")
-_TZ_AWARE_PG = ("timestamptz", "timestamp with time zone", "timetz", "time with time zone")
 
 
-def _classify_column_tz(col_type_str: str, server_tz: str) -> Optional[str]:
+def _classify_column_tz(col_type_str: str, server_tz: str, dialect: str = "postgresql") -> Optional[str]:
     ct = col_type_str.lower().strip()
     if not any(kw in ct for kw in _TZ_DATETIME_KEYWORDS) or ct == "date":
         return None
-    if any(t in ct for t in _TZ_AWARE_PG):
-        return "UTC"
+    aware_types = _TZ_AWARE_TYPES.get(dialect, ())
+    if any(t in ct for t in aware_types):
+        return _TZ_AWARE_INTERPRETATION.get(dialect, "UTC")
     return server_tz
 
 
-def _fetch_server_timezone(engine: Engine) -> str:
-    try:
-        with engine.connect() as conn:
-            return conn.execute(text("SHOW timezone")).scalar() or "Unknown"
-    except Exception:
-        return "Unknown"
-
-
-def check_timezone(engine: Engine, tables: List[Dict], schema: str) -> List[Dict]:
+def check_timezone(engine: Engine, tables: List[Dict], schema: str, adapter=None) -> List[Dict]:
     findings = []
-    server_tz = _fetch_server_timezone(engine)
+    server_tz = adapter.fetch_database_timezone(engine) if adapter else "Unknown"
     all_tz_profiles = []
 
     for tbl in tables:
@@ -1019,12 +993,14 @@ def check_timezone(engine: Engine, tables: List[Dict], schema: str) -> List[Dict
         columns = tbl.get("columns", [])
         tz_columns = []
         tz_set = set()
+        dialect = engine.dialect.name
         for col in columns:
             col_type = col.get("type", "")
-            eff_tz = col.get("column_timezone") or _classify_column_tz(col_type, server_tz)
+            eff_tz = col.get("column_timezone") or _classify_column_tz(col_type, server_tz, dialect)
             if eff_tz is None:
                 continue
-            is_aware = any(t in col_type.lower() for t in _TZ_AWARE_PG)
+            aware_types = _TZ_AWARE_TYPES.get(dialect, ())
+            is_aware = any(t in col_type.lower() for t in aware_types)
             tz_columns.append({"column": col["name"], "type": col_type, "effective_timezone": eff_tz, "is_tz_aware": is_aware})
             tz_set.add(eff_tz)
         if not tz_columns:
@@ -1095,13 +1071,25 @@ def analyze_source_system(
     output_path: str,
     schema: Optional[str] = None,
     include_sample_data: bool = False,
+    dialect_override: Optional[str] = None,
 ) -> Dict[str, Any]:
     """Analyze source database schema and data quality, save combined output to schema.json."""
-    schema = schema or "public"
+    engine = get_engine(database_url)
+    dialect = dialect_override or engine.dialect.name
+    adapter = get_adapter(dialect)
+
+    if dialect_override and dialect_override != engine.dialect.name:
+        logger.warning(f"Specified dialect '{dialect_override}' does not match URL dialect '{engine.dialect.name}'")
+
+    schema = schema or (adapter.resolve_default_schema(engine) if adapter else "public")
     logger.info(f"Starting source system analysis for schema: {schema}")
 
-    engine = get_engine(database_url)
-    dialect = engine.dialect.name
+    # Append schema and dialect to output filename: schema.json -> schema_public_postgresql.json
+    out_path = Path(output_path)
+    base = out_path.stem
+    ext = out_path.suffix or ".json"
+    parent = out_path.parent
+    output_path = str(parent / f"{base}_{schema}_{dialect}{ext}")
 
     try:
         schema_meta = fetch_schema_metadata(engine, schema=schema)
@@ -1117,8 +1105,8 @@ def analyze_source_system(
         logger.info(f"Found {len(tables)} tables")
 
         connection_info = parse_connection_info(engine)
-        db_timezone = fetch_database_timezone(engine)
-        row_counts = fetch_row_counts(engine, tables, schema=schema)
+        db_timezone = fetch_database_timezone(engine, adapter=adapter)
+        row_counts = fetch_row_counts(engine, tables, schema=schema, adapter=adapter)
 
         enriched_tables = []
         total_rows = 0
@@ -1136,17 +1124,17 @@ def analyze_source_system(
                 sample_data = None
                 if include_sample_data:
                     try:
-                        colnames, rows = fetch_sample_rows(engine, table_name, limit=10)
+                        colnames, rows = fetch_sample_rows(engine, table_name, limit=10, schema=table_schema, adapter=adapter)
                         sample_data = {col: [row[i] for row in rows] for i, col in enumerate(colnames)}
                     except Exception:
                         pass
 
                 field_classifications = {col["name"]: c for col in table_columns if (c := classify_field(col["name"]))}
                 sensitive_fields = detect_sensitive_fields(table_columns)
-                partition_columns = detect_partition_columns(table_columns, table_name=table_name, schema=table_schema, engine=engine)
+                partition_columns = detect_partition_columns(table_columns, table_name=table_name, schema=table_schema, engine=engine, adapter=adapter)
                 incremental_columns = detect_incremental_columns(table_columns, pk_columns)
-                cdc_enabled = detect_cdc_enabled(engine, table_name, schema=table_schema)
-                col_statistics = fetch_column_statistics(engine, table_name, table_columns, schema=table_schema, row_count=row_count)
+                cdc_enabled = adapter.detect_cdc_enabled(engine, table_name, table_schema) if adapter else False
+                col_statistics = fetch_column_statistics(engine, table_name, table_columns, schema=table_schema, row_count=row_count, adapter=adapter)
                 join_candidates = detect_join_candidates(table_name, table_columns, pk_columns, fk_columns, all_pks)
 
                 enriched_columns = []
@@ -1187,26 +1175,26 @@ def analyze_source_system(
             except Exception as e:
                 logger.warning(f"Skipped table '{table_name}': {e}")
 
-        # ---- Data quality checks (PostgreSQL only) ----
+        # ---- Data quality checks (supported dialects only) ----
         data_quality_summary = {}
         database_wide_findings = []
-        if dialect == "postgresql":
+        if adapter:
             logger.info("Running data quality checks…")
-            check_constraints = fetch_check_constraints(engine, schema)
-            enum_cols = fetch_enum_columns(engine, schema)
-            unique_constraints = fetch_unique_constraints(engine, schema)
+            check_constraints = adapter.fetch_check_constraints(engine, schema)
+            enum_cols = adapter.fetch_enum_columns(engine, schema)
+            unique_constraints = adapter.fetch_unique_constraints(engine, schema)
             all_pks_dict = {t["table"]: t.get("primary_keys", []) for t in enriched_tables}
 
             all_findings = []
-            all_findings.extend(check_controlled_value_candidates(engine, enriched_tables, check_constraints, enum_cols, unique_constraints, schema))
+            all_findings.extend(check_controlled_value_candidates(engine, enriched_tables, check_constraints, enum_cols, unique_constraints, schema, adapter=adapter))
             all_findings.extend(check_nullable_but_never_null(enriched_tables))
             all_findings.extend(check_missing_primary_keys(enriched_tables))
-            all_findings.extend(check_missing_foreign_keys(engine, enriched_tables, all_pks_dict, schema))
-            all_findings.extend(check_format_inconsistency(engine, enriched_tables, schema))
-            all_findings.extend(check_range_violations(engine, enriched_tables, schema))
-            all_findings.extend(check_delete_management(engine, enriched_tables, schema))
-            all_findings.extend(check_late_arriving_data(engine, enriched_tables, schema))
-            all_findings.extend(check_timezone(engine, enriched_tables, schema))
+            all_findings.extend(check_missing_foreign_keys(engine, enriched_tables, all_pks_dict, schema, adapter=adapter))
+            all_findings.extend(check_format_inconsistency(engine, enriched_tables, schema, adapter=adapter))
+            all_findings.extend(check_range_violations(engine, enriched_tables, schema, adapter=adapter))
+            all_findings.extend(check_delete_management(engine, enriched_tables, schema, adapter=adapter))
+            all_findings.extend(check_late_arriving_data(engine, enriched_tables, schema, adapter=adapter))
+            all_findings.extend(check_timezone(engine, enriched_tables, schema, adapter=adapter))
 
             severity_counts = Counter(f["severity"] for f in all_findings)
             check_counts = Counter(f["check"] for f in all_findings)
@@ -1250,7 +1238,7 @@ def analyze_source_system(
 
             logger.info(f"Data quality: {len(all_findings)} finding(s) (critical: {severity_counts.get('critical', 0)}, warning: {severity_counts.get('warning', 0)}, info: {severity_counts.get('info', 0)})")
         else:
-            logger.info(f"Data quality checks skipped (PostgreSQL only; dialect={dialect})")
+            logger.info(f"Data quality checks skipped (dialect {dialect} not supported; use postgresql, mssql, or oracle)")
 
         # Build final document
         total_findings = sum(len(tbl.get("data_quality", {}).get("findings", [])) for tbl in enriched_tables)
@@ -1283,13 +1271,20 @@ def analyze_source_system(
 
 
 if __name__ == "__main__":
+    import argparse
     import sys
     _load_env_file()
-    if len(sys.argv) < 3:
-        print("Usage: python source_system_analyzer.py <database_url> <output_json_path> [schema]")
-        print("  schema can also be set via DATABASE_SCHEMA or SCHEMA in .env")
-        sys.exit(1)
-    database_url = sys.argv[1]
-    output_path = sys.argv[2]
-    schema = sys.argv[3] if len(sys.argv) > 3 else os.environ.get("DATABASE_SCHEMA") or os.environ.get("SCHEMA") or None
-    analyze_source_system(database_url, output_path, schema=schema)
+    parser = argparse.ArgumentParser(description="Analyze source database schema and data quality")
+    parser.add_argument("database_url", help="Database connection URL")
+    parser.add_argument("output_json_path", help="Path for schema.json output")
+    parser.add_argument("schema", nargs="?", default=None, help="Schema to analyze (default: from DATABASE_SCHEMA/SCHEMA env or dialect default)")
+    parser.add_argument("--dialect", choices=["postgresql", "mssql", "oracle"], default=None,
+                        help="Override dialect (default: inferred from URL)")
+    args = parser.parse_args()
+    schema = args.schema or os.environ.get("DATABASE_SCHEMA") or os.environ.get("SCHEMA")
+    analyze_source_system(
+        args.database_url,
+        args.output_json_path,
+        schema=schema,
+        dialect_override=args.dialect,
+    )

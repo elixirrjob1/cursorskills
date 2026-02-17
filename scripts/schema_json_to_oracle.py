@@ -6,16 +6,21 @@ Ensures Oracle has the same tables and data as schema.json (PostgreSQL source).
 import json
 import os
 import re
+import sys
 from pathlib import Path
 
-from dotenv import load_dotenv
 from sqlalchemy import create_engine, text
 
-load_dotenv()
+_scripts = Path(__file__).resolve().parent
+if str(_scripts) not in sys.path:
+    sys.path.insert(0, str(_scripts))
+from keyvault_loader import load_env
+
+load_env()
 DATABASE_URL = os.environ.get("DATABASE_URL")
 ORACLE_URL = os.environ.get("ORACLE_URL")
 if not DATABASE_URL or not ORACLE_URL:
-    raise SystemExit("DATABASE_URL and ORACLE_URL must be set in .env")
+    raise SystemExit("DATABASE_URL and ORACLE_URL must be set (in .env or Key Vault)")
 
 SCHEMA_JSON = Path(__file__).resolve().parent.parent / "schema.json"
 with open(SCHEMA_JSON) as f:

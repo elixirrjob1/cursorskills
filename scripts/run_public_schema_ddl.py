@@ -2,15 +2,20 @@
 """Run schema_public_mssql.ddl against MSSQL and populate with sample data."""
 import os
 import re
+import sys
 from pathlib import Path
 
-from dotenv import load_dotenv
 from sqlalchemy import create_engine, text
 
-load_dotenv()
+_scripts = Path(__file__).resolve().parent
+if str(_scripts) not in sys.path:
+    sys.path.insert(0, str(_scripts))
+from keyvault_loader import load_env
+
+load_env()
 MSSQL_URL = os.environ.get("MSSQL_URL")
 if not MSSQL_URL:
-    raise SystemExit("MSSQL_URL not set in .env")
+    raise SystemExit("MSSQL_URL not set (in .env or Key Vault)")
 
 ddl_path = Path(__file__).resolve().parent.parent / "schema_public_mssql.ddl"
 ddl = ddl_path.read_text()

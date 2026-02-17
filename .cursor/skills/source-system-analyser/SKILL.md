@@ -35,7 +35,13 @@ This skill provides a single tool that analyzes a source database schema and ass
 
 4. **Ask the user**: If no connection string is found, ask: "I need a database connection string. Please provide it in the format: `postgresql://user:password@host:port/database`"
 
-**Connection string format:** `postgresql://[user[:password]@][host][:port][/database]`
+**Connection string formats:**
+
+| Database | Format |
+|----------|--------|
+| PostgreSQL | `postgresql://user:password@host:port/database` |
+| Microsoft SQL Server / Azure SQL | `mssql+pyodbc://user:password@host:port/database?driver=ODBC+Driver+17+for+SQL+Server` |
+| Oracle | `oracle+cx_oracle://user:password@host:port/?service_name=XE` |
 
 **Security note**: Never hardcode credentials. Use environment variables or ask the user.
 
@@ -44,8 +50,10 @@ This skill provides a single tool that analyzes a source database schema and ass
 **Required Python packages:**
 - `sqlalchemy` — Database connectivity
 - `psycopg2-binary` — PostgreSQL driver
+- `pyodbc` — Microsoft SQL Server / Azure SQL (optional, for MSSQL)
+- `cx_Oracle` or `oracledb` — Oracle (optional, for Oracle)
 
-Same as other skills. If `.venv` exists with those packages, no extra setup needed.
+Same as other skills. If `.venv` exists with those packages, no extra setup needed. Install drivers only for the databases you use.
 
 ## Running the Script
 
@@ -53,29 +61,38 @@ Same as other skills. If `.venv` exists with those packages, no extra setup need
 
 2. Ensure a virtual environment is available:
    - If `.venv/bin/python` does NOT exist: `python3 -m venv .venv` then `.venv/bin/pip install sqlalchemy psycopg2-binary`
-   - If it DOES exist: `.venv/bin/pip install --quiet sqlalchemy psycopg2-binary`
+   - For MSSQL add: `pip install pyodbc`
+   - For Oracle add: `pip install cx_Oracle` or `pip install oracledb`
+   - If it DOES exist: `.venv/bin/pip install --quiet sqlalchemy psycopg2-binary` (and drivers as needed)
 
 3. Run the script:
    ```bash
-   .venv/bin/python .cursor/skills/source-system-analyser/scripts/source_system_analyzer.py <database_url> <output_json_path> [schema]
+   .venv/bin/python scripts/source_system_analyzer.py <database_url> <output_json_path> [schema] [--dialect postgresql|mssql|oracle]
    ```
 
 ### Arguments
 
 | Argument | Required | Description |
 |----------|----------|-------------|
-| `database_url` | Yes | PostgreSQL connection URL |
+| `database_url` | Yes | Database connection URL |
 | `output_json_path` | Yes | Where to save the combined output (e.g. `schema.json`) |
-| `schema` | No | Schema to analyze (default: from `DATABASE_SCHEMA` or `SCHEMA` env var, or `public`) |
+| `schema` | No | Schema to analyze (default: from `DATABASE_SCHEMA` or `SCHEMA` env, or dialect default: `public`/`dbo`/current user) |
+| `--dialect` | No | Override dialect: `postgresql`, `mssql`, or `oracle` (default: inferred from URL) |
 
 ### Examples
 
 ```bash
-# Basic usage
-.venv/bin/python .cursor/skills/source-system-analyser/scripts/source_system_analyzer.py "$DATABASE_URL" schema.json public
+# PostgreSQL (basic)
+.venv/bin/python scripts/source_system_analyzer.py "$DATABASE_URL" schema.json public
 
-# Schema from .env
-.venv/bin/python .cursor/skills/source-system-analyser/scripts/source_system_analyzer.py "$DATABASE_URL" schema.json
+# PostgreSQL (schema from .env)
+.venv/bin/python scripts/source_system_analyzer.py "$DATABASE_URL" schema.json
+
+# Microsoft SQL Server / Azure SQL
+.venv/bin/python scripts/source_system_analyzer.py "$MSSQL_URL" schema.json dbo --dialect mssql
+
+# Oracle
+.venv/bin/python scripts/source_system_analyzer.py "$ORACLE_URL" schema.json MYSCHEMA --dialect oracle
 ```
 
 ## Combined Output Format
@@ -191,11 +208,11 @@ Each table includes:
 | 8 | **Late-Arriving Data** | warning/info | Lag between business dates and insertion timestamps; recommended lookback windows |
 | 9 | **Timezone** | warning/info | Per-table and cross-database timezone assessment; TZ-aware vs TZ-naive; mixed-TZ warnings |
 
-**Note:** Data quality checks run only for PostgreSQL. For other dialects, `data_quality` will be empty.
+**Note:** Data quality checks run for PostgreSQL, Microsoft SQL Server / Azure SQL, and Oracle. For other dialects, `data_quality` will be empty.
 
 ## Script Reference
 
-See `.cursor/skills/source-system-analyser/scripts/source_system_analyzer.py` for implementation details.
+See `scripts/source_system_analyzer.py` for implementation details. Dialect-specific logic lives in `scripts/databases/`.
 
 **Key function:**
 - `analyze_source_system()` — Main function that analyzes schema and runs data quality checks in one pass

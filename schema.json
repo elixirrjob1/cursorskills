@@ -1,6 +1,6 @@
 {
   "metadata": {
-    "generated_at": "2026-02-13T10:46:27.275696+00:00",
+    "generated_at": "2026-02-15T16:34:17.395941+00:00",
     "database_url": "aws-1-eu-west-1.pooler.supabase.com:5432/postgres",
     "schema_filter": "public",
     "total_tables": 10,

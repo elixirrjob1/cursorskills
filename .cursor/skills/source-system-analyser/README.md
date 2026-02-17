@@ -13,20 +13,29 @@ A Cursor skill that analyzes source database schemas and assesses data quality i
 ## Quick Start
 
 ```bash
-# Run against a database
-.venv/bin/python .cursor/skills/source-system-analyser/scripts/source_system_analyzer.py \
-  "$DATABASE_URL" schema.json public
+# PostgreSQL
+.venv/bin/python scripts/source_system_analyzer.py "$DATABASE_URL" schema.json public
+
+# Microsoft SQL Server / Azure SQL
+.venv/bin/python scripts/source_system_analyzer.py "$MSSQL_URL" schema.json dbo --dialect mssql
+
+# Oracle
+.venv/bin/python scripts/source_system_analyzer.py "$ORACLE_URL" schema.json MYSCHEMA --dialect oracle
 ```
 
 ## Requirements
 
 - Python 3.7+
 - `sqlalchemy`
-- `psycopg2-binary`
+- `psycopg2-binary` (PostgreSQL)
+- `pyodbc` (Microsoft SQL Server / Azure SQL, optional)
+- `cx_Oracle` or `oracledb` (Oracle, optional)
 
 ```bash
 python3 -m venv .venv
 .venv/bin/pip install sqlalchemy psycopg2-binary
+# For MSSQL: pip install pyodbc
+# For Oracle: pip install cx_Oracle
 ```
 
 ## Output
@@ -52,7 +61,7 @@ The script produces a single `schema.json` containing:
 | Late-Arriving Data | warning/info | Lag between business dates and insertion timestamps |
 | Timezone | warning/info | Per-table and cross-database timezone assessment |
 
-Data quality checks run only for PostgreSQL.
+Data quality checks run for PostgreSQL, Microsoft SQL Server / Azure SQL, and Oracle.
 
 ## Usage
 
@@ -65,8 +74,11 @@ The skill is automatically available when you:
 ### Manual Script Usage
 
 ```bash
-.venv/bin/python .cursor/skills/source-system-analyser/scripts/source_system_analyzer.py \
-  "postgresql://user:pass@host/db" schema.json public
+# PostgreSQL
+.venv/bin/python scripts/source_system_analyzer.py "postgresql://user:pass@host/db" schema.json public
+
+# With dialect override
+.venv/bin/python scripts/source_system_analyzer.py "$DATABASE_URL" schema.json --dialect postgresql
 ```
 
 ## Environment Variables

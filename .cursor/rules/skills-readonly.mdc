@@ -1,8 +1,6 @@
 ---
-description: Skills are read-only; use them but do not modify
-alwaysApply: true
+alwaysApply: false
 ---
-
 # Skills Are Read-Only
 
 The `.cursor/skills/` directory contains published Cursor skills. **Never modify these files.**

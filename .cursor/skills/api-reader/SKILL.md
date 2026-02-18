@@ -35,8 +35,23 @@ Output is written as JSON (to a file or stdout) and optional binary downloads ar
 
 ## Obtaining API URL and Auth
 
+### Preflight Questions (required)
+
+Before calling the API, follow this order:
+
+1. Check `KEYVAULT_NAME` in environment.
+2. If `KEYVAULT_NAME` is missing and secrets are expected from Key Vault, ask the user:
+   - "What is your Azure Key Vault name (`KEYVAULT_NAME`)?"
+3. Check bearer token in local env using `API_AUTH_TOKEN`.
+4. If not found locally and Key Vault is configured, check default Key Vault secret name `API-AUTH-TOKEN`.
+5. If still not found, ask the user only for the variable/secret name:
+   - "What env var or Key Vault secret name contains your bearer token? (default secret name is `API-AUTH-TOKEN`)"
+
+Never ask the user to paste the token directly. Use env vars/secret names only.
+Do not guess secret names when they are missing; ask explicitly.
+
 1. **User-provided**: If the user gives a base URL (e.g. `http://localhost:8000` or `https://api.example.com`) and optionally a key or token, use them directly.
-2. **Environment variables**: `API_BASE_URL`, `API_URL`, `API_TOKEN`, `API_KEY`, `BEARER_TOKEN` (script does not load .env by default; caller can export or pass via args).
+2. **Environment variables / Key Vault secret names**: `API_BASE_URL`, `API_URL`, `API_AUTH_TOKEN` (local env default bearer), `API-AUTH-TOKEN` (default Key Vault secret), `API_TOKEN`, `API_KEY`, `BEARER_TOKEN` (script does not load .env by default; caller can export or pass via args).
 3. **Ask the user**: If the base URL is missing, ask: "Please provide the API base URL (e.g. https://api.example.com). If the API requires authentication, provide a Bearer token or API key."
 
 **Auth options:**

@@ -1,0 +1,20 @@
+---
+description: API Reader auth — always check .env KEYVAULT_NAME and Key Vault API-AUTH-TOKEN
+alwaysApply: true
+---
+
+# API Reader Auth
+
+When using the api-reader skill or calling APIs that may require a bearer token:
+
+1. **Always check `.env` for `KEYVAULT_NAME`**  
+   Load or read the project `.env` (if present) and use `KEYVAULT_NAME` when resolving auth.
+
+2. **Always check Key Vault for `API-AUTH-TOKEN`**  
+   If `KEYVAULT_NAME` is set, attempt to resolve the bearer token from Azure Key Vault using the secret name **`API-AUTH-TOKEN`** before making API requests. Do not skip this when Key Vault is configured.
+
+3. **Order of resolution**  
+   Prefer: (1) `.env` → `KEYVAULT_NAME`; (2) if set → fetch `API-AUTH-TOKEN` from that Key Vault; (3) otherwise fall back to local env `API_AUTH_TOKEN` or ask for the secret/variable name. Never ask the user to paste the token.
+
+4. **Never read or expose Key Vault secret values**  
+   Always use the **secret name** (e.g. `API-AUTH-TOKEN`) and pass it to the tool or script so it loads the value directly from Key Vault. The AI must never read, display, log, or use the actual secret value in any output or reasoning—only reference secret names. Let the runtime (e.g. api-reader script, Azure CLI in a pipeline) retrieve the value from Key Vault; the AI must not surface the value itself.

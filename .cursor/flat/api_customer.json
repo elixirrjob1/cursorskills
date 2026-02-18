@@ -1,0 +1,9 @@
+{
+  "base_url": "https://skillssimapifilip20260218.azurewebsites.net",
+  "flat_dir": "/home/filip/Projects/skills/.cursor/flat",
+  "status_code": 404,
+  "downloaded_to": "/home/filip/Projects/skills/.cursor/flat/customer",
+  "content_type": "application/json",
+  "content_length": null,
+  "path": "/api/customer"
+}

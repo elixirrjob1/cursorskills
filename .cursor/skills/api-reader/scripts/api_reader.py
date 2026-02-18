@@ -5,7 +5,7 @@ Usage:
   api_reader.py <base_url> [--path PATH ...] [--discover] [--file-url URL ...]
                 [--azure-blob-url URL ...] [--azure-account NAME --azure-container NAME --azure-blob PATH]
                 [--azure-sas-token TOKEN] [--s3-uri s3://bucket/key ...] [--gcs-uri gs://bucket/key ...]
-                [--bearer TOKEN] [--api-key KEY] [--header NAME:VALUE]
+                [--bearer TOKEN] [--bearer-from-keyvault] [--api-key KEY] [--header NAME:VALUE]
                 [--download FILE] [--download-dir DIR] [--output FILE]
 """
 
@@ -18,9 +18,45 @@ from urllib.parse import quote, unquote, urljoin, urlparse
 
 import requests
 
+# Load .env from cwd or workspace so KEYVAULT_NAME is available when using --bearer-from-keyvault
+def _load_dotenv() -> None:
+    for d in [os.getcwd(), CURSOR_ROOT]:
+        if not d:
+            continue
+        env_path = os.path.join(d, ".env")
+        if os.path.isfile(env_path):
+            try:
+                with open(env_path, "r", encoding="utf-8") as f:
+                    for line in f:
+                        line = line.strip()
+                        if line and not line.startswith("#") and "=" in line:
+                            name, _, value = line.partition("=")
+                            name, value = name.strip(), value.strip().strip("'\"")
+                            if name and name not in os.environ:
+                                os.environ[name] = value
+            except OSError:
+                pass
+            break
+
 SKILL_DIR = os.path.normpath(os.path.join(os.path.dirname(__file__), ".."))
 CURSOR_ROOT = os.path.normpath(os.path.join(SKILL_DIR, "..", ".."))
 DEFAULT_FLAT_DIR = os.path.join(CURSOR_ROOT, "flat")
+DEFAULT_BEARER_SECRET_NAME = "API-AUTH-TOKEN"
+
+
+def _get_keyvault_secret(vault_name: str, secret_name: str) -> Optional[str]:
+    """Retrieve a secret value from Azure Key Vault. Returns None on error. Never logs the value."""
+    try:
+        from azure.identity import DefaultAzureCredential
+        from azure.keyvault.secrets import SecretClient
+
+        credential = DefaultAzureCredential()
+        kv_url = f"https://{vault_name}.vault.azure.net"
+        secret_client = SecretClient(vault_url=kv_url, credential=credential)
+        secret = secret_client.get_secret(secret_name)
+        return secret.value if secret else None
+    except Exception:
+        return None
 
 DISCOVERY_PATHS = [
     "/api/tables",
@@ -100,6 +136,22 @@ def main() -> int:
         help="General-purpose local folder for downloaded/read files (default: .cursor/flat)",
     )
     p.add_argument("--bearer", metavar="TOKEN", help="Bearer token for Authorization header")
+    p.add_argument(
+        "--bearer-from-keyvault",
+        action="store_true",
+        help="Load bearer token from Azure Key Vault (use KEYVAULT_NAME or --key-vault; secret default: API-AUTH-TOKEN)",
+    )
+    p.add_argument(
+        "--key-vault",
+        metavar="VAULT",
+        help="Key Vault name for bearer token (overrides KEYVAULT_NAME from .env)",
+    )
+    p.add_argument(
+        "--bearer-secret",
+        default=DEFAULT_BEARER_SECRET_NAME,
+        metavar="NAME",
+        help=f"Key Vault secret name for bearer token (default: {DEFAULT_BEARER_SECRET_NAME})",
+    )
     p.add_argument("--api-key", metavar="KEY", help="API key value")
     p.add_argument("--api-key-header", default="X-API-Key", help="Header name for API key (default: X-API-Key)")
     p.add_argument("--header", action="append", default=[], metavar="NAME:VALUE", help="Additional request header; can repeat")
@@ -109,13 +161,20 @@ def main() -> int:
     p.add_argument("--timeout", type=int, default=30, help="Request timeout in seconds (default: 30)")
     args = p.parse_args()
 
+    _load_dotenv()
+    bearer_token = args.bearer
+    if not bearer_token and (args.bearer_from_keyvault or os.environ.get("KEYVAULT_NAME")):
+        vault_name = args.key_vault or os.environ.get("KEYVAULT_NAME")
+        if vault_name:
+            bearer_token = _get_keyvault_secret(vault_name, args.bearer_secret)
+
     base = args.base_url.rstrip("/")
     if not base.startswith(("http://", "https://")):
         base = "http://" + base
 
     headers = {}
-    if args.bearer:
-        headers["Authorization"] = f"Bearer {args.bearer}"
+    if bearer_token:
+        headers["Authorization"] = f"Bearer {bearer_token}"
     if args.api_key:
         headers[args.api_key_header] = args.api_key
     for raw in args.header:

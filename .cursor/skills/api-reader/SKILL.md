@@ -51,11 +51,12 @@ Never ask the user to paste the token directly. Use env vars/secret names only.
 Do not guess secret names when they are missing; ask explicitly.
 
 1. **User-provided**: If the user gives a base URL (e.g. `http://localhost:8000` or `https://api.example.com`) and optionally a key or token, use them directly.
-2. **Environment variables / Key Vault secret names**: `API_BASE_URL`, `API_URL`, `API_AUTH_TOKEN` (local env default bearer), `API-AUTH-TOKEN` (default Key Vault secret), `API_TOKEN`, `API_KEY`, `BEARER_TOKEN` (script does not load .env by default; caller can export or pass via args).
+2. **Environment variables / Key Vault**: The script loads `.env` from the current or project directory so `KEYVAULT_NAME` is available. Use `API_BASE_URL`, `API_URL`, `API_AUTH_TOKEN` (local env bearer), or Key Vault secret `API-AUTH-TOKEN` via `--bearer-from-keyvault` (or set `KEYVAULT_NAME` in .env).
 3. **Ask the user**: If the base URL is missing, ask: "Please provide the API base URL (e.g. https://api.example.com). If the API requires authentication, provide a Bearer token or API key."
 
 **Auth options:**
 - **Bearer token**: `Authorization: Bearer <token>` — use `--bearer TOKEN`.
+- **Bearer from Key Vault**: Use `--bearer-from-keyvault` (or set `KEYVAULT_NAME` in .env). The script loads the bearer token from Azure Key Vault secret `API-AUTH-TOKEN` (override with `--bearer-secret`). Vault: `--key-vault NAME` or `KEYVAULT_NAME`. Requires `az login` or managed identity and `azure-identity`, `azure-keyvault-secrets`.
 - **Azure Key Vault** (for blob with account key): Set `AZURE_KEY_VAULT_NAME`, `AZURE_STORAGE_ACCOUNT`, `AZURE_STORAGE_CONTAINER`, `AZURE_STORAGE_BLOB`; optionally `AZURE_STORAGE_KEY_SECRET`. Requires `az login` or managed identity.
 - **API key in header**: e.g. `X-API-Key: <key>` — use `--api-key KEY` (default header `X-API-Key`) or `--api-key KEY --api-key-header "Authorization"` for custom header.
 - **Custom headers**: e.g. storage/vendor headers — use `--header "Name:Value"` (repeatable).
@@ -81,6 +82,9 @@ From the project root (or ensure `requests` is installed):
 
 # With Bearer token
 .venv/bin/python .cursor/skills/api-reader/scripts/api_reader.py https://api.example.com --bearer YOUR_TOKEN --path /api/tables --output result.json
+
+# With Bearer token from Key Vault (KEYVAULT_NAME in .env, secret API-AUTH-TOKEN)
+.venv/bin/python .cursor/skills/api-reader/scripts/api_reader.py https://api.example.com --bearer-from-keyvault --path /api/customers --output data.json
 
 # With API key (default header X-API-Key)
 .venv/bin/python .cursor/skills/api-reader/scripts/api_reader.py https://api.example.com --api-key YOUR_KEY --path /api/customers --output data.json
@@ -137,6 +141,9 @@ From the project root (or ensure `requests` is installed):
 | `--flat-file` | No | Relative file path inside flat folder to read locally; can be repeated |
 | `--flat-dir` | No | Override flat folder path (default: `.cursor/flat/`) |
 | `--bearer` | No | Bearer token for `Authorization: Bearer <token>` |
+| `--bearer-from-keyvault` | No | Load bearer token from Azure Key Vault (uses `KEYVAULT_NAME` or `--key-vault`; secret default `API-AUTH-TOKEN`) |
+| `--key-vault` | No | Key Vault name for bearer token (overrides `KEYVAULT_NAME` from .env) |
+| `--bearer-secret` | No | Key Vault secret name for bearer token (default: `API-AUTH-TOKEN`) |
 | `--api-key` | No | API key value (sent in header, see `--api-key-header`) |
 | `--api-key-header` | No | Header name for API key (default: `X-API-Key`) |
 | `--header` | No | Extra header in `Name:Value` format. Can be repeated |

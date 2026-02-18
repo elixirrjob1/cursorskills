@@ -1,0 +1,37 @@
+Azure Function API connection instructions
+=========================================
+
+Working API base URL:
+https://skillssimapifilip20260218.azurewebsites.net
+
+Available endpoints:
+- GET /api/tables
+- GET /api/{table}?limit=100&offset=0
+
+Authentication:
+- Header required: Authorization: Bearer <API_AUTH_TOKEN>
+
+Required environment variables:
+- API_BASE_URL=https://skillssimapifilip20260218.azurewebsites.net
+- API_AUTH_TOKEN=<your token value>
+
+Optional (for local project scripts using Key Vault):
+- KEYVAULT_NAME=skills-fmaric-kv
+- AZURE_USER_NAME=
+
+Quick test commands:
+1) List tables
+curl -H "Authorization: Bearer $API_AUTH_TOKEN" \
+  "$API_BASE_URL/api/tables"
+
+2) Read customers (first 3)
+curl -H "Authorization: Bearer $API_AUTH_TOKEN" \
+  "$API_BASE_URL/api/customers?limit=3"
+
+Example .env snippet:
+API_BASE_URL=https://skillssimapifilip20260218.azurewebsites.net
+API_AUTH_TOKEN=replace_with_real_token
+
+Notes:
+- API returns 401 when token is missing/invalid.
+- API currently reads from Azure MSSQL (schema: dbo).

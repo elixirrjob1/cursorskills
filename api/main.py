@@ -27,12 +27,14 @@ async def lifespan(app: FastAPI):
         raise RuntimeError("DATABASE_URL is not set (Key Vault or .env)")
     if not os.environ.get("API_AUTH_TOKEN"):
         raise RuntimeError("API_AUTH_TOKEN is not set (Key Vault or .env)")
+    database_url = os.environ["DATABASE_URL"]
+    connect_args = {"timeout": 10} if database_url.startswith("mssql+") else {"connect_timeout": 10}
     engine = create_engine(
-        os.environ["DATABASE_URL"],
+        database_url,
         pool_size=5,
         max_overflow=10,
         pool_pre_ping=True,
-        connect_args={"connect_timeout": 10},
+        connect_args=connect_args,
     )
     db.set_engine(engine)
     yield

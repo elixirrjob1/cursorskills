@@ -1,0 +1,21 @@
+---
+alwaysApply: true
+---
+# Flat Folder For Tabular Files
+
+Use `.cursor/flat/` as the default workspace drop zone for miscellaneous tabular files.
+
+## Save Location
+
+- When creating or exporting ad-hoc tabular files, save them in `.cursor/flat/`.
+- Applies to: `.csv`, `.xlsx`, `.tsv`, `.psv`, `.txt` (delimited), and similar flat data extracts.
+
+## Lookup Behavior
+
+- If the user references a tabular file without a full/explicit path, check `.cursor/flat/` first.
+- If multiple candidate files exist, present concise options and ask which one to use.
+
+## Path Preference
+
+- Prefer relative paths under `.cursor/flat/` in commands and examples.
+- Do not scatter one-off tabular files across repo root unless the user explicitly requests another location.

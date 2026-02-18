@@ -1,0 +1,83 @@
+table,schema,column,type,nullable,is_incremental,primary_key,foreign_key,cardinality,null_count,min,max,data_category
+customers,public,customer_id,bigint,False,True,True,,3,0,1,3,discrete
+customers,public,first_name,text,False,False,False,,3,0,Finn,Noah,nominal
+customers,public,last_name,text,False,False,False,,3,0,Oconnor,Walsh,nominal
+customers,public,email,text,True,False,False,,3,0,finn.ryan@example.com,noah.oconnor@example.com,nominal
+customers,public,phone,text,True,False,False,,3,0,+353-1-555-1111,+353-21-555-2222,nominal
+customers,public,created_at,timestamp,False,False,False,,1,0,2026-02-04 14:48:25.951501+00:00,2026-02-04 14:48:25.951501+00:00,continuous
+customers,public,updated_at,timestamp,False,False,False,,1,0,2026-02-04 14:48:25.951501+00:00,2026-02-04 14:48:25.951501+00:00,continuous
+employees,public,employee_id,bigint,False,True,True,,3,0,1,3,discrete
+employees,public,store_id,bigint,False,False,False,stores.store_id,2,0,1,2,discrete
+employees,public,first_name,text,False,False,False,,3,0,Ava,Saoirse,nominal
+employees,public,last_name,text,False,False,False,,3,0,Byrne,Murphy,nominal
+employees,public,email,text,False,False,False,,3,0,ava.byrne@example.com,saoirse.kelly@example.com,nominal
+employees,public,role,text,False,False,False,,3,0,Cashier,Store Manager,nominal
+employees,public,hire_date,date,False,False,False,,3,0,2021-11-20,2023-06-01,continuous
+employees,public,created_at,timestamp,False,False,False,,1,0,2026-02-04 14:48:25.951501+00:00,2026-02-04 14:48:25.951501+00:00,continuous
+employees,public,updated_at,timestamp,False,False,False,,1,0,2026-02-04 14:48:25.951501+00:00,2026-02-04 14:48:25.951501+00:00,continuous
+inventory,public,inventory_id,bigint,False,True,True,,6,0,1,6,discrete
+inventory,public,store_id,bigint,False,False,False,stores.store_id,2,0,1,2,discrete
+inventory,public,product_id,bigint,False,False,False,products.product_id,5,0,1,5,discrete
+inventory,public,quantity_on_hand,integer,False,False,False,,6,0,35,120,discrete
+inventory,public,reorder_level,integer,False,False,False,,5,0,10,30,discrete
+inventory,public,last_restocked_at,timestamp,True,False,False,,5,0,2026-01-30 14:48:25.951501+00:00,2026-02-03 14:48:25.951501+00:00,continuous
+inventory,public,created_at,timestamp,False,False,False,,1,0,2026-02-04 14:48:25.951501+00:00,2026-02-04 14:48:25.951501+00:00,continuous
+inventory,public,updated_at,timestamp,False,False,False,,1,0,2026-02-04 14:48:25.951501+00:00,2026-02-04 14:48:25.951501+00:00,continuous
+products,public,product_id,bigint,False,True,True,,5,0,1,5,discrete
+products,public,supplier_id,bigint,False,False,False,suppliers.supplier_id,2,0,1,2,discrete
+products,public,sku,text,False,False,False,,5,0,APL-001,TEA-001,nominal
+products,public,name,text,False,False,False,,5,0,Apples Gala 1kg,Whole Milk 1L,nominal
+products,public,category,text,False,False,False,,4,0,Bakery,Produce,nominal
+products,public,unit_price,"numeric(10,2)",False,False,False,,5,0,1.79,4.25,continuous
+products,public,cost_price,"numeric(10,2)",False,False,False,,5,0,0.90,2.30,continuous
+products,public,active,boolean,False,False,False,,1,0,,,discrete
+products,public,created_at,timestamp,False,False,False,,1,0,2026-02-04 14:48:25.951501+00:00,2026-02-04 14:48:25.951501+00:00,continuous
+products,public,updated_at,timestamp,False,False,False,,1,0,2026-02-04 14:48:25.951501+00:00,2026-02-04 14:48:25.951501+00:00,continuous
+purchase_order_items,public,po_item_id,bigint,False,True,True,,4,0,1,4,discrete
+purchase_order_items,public,po_id,bigint,False,False,False,purchase_orders.po_id,2,0,1,2,discrete
+purchase_order_items,public,product_id,bigint,False,False,False,products.product_id,4,0,1,5,discrete
+purchase_order_items,public,quantity,integer,False,False,False,,4,0,60,200,discrete
+purchase_order_items,public,unit_cost,"numeric(10,2)",False,False,False,,4,0,1.10,2.20,continuous
+purchase_order_items,public,created_at,timestamp,False,False,False,,1,0,2026-02-04 14:48:25.951501+00:00,2026-02-04 14:48:25.951501+00:00,continuous
+purchase_order_items,public,updated_at,timestamp,False,False,False,,1,0,2026-02-04 14:48:25.951501+00:00,2026-02-04 14:48:25.951501+00:00,continuous
+purchase_orders,public,po_id,bigint,False,True,True,,2,0,1,2,discrete
+purchase_orders,public,supplier_id,bigint,False,False,False,suppliers.supplier_id,2,0,1,2,discrete
+purchase_orders,public,store_id,bigint,False,False,False,stores.store_id,2,0,1,2,discrete
+purchase_orders,public,status,text,False,False,False,,2,0,Approved,Received,nominal
+purchase_orders,public,order_date,date,False,False,False,,2,0,2025-11-01,2025-11-05,continuous
+purchase_orders,public,expected_date,date,True,False,False,,2,0,2025-11-03,2025-11-08,continuous
+purchase_orders,public,created_at,timestamp,False,False,False,,1,0,2026-02-04 14:48:25.951501+00:00,2026-02-04 14:48:25.951501+00:00,continuous
+purchase_orders,public,updated_at,timestamp,False,False,False,,1,0,2026-02-04 14:48:25.951501+00:00,2026-02-04 14:48:25.951501+00:00,continuous
+sales_order_items,public,sales_order_item_id,bigint,False,True,True,,5,0,1,5,discrete
+sales_order_items,public,sales_order_id,bigint,False,False,False,sales_orders.sales_order_id,3,0,1,3,discrete
+sales_order_items,public,product_id,bigint,False,False,False,products.product_id,5,0,1,5,discrete
+sales_order_items,public,quantity,integer,False,False,False,,3,0,1,3,discrete
+sales_order_items,public,unit_price,"numeric(10,2)",False,False,False,,5,0,1.79,4.25,continuous
+sales_order_items,public,created_at,timestamp,False,False,False,,1,0,2026-02-04 14:48:25.951501+00:00,2026-02-04 14:48:25.951501+00:00,continuous
+sales_order_items,public,updated_at,timestamp,False,False,False,,1,0,2026-02-04 14:48:25.951501+00:00,2026-02-04 14:48:25.951501+00:00,continuous
+sales_orders,public,sales_order_id,bigint,False,True,True,,3,0,1,3,discrete
+sales_orders,public,store_id,bigint,False,False,False,stores.store_id,2,0,1,2,discrete
+sales_orders,public,customer_id,bigint,True,False,False,customers.customer_id,3,0,1,3,discrete
+sales_orders,public,employee_id,bigint,False,False,False,employees.employee_id,2,0,2,3,discrete
+sales_orders,public,order_date,timestamp,False,False,False,,3,0,2026-02-03 14:48:25.951501+00:00,2026-02-04 11:48:25.951501+00:00,continuous
+sales_orders,public,status,text,False,False,False,,2,0,Completed,Pending,nominal
+sales_orders,public,total_amount,"numeric(12,2)",False,False,False,,3,0,7.48,12.26,continuous
+sales_orders,public,created_at,timestamp,False,False,False,,1,0,2026-02-04 14:48:25.951501+00:00,2026-02-04 14:48:25.951501+00:00,continuous
+sales_orders,public,updated_at,timestamp,False,False,False,,1,0,2026-02-04 14:48:25.951501+00:00,2026-02-04 14:48:25.951501+00:00,continuous
+stores,public,store_id,bigint,False,True,True,,2,0,1,2,discrete
+stores,public,name,text,False,False,False,,2,0,Downtown Market,Riverside Market,nominal
+stores,public,code,text,False,False,False,,2,0,DTM,RSM,nominal
+stores,public,address,text,True,False,False,,2,0,123 Main St,45 River Rd,nominal
+stores,public,city,text,True,False,False,,2,0,Cork,Dublin,nominal
+stores,public,state,text,True,False,False,,2,0,Leinster,Munster,nominal
+stores,public,postal_code,text,True,False,False,,2,0,D01,T12,nominal
+stores,public,phone,text,True,False,False,,2,0,+353-1-555-0101,+353-21-555-0202,nominal
+stores,public,created_at,timestamp,False,False,False,,1,0,2026-02-04 14:48:25.951501+00:00,2026-02-04 14:48:25.951501+00:00,continuous
+stores,public,updated_at,timestamp,False,False,False,,1,0,2026-02-04 14:48:25.951501+00:00,2026-02-04 14:48:25.951501+00:00,continuous
+suppliers,public,supplier_id,bigint,False,True,True,,2,0,1,2,discrete
+suppliers,public,name,text,False,False,False,,2,0,Fresh Farms Ltd,Global Goods Co,nominal
+suppliers,public,contact_name,text,True,False,False,,2,0,Bridget Nolan,Eoin Byrne,nominal
+suppliers,public,email,text,True,False,False,,2,0,bridget.nolan@freshfarms.example.com,eoin.byrne@globalgoods.example.com,nominal
+suppliers,public,phone,text,True,False,False,,2,0,+353-1-555-4444,+353-21-555-5555,nominal
+suppliers,public,created_at,timestamp,False,False,False,,1,0,2026-02-04 14:48:25.951501+00:00,2026-02-04 14:48:25.951501+00:00,continuous
+suppliers,public,updated_at,timestamp,False,False,False,,1,0,2026-02-04 14:48:25.951501+00:00,2026-02-04 14:48:25.951501+00:00,continuous

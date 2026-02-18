@@ -1,0 +1,8 @@
+{
+  "base_url": "http://localhost:8000",
+  "path": "/api/tables",
+  "status_code": 401,
+  "data": {
+    "detail": "Unauthorized"
+  }
+}

@@ -133,6 +133,27 @@ To update skills later:
 cd /path/to/skills-repo && cp -r .cursor/skills/* ~/.cursor/skills/
 ```
 
+### Cursor MCP (optional)
+
+To use Azure tools (e.g. Key Vault, Storage, App Service) from Cursor, add the **Azure MCP Server** to your Cursor MCP config. If it isn’t already there, run from the repo root:
+
+```bash
+./scripts/setup_cursor_mcp.sh
+```
+
+This creates `~/.cursor/mcp.json` if missing, or adds the Azure MCP Server entry to `mcpServers` without overwriting existing servers. Override the config path with `CURSOR_MCP_JSON=/path/to/mcp.json`. Requires `jq`; if `jq` is not installed, the script prints the snippet to add manually.
+
+**Manual add:** In `~/.cursor/mcp.json` (create it if needed), ensure `mcpServers` contains:
+
+```json
+"Azure MCP Server": {
+  "command": "npx",
+  "args": ["-y", "@azure/mcp@latest", "server", "start"]
+}
+```
+
+Restart Cursor or reload MCP after changing the file.
+
 ### Per-Project (Not Recommended)
 
 Per-project install (`.cursor/skills/` in your project) puts skills inside the agent’s workspace; the agent may try to edit them. Use global install instead. If you must use per-project, this repo includes rules and `.cursorignore` to reduce that risk when the repo itself is the opened project.
@@ -158,6 +179,18 @@ SCHEMA=public
 ```
 
 All scripts load `.env` automatically. You can also pass the connection string directly as a CLI argument.
+
+### Simulated API (Azure)
+
+A read-only REST API is deployed as an Azure Function for testing and integration:
+
+| Item | Value |
+|------|--------|
+| **Base URL** | `https://skillssimapifilip20260218.azurewebsites.net` |
+| **Auth** | `Authorization: Bearer <token>` (required) |
+| **Endpoints** | `GET /api/tables`, `GET /api/{table}?limit=100&offset=0` |
+
+The **API key (Bearer token)** is stored in **Azure Key Vault**; do not commit it. For local use, set `API_AUTH_TOKEN` in `.env` or obtain it from Key Vault (e.g. via `KEYVAULT_NAME` and your Key Vault loader). See `API_CONNECTION_INSTRUCTIONS.txt` for details.
 
 ## Project Structure
 

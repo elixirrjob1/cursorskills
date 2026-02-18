@@ -1,0 +1,11 @@
+table,schema,row_count,cdc_enabled
+customers,public,3,False
+employees,public,3,False
+inventory,public,6,False
+products,public,5,False
+purchase_order_items,public,4,False
+purchase_orders,public,2,False
+sales_order_items,public,5,False
+sales_orders,public,3,False
+stores,public,2,False
+suppliers,public,2,False

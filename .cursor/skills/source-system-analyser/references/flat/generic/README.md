@@ -16,10 +16,24 @@ Use merged tabular schema converter:
 .venv/bin/python scripts/flat/tabular_schema_json.py to-json --columns-file schema_columns.csv --output schema_from_tabular.json --default-schema public
 ```
 
+Auto-detect CSV delimiter (default behavior when delimiter flags are omitted).
+
+Specify delimiter explicitly when needed:
+
+```bash
+.venv/bin/python scripts/flat/tabular_schema_json.py to-json --columns-file schema_columns.csv --columns-delimiter ";" --tables-file schema_tables.csv --tables-delimiter ";" --output schema_from_tabular.json --default-schema public
+```
+
 Inspect first:
 
 ```bash
 .venv/bin/python scripts/flat/tabular_schema_json.py inspect --columns-file schema_columns.xlsx --sample-size 5 --output tabular_inspect.json
+```
+
+For CSV, `inspect` reports the delimiter used and supports explicit overrides:
+
+```bash
+.venv/bin/python scripts/flat/tabular_schema_json.py inspect --columns-file schema_columns.csv --columns-delimiter "|" --sample-size 5 --output tabular_inspect.json
 ```
 
 Have the agent detect source type and use this script directly for CSV/Excel flat sources.

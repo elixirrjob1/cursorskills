@@ -33,9 +33,37 @@ def _as_int(value: Any) -> int | None:
         return None
 
 
-def _read_csv(path: Path) -> list[dict[str, Any]]:
+def _validate_delimiter(delimiter: str | None) -> str | None:
+    if delimiter is None:
+        return None
+    if len(delimiter) != 1:
+        raise SystemExit("Delimiter must be a single character (for example ',', ';', '|', or '\\t').")
+    return delimiter
+
+
+def _detect_csv_delimiter(path: Path, fallback: str = ",") -> str:
     with path.open("r", encoding="utf-8-sig", newline="") as f:
-        reader = csv.DictReader(f)
+        sample = f.read(8192)
+    if not sample:
+        return fallback
+    try:
+        dialect = csv.Sniffer().sniff(sample, delimiters=",;\t|")
+        return dialect.delimiter
+    except Exception:
+        return fallback
+
+
+def _resolve_csv_delimiter(path: Path, delimiter: str | None) -> str:
+    validated = _validate_delimiter(delimiter)
+    if validated is not None:
+        return validated
+    return _detect_csv_delimiter(path)
+
+
+def _read_csv(path: Path, delimiter: str | None = None) -> list[dict[str, Any]]:
+    resolved = _resolve_csv_delimiter(path, delimiter)
+    with path.open("r", encoding="utf-8-sig", newline="") as f:
+        reader = csv.DictReader(f, delimiter=resolved)
         out: list[dict[str, Any]] = []
         for row in reader:
             out.append({_norm_header(k): v for k, v in row.items()})
@@ -65,10 +93,10 @@ def _read_xlsx(path: Path, sheet_name: str | None) -> list[dict[str, Any]]:
     return data
 
 
-def _read_tabular(path: str, sheet_name: str | None = None) -> list[dict[str, Any]]:
+def _read_tabular(path: str, sheet_name: str | None = None, delimiter: str | None = None) -> list[dict[str, Any]]:
     p = Path(path)
     if p.suffix.lower() == ".csv":
-        return _read_csv(p)
+        return _read_csv(p, delimiter=delimiter)
     if p.suffix.lower() == ".xlsx":
         return _read_xlsx(p, sheet_name)
     raise SystemExit(f"Unsupported file type: {p.suffix}. Use .csv or .xlsx")
@@ -230,8 +258,9 @@ def _merge_table_rows(tables: dict[str, dict[str, Any]], rows: list[dict[str, An
 def cmd_inspect(args: argparse.Namespace) -> None:
     out: dict[str, Any] = {"files": []}
 
-    def add_file(path: str, sheet: str | None, kind: str) -> None:
-        rows = _read_tabular(path, sheet)
+    def add_file(path: str, sheet: str | None, kind: str, delimiter: str | None = None) -> None:
+        rows = _read_tabular(path, sheet, delimiter=delimiter)
+        p = Path(path)
         headers = _headers(rows)
         entry = {
             "kind": kind,
@@ -242,11 +271,13 @@ def cmd_inspect(args: argparse.Namespace) -> None:
             "suggested_mapping": _suggest_role(headers),
             "sample_rows": rows[: args.sample_size],
         }
+        if p.suffix.lower() == ".csv":
+            entry["delimiter"] = _resolve_csv_delimiter(p, delimiter)
         out["files"].append(entry)
 
-    add_file(args.columns_file, args.columns_sheet, "columns")
+    add_file(args.columns_file, args.columns_sheet, "columns", delimiter=args.columns_delimiter)
     if args.tables_file:
-        add_file(args.tables_file, args.tables_sheet, "tables")
+        add_file(args.tables_file, args.tables_sheet, "tables", delimiter=args.tables_delimiter)
 
     payload = json.dumps(out, indent=2, default=str)
     if args.output:
@@ -257,11 +288,11 @@ def cmd_inspect(args: argparse.Namespace) -> None:
 
 
 def cmd_to_json(args: argparse.Namespace) -> None:
-    col_rows = _read_tabular(args.columns_file, args.columns_sheet)
+    col_rows = _read_tabular(args.columns_file, args.columns_sheet, delimiter=args.columns_delimiter)
     tables = _parse_columns(col_rows, args.default_schema)
 
     if args.tables_file:
-        table_rows = _read_tabular(args.tables_file, args.tables_sheet)
+        table_rows = _read_tabular(args.tables_file, args.tables_sheet, delimiter=args.tables_delimiter)
         _merge_table_rows(tables, table_rows, args.default_schema)
 
     ordered_tables = [tables[k] for k in sorted(tables.keys())]
@@ -374,8 +405,10 @@ def build_parser() -> argparse.ArgumentParser:
     p_inspect = sub.add_parser("inspect", help="Inspect tabular file columns/rows before conversion")
     p_inspect.add_argument("--columns-file", required=True, help="Path to CSV/XLSX with column-level metadata")
     p_inspect.add_argument("--columns-sheet", default=None, help="Sheet name when --columns-file is .xlsx")
+    p_inspect.add_argument("--columns-delimiter", default=None, help="CSV delimiter for --columns-file (auto-detected when omitted)")
     p_inspect.add_argument("--tables-file", default=None, help="Optional CSV/XLSX with table-level metadata")
     p_inspect.add_argument("--tables-sheet", default=None, help="Sheet name when --tables-file is .xlsx")
+    p_inspect.add_argument("--tables-delimiter", default=None, help="CSV delimiter for --tables-file (auto-detected when omitted)")
     p_inspect.add_argument("--sample-size", type=int, default=5, help="Number of sample rows per file")
     p_inspect.add_argument("--output", default=None, help="Optional output JSON path")
     p_inspect.set_defaults(func=cmd_inspect)
@@ -383,8 +416,10 @@ def build_parser() -> argparse.ArgumentParser:
     p_to = sub.add_parser("to-json", help="Convert tabular schema files to schema.json-like output")
     p_to.add_argument("--columns-file", required=True, help="Path to CSV/XLSX with column-level metadata")
     p_to.add_argument("--columns-sheet", default=None, help="Sheet name when --columns-file is .xlsx")
+    p_to.add_argument("--columns-delimiter", default=None, help="CSV delimiter for --columns-file (auto-detected when omitted)")
     p_to.add_argument("--tables-file", default=None, help="Optional CSV/XLSX with table-level metadata")
     p_to.add_argument("--tables-sheet", default=None, help="Sheet name when --tables-file is .xlsx")
+    p_to.add_argument("--tables-delimiter", default=None, help="CSV delimiter for --tables-file (auto-detected when omitted)")
     p_to.add_argument("--output", required=True, help="Output JSON path")
     p_to.add_argument("--default-schema", default="public", help="Schema name used when missing in source")
     p_to.set_defaults(func=cmd_to_json)

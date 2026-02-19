@@ -1,0 +1,46 @@
+{
+  "base_url": "https://skillssimapifilip20260218.azurewebsites.net",
+  "flat_dir": "/home/filip/Projects/skills/.cursor/flat",
+  "auth_resolution": {
+    "bearer_source": "keyvault",
+    "bearer_env_name": "API_TOKEN_ENV",
+    "bearer_secret_name": "API_TOKEN_SECRET_NAME",
+    "key_vault_name": "skills-fmaric-kv",
+    "used_default_bearer_env": true,
+    "used_default_bearer_secret": true
+  },
+  "discovery": [
+    {
+      "path": "/api/tables",
+      "status_code": 500,
+      "data": {
+        "detail": "Database error: (pyodbc.OperationalError) ('HYT00', '[HYT00] [Microsoft][ODBC Driver 18 for SQL Server]Login timeout expired (0) (SQLDriverConnect)')\n(Background on this error at: https://sqlalche.me/e/20/e3q8)"
+      }
+    },
+    {
+      "path": "/api",
+      "status_code": 404,
+      "data": null
+    },
+    {
+      "path": "/openapi.json",
+      "status_code": 404,
+      "data": null
+    },
+    {
+      "path": "/swagger.json",
+      "status_code": 404,
+      "data": null
+    },
+    {
+      "path": "/docs",
+      "status_code": 404,
+      "data": null
+    },
+    {
+      "path": "/",
+      "status_code": 200,
+      "data": "<!DOCTYPE html>\n<html>\n<head>\n    <title>Your Azure Function App is up and running.</title>\n    <style type=\"text/css\">\n        @font-face {\n            font-family: 'SegoeLight';\n            src: url(//:) format('no404'), url(data:font/woff;charset=utf-8;base64,d09GRgABAAAAAFbcABAAAAAAjewAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAABGRlRNAAABbAAAABsAAAAcWqtaPUdERUYAAAGIAAAAHQAAACABGAADT1MvMgAAAagAAABYAAAAYGrqcLZjbWFwAAACAAAAAaIAAAIKczqUA2N2dCAAAAOkAAAATAAAAEwOEAwRZnBnbQAAA/AAAAGxAAACZQ+0L6dnYXNwAAAFpAAAAAwAAAAMAAMAB2dseWYAAAWwAABJAAAAe3CDYeDNaGVhZAAATrAAAAAxAAAANvjlJxhoaGVhAABO5AAAACAAAAAkDm4GkWhtdHgAAE8EAAACNgAAA6yU7F4gbG9jYQAAUTwAAAHOAAAB2DtSXCptYXhwAABTDAAAACAAAAAgAg8B1G5hbWUAAFMsAAAA5wAAAZ4hIT5EcG9zdAAAVBQAAAH4AAAC+Je8aS1wcmVwAABWDAAAAM8AAAFulHbF13jaY2BgYGQAguP/NtwH0SfDQtZA6Y0AWbsHmQB42mNgZGBg4ANiCQYQYGIA8V8BSRYwjwEADksBHAAAAHjaY2BmfsOow8DKwMI6i9WYgYFhBYRmkmZIY0rjYGLiZmZiYWVhYmJewMC03oFBIZoBCnyDFRSAlMJvFra0f2kMDOzpTJxAgfkgORYG1lkgOQZGAGSzDHF42mNgYGBmgGAZBkYgycDIAuQxgvksDC+AtBmDApAlxlDH8J/RkDGYsYLpGNMtpjssbCwcLGEsEQpcCiIKUgpyCkoKagr6ClYK8QprFJUeMPxm+s3y/z9QvwLDAqC+IAx9DAoCChIKMlB9lnB9jCB9/x//P/R/4v/C/77/GP6+/fvmj9of1d/ffn99cPLBkQcHHxx4sPfBrgebHqx80PrA8v4Rheesz1mfQdxPDmBkY4BrZmQCEkzoCoBBxMLKxs7BycXNw8vHLyAoJCwiKiYuISklLSMrJ6+gqKSsoqqmrqGppa2jq6dvYGhkbGJqZm5haWVtY2tn7+Do5Ozi6ubu4enl7ePr5x8QGBQcEhoWHhEZFR0TGxefkMjQ1t7ZPXnGvMWLlixbunzl6lVr1q5ft2Hj5q1btu3Yvmf33n0MRSmpmfcrFhZkPyvLYuiYxVDMwJBeDnZdTg3Dil2NyXkgdm7tg6Sm1umHj1y/cefuzVs7GQ4eZXj66PGLlwyVt+8xtPQ093b1T5jYN3Uaw5Q5c2cfOnaikIHheBVQIwDe55fTAAD+KQAABAAFmgXpAFQAIQAnAFMAWgBbAFwAYABiAGYAeQCYAGMAXABjAGcAbABwAHcAgQCFAIsAmgBOAEkAVgBRAF4AagBMAEcARABYeNpdUbtOW0EQ3Q0PA4HE2CA52hSzmZAC74U2SCCuLsLIdmM5QtqNXORiXMAHUCBRg/ZrBmgoU6RNg5ALJD6BT4iUmTWJojQ7O7NzzpkzS8qRqndpveepcxZI4W6DZpt+J6TaRYAH0vWNRkbawSMtNjN65bp9v4/BZjTlThpAec9bykNG006gFu25fzI/g+E+/8s8B4OWZpqeWmchPYTAfDNuafA1o1l3/UFfsTpcDQaGFNNU3PXHVMr/luZcbRm2NjOad3AhIj+YBmhqrY1A0586pHo+jmIJcvlsrA0mpqw/yURwYTJd1VQtM752cJ/sLDrYpEpz4AEOsFWegofjowmF9C2JMktDhIPYKjFCxCSHQk45d7I/KVA+koQxb5LSzrhhrYFx5"
+    }
+  ]
+}

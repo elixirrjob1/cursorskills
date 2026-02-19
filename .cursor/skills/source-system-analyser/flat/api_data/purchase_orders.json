@@ -1,0 +1,17 @@
+{
+  "base_url": "https://skillssimapifilip20260218.azurewebsites.net",
+  "flat_dir": "/home/filip/Projects/skills/.cursor/skills/source-system-analyser/flat",
+  "auth_resolution": {
+    "bearer_source": "keyvault",
+    "bearer_env_name": null,
+    "bearer_secret_name": "API-AUTH-TOKEN",
+    "key_vault_name": "skills-fmaric-kv",
+    "used_default_bearer_env": false,
+    "used_default_bearer_secret": false
+  },
+  "status_code": 200,
+  "downloaded_to": "flat/api_data/purchase_orders",
+  "content_type": "application/json",
+  "content_length": null,
+  "path": "/api/purchase_orders"
+}

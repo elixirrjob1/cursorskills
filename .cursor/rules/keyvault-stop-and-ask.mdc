@@ -1,0 +1,15 @@
+---
+description: Key Vault hard-stop — if secret reference is missing/unclear, stop and ask
+alwaysApply: true
+---
+
+# Key Vault Stop-And-Ask Rule
+
+When authentication depends on Key Vault or env-based secret references:
+
+1. If the secret name or env var name is missing, ambiguous, or not explicitly provided, **stop immediately**.
+2. Do **not** run API/database commands that require auth until the user provides the exact reference name.
+3. Ask only for the reference name (for example `DB_SECRET_NAME`, `API_TOKEN_ENV`, `API_TOKEN_SECRET_NAME`), never for the secret value.
+4. After receiving the name, state which reference name is being used, then continue.
+
+This is a mandatory hard-stop behavior.

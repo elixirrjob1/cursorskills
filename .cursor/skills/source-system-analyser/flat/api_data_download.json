@@ -1,0 +1,84 @@
+{
+  "base_url": "https://skillssimapifilip20260218.azurewebsites.net",
+  "flat_dir": "/home/filip/Projects/skills/.cursor/skills/source-system-analyser/flat",
+  "auth_resolution": {
+    "bearer_source": "keyvault",
+    "bearer_env_name": "API_TOKEN_ENV",
+    "bearer_secret_name": "API_TOKEN_SECRET_NAME",
+    "key_vault_name": "skills-fmaric-kv",
+    "used_default_bearer_env": true,
+    "used_default_bearer_secret": true
+  },
+  "paths": [
+    {
+      "status_code": 200,
+      "downloaded_to": ".cursor/skills/source-system-analyser/flat/api_data/customers",
+      "content_type": "application/json",
+      "content_length": null,
+      "path": "/api/customers"
+    },
+    {
+      "status_code": 200,
+      "downloaded_to": ".cursor/skills/source-system-analyser/flat/api_data/employees",
+      "content_type": "application/json",
+      "content_length": null,
+      "path": "/api/employees"
+    },
+    {
+      "status_code": 200,
+      "downloaded_to": ".cursor/skills/source-system-analyser/flat/api_data/inventory",
+      "content_type": "application/json",
+      "content_length": null,
+      "path": "/api/inventory"
+    },
+    {
+      "status_code": 200,
+      "downloaded_to": ".cursor/skills/source-system-analyser/flat/api_data/products",
+      "content_type": "application/json",
+      "content_length": null,
+      "path": "/api/products"
+    },
+    {
+      "status_code": 200,
+      "downloaded_to": ".cursor/skills/source-system-analyser/flat/api_data/purchase_order_items",
+      "content_type": "application/json",
+      "content_length": null,
+      "path": "/api/purchase_order_items"
+    },
+    {
+      "status_code": 200,
+      "downloaded_to": ".cursor/skills/source-system-analyser/flat/api_data/purchase_orders",
+      "content_type": "application/json",
+      "content_length": null,
+      "path": "/api/purchase_orders"
+    },
+    {
+      "status_code": 200,
+      "downloaded_to": ".cursor/skills/source-system-analyser/flat/api_data/sales_order_items",
+      "content_type": "application/json",
+      "content_length": null,
+      "path": "/api/sales_order_items"
+    },
+    {
+      "status_code": 200,
+      "downloaded_to": ".cursor/skills/source-system-analyser/flat/api_data/sales_orders",
+      "content_type": "application/json",
+      "content_length": null,
+      "path": "/api/sales_orders"
+    },
+    {
+      "status_code": 200,
+      "downloaded_to": ".cursor/skills/source-system-analyser/flat/api_data/stores",
+      "content_type": "application/json",
+      "content_length": null,
+      "path": "/api/stores"
+    },
+    {
+      "status_code": 200,
+      "downloaded_to": ".cursor/skills/source-system-analyser/flat/api_data/suppliers",
+      "content_type": "application/json",
+      "content_length": null,
+      "path": "/api/suppliers"
+    }
+  ]
+}

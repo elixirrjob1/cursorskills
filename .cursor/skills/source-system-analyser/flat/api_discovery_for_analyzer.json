@@ -1,0 +1,15 @@
+{
+  "base_url": "https://skillssimapifilip20260218.azurewebsites.net",
+  "tables": [
+    "customers",
+    "employees",
+    "inventory",
+    "products",
+    "purchase_order_items",
+    "purchase_orders",
+    "sales_order_items",
+    "sales_orders",
+    "stores",
+    "suppliers"
+  ]
+}

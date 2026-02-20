@@ -8,6 +8,10 @@ Available endpoints:
 - GET /api/tables
 - GET /api/{table}?limit=100&offset=0
 
+Response shape:
+- /api/tables: `tables` is a list of per-table metadata objects.
+- /api/{table}: includes `metadata` and `data`.
+
 Authentication:
 - Header required: Authorization: Bearer <API_AUTH_TOKEN>
 

@@ -190,6 +190,10 @@ A read-only REST API is deployed as an Azure Function for testing and integratio
 | **Auth** | `Authorization: Bearer <token>` (required) |
 | **Endpoints** | `GET /api/tables`, `GET /api/{table}?limit=100&offset=0` |
 
+Response notes:
+- `GET /api/tables` returns `tables` as table metadata objects (schema-aligned structural metadata), not only table names.
+- `GET /api/{table}` returns `metadata` plus `data`.
+
 The **API key (Bearer token)** is stored in **Azure Key Vault**; do not commit it. For local use, set `API_AUTH_TOKEN` in `.env` or obtain it from Key Vault (e.g. via `KEYVAULT_NAME` and your Key Vault loader). See `API_CONNECTION_INSTRUCTIONS.txt` for details.
 
 ## Project Structure

@@ -80,7 +80,7 @@ def list_tables(req: func.HttpRequest) -> func.HttpResponse:
         return _unauthorized()
     schema = _schema()
     try:
-        tables = _db.get_tables(schema)
+        tables = _db.get_tables_metadata(schema)
         return _json_response({"schema": schema, "tables": tables})
     except Exception:
         return _json_response({"detail": "Database error"}, status=500)
@@ -113,15 +113,26 @@ def get_table(req: func.HttpRequest) -> func.HttpResponse:
 
     schema = _schema()
     try:
-        tables = _db.get_tables(schema)
+        metadata = _db.get_table_metadata(schema, table)
     except Exception:
         return _json_response({"detail": "Database error"}, status=500)
-    if table not in tables:
+    if metadata is None:
+        return _json_response({"detail": "Table not found"}, status=404)
+
+    resolved_table = _db.resolve_table_name(schema, table)
+    if not resolved_table:
         return _json_response({"detail": "Table not found"}, status=404)
 
     try:
-        rows = _db.get_table_data(table, schema, limit=limit, offset=offset)
-        return _json_response({"schema": schema, "table": table, "data": rows})
+        rows = _db.get_table_data(resolved_table, schema, limit=limit, offset=offset)
+        return _json_response(
+            {
+                "schema": schema,
+                "table": resolved_table,
+                "metadata": metadata,
+                "data": rows,
+            }
+        )
     except ValueError as exc:
         return _json_response({"detail": str(exc)}, status=400)
     except Exception:

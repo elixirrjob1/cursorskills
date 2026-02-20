@@ -1,4 +1,4 @@
-"""API routes: list tables and get table data as JSON."""
+"""API routes: list tables and get table data with structural metadata."""
 
 import os
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -15,10 +15,10 @@ def _schema() -> str:
 
 @router.get("/tables")
 async def list_tables(_: None = Depends(require_bearer_token)):
-    """List table names in the configured schema."""
+    """List tables with schema.json-compatible structural metadata."""
     try:
         schema = _schema()
-        tables = db.get_tables(schema)
+        tables = db.get_tables_metadata(schema)
         return {"schema": schema, "tables": tables}
     except Exception as e:
         raise HTTPException(status_code=500, detail="Database error") from e
@@ -31,17 +31,26 @@ async def get_table(
     limit: int = Query(100, ge=1, le=1000),
     offset: int = Query(0, ge=0),
 ):
-    """Return rows from the given table as JSON. Supports limit and offset."""
+    """Return rows and metadata from the given table. Supports limit and offset."""
     schema = _schema()
     try:
-        tables = db.get_tables(schema)
+        metadata = db.get_table_metadata(schema, table)
     except Exception as e:
         raise HTTPException(status_code=500, detail="Database error") from e
-    if table not in tables:
+    if metadata is None:
+        raise HTTPException(status_code=404, detail="Table not found")
+
+    resolved_table = db.resolve_table_name(schema, table)
+    if not resolved_table:
         raise HTTPException(status_code=404, detail="Table not found")
     try:
-        rows = db.get_table_data(table, schema, limit=limit, offset=offset)
-        return {"schema": schema, "table": table, "data": rows}
+        rows = db.get_table_data(resolved_table, schema, limit=limit, offset=offset)
+        return {
+            "schema": schema,
+            "table": resolved_table,
+            "metadata": metadata,
+            "data": rows,
+        }
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
     except Exception as e:

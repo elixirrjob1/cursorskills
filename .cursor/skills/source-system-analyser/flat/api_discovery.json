@@ -10,16 +10,812 @@
     "used_default_bearer_secret": false
   },
   "tables": [
-    "customers",
-    "employees",
-    "inventory",
-    "products",
-    "purchase_order_items",
-    "purchase_orders",
-    "sales_order_items",
-    "sales_orders",
-    "stores",
-    "suppliers"
+    {
+      "table": "customers",
+      "schema": "dbo",
+      "columns": [
+        {
+          "name": "customer_id",
+          "type": "bigint",
+          "nullable": false,
+          "is_incremental": true
+        },
+        {
+          "name": "first_name",
+          "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+          "nullable": false,
+          "is_incremental": false
+        },
+        {
+          "name": "last_name",
+          "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+          "nullable": false,
+          "is_incremental": false
+        },
+        {
+          "name": "email",
+          "type": "nvarchar(450) collate \"sql_latin1_general_cp1_ci_as\"",
+          "nullable": true,
+          "is_incremental": false
+        },
+        {
+          "name": "phone",
+          "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+          "nullable": true,
+          "is_incremental": false
+        },
+        {
+          "name": "created_at",
+          "type": "datetime2",
+          "nullable": false,
+          "is_incremental": true
+        },
+        {
+          "name": "updated_at",
+          "type": "datetime2",
+          "nullable": false,
+          "is_incremental": true
+        }
+      ],
+      "primary_keys": [
+        "customer_id"
+      ],
+      "foreign_keys": [],
+      "row_count": 3,
+      "incremental_columns": [
+        "customer_id",
+        "created_at",
+        "updated_at"
+      ],
+      "partition_columns": [
+        "created_at",
+        "updated_at"
+      ],
+      "join_candidates": [],
+      "cdc_enabled": false,
+      "has_primary_key": true,
+      "has_foreign_keys": false,
+      "has_sensitive_fields": false
+    },
+    {
+      "table": "employees",
+      "schema": "dbo",
+      "columns": [
+        {
+          "name": "employee_id",
+          "type": "bigint",
+          "nullable": false,
+          "is_incremental": true
+        },
+        {
+          "name": "store_id",
+          "type": "bigint",
+          "nullable": false,
+          "is_incremental": false
+        },
+        {
+          "name": "first_name",
+          "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+          "nullable": false,
+          "is_incremental": false
+        },
+        {
+          "name": "last_name",
+          "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+          "nullable": false,
+          "is_incremental": false
+        },
+        {
+          "name": "email",
+          "type": "nvarchar(450) collate \"sql_latin1_general_cp1_ci_as\"",
+          "nullable": false,
+          "is_incremental": false
+        },
+        {
+          "name": "role",
+          "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+          "nullable": false,
+          "is_incremental": false
+        },
+        {
+          "name": "hire_date",
+          "type": "date",
+          "nullable": false,
+          "is_incremental": false
+        },
+        {
+          "name": "created_at",
+          "type": "datetime2",
+          "nullable": false,
+          "is_incremental": true
+        },
+        {
+          "name": "updated_at",
+          "type": "datetime2",
+          "nullable": false,
+          "is_incremental": true
+        }
+      ],
+      "primary_keys": [
+        "employee_id"
+      ],
+      "foreign_keys": [
+        {
+          "column": "store_id",
+          "references": "stores.store_id"
+        }
+      ],
+      "row_count": 3,
+      "incremental_columns": [
+        "employee_id",
+        "created_at",
+        "updated_at"
+      ],
+      "partition_columns": [
+        "hire_date",
+        "created_at",
+        "updated_at"
+      ],
+      "join_candidates": [],
+      "cdc_enabled": false,
+      "has_primary_key": true,
+      "has_foreign_keys": true,
+      "has_sensitive_fields": false
+    },
+    {
+      "table": "inventory",
+      "schema": "dbo",
+      "columns": [
+        {
+          "name": "inventory_id",
+          "type": "bigint",
+          "nullable": false,
+          "is_incremental": true
+        },
+        {
+          "name": "store_id",
+          "type": "bigint",
+          "nullable": false,
+          "is_incremental": false
+        },
+        {
+          "name": "product_id",
+          "type": "bigint",
+          "nullable": false,
+          "is_incremental": false
+        },
+        {
+          "name": "quantity_on_hand",
+          "type": "integer",
+          "nullable": false,
+          "is_incremental": false
+        },
+        {
+          "name": "reorder_level",
+          "type": "integer",
+          "nullable": false,
+          "is_incremental": false
+        },
+        {
+          "name": "last_restocked_at",
+          "type": "datetime2",
+          "nullable": true,
+          "is_incremental": false
+        },
+        {
+          "name": "created_at",
+          "type": "datetime2",
+          "nullable": false,
+          "is_incremental": true
+        },
+        {
+          "name": "updated_at",
+          "type": "datetime2",
+          "nullable": false,
+          "is_incremental": true
+        }
+      ],
+      "primary_keys": [
+        "inventory_id"
+      ],
+      "foreign_keys": [
+        {
+          "column": "product_id",
+          "references": "products.product_id"
+        },
+        {
+          "column": "store_id",
+          "references": "stores.store_id"
+        }
+      ],
+      "row_count": 6,
+      "incremental_columns": [
+        "inventory_id",
+        "created_at",
+        "updated_at"
+      ],
+      "partition_columns": [
+        "last_restocked_at",
+        "created_at",
+        "updated_at"
+      ],
+      "join_candidates": [],
+      "cdc_enabled": false,
+      "has_primary_key": true,
+      "has_foreign_keys": true,
+      "has_sensitive_fields": false
+    },
+    {
+      "table": "products",
+      "schema": "dbo",
+      "columns": [
+        {
+          "name": "product_id",
+          "type": "bigint",
+          "nullable": false,
+          "is_incremental": true
+        },
+        {
+          "name": "supplier_id",
+          "type": "bigint",
+          "nullable": false,
+          "is_incremental": false
+        },
+        {
+          "name": "sku",
+          "type": "nvarchar(450) collate \"sql_latin1_general_cp1_ci_as\"",
+          "nullable": false,
+          "is_incremental": false
+        },
+        {
+          "name": "name",
+          "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+          "nullable": false,
+          "is_incremental": false
+        },
+        {
+          "name": "category",
+          "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+          "nullable": false,
+          "is_incremental": false
+        },
+        {
+          "name": "unit_price",
+          "type": "decimal(10, 2)",
+          "nullable": false,
+          "is_incremental": false
+        },
+        {
+          "name": "cost_price",
+          "type": "decimal(10, 2)",
+          "nullable": false,
+          "is_incremental": false
+        },
+        {
+          "name": "active",
+          "type": "bit",
+          "nullable": false,
+          "is_incremental": false
+        },
+        {
+          "name": "created_at",
+          "type": "datetime2",
+          "nullable": false,
+          "is_incremental": true
+        },
+        {
+          "name": "updated_at",
+          "type": "datetime2",
+          "nullable": false,
+          "is_incremental": true
+        }
+      ],
+      "primary_keys": [
+        "product_id"
+      ],
+      "foreign_keys": [
+        {
+          "column": "supplier_id",
+          "references": "suppliers.supplier_id"
+        }
+      ],
+      "row_count": 5,
+      "incremental_columns": [
+        "product_id",
+        "created_at",
+        "updated_at"
+      ],
+      "partition_columns": [
+        "created_at",
+        "updated_at"
+      ],
+      "join_candidates": [],
+      "cdc_enabled": false,
+      "has_primary_key": true,
+      "has_foreign_keys": true,
+      "has_sensitive_fields": false
+    },
+    {
+      "table": "purchase_order_items",
+      "schema": "dbo",
+      "columns": [
+        {
+          "name": "po_item_id",
+          "type": "bigint",
+          "nullable": false,
+          "is_incremental": true
+        },
+        {
+          "name": "po_id",
+          "type": "bigint",
+          "nullable": false,
+          "is_incremental": false
+        },
+        {
+          "name": "product_id",
+          "type": "bigint",
+          "nullable": false,
+          "is_incremental": false
+        },
+        {
+          "name": "quantity",
+          "type": "integer",
+          "nullable": false,
+          "is_incremental": false
+        },
+        {
+          "name": "unit_cost",
+          "type": "decimal(10, 2)",
+          "nullable": false,
+          "is_incremental": false
+        },
+        {
+          "name": "created_at",
+          "type": "datetime2",
+          "nullable": false,
+          "is_incremental": true
+        },
+        {
+          "name": "updated_at",
+          "type": "datetime2",
+          "nullable": false,
+          "is_incremental": true
+        }
+      ],
+      "primary_keys": [
+        "po_item_id"
+      ],
+      "foreign_keys": [
+        {
+          "column": "po_id",
+          "references": "purchase_orders.po_id"
+        },
+        {
+          "column": "product_id",
+          "references": "products.product_id"
+        }
+      ],
+      "row_count": 4,
+      "incremental_columns": [
+        "po_item_id",
+        "created_at",
+        "updated_at"
+      ],
+      "partition_columns": [
+        "created_at",
+        "updated_at"
+      ],
+      "join_candidates": [],
+      "cdc_enabled": false,
+      "has_primary_key": true,
+      "has_foreign_keys": true,
+      "has_sensitive_fields": false
+    },
+    {
+      "table": "purchase_orders",
+      "schema": "dbo",
+      "columns": [
+        {
+          "name": "po_id",
+          "type": "bigint",
+          "nullable": false,
+          "is_incremental": true
+        },
+        {
+          "name": "supplier_id",
+          "type": "bigint",
+          "nullable": false,
+          "is_incremental": false
+        },
+        {
+          "name": "store_id",
+          "type": "bigint",
+          "nullable": false,
+          "is_incremental": false
+        },
+        {
+          "name": "status",
+          "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+          "nullable": false,
+          "is_incremental": false
+        },
+        {
+          "name": "order_date",
+          "type": "date",
+          "nullable": false,
+          "is_incremental": false
+        },
+        {
+          "name": "expected_date",
+          "type": "date",
+          "nullable": true,
+          "is_incremental": false
+        },
+        {
+          "name": "created_at",
+          "type": "datetime2",
+          "nullable": false,
+          "is_incremental": true
+        },
+        {
+          "name": "updated_at",
+          "type": "datetime2",
+          "nullable": false,
+          "is_incremental": true
+        }
+      ],
+      "primary_keys": [
+        "po_id"
+      ],
+      "foreign_keys": [
+        {
+          "column": "store_id",
+          "references": "stores.store_id"
+        },
+        {
+          "column": "supplier_id",
+          "references": "suppliers.supplier_id"
+        }
+      ],
+      "row_count": 2,
+      "incremental_columns": [
+        "po_id",
+        "created_at",
+        "updated_at"
+      ],
+      "partition_columns": [
+        "order_date",
+        "expected_date",
+        "created_at",
+        "updated_at"
+      ],
+      "join_candidates": [],
+      "cdc_enabled": false,
+      "has_primary_key": true,
+      "has_foreign_keys": true,
+      "has_sensitive_fields": false
+    },
+    {
+      "table": "sales_order_items",
+      "schema": "dbo",
+      "columns": [
+        {
+          "name": "sales_order_item_id",
+          "type": "bigint",
+          "nullable": false,
+          "is_incremental": true
+        },
+        {
+          "name": "sales_order_id",
+          "type": "bigint",
+          "nullable": false,
+          "is_incremental": false
+        },
+        {
+          "name": "product_id",
+          "type": "bigint",
+          "nullable": false,
+          "is_incremental": false
+        },
+        {
+          "name": "quantity",
+          "type": "integer",
+          "nullable": false,
+          "is_incremental": false
+        },
+        {
+          "name": "unit_price",
+          "type": "decimal(10, 2)",
+          "nullable": false,
+          "is_incremental": false
+        },
+        {
+          "name": "created_at",
+          "type": "datetime2",
+          "nullable": false,
+          "is_incremental": true
+        },
+        {
+          "name": "updated_at",
+          "type": "datetime2",
+          "nullable": false,
+          "is_incremental": true
+        }
+      ],
+      "primary_keys": [
+        "sales_order_item_id"
+      ],
+      "foreign_keys": [
+        {
+          "column": "product_id",
+          "references": "products.product_id"
+        },
+        {
+          "column": "sales_order_id",
+          "references": "sales_orders.sales_order_id"
+        }
+      ],
+      "row_count": 5,
+      "incremental_columns": [
+        "sales_order_item_id",
+        "created_at",
+        "updated_at"
+      ],
+      "partition_columns": [
+        "created_at",
+        "updated_at"
+      ],
+      "join_candidates": [],
+      "cdc_enabled": false,
+      "has_primary_key": true,
+      "has_foreign_keys": true,
+      "has_sensitive_fields": false
+    },
+    {
+      "table": "sales_orders",
+      "schema": "dbo",
+      "columns": [
+        {
+          "name": "sales_order_id",
+          "type": "bigint",
+          "nullable": false,
+          "is_incremental": true
+        },
+        {
+          "name": "store_id",
+          "type": "bigint",
+          "nullable": false,
+          "is_incremental": false
+        },
+        {
+          "name": "customer_id",
+          "type": "bigint",
+          "nullable": true,
+          "is_incremental": false
+        },
+        {
+          "name": "employee_id",
+          "type": "bigint",
+          "nullable": false,
+          "is_incremental": false
+        },
+        {
+          "name": "order_date",
+          "type": "datetime2",
+          "nullable": false,
+          "is_incremental": false
+        },
+        {
+          "name": "status",
+          "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+          "nullable": false,
+          "is_incremental": false
+        },
+        {
+          "name": "total_amount",
+          "type": "decimal(12, 2)",
+          "nullable": false,
+          "is_incremental": false
+        },
+        {
+          "name": "created_at",
+          "type": "datetime2",
+          "nullable": false,
+          "is_incremental": true
+        },
+        {
+          "name": "updated_at",
+          "type": "datetime2",
+          "nullable": false,
+          "is_incremental": true
+        }
+      ],
+      "primary_keys": [
+        "sales_order_id"
+      ],
+      "foreign_keys": [
+        {
+          "column": "customer_id",
+          "references": "customers.customer_id"
+        },
+        {
+          "column": "employee_id",
+          "references": "employees.employee_id"
+        },
+        {
+          "column": "store_id",
+          "references": "stores.store_id"
+        }
+      ],
+      "row_count": 3,
+      "incremental_columns": [
+        "sales_order_id",
+        "created_at",
+        "updated_at"
+      ],
+      "partition_columns": [
+        "order_date",
+        "created_at",
+        "updated_at"
+      ],
+      "join_candidates": [],
+      "cdc_enabled": false,
+      "has_primary_key": true,
+      "has_foreign_keys": true,
+      "has_sensitive_fields": false
+    },
+    {
+      "table": "stores",
+      "schema": "dbo",
+      "columns": [
+        {
+          "name": "store_id",
+          "type": "bigint",
+          "nullable": false,
+          "is_incremental": true
+        },
+        {
+          "name": "name",
+          "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+          "nullable": false,
+          "is_incremental": false
+        },
+        {
+          "name": "code",
+          "type": "nvarchar(450) collate \"sql_latin1_general_cp1_ci_as\"",
+          "nullable": false,
+          "is_incremental": false
+        },
+        {
+          "name": "address",
+          "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+          "nullable": true,
+          "is_incremental": false
+        },
+        {
+          "name": "city",
+          "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+          "nullable": true,
+          "is_incremental": false
+        },
+        {
+          "name": "state",
+          "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+          "nullable": true,
+          "is_incremental": false
+        },
+        {
+          "name": "postal_code",
+          "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+          "nullable": true,
+          "is_incremental": false
+        },
+        {
+          "name": "phone",
+          "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+          "nullable": true,
+          "is_incremental": false
+        },
+        {
+          "name": "created_at",
+          "type": "datetime2",
+          "nullable": false,
+          "is_incremental": true
+        },
+        {
+          "name": "updated_at",
+          "type": "datetime2",
+          "nullable": false,
+          "is_incremental": true
+        }
+      ],
+      "primary_keys": [
+        "store_id"
+      ],
+      "foreign_keys": [],
+      "row_count": 2,
+      "incremental_columns": [
+        "store_id",
+        "created_at",
+        "updated_at"
+      ],
+      "partition_columns": [
+        "created_at",
+        "updated_at"
+      ],
+      "join_candidates": [],
+      "cdc_enabled": false,
+      "has_primary_key": true,
+      "has_foreign_keys": false,
+      "has_sensitive_fields": false
+    },
+    {
+      "table": "suppliers",
+      "schema": "dbo",
+      "columns": [
+        {
+          "name": "supplier_id",
+          "type": "bigint",
+          "nullable": false,
+          "is_incremental": true
+        },
+        {
+          "name": "name",
+          "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+          "nullable": false,
+          "is_incremental": false
+        },
+        {
+          "name": "contact_name",
+          "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+          "nullable": true,
+          "is_incremental": false
+        },
+        {
+          "name": "email",
+          "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+          "nullable": true,
+          "is_incremental": false
+        },
+        {
+          "name": "phone",
+          "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+          "nullable": true,
+          "is_incremental": false
+        },
+        {
+          "name": "created_at",
+          "type": "datetime2",
+          "nullable": false,
+          "is_incremental": true
+        },
+        {
+          "name": "updated_at",
+          "type": "datetime2",
+          "nullable": false,
+          "is_incremental": true
+        }
+      ],
+      "primary_keys": [
+        "supplier_id"
+      ],
+      "foreign_keys": [],
+      "row_count": 2,
+      "incremental_columns": [
+        "supplier_id",
+        "created_at",
+        "updated_at"
+      ],
+      "partition_columns": [
+        "created_at",
+        "updated_at"
+      ],
+      "join_candidates": [],
+      "cdc_enabled": false,
+      "has_primary_key": true,
+      "has_foreign_keys": false,
+      "has_sensitive_fields": false
+    }
   ],
   "discovery": [
     {
@@ -28,16 +824,812 @@
       "data": {
         "schema": "dbo",
         "tables": [
-          "customers",
-          "employees",
-          "inventory",
-          "products",
-          "purchase_order_items",
-          "purchase_orders",
-          "sales_order_items",
-          "sales_orders",
-          "stores",
-          "suppliers"
+          {
+            "table": "customers",
+            "schema": "dbo",
+            "columns": [
+              {
+                "name": "customer_id",
+                "type": "bigint",
+                "nullable": false,
+                "is_incremental": true
+              },
+              {
+                "name": "first_name",
+                "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+                "nullable": false,
+                "is_incremental": false
+              },
+              {
+                "name": "last_name",
+                "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+                "nullable": false,
+                "is_incremental": false
+              },
+              {
+                "name": "email",
+                "type": "nvarchar(450) collate \"sql_latin1_general_cp1_ci_as\"",
+                "nullable": true,
+                "is_incremental": false
+              },
+              {
+                "name": "phone",
+                "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+                "nullable": true,
+                "is_incremental": false
+              },
+              {
+                "name": "created_at",
+                "type": "datetime2",
+                "nullable": false,
+                "is_incremental": true
+              },
+              {
+                "name": "updated_at",
+                "type": "datetime2",
+                "nullable": false,
+                "is_incremental": true
+              }
+            ],
+            "primary_keys": [
+              "customer_id"
+            ],
+            "foreign_keys": [],
+            "row_count": 3,
+            "incremental_columns": [
+              "customer_id",
+              "created_at",
+              "updated_at"
+            ],
+            "partition_columns": [
+              "created_at",
+              "updated_at"
+            ],
+            "join_candidates": [],
+            "cdc_enabled": false,
+            "has_primary_key": true,
+            "has_foreign_keys": false,
+            "has_sensitive_fields": false
+          },
+          {
+            "table": "employees",
+            "schema": "dbo",
+            "columns": [
+              {
+                "name": "employee_id",
+                "type": "bigint",
+                "nullable": false,
+                "is_incremental": true
+              },
+              {
+                "name": "store_id",
+                "type": "bigint",
+                "nullable": false,
+                "is_incremental": false
+              },
+              {
+                "name": "first_name",
+                "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+                "nullable": false,
+                "is_incremental": false
+              },
+              {
+                "name": "last_name",
+                "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+                "nullable": false,
+                "is_incremental": false
+              },
+              {
+                "name": "email",
+                "type": "nvarchar(450) collate \"sql_latin1_general_cp1_ci_as\"",
+                "nullable": false,
+                "is_incremental": false
+              },
+              {
+                "name": "role",
+                "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+                "nullable": false,
+                "is_incremental": false
+              },
+              {
+                "name": "hire_date",
+                "type": "date",
+                "nullable": false,
+                "is_incremental": false
+              },
+              {
+                "name": "created_at",
+                "type": "datetime2",
+                "nullable": false,
+                "is_incremental": true
+              },
+              {
+                "name": "updated_at",
+                "type": "datetime2",
+                "nullable": false,
+                "is_incremental": true
+              }
+            ],
+            "primary_keys": [
+              "employee_id"
+            ],
+            "foreign_keys": [
+              {
+                "column": "store_id",
+                "references": "stores.store_id"
+              }
+            ],
+            "row_count": 3,
+            "incremental_columns": [
+              "employee_id",
+              "created_at",
+              "updated_at"
+            ],
+            "partition_columns": [
+              "hire_date",
+              "created_at",
+              "updated_at"
+            ],
+            "join_candidates": [],
+            "cdc_enabled": false,
+            "has_primary_key": true,
+            "has_foreign_keys": true,
+            "has_sensitive_fields": false
+          },
+          {
+            "table": "inventory",
+            "schema": "dbo",
+            "columns": [
+              {
+                "name": "inventory_id",
+                "type": "bigint",
+                "nullable": false,
+                "is_incremental": true
+              },
+              {
+                "name": "store_id",
+                "type": "bigint",
+                "nullable": false,
+                "is_incremental": false
+              },
+              {
+                "name": "product_id",
+                "type": "bigint",
+                "nullable": false,
+                "is_incremental": false
+              },
+              {
+                "name": "quantity_on_hand",
+                "type": "integer",
+                "nullable": false,
+                "is_incremental": false
+              },
+              {
+                "name": "reorder_level",
+                "type": "integer",
+                "nullable": false,
+                "is_incremental": false
+              },
+              {
+                "name": "last_restocked_at",
+                "type": "datetime2",
+                "nullable": true,
+                "is_incremental": false
+              },
+              {
+                "name": "created_at",
+                "type": "datetime2",
+                "nullable": false,
+                "is_incremental": true
+              },
+              {
+                "name": "updated_at",
+                "type": "datetime2",
+                "nullable": false,
+                "is_incremental": true
+              }
+            ],
+            "primary_keys": [
+              "inventory_id"
+            ],
+            "foreign_keys": [
+              {
+                "column": "product_id",
+                "references": "products.product_id"
+              },
+              {
+                "column": "store_id",
+                "references": "stores.store_id"
+              }
+            ],
+            "row_count": 6,
+            "incremental_columns": [
+              "inventory_id",
+              "created_at",
+              "updated_at"
+            ],
+            "partition_columns": [
+              "last_restocked_at",
+              "created_at",
+              "updated_at"
+            ],
+            "join_candidates": [],
+            "cdc_enabled": false,
+            "has_primary_key": true,
+            "has_foreign_keys": true,
+            "has_sensitive_fields": false
+          },
+          {
+            "table": "products",
+            "schema": "dbo",
+            "columns": [
+              {
+                "name": "product_id",
+                "type": "bigint",
+                "nullable": false,
+                "is_incremental": true
+              },
+              {
+                "name": "supplier_id",
+                "type": "bigint",
+                "nullable": false,
+                "is_incremental": false
+              },
+              {
+                "name": "sku",
+                "type": "nvarchar(450) collate \"sql_latin1_general_cp1_ci_as\"",
+                "nullable": false,
+                "is_incremental": false
+              },
+              {
+                "name": "name",
+                "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+                "nullable": false,
+                "is_incremental": false
+              },
+              {
+                "name": "category",
+                "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+                "nullable": false,
+                "is_incremental": false
+              },
+              {
+                "name": "unit_price",
+                "type": "decimal(10, 2)",
+                "nullable": false,
+                "is_incremental": false
+              },
+              {
+                "name": "cost_price",
+                "type": "decimal(10, 2)",
+                "nullable": false,
+                "is_incremental": false
+              },
+              {
+                "name": "active",
+                "type": "bit",
+                "nullable": false,
+                "is_incremental": false
+              },
+              {
+                "name": "created_at",
+                "type": "datetime2",
+                "nullable": false,
+                "is_incremental": true
+              },
+              {
+                "name": "updated_at",
+                "type": "datetime2",
+                "nullable": false,
+                "is_incremental": true
+              }
+            ],
+            "primary_keys": [
+              "product_id"
+            ],
+            "foreign_keys": [
+              {
+                "column": "supplier_id",
+                "references": "suppliers.supplier_id"
+              }
+            ],
+            "row_count": 5,
+            "incremental_columns": [
+              "product_id",
+              "created_at",
+              "updated_at"
+            ],
+            "partition_columns": [
+              "created_at",
+              "updated_at"
+            ],
+            "join_candidates": [],
+            "cdc_enabled": false,
+            "has_primary_key": true,
+            "has_foreign_keys": true,
+            "has_sensitive_fields": false
+          },
+          {
+            "table": "purchase_order_items",
+            "schema": "dbo",
+            "columns": [
+              {
+                "name": "po_item_id",
+                "type": "bigint",
+                "nullable": false,
+                "is_incremental": true
+              },
+              {
+                "name": "po_id",
+                "type": "bigint",
+                "nullable": false,
+                "is_incremental": false
+              },
+              {
+                "name": "product_id",
+                "type": "bigint",
+                "nullable": false,
+                "is_incremental": false
+              },
+              {
+                "name": "quantity",
+                "type": "integer",
+                "nullable": false,
+                "is_incremental": false
+              },
+              {
+                "name": "unit_cost",
+                "type": "decimal(10, 2)",
+                "nullable": false,
+                "is_incremental": false
+              },
+              {
+                "name": "created_at",
+                "type": "datetime2",
+                "nullable": false,
+                "is_incremental": true
+              },
+              {
+                "name": "updated_at",
+                "type": "datetime2",
+                "nullable": false,
+                "is_incremental": true
+              }
+            ],
+            "primary_keys": [
+              "po_item_id"
+            ],
+            "foreign_keys": [
+              {
+                "column": "po_id",
+                "references": "purchase_orders.po_id"
+              },
+              {
+                "column": "product_id",
+                "references": "products.product_id"
+              }
+            ],
+            "row_count": 4,
+            "incremental_columns": [
+              "po_item_id",
+              "created_at",
+              "updated_at"
+            ],
+            "partition_columns": [
+              "created_at",
+              "updated_at"
+            ],
+            "join_candidates": [],
+            "cdc_enabled": false,
+            "has_primary_key": true,
+            "has_foreign_keys": true,
+            "has_sensitive_fields": false
+          },
+          {
+            "table": "purchase_orders",
+            "schema": "dbo",
+            "columns": [
+              {
+                "name": "po_id",
+                "type": "bigint",
+                "nullable": false,
+                "is_incremental": true
+              },
+              {
+                "name": "supplier_id",
+                "type": "bigint",
+                "nullable": false,
+                "is_incremental": false
+              },
+              {
+                "name": "store_id",
+                "type": "bigint",
+                "nullable": false,
+                "is_incremental": false
+              },
+              {
+                "name": "status",
+                "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+                "nullable": false,
+                "is_incremental": false
+              },
+              {
+                "name": "order_date",
+                "type": "date",
+                "nullable": false,
+                "is_incremental": false
+              },
+              {
+                "name": "expected_date",
+                "type": "date",
+                "nullable": true,
+                "is_incremental": false
+              },
+              {
+                "name": "created_at",
+                "type": "datetime2",
+                "nullable": false,
+                "is_incremental": true
+              },
+              {
+                "name": "updated_at",
+                "type": "datetime2",
+                "nullable": false,
+                "is_incremental": true
+              }
+            ],
+            "primary_keys": [
+              "po_id"
+            ],
+            "foreign_keys": [
+              {
+                "column": "store_id",
+                "references": "stores.store_id"
+              },
+              {
+                "column": "supplier_id",
+                "references": "suppliers.supplier_id"
+              }
+            ],
+            "row_count": 2,
+            "incremental_columns": [
+              "po_id",
+              "created_at",
+              "updated_at"
+            ],
+            "partition_columns": [
+              "order_date",
+              "expected_date",
+              "created_at",
+              "updated_at"
+            ],
+            "join_candidates": [],
+            "cdc_enabled": false,
+            "has_primary_key": true,
+            "has_foreign_keys": true,
+            "has_sensitive_fields": false
+          },
+          {
+            "table": "sales_order_items",
+            "schema": "dbo",
+            "columns": [
+              {
+                "name": "sales_order_item_id",
+                "type": "bigint",
+                "nullable": false,
+                "is_incremental": true
+              },
+              {
+                "name": "sales_order_id",
+                "type": "bigint",
+                "nullable": false,
+                "is_incremental": false
+              },
+              {
+                "name": "product_id",
+                "type": "bigint",
+                "nullable": false,
+                "is_incremental": false
+              },
+              {
+                "name": "quantity",
+                "type": "integer",
+                "nullable": false,
+                "is_incremental": false
+              },
+              {
+                "name": "unit_price",
+                "type": "decimal(10, 2)",
+                "nullable": false,
+                "is_incremental": false
+              },
+              {
+                "name": "created_at",
+                "type": "datetime2",
+                "nullable": false,
+                "is_incremental": true
+              },
+              {
+                "name": "updated_at",
+                "type": "datetime2",
+                "nullable": false,
+                "is_incremental": true
+              }
+            ],
+            "primary_keys": [
+              "sales_order_item_id"
+            ],
+            "foreign_keys": [
+              {
+                "column": "product_id",
+                "references": "products.product_id"
+              },
+              {
+                "column": "sales_order_id",
+                "references": "sales_orders.sales_order_id"
+              }
+            ],
+            "row_count": 5,
+            "incremental_columns": [
+              "sales_order_item_id",
+              "created_at",
+              "updated_at"
+            ],
+            "partition_columns": [
+              "created_at",
+              "updated_at"
+            ],
+            "join_candidates": [],
+            "cdc_enabled": false,
+            "has_primary_key": true,
+            "has_foreign_keys": true,
+            "has_sensitive_fields": false
+          },
+          {
+            "table": "sales_orders",
+            "schema": "dbo",
+            "columns": [
+              {
+                "name": "sales_order_id",
+                "type": "bigint",
+                "nullable": false,
+                "is_incremental": true
+              },
+              {
+                "name": "store_id",
+                "type": "bigint",
+                "nullable": false,
+                "is_incremental": false
+              },
+              {
+                "name": "customer_id",
+                "type": "bigint",
+                "nullable": true,
+                "is_incremental": false
+              },
+              {
+                "name": "employee_id",
+                "type": "bigint",
+                "nullable": false,
+                "is_incremental": false
+              },
+              {
+                "name": "order_date",
+                "type": "datetime2",
+                "nullable": false,
+                "is_incremental": false
+              },
+              {
+                "name": "status",
+                "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+                "nullable": false,
+                "is_incremental": false
+              },
+              {
+                "name": "total_amount",
+                "type": "decimal(12, 2)",
+                "nullable": false,
+                "is_incremental": false
+              },
+              {
+                "name": "created_at",
+                "type": "datetime2",
+                "nullable": false,
+                "is_incremental": true
+              },
+              {
+                "name": "updated_at",
+                "type": "datetime2",
+                "nullable": false,
+                "is_incremental": true
+              }
+            ],
+            "primary_keys": [
+              "sales_order_id"
+            ],
+            "foreign_keys": [
+              {
+                "column": "customer_id",
+                "references": "customers.customer_id"
+              },
+              {
+                "column": "employee_id",
+                "references": "employees.employee_id"
+              },
+              {
+                "column": "store_id",
+                "references": "stores.store_id"
+              }
+            ],
+            "row_count": 3,
+            "incremental_columns": [
+              "sales_order_id",
+              "created_at",
+              "updated_at"
+            ],
+            "partition_columns": [
+              "order_date",
+              "created_at",
+              "updated_at"
+            ],
+            "join_candidates": [],
+            "cdc_enabled": false,
+            "has_primary_key": true,
+            "has_foreign_keys": true,
+            "has_sensitive_fields": false
+          },
+          {
+            "table": "stores",
+            "schema": "dbo",
+            "columns": [
+              {
+                "name": "store_id",
+                "type": "bigint",
+                "nullable": false,
+                "is_incremental": true
+              },
+              {
+                "name": "name",
+                "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+                "nullable": false,
+                "is_incremental": false
+              },
+              {
+                "name": "code",
+                "type": "nvarchar(450) collate \"sql_latin1_general_cp1_ci_as\"",
+                "nullable": false,
+                "is_incremental": false
+              },
+              {
+                "name": "address",
+                "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+                "nullable": true,
+                "is_incremental": false
+              },
+              {
+                "name": "city",
+                "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+                "nullable": true,
+                "is_incremental": false
+              },
+              {
+                "name": "state",
+                "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+                "nullable": true,
+                "is_incremental": false
+              },
+              {
+                "name": "postal_code",
+                "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+                "nullable": true,
+                "is_incremental": false
+              },
+              {
+                "name": "phone",
+                "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+                "nullable": true,
+                "is_incremental": false
+              },
+              {
+                "name": "created_at",
+                "type": "datetime2",
+                "nullable": false,
+                "is_incremental": true
+              },
+              {
+                "name": "updated_at",
+                "type": "datetime2",
+                "nullable": false,
+                "is_incremental": true
+              }
+            ],
+            "primary_keys": [
+              "store_id"
+            ],
+            "foreign_keys": [],
+            "row_count": 2,
+            "incremental_columns": [
+              "store_id",
+              "created_at",
+              "updated_at"
+            ],
+            "partition_columns": [
+              "created_at",
+              "updated_at"
+            ],
+            "join_candidates": [],
+            "cdc_enabled": false,
+            "has_primary_key": true,
+            "has_foreign_keys": false,
+            "has_sensitive_fields": false
+          },
+          {
+            "table": "suppliers",
+            "schema": "dbo",
+            "columns": [
+              {
+                "name": "supplier_id",
+                "type": "bigint",
+                "nullable": false,
+                "is_incremental": true
+              },
+              {
+                "name": "name",
+                "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+                "nullable": false,
+                "is_incremental": false
+              },
+              {
+                "name": "contact_name",
+                "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+                "nullable": true,
+                "is_incremental": false
+              },
+              {
+                "name": "email",
+                "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+                "nullable": true,
+                "is_incremental": false
+              },
+              {
+                "name": "phone",
+                "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+                "nullable": true,
+                "is_incremental": false
+              },
+              {
+                "name": "created_at",
+                "type": "datetime2",
+                "nullable": false,
+                "is_incremental": true
+              },
+              {
+                "name": "updated_at",
+                "type": "datetime2",
+                "nullable": false,
+                "is_incremental": true
+              }
+            ],
+            "primary_keys": [
+              "supplier_id"
+            ],
+            "foreign_keys": [],
+            "row_count": 2,
+            "incremental_columns": [
+              "supplier_id",
+              "created_at",
+              "updated_at"
+            ],
+            "partition_columns": [
+              "created_at",
+              "updated_at"
+            ],
+            "join_candidates": [],
+            "cdc_enabled": false,
+            "has_primary_key": true,
+            "has_foreign_keys": false,
+            "has_sensitive_fields": false
+          }
         ]
       }
     },

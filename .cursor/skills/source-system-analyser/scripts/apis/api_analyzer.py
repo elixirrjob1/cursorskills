@@ -12,7 +12,7 @@ import re
 from collections import Counter
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 # Type inference helpers
 def infer_type(value: Any) -> str:
@@ -37,6 +37,46 @@ def infer_type(value: Any) -> str:
     return "text"
 
 
+def _normalize_discovery_tables(raw_tables: Any) -> Tuple[List[str], Dict[str, Dict[str, Any]]]:
+    """Support discovery tables as either ['customers'] or [{'table': 'customers', ...}]."""
+    names: List[str] = []
+    metadata_by_table: Dict[str, Dict[str, Any]] = {}
+
+    if not isinstance(raw_tables, list):
+        return names, metadata_by_table
+
+    for entry in raw_tables:
+        if isinstance(entry, str):
+            table_name = entry.strip()
+            if table_name and table_name not in metadata_by_table:
+                names.append(table_name)
+                metadata_by_table[table_name] = {}
+            continue
+
+        if isinstance(entry, dict):
+            table_name = str(entry.get("table") or entry.get("name") or "").strip()
+            if not table_name:
+                continue
+            if table_name not in metadata_by_table:
+                names.append(table_name)
+            metadata_by_table[table_name] = entry
+
+    return names, metadata_by_table
+
+
+def _load_table_payload(data_dir: Path, table_name: str) -> Optional[Dict[str, Any]]:
+    """Load table payload from api_reader output, accepting with/without .json suffix."""
+    candidates = [data_dir / table_name, data_dir / f"{table_name}.json"]
+    for data_file in candidates:
+        if not data_file.exists():
+            continue
+        with open(data_file, "r", encoding="utf-8") as f:
+            payload = json.load(f)
+        if isinstance(payload, dict):
+            return payload
+    return None
+
+
 def analyze_api_data(discovery_file: Path, data_dir: Path, base_url: str) -> Dict[str, Any]:
     """Analyze API data and generate normalized schema.json."""
     
@@ -44,7 +84,7 @@ def analyze_api_data(discovery_file: Path, data_dir: Path, base_url: str) -> Dic
     with open(discovery_file, "r", encoding="utf-8") as f:
         discovery = json.load(f)
     
-    tables_list = discovery.get("tables", [])
+    tables_list, discovery_meta_by_table = _normalize_discovery_tables(discovery.get("tables", []))
     schema_name = "dbo"  # Default from test API
     
     # Process each table
@@ -52,41 +92,65 @@ def analyze_api_data(discovery_file: Path, data_dir: Path, base_url: str) -> Dic
     all_findings = []
     
     for table_name in tables_list:
-        data_file = data_dir / table_name
-        if not data_file.exists():
+        table_data = _load_table_payload(data_dir, table_name)
+        if not table_data:
             continue
-        
-        with open(data_file, "r", encoding="utf-8") as f:
-            table_data = json.load(f)
-        
-        schema = table_data.get("schema", schema_name)
+
+        discovered_table_meta = discovery_meta_by_table.get(table_name, {})
+        api_table_meta = table_data.get("metadata") if isinstance(table_data.get("metadata"), dict) else {}
+        table_meta = api_table_meta or discovered_table_meta
+
+        schema = (
+            table_data.get("schema")
+            or table_meta.get("schema")
+            or schema_name
+        )
         records = table_data.get("data", [])
-        
-        if not records:
-            continue
-        
-        # Infer columns from first record
-        first_record = records[0]
+
+        # Build columns from API metadata when available; fallback to inferred from first row.
         columns = []
-        column_types = {}
         null_counts = Counter()
         value_samples = {}  # For controlled value detection
-        
-        for col_name, col_value in first_record.items():
-            col_type = infer_type(col_value)
-            columns.append({
-                "name": col_name,
-                "type": col_type,
-                "nullable": True,  # Assume nullable unless proven otherwise
-                "is_incremental": col_name in ("created_at", "updated_at", "id"),
-                "cardinality": None,
-                "null_count": 0,
-                "data_range": {"min": None, "max": None},
-                "data_category": None,
-            })
-            column_types[col_name] = col_type
-            value_samples[col_name] = set()
-        
+
+        metadata_columns = table_meta.get("columns") if isinstance(table_meta, dict) else None
+        if isinstance(metadata_columns, list) and metadata_columns:
+            for col in metadata_columns:
+                if not isinstance(col, dict):
+                    continue
+                col_name = str(col.get("name") or "").strip()
+                if not col_name:
+                    continue
+                col_type = str(col.get("type") or "text")
+                columns.append({
+                    "name": col_name,
+                    "type": col_type,
+                    "nullable": bool(col.get("nullable", True)),
+                    "is_incremental": bool(col.get("is_incremental", False)),
+                    "cardinality": None,
+                    "null_count": 0,
+                    "data_range": {"min": None, "max": None},
+                    "data_category": None,
+                })
+                value_samples[col_name] = set()
+        elif records:
+            first_record = records[0]
+            for col_name, col_value in first_record.items():
+                col_type = infer_type(col_value)
+                columns.append({
+                    "name": col_name,
+                    "type": col_type,
+                    "nullable": True,  # Assume nullable unless proven otherwise
+                    "is_incremental": col_name in ("created_at", "updated_at", "id"),
+                    "cardinality": None,
+                    "null_count": 0,
+                    "data_range": {"min": None, "max": None},
+                    "data_category": None,
+                })
+                value_samples[col_name] = set()
+
+        if not columns:
+            continue
+
         # Analyze all records
         for record in records:
             for col_name in columns:
@@ -104,7 +168,8 @@ def analyze_api_data(discovery_file: Path, data_dir: Path, base_url: str) -> Dic
         for col in columns:
             col_name = col["name"]
             col["null_count"] = null_counts[col_name]
-            col["nullable"] = null_counts[col_name] > 0 or len(records) == 0
+            if records:
+                col["nullable"] = null_counts[col_name] > 0
             unique_count = len(value_samples.get(col_name, set()))
             col["cardinality"] = unique_count if unique_count > 0 else None
             
@@ -120,34 +185,44 @@ def analyze_api_data(discovery_file: Path, data_dir: Path, base_url: str) -> Dic
                     col["data_range"]["max"] = str(max(numeric_values))
         
         # Identify primary keys (fields ending in _id or just 'id')
-        primary_keys = []
-        for col in columns:
-            col_name = col["name"]
-            if col_name == "id" or (col_name.endswith("_id") and col_name != "id"):
-                # Check if it's unique
-                if col["cardinality"] == len(records):
-                    primary_keys.append(col_name)
-        
-        # If no clear PK found, check for 'id' or '{table}_id'
-        if not primary_keys:
+        meta_primary_keys = table_meta.get("primary_keys") if isinstance(table_meta, dict) else None
+        if isinstance(meta_primary_keys, list) and meta_primary_keys:
+            primary_keys = [str(pk) for pk in meta_primary_keys if str(pk).strip()]
+        else:
+            primary_keys = []
             for col in columns:
                 col_name = col["name"]
-                if col_name == f"{table_name}_id" or col_name == "id":
-                    primary_keys.append(col_name)
-                    break
+                if col_name == "id" or (col_name.endswith("_id") and col_name != "id"):
+                    if col["cardinality"] == len(records):
+                        primary_keys.append(col_name)
+            if not primary_keys:
+                for col in columns:
+                    col_name = col["name"]
+                    if col_name == f"{table_name}_id" or col_name == "id":
+                        primary_keys.append(col_name)
+                        break
         
         # Identify foreign keys (fields ending in _id that reference other tables)
-        foreign_keys = []
-        for col in columns:
-            col_name = col["name"]
-            if col_name.endswith("_id") and col_name not in primary_keys:
-                # Infer referenced table from column name
-                ref_table = col_name.replace("_id", "")
-                if ref_table in tables_list:
+        meta_foreign_keys = table_meta.get("foreign_keys") if isinstance(table_meta, dict) else None
+        if isinstance(meta_foreign_keys, list) and meta_foreign_keys:
+            foreign_keys = []
+            for fk in meta_foreign_keys:
+                if isinstance(fk, dict) and fk.get("column") and fk.get("references"):
                     foreign_keys.append({
-                        "column": col_name,
-                        "references": f"{schema}.{ref_table}({ref_table}_id)"
+                        "column": str(fk["column"]),
+                        "references": str(fk["references"]),
                     })
+        else:
+            foreign_keys = []
+            for col in columns:
+                col_name = col["name"]
+                if col_name.endswith("_id") and col_name not in primary_keys:
+                    ref_table = col_name.replace("_id", "")
+                    if ref_table in tables_list:
+                        foreign_keys.append({
+                            "column": col_name,
+                            "references": f"{schema}.{ref_table}({ref_table}_id)"
+                        })
         
         # Data quality checks
         findings = []

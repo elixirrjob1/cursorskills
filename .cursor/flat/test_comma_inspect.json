@@ -1,0 +1,45 @@
+{
+  "files": [
+    {
+      "kind": "columns",
+      "path": ".cursor/flat/test_comma.csv",
+      "sheet": null,
+      "row_count": 4,
+      "headers": [
+        "id",
+        "name",
+        "email",
+        "age"
+      ],
+      "suggested_mapping": {
+        "table": null,
+        "column": "name",
+        "type": null,
+        "schema": null,
+        "primary_key": null,
+        "foreign_key": null
+      },
+      "sample_rows": [
+        {
+          "id": "1",
+          "name": "John Doe",
+          "email": "john@example.com",
+          "age": "30"
+        },
+        {
+          "id": "2",
+          "name": "Jane Smith",
+          "email": "jane@example.com",
+          "age": "25"
+        },
+        {
+          "id": "3",
+          "name": "Bob Johnson",
+          "email": "bob@example.com",
+          "age": "35"
+        }
+      ],
+      "delimiter": ","
+    }
+  ]
+}

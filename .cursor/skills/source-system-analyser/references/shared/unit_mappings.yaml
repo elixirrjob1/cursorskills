@@ -1,0 +1,368 @@
+unit_aliases:
+  # Length
+  m: m
+  meter: m
+  meters: m
+  metre: m
+  metres: m
+  km: km
+  kilometer: km
+  kilometers: km
+  kilometre: km
+  centimetre: cm
+  centimeter: cm
+  centimetres: cm
+  centimeters: cm
+  cm: cm
+  mm: mm
+  millimeter: mm
+  millimetre: mm
+  um: um
+  micrometer: um
+  micrometre: um
+  nm: nm
+  nanometer: nm
+  nanometre: nm
+  in: in
+  inch: in
+  inches: in
+  ft: ft
+  foot: ft
+  feet: ft
+  yd: yd
+  yard: yd
+  yards: yd
+  mi: mi
+  mile: mi
+  miles: mi
+  nmi: nmi
+  nautical_mile: nmi
+
+  # Area
+  m2: m2
+  sqm: m2
+  square_meter: m2
+  square_metre: m2
+  km2: km2
+  square_kilometer: km2
+  square_kilometre: km2
+  cm2: cm2
+  mm2: mm2
+  ft2: ft2
+  sqft: ft2
+  square_foot: ft2
+  in2: in2
+  sqin: in2
+  yd2: yd2
+  sqyd: yd2
+  acre: acre
+  acres: acre
+  ha: ha
+  hectare: ha
+  hectares: ha
+
+  # Volume
+  m3: m3
+  cubic_m: m3
+  cubic_meter: m3
+  cubic_metre: m3
+  cm3: cm3
+  cubic_cm: cm3
+  mm3: mm3
+  l: l
+  liter: l
+  litre: l
+  liters: l
+  litres: l
+  ml: ml
+  milliliter: ml
+  millilitre: ml
+  ul: ul
+  microliter: ul
+  microlitre: ul
+  ft3: ft3
+  cubic_ft: ft3
+  cubic_foot: ft3
+  in3: in3
+  cubic_in: in3
+  yd3: yd3
+  cubic_yd: yd3
+  gal: gal_us
+  gallon: gal_us
+  gallons: gal_us
+  us_gallon: gal_us
+  qt: qt_us
+  quart: qt_us
+  quarts: qt_us
+  pt: pt_us
+  pint: pt_us
+  pints: pt_us
+  cup: cup_us
+  cups: cup_us
+  floz: floz_us
+  fluid_ounce: floz_us
+  tbsp: tbsp_us
+  tablespoon: tbsp_us
+  tsp: tsp_us
+  teaspoon: tsp_us
+  imp_gallon: gal_uk
+  uk_gallon: gal_uk
+
+  # Mass
+  kg: kg
+  kilogram: kg
+  kilograms: kg
+  g: g
+  gram: g
+  grams: g
+  mg: mg
+  milligram: mg
+  ug: ug
+  microgram: ug
+  tonne: tonne
+  metric_ton: tonne
+  t: tonne
+  lb: lb
+  lbs: lb
+  pound: lb
+  pounds: lb
+  oz: oz
+  ounce: oz
+  ounces: oz
+  st: stone
+  stone: stone
+  short_ton: short_ton
+  long_ton: long_ton
+
+  # Pressure
+  pa: pa
+  pascal: pa
+  kpa: kpa
+  mpa: mpa
+  bar: bar
+  mbar: mbar
+  psi: psi
+  ksi: ksi
+  atm: atm
+  torr: torr
+  mmhg: mmhg
+  inhg: inhg
+
+  # Temperature
+  c: c
+  celsius: c
+  degc: c
+  f: f
+  fahrenheit: f
+  degf: f
+  k: k
+  kelvin: k
+  r: r
+  rankine: r
+
+  # Duration
+  ns: ns
+  us: us_time
+  microsecond: us_time
+  ms: ms
+  millisecond: ms
+  s: s
+  sec: s
+  second: s
+  seconds: s
+  min: min
+  minute: min
+  minutes: min
+  h: h
+  hr: h
+  hour: h
+  hours: h
+  day: day
+  days: day
+  week: week
+  weeks: week
+
+  # Speed
+  mps: m_s
+  m/s: m_s
+  meter_per_second: m_s
+  kmh: km_h
+  km/h: km_h
+  kph: km_h
+  mph: mph
+  mile_per_hour: mph
+  ft/s: ft_s
+  fps: ft_s
+  knot: knot
+  knots: knot
+
+  # Flow rate
+  m3/s: m3_s
+  m3s: m3_s
+  m3/h: m3_h
+  m3h: m3_h
+  l/s: l_s
+  ls: l_s
+  l/min: l_min
+  lpm: l_min
+  l/h: l_h
+  gpm: gpm_us
+  cfm: cfm
+  ft3/min: cfm
+
+  # Force
+  n: n
+  newton: n
+  kn: kn
+  lbf: lbf
+
+  # Energy
+  j: j
+  joule: j
+  kj: kj
+  mj: mj
+  wh: wh
+  kwh: kwh
+  btu: btu
+  cal: cal
+  kcal: kcal
+
+  # Power
+  w: w
+  watt: w
+  kw: kw
+  mw: mw
+  hp: hp
+  horsepower: hp
+
+  # Density
+  kg/m3: kg_m3
+  g/cm3: g_cm3
+  lb/ft3: lb_ft3
+
+unit_conversion:
+  # Length canonical: m
+  m: { canonical_unit: m, unit_system: metric, factor_to_canonical: 1.0, offset_to_canonical: 0.0, dimension: length }
+  km: { canonical_unit: m, unit_system: metric, factor_to_canonical: 1000.0, offset_to_canonical: 0.0, dimension: length }
+  cm: { canonical_unit: m, unit_system: metric, factor_to_canonical: 0.01, offset_to_canonical: 0.0, dimension: length }
+  mm: { canonical_unit: m, unit_system: metric, factor_to_canonical: 0.001, offset_to_canonical: 0.0, dimension: length }
+  um: { canonical_unit: m, unit_system: metric, factor_to_canonical: 0.000001, offset_to_canonical: 0.0, dimension: length }
+  nm: { canonical_unit: m, unit_system: metric, factor_to_canonical: 0.000000001, offset_to_canonical: 0.0, dimension: length }
+  in: { canonical_unit: m, unit_system: imperial, factor_to_canonical: 0.0254, offset_to_canonical: 0.0, dimension: length }
+  ft: { canonical_unit: m, unit_system: imperial, factor_to_canonical: 0.3048, offset_to_canonical: 0.0, dimension: length }
+  yd: { canonical_unit: m, unit_system: imperial, factor_to_canonical: 0.9144, offset_to_canonical: 0.0, dimension: length }
+  mi: { canonical_unit: m, unit_system: imperial, factor_to_canonical: 1609.344, offset_to_canonical: 0.0, dimension: length }
+  nmi: { canonical_unit: m, unit_system: imperial, factor_to_canonical: 1852.0, offset_to_canonical: 0.0, dimension: length }
+
+  # Area canonical: m2
+  m2: { canonical_unit: m2, unit_system: metric, factor_to_canonical: 1.0, offset_to_canonical: 0.0, dimension: area }
+  km2: { canonical_unit: m2, unit_system: metric, factor_to_canonical: 1000000.0, offset_to_canonical: 0.0, dimension: area }
+  cm2: { canonical_unit: m2, unit_system: metric, factor_to_canonical: 0.0001, offset_to_canonical: 0.0, dimension: area }
+  mm2: { canonical_unit: m2, unit_system: metric, factor_to_canonical: 0.000001, offset_to_canonical: 0.0, dimension: area }
+  ft2: { canonical_unit: m2, unit_system: imperial, factor_to_canonical: 0.09290304, offset_to_canonical: 0.0, dimension: area }
+  in2: { canonical_unit: m2, unit_system: imperial, factor_to_canonical: 0.00064516, offset_to_canonical: 0.0, dimension: area }
+  yd2: { canonical_unit: m2, unit_system: imperial, factor_to_canonical: 0.83612736, offset_to_canonical: 0.0, dimension: area }
+  acre: { canonical_unit: m2, unit_system: imperial, factor_to_canonical: 4046.8564224, offset_to_canonical: 0.0, dimension: area }
+  ha: { canonical_unit: m2, unit_system: metric, factor_to_canonical: 10000.0, offset_to_canonical: 0.0, dimension: area }
+
+  # Volume canonical: m3
+  m3: { canonical_unit: m3, unit_system: metric, factor_to_canonical: 1.0, offset_to_canonical: 0.0, dimension: volume }
+  cm3: { canonical_unit: m3, unit_system: metric, factor_to_canonical: 0.000001, offset_to_canonical: 0.0, dimension: volume }
+  mm3: { canonical_unit: m3, unit_system: metric, factor_to_canonical: 0.000000001, offset_to_canonical: 0.0, dimension: volume }
+  l: { canonical_unit: m3, unit_system: metric, factor_to_canonical: 0.001, offset_to_canonical: 0.0, dimension: volume }
+  ml: { canonical_unit: m3, unit_system: metric, factor_to_canonical: 0.000001, offset_to_canonical: 0.0, dimension: volume }
+  ul: { canonical_unit: m3, unit_system: metric, factor_to_canonical: 0.000000001, offset_to_canonical: 0.0, dimension: volume }
+  ft3: { canonical_unit: m3, unit_system: imperial, factor_to_canonical: 0.028316846592, offset_to_canonical: 0.0, dimension: volume }
+  in3: { canonical_unit: m3, unit_system: imperial, factor_to_canonical: 0.000016387064, offset_to_canonical: 0.0, dimension: volume }
+  yd3: { canonical_unit: m3, unit_system: imperial, factor_to_canonical: 0.764554857984, offset_to_canonical: 0.0, dimension: volume }
+  gal_us: { canonical_unit: m3, unit_system: imperial, factor_to_canonical: 0.003785411784, offset_to_canonical: 0.0, dimension: volume }
+  qt_us: { canonical_unit: m3, unit_system: imperial, factor_to_canonical: 0.000946352946, offset_to_canonical: 0.0, dimension: volume }
+  pt_us: { canonical_unit: m3, unit_system: imperial, factor_to_canonical: 0.000473176473, offset_to_canonical: 0.0, dimension: volume }
+  cup_us: { canonical_unit: m3, unit_system: imperial, factor_to_canonical: 0.0002365882365, offset_to_canonical: 0.0, dimension: volume }
+  floz_us: { canonical_unit: m3, unit_system: imperial, factor_to_canonical: 0.0000295735295625, offset_to_canonical: 0.0, dimension: volume }
+  tbsp_us: { canonical_unit: m3, unit_system: imperial, factor_to_canonical: 0.00001478676478125, offset_to_canonical: 0.0, dimension: volume }
+  tsp_us: { canonical_unit: m3, unit_system: imperial, factor_to_canonical: 0.00000492892159375, offset_to_canonical: 0.0, dimension: volume }
+  gal_uk: { canonical_unit: m3, unit_system: imperial, factor_to_canonical: 0.00454609, offset_to_canonical: 0.0, dimension: volume }
+
+  # Mass canonical: kg
+  kg: { canonical_unit: kg, unit_system: metric, factor_to_canonical: 1.0, offset_to_canonical: 0.0, dimension: mass }
+  g: { canonical_unit: kg, unit_system: metric, factor_to_canonical: 0.001, offset_to_canonical: 0.0, dimension: mass }
+  mg: { canonical_unit: kg, unit_system: metric, factor_to_canonical: 0.000001, offset_to_canonical: 0.0, dimension: mass }
+  ug: { canonical_unit: kg, unit_system: metric, factor_to_canonical: 0.000000001, offset_to_canonical: 0.0, dimension: mass }
+  tonne: { canonical_unit: kg, unit_system: metric, factor_to_canonical: 1000.0, offset_to_canonical: 0.0, dimension: mass }
+  lb: { canonical_unit: kg, unit_system: imperial, factor_to_canonical: 0.45359237, offset_to_canonical: 0.0, dimension: mass }
+  oz: { canonical_unit: kg, unit_system: imperial, factor_to_canonical: 0.028349523125, offset_to_canonical: 0.0, dimension: mass }
+  stone: { canonical_unit: kg, unit_system: imperial, factor_to_canonical: 6.35029318, offset_to_canonical: 0.0, dimension: mass }
+  short_ton: { canonical_unit: kg, unit_system: imperial, factor_to_canonical: 907.18474, offset_to_canonical: 0.0, dimension: mass }
+  long_ton: { canonical_unit: kg, unit_system: imperial, factor_to_canonical: 1016.0469088, offset_to_canonical: 0.0, dimension: mass }
+
+  # Pressure canonical: bar
+  pa: { canonical_unit: bar, unit_system: metric, factor_to_canonical: 0.00001, offset_to_canonical: 0.0, dimension: pressure }
+  kpa: { canonical_unit: bar, unit_system: metric, factor_to_canonical: 0.01, offset_to_canonical: 0.0, dimension: pressure }
+  mpa: { canonical_unit: bar, unit_system: metric, factor_to_canonical: 10.0, offset_to_canonical: 0.0, dimension: pressure }
+  bar: { canonical_unit: bar, unit_system: metric, factor_to_canonical: 1.0, offset_to_canonical: 0.0, dimension: pressure }
+  mbar: { canonical_unit: bar, unit_system: metric, factor_to_canonical: 0.001, offset_to_canonical: 0.0, dimension: pressure }
+  psi: { canonical_unit: bar, unit_system: imperial, factor_to_canonical: 0.0689475729, offset_to_canonical: 0.0, dimension: pressure }
+  ksi: { canonical_unit: bar, unit_system: imperial, factor_to_canonical: 68.9475729, offset_to_canonical: 0.0, dimension: pressure }
+  atm: { canonical_unit: bar, unit_system: metric, factor_to_canonical: 1.01325, offset_to_canonical: 0.0, dimension: pressure }
+  torr: { canonical_unit: bar, unit_system: metric, factor_to_canonical: 0.001333223684, offset_to_canonical: 0.0, dimension: pressure }
+  mmhg: { canonical_unit: bar, unit_system: metric, factor_to_canonical: 0.001333223684, offset_to_canonical: 0.0, dimension: pressure }
+  inhg: { canonical_unit: bar, unit_system: imperial, factor_to_canonical: 0.0338638866667, offset_to_canonical: 0.0, dimension: pressure }
+
+  # Temperature canonical: c
+  c: { canonical_unit: c, unit_system: metric, factor_to_canonical: 1.0, offset_to_canonical: 0.0, dimension: temperature }
+  f: { canonical_unit: c, unit_system: imperial, factor_to_canonical: 0.5555555556, offset_to_canonical: -17.7777777778, dimension: temperature }
+  k: { canonical_unit: c, unit_system: metric, factor_to_canonical: 1.0, offset_to_canonical: -273.15, dimension: temperature }
+  r: { canonical_unit: c, unit_system: imperial, factor_to_canonical: 0.5555555556, offset_to_canonical: -273.15, dimension: temperature }
+
+  # Duration canonical: s
+  ns: { canonical_unit: s, unit_system: metric, factor_to_canonical: 0.000000001, offset_to_canonical: 0.0, dimension: duration }
+  us_time: { canonical_unit: s, unit_system: metric, factor_to_canonical: 0.000001, offset_to_canonical: 0.0, dimension: duration }
+  ms: { canonical_unit: s, unit_system: metric, factor_to_canonical: 0.001, offset_to_canonical: 0.0, dimension: duration }
+  s: { canonical_unit: s, unit_system: metric, factor_to_canonical: 1.0, offset_to_canonical: 0.0, dimension: duration }
+  min: { canonical_unit: s, unit_system: metric, factor_to_canonical: 60.0, offset_to_canonical: 0.0, dimension: duration }
+  h: { canonical_unit: s, unit_system: metric, factor_to_canonical: 3600.0, offset_to_canonical: 0.0, dimension: duration }
+  day: { canonical_unit: s, unit_system: metric, factor_to_canonical: 86400.0, offset_to_canonical: 0.0, dimension: duration }
+  week: { canonical_unit: s, unit_system: metric, factor_to_canonical: 604800.0, offset_to_canonical: 0.0, dimension: duration }
+
+  # Speed canonical: m_s
+  m_s: { canonical_unit: m_s, unit_system: metric, factor_to_canonical: 1.0, offset_to_canonical: 0.0, dimension: speed }
+  km_h: { canonical_unit: m_s, unit_system: metric, factor_to_canonical: 0.2777777778, offset_to_canonical: 0.0, dimension: speed }
+  mph: { canonical_unit: m_s, unit_system: imperial, factor_to_canonical: 0.44704, offset_to_canonical: 0.0, dimension: speed }
+  ft_s: { canonical_unit: m_s, unit_system: imperial, factor_to_canonical: 0.3048, offset_to_canonical: 0.0, dimension: speed }
+  knot: { canonical_unit: m_s, unit_system: imperial, factor_to_canonical: 0.514444, offset_to_canonical: 0.0, dimension: speed }
+
+  # Flow canonical: m3_s
+  m3_s: { canonical_unit: m3_s, unit_system: metric, factor_to_canonical: 1.0, offset_to_canonical: 0.0, dimension: flow_rate }
+  m3_h: { canonical_unit: m3_s, unit_system: metric, factor_to_canonical: 0.0002777778, offset_to_canonical: 0.0, dimension: flow_rate }
+  l_s: { canonical_unit: m3_s, unit_system: metric, factor_to_canonical: 0.001, offset_to_canonical: 0.0, dimension: flow_rate }
+  l_min: { canonical_unit: m3_s, unit_system: metric, factor_to_canonical: 0.0000166667, offset_to_canonical: 0.0, dimension: flow_rate }
+  l_h: { canonical_unit: m3_s, unit_system: metric, factor_to_canonical: 0.0000002778, offset_to_canonical: 0.0, dimension: flow_rate }
+  gpm_us: { canonical_unit: m3_s, unit_system: imperial, factor_to_canonical: 0.0000630902, offset_to_canonical: 0.0, dimension: flow_rate }
+  cfm: { canonical_unit: m3_s, unit_system: imperial, factor_to_canonical: 0.0004719474, offset_to_canonical: 0.0, dimension: flow_rate }
+
+  # Force canonical: n
+  n: { canonical_unit: n, unit_system: metric, factor_to_canonical: 1.0, offset_to_canonical: 0.0, dimension: force }
+  kn: { canonical_unit: n, unit_system: metric, factor_to_canonical: 1000.0, offset_to_canonical: 0.0, dimension: force }
+  lbf: { canonical_unit: n, unit_system: imperial, factor_to_canonical: 4.4482216153, offset_to_canonical: 0.0, dimension: force }
+
+  # Energy canonical: j
+  j: { canonical_unit: j, unit_system: metric, factor_to_canonical: 1.0, offset_to_canonical: 0.0, dimension: energy }
+  kj: { canonical_unit: j, unit_system: metric, factor_to_canonical: 1000.0, offset_to_canonical: 0.0, dimension: energy }
+  mj: { canonical_unit: j, unit_system: metric, factor_to_canonical: 1000000.0, offset_to_canonical: 0.0, dimension: energy }
+  wh: { canonical_unit: j, unit_system: metric, factor_to_canonical: 3600.0, offset_to_canonical: 0.0, dimension: energy }
+  kwh: { canonical_unit: j, unit_system: metric, factor_to_canonical: 3600000.0, offset_to_canonical: 0.0, dimension: energy }
+  btu: { canonical_unit: j, unit_system: imperial, factor_to_canonical: 1055.05585262, offset_to_canonical: 0.0, dimension: energy }
+  cal: { canonical_unit: j, unit_system: metric, factor_to_canonical: 4.184, offset_to_canonical: 0.0, dimension: energy }
+  kcal: { canonical_unit: j, unit_system: metric, factor_to_canonical: 4184.0, offset_to_canonical: 0.0, dimension: energy }
+
+  # Power canonical: w
+  w: { canonical_unit: w, unit_system: metric, factor_to_canonical: 1.0, offset_to_canonical: 0.0, dimension: power }
+  kw: { canonical_unit: w, unit_system: metric, factor_to_canonical: 1000.0, offset_to_canonical: 0.0, dimension: power }
+  mw: { canonical_unit: w, unit_system: metric, factor_to_canonical: 1000000.0, offset_to_canonical: 0.0, dimension: power }
+  hp: { canonical_unit: w, unit_system: imperial, factor_to_canonical: 745.699872, offset_to_canonical: 0.0, dimension: power }
+
+  # Density canonical: kg_m3
+  kg_m3: { canonical_unit: kg_m3, unit_system: metric, factor_to_canonical: 1.0, offset_to_canonical: 0.0, dimension: density }
+  g_cm3: { canonical_unit: kg_m3, unit_system: metric, factor_to_canonical: 1000.0, offset_to_canonical: 0.0, dimension: density }
+  lb_ft3: { canonical_unit: kg_m3, unit_system: imperial, factor_to_canonical: 16.0184634, offset_to_canonical: 0.0, dimension: density }

@@ -22,6 +22,11 @@ from typing import Dict, List, Optional, Any, Set
 from datetime import datetime, timezone
 from collections import Counter
 
+try:
+    import yaml  # type: ignore
+except Exception:
+    yaml = None
+
 from sqlalchemy import create_engine, inspect, text, MetaData, Table, select
 from sqlalchemy.engine import Engine
 from sqlalchemy.exc import SAWarning
@@ -56,6 +61,8 @@ def _load_env_file() -> None:
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
+
+_RULES_CACHE: Optional[Dict[str, Any]] = None
 
 
 # ============================================================================
@@ -397,6 +404,287 @@ def parse_connection_info(engine: Engine) -> Dict[str, str]:
     }
 
 
+def _default_context_rules() -> Dict[str, Any]:
+    return {
+        "semantic_patterns": [
+            {"pattern": r"(length|height|width|depth|distance|diameter|radius|thickness)", "semantic_class": "length"},
+            {"pattern": r"(volume|capacity|cubic|cbm|ft3|m3|liter|litre|gallon)", "semantic_class": "volume"},
+            {"pattern": r"(pressure|press|psi|bar|kpa|mpa)", "semantic_class": "pressure"},
+            {"pattern": r"(temperature|temp|celsius|fahrenheit|kelvin)", "semantic_class": "temperature"},
+            {"pattern": r"(duration|latency|elapsed|runtime|ttl|age|timeout)", "semantic_class": "duration"},
+            {"pattern": r"(sku|product_code|product_id)", "semantic_class": "product_identifier"},
+        ],
+        "unit_aliases": {
+            "ft": "ft",
+            "feet": "ft",
+            "foot": "ft",
+            "in": "in",
+            "inch": "in",
+            "inches": "in",
+            "m": "m",
+            "meter": "m",
+            "meters": "m",
+            "metre": "m",
+            "metres": "m",
+            "cm": "cm",
+            "mm": "mm",
+            "ft3": "ft3",
+            "cubic_ft": "ft3",
+            "cubic_foot": "ft3",
+            "m3": "m3",
+            "cubic_m": "m3",
+            "cubic_meter": "m3",
+            "cubic_metre": "m3",
+            "l": "l",
+            "liter": "l",
+            "litre": "l",
+            "psi": "psi",
+            "bar": "bar",
+            "kpa": "kpa",
+            "mpa": "mpa",
+            "s": "s",
+            "sec": "s",
+            "second": "s",
+            "seconds": "s",
+            "min": "min",
+            "minute": "min",
+            "minutes": "min",
+            "h": "h",
+            "hr": "h",
+            "hour": "h",
+            "hours": "h",
+            "c": "c",
+            "celsius": "c",
+            "f": "f",
+            "fahrenheit": "f",
+            "k": "k",
+            "kelvin": "k",
+        },
+        "unit_conversion": {
+            "ft": {"canonical_unit": "m", "unit_system": "imperial", "factor_to_canonical": 0.3048, "offset_to_canonical": 0.0, "dimension": "length"},
+            "in": {"canonical_unit": "m", "unit_system": "imperial", "factor_to_canonical": 0.0254, "offset_to_canonical": 0.0, "dimension": "length"},
+            "m": {"canonical_unit": "m", "unit_system": "metric", "factor_to_canonical": 1.0, "offset_to_canonical": 0.0, "dimension": "length"},
+            "cm": {"canonical_unit": "m", "unit_system": "metric", "factor_to_canonical": 0.01, "offset_to_canonical": 0.0, "dimension": "length"},
+            "mm": {"canonical_unit": "m", "unit_system": "metric", "factor_to_canonical": 0.001, "offset_to_canonical": 0.0, "dimension": "length"},
+            "ft3": {"canonical_unit": "m3", "unit_system": "imperial", "factor_to_canonical": 0.028316846592, "offset_to_canonical": 0.0, "dimension": "volume"},
+            "m3": {"canonical_unit": "m3", "unit_system": "metric", "factor_to_canonical": 1.0, "offset_to_canonical": 0.0, "dimension": "volume"},
+            "l": {"canonical_unit": "m3", "unit_system": "metric", "factor_to_canonical": 0.001, "offset_to_canonical": 0.0, "dimension": "volume"},
+            "psi": {"canonical_unit": "bar", "unit_system": "imperial", "factor_to_canonical": 0.0689475729, "offset_to_canonical": 0.0, "dimension": "pressure"},
+            "bar": {"canonical_unit": "bar", "unit_system": "metric", "factor_to_canonical": 1.0, "offset_to_canonical": 0.0, "dimension": "pressure"},
+            "kpa": {"canonical_unit": "bar", "unit_system": "metric", "factor_to_canonical": 0.01, "offset_to_canonical": 0.0, "dimension": "pressure"},
+            "mpa": {"canonical_unit": "bar", "unit_system": "metric", "factor_to_canonical": 10.0, "offset_to_canonical": 0.0, "dimension": "pressure"},
+            "s": {"canonical_unit": "s", "unit_system": "metric", "factor_to_canonical": 1.0, "offset_to_canonical": 0.0, "dimension": "duration"},
+            "min": {"canonical_unit": "s", "unit_system": "metric", "factor_to_canonical": 60.0, "offset_to_canonical": 0.0, "dimension": "duration"},
+            "h": {"canonical_unit": "s", "unit_system": "metric", "factor_to_canonical": 3600.0, "offset_to_canonical": 0.0, "dimension": "duration"},
+            "c": {"canonical_unit": "c", "unit_system": "metric", "factor_to_canonical": 1.0, "offset_to_canonical": 0.0, "dimension": "temperature"},
+            "f": {"canonical_unit": "c", "unit_system": "imperial", "factor_to_canonical": 0.5555555556, "offset_to_canonical": -17.7777777778, "dimension": "temperature"},
+            "k": {"canonical_unit": "c", "unit_system": "metric", "factor_to_canonical": 1.0, "offset_to_canonical": -273.15, "dimension": "temperature"},
+        },
+    }
+
+
+def _load_context_rules() -> Dict[str, Any]:
+    global _RULES_CACHE
+    if _RULES_CACHE is not None:
+        return _RULES_CACHE
+
+    rules = _default_context_rules()
+    if yaml is None:
+        _RULES_CACHE = rules
+        return rules
+
+    shared_dir = (_script_dir.parent / "references" / "shared").resolve()
+    semantic_path = shared_dir / "semantic_mappings.yaml"
+    unit_path = shared_dir / "unit_mappings.yaml"
+
+    try:
+        if semantic_path.exists():
+            with open(semantic_path, encoding="utf-8") as f:
+                semantic_data = yaml.safe_load(f) or {}
+            if isinstance(semantic_data.get("semantic_patterns"), list):
+                rules["semantic_patterns"] = semantic_data["semantic_patterns"]
+    except Exception as e:
+        logger.warning("Could not load semantic mappings from %s: %s", semantic_path, e)
+
+    try:
+        if unit_path.exists():
+            with open(unit_path, encoding="utf-8") as f:
+                unit_data = yaml.safe_load(f) or {}
+            if isinstance(unit_data.get("unit_aliases"), dict):
+                rules["unit_aliases"].update({str(k): str(v) for k, v in unit_data["unit_aliases"].items()})
+            if isinstance(unit_data.get("unit_conversion"), dict):
+                rules["unit_conversion"].update(unit_data["unit_conversion"])
+    except Exception as e:
+        logger.warning("Could not load unit mappings from %s: %s", unit_path, e)
+
+    _RULES_CACHE = rules
+    return rules
+
+
+_FIELD_CLASS_TO_SEMANTIC = {
+    "pricing": "currency_amount",
+    "quantity": "count",
+    "categorical": "category",
+    "temporal": "timestamp",
+    "contact": "contact",
+}
+_UNITFUL_SEMANTIC_CLASSES = {
+    "length",
+    "area",
+    "volume",
+    "mass",
+    "pressure",
+    "temperature",
+    "duration",
+    "speed",
+    "flow_rate",
+    "force",
+    "energy",
+    "power",
+    "density",
+}
+
+
+def _infer_semantic_class(col_name: str, field_classification: Optional[str]) -> Optional[str]:
+    if field_classification in _FIELD_CLASS_TO_SEMANTIC:
+        return _FIELD_CLASS_TO_SEMANTIC[field_classification]
+    lower = col_name.lower()
+    rules = _load_context_rules()
+    for rule in rules.get("semantic_patterns", []):
+        if not isinstance(rule, dict):
+            continue
+        pattern = str(rule.get("pattern") or "").strip()
+        semantic_class = str(rule.get("semantic_class") or "").strip()
+        if not pattern or not semantic_class:
+            continue
+        try:
+            if re.search(pattern, lower):
+                return semantic_class
+        except re.error:
+            if pattern in lower:
+                return semantic_class
+    return None
+
+
+def _extract_unit_from_name(col_name: str, aliases: Dict[str, str]) -> Optional[str]:
+    lower = re.sub(r"[^a-z0-9]+", "_", col_name.lower()).strip("_")
+    if not lower:
+        return None
+    for alias in sorted(aliases.keys(), key=len, reverse=True):
+        norm_alias = re.sub(r"[^a-z0-9]+", "_", str(alias).lower()).strip("_")
+        if not norm_alias:
+            continue
+        if re.search(rf"(?:^|_){re.escape(norm_alias)}(?:$|_)", lower):
+            return aliases[alias]
+    return None
+
+
+def _extract_unit_from_samples(sample_values: List[Any], aliases: Dict[str, str]) -> Optional[str]:
+    if not sample_values:
+        return None
+    tokens = []
+    for value in sample_values[:20]:
+        sval = str(value).strip().lower()
+        m = re.search(r"(?:^|\s)([a-z0-9_\/]+)\s*$", sval)
+        if m:
+            tokens.append(m.group(1))
+    for token in tokens:
+        if token in aliases:
+            return aliases[token]
+    return None
+
+
+def _build_unit_context(
+    col_name: str,
+    semantic_class: Optional[str],
+    sample_values: Optional[List[Any]] = None,
+) -> Optional[Dict[str, Any]]:
+    rules = _load_context_rules()
+    aliases = rules.get("unit_aliases", {})
+    conversions = rules.get("unit_conversion", {})
+
+    detected = _extract_unit_from_name(col_name, aliases)
+    detection_source = "name"
+    confidence = "medium"
+    if not detected and sample_values:
+        detected = _extract_unit_from_samples(sample_values, aliases)
+        if detected:
+            detection_source = "sample_values"
+            confidence = "low"
+    if not detected:
+        if semantic_class in _UNITFUL_SEMANTIC_CLASSES:
+            return {
+                "detected_unit": None,
+                "canonical_unit": None,
+                "unit_system": "unknown",
+                "conversion": None,
+                "detection_confidence": "low",
+                "detection_source": "combined",
+                "notes": "Semantic class suggests units, but no explicit source unit token was detected.",
+            }
+        return None
+
+    conv = conversions.get(detected)
+    if not isinstance(conv, dict):
+        return {
+            "detected_unit": detected,
+            "canonical_unit": None,
+            "unit_system": "unknown",
+            "conversion": None,
+            "detection_confidence": confidence,
+            "detection_source": detection_source,
+            "notes": "Detected unit alias is not configured for canonical conversion.",
+        }
+
+    canonical_unit = conv.get("canonical_unit")
+    unit_system = conv.get("unit_system", "unknown")
+    factor = conv.get("factor_to_canonical")
+    offset = conv.get("offset_to_canonical", 0.0)
+    conversion = {
+        "factor_to_canonical": factor,
+        "offset_to_canonical": offset,
+        "formula": f"canonical = value * {factor} + {offset}",
+    }
+    notes = None
+    if detected != canonical_unit:
+        notes = f"Values should be normalized from '{detected}' to canonical '{canonical_unit}'."
+    return {
+        "detected_unit": detected,
+        "canonical_unit": canonical_unit,
+        "unit_system": unit_system,
+        "conversion": conversion,
+        "detection_confidence": confidence,
+        "detection_source": detection_source,
+        "notes": notes,
+    }
+
+
+def _build_unit_summary(columns: List[Dict[str, Any]]) -> Dict[str, Any]:
+    with_units = 0
+    unknown_cols: List[str] = []
+    groups: Dict[str, Set[str]] = {}
+    for col in columns:
+        semantic_class = col.get("semantic_class")
+        unit_ctx = col.get("unit_context")
+        if isinstance(unit_ctx, dict) and unit_ctx.get("detected_unit"):
+            with_units += 1
+            if semantic_class:
+                groups.setdefault(str(semantic_class), set()).add(str(unit_ctx.get("detected_unit")))
+        elif semantic_class in _UNITFUL_SEMANTIC_CLASSES:
+            unknown_cols.append(str(col.get("name")))
+    mixed_groups = [
+        {"semantic_class": cls, "detected_units": sorted(units)}
+        for cls, units in groups.items()
+        if len(units) > 1
+    ]
+    return {
+        "columns_with_units": with_units,
+        "columns_without_units": max(len(columns) - with_units, 0),
+        "mixed_unit_groups": mixed_groups,
+        "unknown_unit_columns": sorted(unknown_cols),
+    }
+
+
 def classify_field(col_name: str) -> Optional[str]:
     """Classify a field based on its name."""
     col_name_lower = col_name.lower()
@@ -440,6 +728,31 @@ def detect_join_candidates(table_name: str, columns: List[Dict], pk_columns: Lis
     """Detect columns that are candidates for JOIN operations."""
     explicit_fk_cols = {fk["column"] for fk in fk_columns}
     candidates = []
+    candidate_keys = set()
+
+    # Explicit FK columns are always valid join candidates.
+    for fk in fk_columns:
+        col = fk.get("column")
+        ref = fk.get("references")
+        if not col:
+            continue
+        target_table = None
+        target_column = None
+        if isinstance(ref, str) and "." in ref:
+            target_table, target_column = ref.split(".", 1)
+        key = (col, target_table, target_column)
+        if key in candidate_keys:
+            continue
+        candidate_keys.add(key)
+        candidates.append(
+            {
+                "column": col,
+                "target_table": target_table,
+                "target_column": target_column,
+                "confidence": "high",
+            }
+        )
+
     for col in columns:
         name = col["name"]
         name_lower = name.lower()
@@ -464,9 +777,17 @@ def detect_join_candidates(table_name: str, columns: List[Dict], pk_columns: Lis
                 suffix_base = matched_suffix.lstrip("_")
                 target_col = next((pk for pk in other_pks if pk.lower() == suffix_base or pk.lower() == name_lower), None)
                 target_col = target_col or (other_pks[0] if other_pks else None)
+                key = (name, other_table, target_col)
+                if key in candidate_keys:
+                    break
+                candidate_keys.add(key)
                 candidates.append({"column": name, "target_table": other_table, "target_column": target_col, "confidence": "high"})
                 break
         else:
+            key = (name, None, None)
+            if key in candidate_keys:
+                continue
+            candidate_keys.add(key)
             candidates.append({"column": name, "target_table": None, "target_column": None, "confidence": "low"})
     return candidates
 
@@ -1049,6 +1370,75 @@ def check_timezone(engine: Engine, tables: List[Dict], schema: str, adapter=None
     return findings
 
 
+def check_unit_consistency(tables: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    findings: List[Dict[str, Any]] = []
+    for tbl in tables:
+        table_name = tbl.get("table")
+        unit_groups: Dict[str, Set[str]] = {}
+        for col in tbl.get("columns", []):
+            col_name = col.get("name")
+            semantic_class = col.get("semantic_class")
+            unit_ctx = col.get("unit_context")
+            if not semantic_class or semantic_class not in _UNITFUL_SEMANTIC_CLASSES:
+                continue
+            if not isinstance(unit_ctx, dict):
+                findings.append(
+                    {
+                        "table": table_name,
+                        "column": col_name,
+                        "check": "unit_unknown",
+                        "severity": "warning",
+                        "detail": f"Column semantic class '{semantic_class}' expects units, but no unit context was detected.",
+                        "recommendation": "Annotate the source column with explicit units or add a mapping override.",
+                    }
+                )
+                continue
+            detected = unit_ctx.get("detected_unit")
+            canonical = unit_ctx.get("canonical_unit")
+            conversion = unit_ctx.get("conversion")
+            if not detected:
+                findings.append(
+                    {
+                        "table": table_name,
+                        "column": col_name,
+                        "check": "unit_unknown",
+                        "severity": "warning",
+                        "detail": f"Column semantic class '{semantic_class}' has unknown source units.",
+                        "recommendation": "Add explicit source unit mapping for this field to enable safe aggregation.",
+                    }
+                )
+                continue
+            unit_groups.setdefault(str(semantic_class), set()).add(str(detected))
+            if canonical and detected != canonical and isinstance(conversion, dict):
+                findings.append(
+                    {
+                        "table": table_name,
+                        "column": col_name,
+                        "check": "unit_noncanonical_but_convertible",
+                        "severity": "warning",
+                        "detail": f"Column uses '{detected}' while canonical unit is '{canonical}'.",
+                        "recommendation": "Convert values to canonical unit during ingestion using the provided conversion metadata.",
+                        "detected_unit": detected,
+                        "canonical_unit": canonical,
+                    }
+                )
+        for semantic_class, units in unit_groups.items():
+            if len(units) > 1:
+                findings.append(
+                    {
+                        "table": table_name,
+                        "column": None,
+                        "check": "unit_mismatch_within_semantic_group",
+                        "severity": "warning",
+                        "detail": f"Columns in semantic class '{semantic_class}' use mixed source units: {', '.join(sorted(units))}.",
+                        "recommendation": "Normalize all fields in this semantic class to one canonical unit before aggregation.",
+                        "semantic_class": semantic_class,
+                        "detected_units": sorted(units),
+                    }
+                )
+    return findings
+
+
 # ============================================================================
 # Data quality: per-table grouping helper
 # ============================================================================
@@ -1107,6 +1497,8 @@ def analyze_source_system(
         connection_info = parse_connection_info(engine)
         db_timezone = fetch_database_timezone(engine, adapter=adapter)
         row_counts = fetch_row_counts(engine, tables, schema=schema, adapter=adapter)
+        table_descriptions = adapter.fetch_table_descriptions(engine, schema) if adapter else {}
+        column_descriptions = adapter.fetch_column_descriptions(engine, schema) if adapter else {}
 
         enriched_tables = []
         total_rows = 0
@@ -1140,6 +1532,9 @@ def analyze_source_system(
                 enriched_columns = []
                 for col in table_columns:
                     col_dict = {"name": col["name"], "type": col["type"], "nullable": col.get("nullable", True), "is_incremental": col.get("is_incremental", False)}
+                    col_desc = (column_descriptions.get(table_name, {}) or {}).get(col["name"])
+                    if col_desc:
+                        col_dict["column_description"] = col_desc
                     col_tz = get_column_timezone(col["type"], dialect, db_timezone)
                     if col_tz is not None:
                         col_dict["column_timezone"] = col_tz
@@ -1152,10 +1547,18 @@ def analyze_source_system(
                     data_cat = classify_data_category(col["type"], col["name"], cardinality=stats.get("cardinality", 0), row_count=row_count)
                     if data_cat:
                         col_dict["data_category"] = data_cat
+                    field_classification = field_classifications.get(col["name"])
+                    semantic_class = _infer_semantic_class(col["name"], field_classification)
+                    col_dict["semantic_class"] = semantic_class
+                    sample_values = sample_data.get(col["name"], []) if isinstance(sample_data, dict) else None
+                    col_dict["unit_context"] = _build_unit_context(col["name"], semantic_class, sample_values=sample_values)
                     enriched_columns.append(col_dict)
+
+                unit_summary = _build_unit_summary(enriched_columns)
 
                 table_entry = {
                     "table": table_name, "schema": table_schema, "columns": enriched_columns,
+                    "table_description": table_descriptions.get(table_name),
                     "primary_keys": pk_columns,
                     "foreign_keys": [{"column": fk["column"], "references": fk["references"]} for fk in fk_columns],
                     "row_count": row_count,
@@ -1164,6 +1567,7 @@ def analyze_source_system(
                     "incremental_columns": incremental_columns,
                     "partition_columns": partition_columns,
                     "join_candidates": join_candidates,
+                    "unit_summary": unit_summary,
                     "cdc_enabled": cdc_enabled,
                     "has_primary_key": len(pk_columns) > 0,
                     "has_foreign_keys": len(fk_columns) > 0,
@@ -1195,6 +1599,7 @@ def analyze_source_system(
             all_findings.extend(check_delete_management(engine, enriched_tables, schema, adapter=adapter))
             all_findings.extend(check_late_arriving_data(engine, enriched_tables, schema, adapter=adapter))
             all_findings.extend(check_timezone(engine, enriched_tables, schema, adapter=adapter))
+            all_findings.extend(check_unit_consistency(enriched_tables))
 
             severity_counts = Counter(f["severity"] for f in all_findings)
             check_counts = Counter(f["check"] for f in all_findings)
@@ -1225,6 +1630,7 @@ def analyze_source_system(
                         "missing_primary_key", "missing_foreign_key",
                         "format_inconsistency", "range_violation",
                         "delete_management", "late_arriving_data", "timezone",
+                        "unit_unknown", "unit_noncanonical_but_convertible", "unit_mismatch_within_semantic_group",
                     )
                 },
                 "constraints_found": {
@@ -1254,6 +1660,11 @@ def analyze_source_system(
                 "total_findings": total_findings,
             },
             "connection": {**connection_info, "timezone": db_timezone},
+            "source_system_context": {
+                "contacts": [],
+                "delete_management_instruction": "",
+                "restrictions": "",
+            },
             "data_quality_summary": data_quality_summary,
             "tables": enriched_tables,
         }

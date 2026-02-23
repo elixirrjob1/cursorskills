@@ -92,6 +92,48 @@ class PostgresqlAdapter(DialectAdapter):
         except Exception:
             return False
 
+    def fetch_table_descriptions(self, engine: Engine, schema: str) -> Dict[str, str]:
+        result: Dict[str, str] = {}
+        query = text(
+            """
+            SELECT c.relname AS table_name, obj_description(c.oid, 'pg_class') AS description
+            FROM pg_class c
+            JOIN pg_namespace n ON n.oid = c.relnamespace
+            WHERE n.nspname = :schema AND c.relkind = 'r'
+            """
+        )
+        try:
+            with engine.connect() as conn:
+                for row in conn.execute(query, {"schema": schema}).fetchall():
+                    if row[1]:
+                        result[str(row[0])] = str(row[1])
+        except Exception as e:
+            logger.warning(f"Could not fetch table descriptions: {e}")
+        return result
+
+    def fetch_column_descriptions(self, engine: Engine, schema: str) -> Dict[str, Dict[str, str]]:
+        result: Dict[str, Dict[str, str]] = {}
+        query = text(
+            """
+            SELECT c.relname AS table_name, a.attname AS column_name, col_description(a.attrelid, a.attnum) AS description
+            FROM pg_class c
+            JOIN pg_namespace n ON n.oid = c.relnamespace
+            JOIN pg_attribute a ON a.attrelid = c.oid
+            WHERE n.nspname = :schema
+              AND c.relkind = 'r'
+              AND a.attnum > 0
+              AND NOT a.attisdropped
+            """
+        )
+        try:
+            with engine.connect() as conn:
+                for row in conn.execute(query, {"schema": schema}).fetchall():
+                    if row[2]:
+                        result.setdefault(str(row[0]), {})[str(row[1])] = str(row[2])
+        except Exception as e:
+            logger.warning(f"Could not fetch column descriptions: {e}")
+        return result
+
     def detect_partition_columns(
         self, engine: Engine, table_name: str, schema: str, columns: List[Dict]
     ) -> List[str]:

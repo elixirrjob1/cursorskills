@@ -63,6 +63,14 @@ class DialectAdapter(ABC):
         """Check if the table has CDC-friendly settings."""
         pass
 
+    def fetch_table_descriptions(self, engine: Engine, schema: str) -> Dict[str, str]:
+        """Return table descriptions/comments keyed by table name."""
+        return {}
+
+    def fetch_column_descriptions(self, engine: Engine, schema: str) -> Dict[str, Dict[str, str]]:
+        """Return column descriptions/comments keyed by table then column."""
+        return {}
+
     _PARTITION_NAME_HINTS = (
         "order_date", "event_time", "event_date", "payment_date", "transaction_date",
         "created_at", "changed_at", "log_date", "partition_date", "report_date",

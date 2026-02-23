@@ -6,9 +6,15 @@ from __future__ import annotations
 import argparse
 import csv
 import json
+import re
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
+
+try:
+    import yaml  # type: ignore
+except Exception:
+    yaml = None
 
 
 def _norm_header(name: str) -> str:
@@ -29,6 +35,15 @@ def _as_int(value: Any) -> int | None:
         return None
     try:
         return int(float(str(value).strip()))
+    except Exception:
+        return None
+
+
+def _as_float(value: Any) -> float | None:
+    if value is None or value == "":
+        return None
+    try:
+        return float(str(value).strip())
     except Exception:
         return None
 
@@ -120,6 +135,229 @@ def _headers(rows: list[dict[str, Any]]) -> list[str]:
     return out
 
 
+def _fk_to_join_candidate(fk: dict[str, Any]) -> dict[str, Any] | None:
+    column = fk.get("column")
+    references = fk.get("references")
+    if not column:
+        return None
+    target_table = None
+    target_column = None
+    if isinstance(references, str) and "." in references:
+        target_table, target_column = references.split(".", 1)
+    return {
+        "column": column,
+        "target_table": target_table,
+        "target_column": target_column,
+        "confidence": "high",
+    }
+
+
+_SEMANTIC_PATTERNS: list[tuple[str, str]] = [
+    (r"(length|height|width|depth|distance|diameter|radius|thickness)", "length"),
+    (r"(volume|capacity|cubic|cbm|ft3|m3|liter|litre|gallon)", "volume"),
+    (r"(pressure|press|psi|bar|kpa|mpa)", "pressure"),
+    (r"(temperature|temp|celsius|fahrenheit|kelvin)", "temperature"),
+    (r"(duration|latency|elapsed|runtime|ttl|age|timeout)", "duration"),
+]
+_UNITFUL_SEMANTICS = {"length", "area", "volume", "mass", "pressure", "temperature", "duration", "speed", "flow_rate", "force", "energy", "power", "density"}
+_UNIT_ALIASES = {
+    "ft": "ft",
+    "feet": "ft",
+    "foot": "ft",
+    "in": "in",
+    "inch": "in",
+    "inches": "in",
+    "m": "m",
+    "meter": "m",
+    "meters": "m",
+    "cm": "cm",
+    "mm": "mm",
+    "ft3": "ft3",
+    "cubic_ft": "ft3",
+    "m3": "m3",
+    "cubic_m": "m3",
+    "psi": "psi",
+    "bar": "bar",
+    "kpa": "kpa",
+    "mpa": "mpa",
+    "s": "s",
+    "sec": "s",
+    "second": "s",
+    "min": "min",
+    "minute": "min",
+    "h": "h",
+    "hour": "h",
+    "c": "c",
+    "celsius": "c",
+    "f": "f",
+    "fahrenheit": "f",
+    "k": "k",
+    "kelvin": "k",
+}
+_UNIT_CONVERSION: dict[str, dict[str, Any]] = {
+    "ft": {"canonical_unit": "m", "unit_system": "imperial", "factor_to_canonical": 0.3048, "offset_to_canonical": 0.0},
+    "in": {"canonical_unit": "m", "unit_system": "imperial", "factor_to_canonical": 0.0254, "offset_to_canonical": 0.0},
+    "m": {"canonical_unit": "m", "unit_system": "metric", "factor_to_canonical": 1.0, "offset_to_canonical": 0.0},
+    "cm": {"canonical_unit": "m", "unit_system": "metric", "factor_to_canonical": 0.01, "offset_to_canonical": 0.0},
+    "mm": {"canonical_unit": "m", "unit_system": "metric", "factor_to_canonical": 0.001, "offset_to_canonical": 0.0},
+    "ft3": {"canonical_unit": "m3", "unit_system": "imperial", "factor_to_canonical": 0.028316846592, "offset_to_canonical": 0.0},
+    "m3": {"canonical_unit": "m3", "unit_system": "metric", "factor_to_canonical": 1.0, "offset_to_canonical": 0.0},
+    "psi": {"canonical_unit": "bar", "unit_system": "imperial", "factor_to_canonical": 0.0689475729, "offset_to_canonical": 0.0},
+    "bar": {"canonical_unit": "bar", "unit_system": "metric", "factor_to_canonical": 1.0, "offset_to_canonical": 0.0},
+    "kpa": {"canonical_unit": "bar", "unit_system": "metric", "factor_to_canonical": 0.01, "offset_to_canonical": 0.0},
+    "mpa": {"canonical_unit": "bar", "unit_system": "metric", "factor_to_canonical": 10.0, "offset_to_canonical": 0.0},
+    "s": {"canonical_unit": "s", "unit_system": "metric", "factor_to_canonical": 1.0, "offset_to_canonical": 0.0},
+    "min": {"canonical_unit": "s", "unit_system": "metric", "factor_to_canonical": 60.0, "offset_to_canonical": 0.0},
+    "h": {"canonical_unit": "s", "unit_system": "metric", "factor_to_canonical": 3600.0, "offset_to_canonical": 0.0},
+    "c": {"canonical_unit": "c", "unit_system": "metric", "factor_to_canonical": 1.0, "offset_to_canonical": 0.0},
+    "f": {"canonical_unit": "c", "unit_system": "imperial", "factor_to_canonical": 0.5555555556, "offset_to_canonical": -17.7777777778},
+    "k": {"canonical_unit": "c", "unit_system": "metric", "factor_to_canonical": 1.0, "offset_to_canonical": -273.15},
+}
+_RULES_LOADED = False
+
+
+def _load_context_rules() -> None:
+    global _RULES_LOADED, _SEMANTIC_PATTERNS, _UNIT_ALIASES, _UNIT_CONVERSION
+    if _RULES_LOADED:
+        return
+    _RULES_LOADED = True
+    if yaml is None:
+        return
+    shared_dir = (Path(__file__).resolve().parent.parent / "references" / "shared")
+    semantic_path = shared_dir / "semantic_mappings.yaml"
+    unit_path = shared_dir / "unit_mappings.yaml"
+    try:
+        if semantic_path.exists():
+            with open(semantic_path, encoding="utf-8") as f:
+                data = yaml.safe_load(f) or {}
+            patterns = data.get("semantic_patterns")
+            if isinstance(patterns, list):
+                parsed: list[tuple[str, str]] = []
+                for item in patterns:
+                    if not isinstance(item, dict):
+                        continue
+                    pat = str(item.get("pattern") or "").strip()
+                    cls = str(item.get("semantic_class") or "").strip()
+                    if pat and cls:
+                        parsed.append((pat, cls))
+                if parsed:
+                    _SEMANTIC_PATTERNS = parsed
+    except Exception:
+        pass
+    try:
+        if unit_path.exists():
+            with open(unit_path, encoding="utf-8") as f:
+                data = yaml.safe_load(f) or {}
+            aliases = data.get("unit_aliases")
+            if isinstance(aliases, dict):
+                _UNIT_ALIASES.update({str(k): str(v) for k, v in aliases.items()})
+            conversions = data.get("unit_conversion")
+            if isinstance(conversions, dict):
+                _UNIT_CONVERSION.update(conversions)
+    except Exception:
+        pass
+
+
+def _infer_semantic_class(col_name: str) -> str | None:
+    _load_context_rules()
+    lower = col_name.lower()
+    for pattern, semantic_class in _SEMANTIC_PATTERNS:
+        if re.search(pattern, lower):
+            return semantic_class
+    return None
+
+
+def _extract_unit_from_name(col_name: str) -> str | None:
+    _load_context_rules()
+    lower = re.sub(r"[^a-z0-9]+", "_", col_name.lower()).strip("_")
+    if not lower:
+        return None
+    for alias in sorted(_UNIT_ALIASES.keys(), key=len, reverse=True):
+        norm_alias = re.sub(r"[^a-z0-9]+", "_", alias).strip("_")
+        if re.search(rf"(?:^|_){re.escape(norm_alias)}(?:$|_)", lower):
+            return _UNIT_ALIASES[alias]
+    return None
+
+
+def _build_unit_context(col_name: str, semantic_class: str | None, raw_row: dict[str, Any]) -> dict[str, Any] | None:
+    _load_context_rules()
+    detected = _get(raw_row, "detected_unit", "unit")
+    if detected not in (None, ""):
+        detected = str(detected).strip().lower()
+    else:
+        detected = _extract_unit_from_name(col_name)
+    canonical = _get(raw_row, "canonical_unit")
+    if canonical in (None, "") and detected:
+        canonical = _UNIT_CONVERSION.get(detected, {}).get("canonical_unit")
+    unit_system = _get(raw_row, "unit_system")
+    if unit_system in (None, "") and detected:
+        unit_system = _UNIT_CONVERSION.get(detected, {}).get("unit_system", "unknown")
+    factor = _as_float(_get(raw_row, "factor_to_canonical"))
+    offset = _as_float(_get(raw_row, "offset_to_canonical"))
+    if factor is None and detected in _UNIT_CONVERSION:
+        factor = _UNIT_CONVERSION[detected].get("factor_to_canonical")
+    if offset is None and detected in _UNIT_CONVERSION:
+        offset = _UNIT_CONVERSION[detected].get("offset_to_canonical")
+
+    if not detected:
+        if semantic_class in _UNITFUL_SEMANTICS:
+            return {
+                "detected_unit": None,
+                "canonical_unit": None,
+                "unit_system": "unknown",
+                "conversion": None,
+                "detection_confidence": "low",
+                "detection_source": "combined",
+                "notes": "Semantic class suggests units, but no explicit source unit token was detected.",
+            }
+        return None
+
+    conversion = None
+    if factor is not None:
+        offset_val = 0.0 if offset is None else offset
+        conversion = {
+            "factor_to_canonical": factor,
+            "offset_to_canonical": offset_val,
+            "formula": f"canonical = value * {factor} + {offset_val}",
+        }
+
+    return {
+        "detected_unit": detected,
+        "canonical_unit": canonical,
+        "unit_system": unit_system or "unknown",
+        "conversion": conversion,
+        "detection_confidence": "medium",
+        "detection_source": "combined",
+        "notes": None if not canonical or detected == canonical else f"Normalize from '{detected}' to canonical '{canonical}'.",
+    }
+
+
+def _build_unit_summary(columns: list[dict[str, Any]]) -> dict[str, Any]:
+    with_units = 0
+    unknown_cols: list[str] = []
+    groups: dict[str, set[str]] = {}
+    for col in columns:
+        semantic_class = col.get("semantic_class")
+        unit_ctx = col.get("unit_context")
+        if isinstance(unit_ctx, dict) and unit_ctx.get("detected_unit"):
+            with_units += 1
+            if semantic_class:
+                groups.setdefault(str(semantic_class), set()).add(str(unit_ctx.get("detected_unit")))
+        elif semantic_class in _UNITFUL_SEMANTICS:
+            unknown_cols.append(str(col.get("name")))
+    mixed_groups = [
+        {"semantic_class": semantic_class, "detected_units": sorted(units)}
+        for semantic_class, units in groups.items()
+        if len(units) > 1
+    ]
+    return {
+        "columns_with_units": with_units,
+        "columns_without_units": max(len(columns) - with_units, 0),
+        "mixed_unit_groups": mixed_groups,
+        "unknown_unit_columns": sorted(unknown_cols),
+    }
+
+
 def _suggest_role(headers: list[str]) -> dict[str, str | None]:
     s = set(headers)
 
@@ -154,6 +392,7 @@ def _parse_columns(rows: list[dict[str, Any]], default_schema: str) -> dict[str,
             {
                 "table": table,
                 "schema": schema,
+                "table_description": None,
                 "columns": [],
                 "primary_keys": [],
                 "foreign_keys": [],
@@ -163,6 +402,12 @@ def _parse_columns(rows: list[dict[str, Any]], default_schema: str) -> dict[str,
                 "incremental_columns": [],
                 "partition_columns": [],
                 "join_candidates": [],
+                "unit_summary": {
+                    "columns_with_units": 0,
+                    "columns_without_units": 0,
+                    "mixed_unit_groups": [],
+                    "unknown_unit_columns": [],
+                },
                 "cdc_enabled": _as_bool(_get(r, "cdc_enabled"), False),
                 "has_primary_key": False,
                 "has_foreign_keys": False,
@@ -176,10 +421,16 @@ def _parse_columns(rows: list[dict[str, Any]], default_schema: str) -> dict[str,
         )
 
         is_incremental = _as_bool(_get(r, "is_incremental", "incremental"), False)
+        semantic_class = _get(r, "semantic_class")
+        if semantic_class in (None, ""):
+            semantic_class = _infer_semantic_class(column)
+        else:
+            semantic_class = str(semantic_class).strip()
         col = {
             "name": column,
             "type": col_type,
             "nullable": _as_bool(_get(r, "nullable", "is_nullable"), True),
+            "column_description": _get(r, "column_description", "description"),
             "is_incremental": is_incremental,
             "cardinality": _as_int(_get(r, "cardinality", "distinct_count")),
             "null_count": _as_int(_get(r, "null_count", "nulls")),
@@ -188,6 +439,8 @@ def _parse_columns(rows: list[dict[str, Any]], default_schema: str) -> dict[str,
                 "max": None if _get(r, "max", "max_value") in (None, "") else str(_get(r, "max", "max_value")),
             },
             "data_category": _get(r, "data_category", "category") or None,
+            "semantic_class": semantic_class,
+            "unit_context": _build_unit_context(column, semantic_class, r),
         }
         t["columns"].append(col)
 
@@ -212,6 +465,8 @@ def _parse_columns(rows: list[dict[str, Any]], default_schema: str) -> dict[str,
                 seen.add(key)
                 fks.append(fk)
         t["foreign_keys"] = fks
+        t["join_candidates"] = [jc for fk in fks if (jc := _fk_to_join_candidate(fk)) is not None]
+        t["unit_summary"] = _build_unit_summary(t["columns"])
         t["has_primary_key"] = bool(t["primary_keys"])
         t["has_foreign_keys"] = bool(t["foreign_keys"])
     return tables
@@ -227,6 +482,7 @@ def _merge_table_rows(tables: dict[str, dict[str, Any]], rows: list[dict[str, An
             {
                 "table": table,
                 "schema": str(_get(r, "schema", "schema_name", default=default_schema)).strip() or default_schema,
+                "table_description": None,
                 "columns": [],
                 "primary_keys": [],
                 "foreign_keys": [],
@@ -236,6 +492,12 @@ def _merge_table_rows(tables: dict[str, dict[str, Any]], rows: list[dict[str, An
                 "incremental_columns": [],
                 "partition_columns": [],
                 "join_candidates": [],
+                "unit_summary": {
+                    "columns_with_units": 0,
+                    "columns_without_units": 0,
+                    "mixed_unit_groups": [],
+                    "unknown_unit_columns": [],
+                },
                 "cdc_enabled": False,
                 "has_primary_key": False,
                 "has_foreign_keys": False,
@@ -249,6 +511,8 @@ def _merge_table_rows(tables: dict[str, dict[str, Any]], rows: list[dict[str, An
         )
         if _get(r, "schema", "schema_name") not in (None, ""):
             t["schema"] = str(_get(r, "schema", "schema_name")).strip()
+        if _get(r, "table_description", "description") not in (None, ""):
+            t["table_description"] = str(_get(r, "table_description", "description")).strip()
         if _as_int(_get(r, "row_count", "rows")) is not None:
             t["row_count"] = _as_int(_get(r, "row_count", "rows")) or 0
         if _get(r, "cdc_enabled", "cdc") not in (None, ""):
@@ -312,6 +576,11 @@ def cmd_to_json(args: argparse.Namespace) -> None:
             "driver": None,
             "timezone": None,
         },
+        "source_system_context": {
+            "contacts": [],
+            "delete_management_instruction": "",
+            "restrictions": "",
+        },
         "data_quality_summary": {
             "critical": 0,
             "warning": 0,
@@ -334,6 +603,7 @@ def cmd_from_json(args: argparse.Namespace) -> None:
         "table",
         "schema",
         "column",
+        "column_description",
         "type",
         "nullable",
         "is_incremental",
@@ -344,8 +614,14 @@ def cmd_from_json(args: argparse.Namespace) -> None:
         "min",
         "max",
         "data_category",
+        "semantic_class",
+        "detected_unit",
+        "canonical_unit",
+        "unit_system",
+        "factor_to_canonical",
+        "offset_to_canonical",
     ]
-    table_headers = ["table", "schema", "row_count", "cdc_enabled"]
+    table_headers = ["table", "schema", "table_description", "row_count", "cdc_enabled"]
 
     col_rows: list[dict[str, Any]] = []
     table_rows: list[dict[str, Any]] = []
@@ -360,6 +636,7 @@ def cmd_from_json(args: argparse.Namespace) -> None:
             {
                 "table": tname,
                 "schema": schema,
+                "table_description": t.get("table_description"),
                 "row_count": t.get("row_count"),
                 "cdc_enabled": t.get("cdc_enabled"),
             }
@@ -367,11 +644,14 @@ def cmd_from_json(args: argparse.Namespace) -> None:
 
         for c in t.get("columns") or []:
             rng = c.get("data_range") or {}
+            unit_ctx = c.get("unit_context") if isinstance(c.get("unit_context"), dict) else {}
+            conversion = unit_ctx.get("conversion") if isinstance(unit_ctx.get("conversion"), dict) else {}
             col_rows.append(
                 {
                     "table": tname,
                     "schema": schema,
                     "column": c.get("name"),
+                    "column_description": c.get("column_description"),
                     "type": c.get("type"),
                     "nullable": c.get("nullable"),
                     "is_incremental": c.get("is_incremental"),
@@ -382,6 +662,12 @@ def cmd_from_json(args: argparse.Namespace) -> None:
                     "min": rng.get("min"),
                     "max": rng.get("max"),
                     "data_category": c.get("data_category"),
+                    "semantic_class": c.get("semantic_class"),
+                    "detected_unit": unit_ctx.get("detected_unit"),
+                    "canonical_unit": unit_ctx.get("canonical_unit"),
+                    "unit_system": unit_ctx.get("unit_system"),
+                    "factor_to_canonical": conversion.get("factor_to_canonical"),
+                    "offset_to_canonical": conversion.get("offset_to_canonical"),
                 }
             )
 

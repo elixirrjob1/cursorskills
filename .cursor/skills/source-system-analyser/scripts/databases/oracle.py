@@ -86,6 +86,42 @@ class OracleAdapter(DialectAdapter):
     def detect_cdc_enabled(self, engine: Engine, table_name: str, schema: str) -> bool:
         return False
 
+    def fetch_table_descriptions(self, engine: Engine, schema: str) -> Dict[str, str]:
+        result: Dict[str, str] = {}
+        query = text(
+            """
+            SELECT TABLE_NAME, COMMENTS
+            FROM ALL_TAB_COMMENTS
+            WHERE OWNER = :schema
+            """
+        )
+        try:
+            with engine.connect() as conn:
+                for row in conn.execute(query, {"schema": schema.upper()}).fetchall():
+                    if row[1]:
+                        result[str(row[0])] = str(row[1])
+        except Exception as e:
+            logger.warning(f"Could not fetch table descriptions: {e}")
+        return result
+
+    def fetch_column_descriptions(self, engine: Engine, schema: str) -> Dict[str, Dict[str, str]]:
+        result: Dict[str, Dict[str, str]] = {}
+        query = text(
+            """
+            SELECT TABLE_NAME, COLUMN_NAME, COMMENTS
+            FROM ALL_COL_COMMENTS
+            WHERE OWNER = :schema
+            """
+        )
+        try:
+            with engine.connect() as conn:
+                for row in conn.execute(query, {"schema": schema.upper()}).fetchall():
+                    if row[2]:
+                        result.setdefault(str(row[0]), {})[str(row[1])] = str(row[2])
+        except Exception as e:
+            logger.warning(f"Could not fetch column descriptions: {e}")
+        return result
+
     def detect_partition_columns(
         self, engine: Engine, table_name: str, schema: str, columns: List[Dict]
     ) -> List[str]:

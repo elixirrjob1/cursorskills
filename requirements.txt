@@ -1,6 +1,7 @@
 # Core
 sqlalchemy>=2.0
 python-dotenv>=1.0
+PyYAML>=6.0
 
 # API
 fastapi>=0.100

@@ -379,6 +379,11 @@ def analyze_api_data(discovery_file: Path, data_dir: Path, base_url: str) -> Dic
             "driver": "rest_api",
             "timezone": None,
         },
+        "source_system_context": {
+            "contacts": [],
+            "delete_management_instruction": "",
+            "restrictions": "",
+        },
         "data_quality_summary": {
             "critical": severity_counts.get("critical", 0),
             "warning": severity_counts.get("warning", 0),

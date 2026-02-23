@@ -22,6 +22,11 @@ class GenericFlatAnalyzer(BaseFlatAnalyzer):
             "connection": {
                 "provider": source_config.get("provider", "file"),
             },
+            "source_system_context": {
+                "contacts": [],
+                "delete_management_instruction": "",
+                "restrictions": "",
+            },
             "data_quality_summary": {
                 "critical": 0,
                 "warning": 0,

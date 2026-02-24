@@ -188,11 +188,12 @@ A read-only REST API is deployed as an Azure Function for testing and integratio
 |------|--------|
 | **Base URL** | `https://skillssimapifilip20260218.azurewebsites.net` |
 | **Auth** | `Authorization: Bearer <token>` (required) |
-| **Endpoints** | `GET /api/tables`, `GET /api/{table}?limit=100&offset=0` |
+| **Endpoints** | `GET /api/tables?schema=<schema>`, `GET /api/{table}?limit=100&offset=0&schema=<schema>` |
 
 Response notes:
 - `GET /api/tables` returns `tables` as table metadata objects (schema-aligned structural metadata), not only table names.
 - `GET /api/{table}` returns `metadata` plus `data`.
+- API responses always include the `schema` actually used; you can override with query param `schema`.
 
 The **API key (Bearer token)** is stored in **Azure Key Vault**; do not commit it. For local use, set `API_AUTH_TOKEN` in `.env` or obtain it from Key Vault (e.g. via `KEYVAULT_NAME` and your Key Vault loader). See `API_CONNECTION_INSTRUCTIONS.txt` for details.
 

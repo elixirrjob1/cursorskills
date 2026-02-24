@@ -5,12 +5,12 @@ Working API base URL:
 https://skillssimapifilip20260218.azurewebsites.net
 
 Available endpoints:
-- GET /api/tables
-- GET /api/{table}?limit=100&offset=0
+- GET /api/tables?schema=<schema_name>
+- GET /api/{table}?limit=100&offset=0&schema=<schema_name>
 
 Response shape:
-- /api/tables: `tables` is a list of per-table metadata objects.
-- /api/{table}: includes `metadata` and `data`.
+- /api/tables: `tables` is a list of per-table metadata objects, and response includes `schema` used.
+- /api/{table}: includes `metadata`, `data`, and `schema` used.
 
 Authentication:
 - Header required: Authorization: Bearer <API_AUTH_TOKEN>
@@ -26,11 +26,11 @@ Optional (for local project scripts using Key Vault):
 Quick test commands:
 1) List tables
 curl -H "Authorization: Bearer $API_AUTH_TOKEN" \
-  "$API_BASE_URL/api/tables"
+  "$API_BASE_URL/api/tables?schema=public"
 
 2) Read customers (first 3)
 curl -H "Authorization: Bearer $API_AUTH_TOKEN" \
-  "$API_BASE_URL/api/customers?limit=3"
+  "$API_BASE_URL/api/customers?limit=3&schema=public"
 
 Example .env snippet:
 API_BASE_URL=https://skillssimapifilip20260218.azurewebsites.net

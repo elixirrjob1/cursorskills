@@ -1,0 +1,983 @@
+{
+  "metadata": {
+    "generated_at": "2026-02-24T11:03:09.080560+00:00",
+    "database_url": "localhost:1433/master?driver=ODBC+Driver+18+for+SQL+Server&TrustServerCertificate=yes",
+    "schema_filter": "dbo",
+    "total_tables": 5,
+    "total_rows": 4,
+    "total_findings": 14
+  },
+  "connection": {
+    "host": "localhost",
+    "port": "1433",
+    "database": "master",
+    "driver": "mssql",
+    "timezone": "(UTC+01:00) Sarajevo, Skopje, Warsaw, Zagreb"
+  },
+  "source_system_context": {
+    "contacts": [],
+    "delete_management_instruction": "",
+    "restrictions": ""
+  },
+  "data_quality_summary": {
+    "critical": 5,
+    "warning": 5,
+    "info": 4,
+    "by_check": {
+      "controlled_value_candidate": 0,
+      "nullable_but_never_null": 0,
+      "missing_primary_key": 5,
+      "missing_foreign_key": 0,
+      "format_inconsistency": 0,
+      "range_violation": 0,
+      "delete_management": 5,
+      "late_arriving_data": 0,
+      "timezone": 4,
+      "unit_unknown": 0,
+      "unit_noncanonical_but_convertible": 0,
+      "unit_mismatch_within_semantic_group": 0
+    },
+    "constraints_found": {
+      "check_constraints": 0,
+      "enum_columns": 0,
+      "unique_constraints": 0
+    }
+  },
+  "tables": [
+    {
+      "table": "MSreplication_options",
+      "schema": "dbo",
+      "columns": [
+        {
+          "name": "optname",
+          "type": "null",
+          "nullable": false,
+          "is_incremental": false,
+          "cardinality": 3,
+          "null_count": 0,
+          "data_range": {
+            "min": "merge",
+            "max": "transactional"
+          },
+          "semantic_class": null,
+          "unit_context": null
+        },
+        {
+          "name": "value",
+          "type": "bit",
+          "nullable": false,
+          "is_incremental": false,
+          "cardinality": 1,
+          "null_count": 0,
+          "data_category": "discrete",
+          "semantic_class": null,
+          "unit_context": null
+        },
+        {
+          "name": "major_version",
+          "type": "integer",
+          "nullable": false,
+          "is_incremental": false,
+          "cardinality": 1,
+          "null_count": 0,
+          "data_range": {
+            "min": "90",
+            "max": "90"
+          },
+          "data_category": "discrete",
+          "semantic_class": null,
+          "unit_context": null
+        },
+        {
+          "name": "minor_version",
+          "type": "integer",
+          "nullable": false,
+          "is_incremental": false,
+          "cardinality": 1,
+          "null_count": 0,
+          "data_range": {
+            "min": "0",
+            "max": "0"
+          },
+          "data_category": "discrete",
+          "semantic_class": null,
+          "unit_context": null
+        },
+        {
+          "name": "revision",
+          "type": "integer",
+          "nullable": false,
+          "is_incremental": false,
+          "cardinality": 1,
+          "null_count": 0,
+          "data_range": {
+            "min": "0",
+            "max": "0"
+          },
+          "data_category": "discrete",
+          "semantic_class": null,
+          "unit_context": null
+        },
+        {
+          "name": "install_failures",
+          "type": "integer",
+          "nullable": false,
+          "is_incremental": false,
+          "cardinality": 1,
+          "null_count": 0,
+          "data_range": {
+            "min": "0",
+            "max": "0"
+          },
+          "data_category": "discrete",
+          "semantic_class": null,
+          "unit_context": null
+        }
+      ],
+      "table_description": null,
+      "primary_keys": [],
+      "foreign_keys": [],
+      "row_count": 3,
+      "field_classifications": {},
+      "sensitive_fields": {},
+      "incremental_columns": [],
+      "partition_columns": [],
+      "join_candidates": [],
+      "unit_summary": {
+        "columns_with_units": 0,
+        "columns_without_units": 6,
+        "mixed_unit_groups": [],
+        "unknown_unit_columns": []
+      },
+      "cdc_enabled": false,
+      "has_primary_key": false,
+      "has_foreign_keys": false,
+      "has_sensitive_fields": false,
+      "data_quality": {
+        "findings": [
+          {
+            "column": null,
+            "check": "missing_primary_key",
+            "severity": "critical",
+            "detail": "Table has no primary key defined",
+            "recommendation": "Add a primary key to ensure row uniqueness and enable efficient lookups"
+          },
+          {
+            "column": null,
+            "check": "delete_management",
+            "severity": "warning",
+            "detail": "No soft-delete column detected and CDC is not enabled. Table likely uses hard deletes invisible to incremental ingestion.",
+            "recommendation": "Consider: (1) Add soft-delete column, (2) Enable CDC via ALTER TABLE \u2026 REPLICA IDENTITY FULL, or (3) Plan periodic full-load syncs.",
+            "delete_strategy": "hard_delete",
+            "soft_delete_column": null,
+            "soft_delete_type": null,
+            "has_audit_trail": false
+          }
+        ]
+      }
+    },
+    {
+      "table": "spt_fallback_db",
+      "schema": "dbo",
+      "columns": [
+        {
+          "name": "xserver_name",
+          "type": "varchar(30)",
+          "nullable": false,
+          "is_incremental": false,
+          "cardinality": 0,
+          "null_count": 0,
+          "data_category": "nominal",
+          "semantic_class": null,
+          "unit_context": null
+        },
+        {
+          "name": "xdttm_ins",
+          "type": "datetime",
+          "nullable": false,
+          "is_incremental": false,
+          "column_timezone": "(UTC+01:00) Sarajevo, Skopje, Warsaw, Zagreb",
+          "cardinality": 0,
+          "null_count": 0,
+          "data_category": "continuous",
+          "semantic_class": null,
+          "unit_context": null
+        },
+        {
+          "name": "xdttm_last_ins_upd",
+          "type": "datetime",
+          "nullable": false,
+          "is_incremental": false,
+          "column_timezone": "(UTC+01:00) Sarajevo, Skopje, Warsaw, Zagreb",
+          "cardinality": 0,
+          "null_count": 0,
+          "data_category": "continuous",
+          "semantic_class": null,
+          "unit_context": null
+        },
+        {
+          "name": "xfallback_dbid",
+          "type": "smallint",
+          "nullable": true,
+          "is_incremental": false,
+          "cardinality": 0,
+          "null_count": 0,
+          "data_category": "discrete",
+          "semantic_class": null,
+          "unit_context": null
+        },
+        {
+          "name": "name",
+          "type": "varchar(30)",
+          "nullable": false,
+          "is_incremental": false,
+          "cardinality": 0,
+          "null_count": 0,
+          "data_category": "nominal",
+          "semantic_class": null,
+          "unit_context": null
+        },
+        {
+          "name": "dbid",
+          "type": "smallint",
+          "nullable": false,
+          "is_incremental": false,
+          "cardinality": 0,
+          "null_count": 0,
+          "data_category": "discrete",
+          "semantic_class": null,
+          "unit_context": null
+        },
+        {
+          "name": "status",
+          "type": "smallint",
+          "nullable": false,
+          "is_incremental": false,
+          "cardinality": 0,
+          "null_count": 0,
+          "data_category": "discrete",
+          "semantic_class": "category",
+          "unit_context": null
+        },
+        {
+          "name": "version",
+          "type": "smallint",
+          "nullable": false,
+          "is_incremental": false,
+          "cardinality": 0,
+          "null_count": 0,
+          "data_category": "discrete",
+          "semantic_class": null,
+          "unit_context": null
+        }
+      ],
+      "table_description": null,
+      "primary_keys": [],
+      "foreign_keys": [],
+      "row_count": 0,
+      "field_classifications": {
+        "status": "categorical"
+      },
+      "sensitive_fields": {},
+      "incremental_columns": [],
+      "partition_columns": [],
+      "join_candidates": [],
+      "unit_summary": {
+        "columns_with_units": 0,
+        "columns_without_units": 8,
+        "mixed_unit_groups": [],
+        "unknown_unit_columns": []
+      },
+      "cdc_enabled": false,
+      "has_primary_key": false,
+      "has_foreign_keys": false,
+      "has_sensitive_fields": false,
+      "data_quality": {
+        "findings": [
+          {
+            "column": null,
+            "check": "missing_primary_key",
+            "severity": "critical",
+            "detail": "Table has no primary key defined",
+            "recommendation": "Add a primary key to ensure row uniqueness and enable efficient lookups"
+          },
+          {
+            "column": null,
+            "check": "delete_management",
+            "severity": "warning",
+            "detail": "No soft-delete column detected and CDC is not enabled. Table likely uses hard deletes invisible to incremental ingestion.",
+            "recommendation": "Consider: (1) Add soft-delete column, (2) Enable CDC via ALTER TABLE \u2026 REPLICA IDENTITY FULL, or (3) Plan periodic full-load syncs.",
+            "delete_strategy": "hard_delete",
+            "soft_delete_column": null,
+            "soft_delete_type": null,
+            "has_audit_trail": false
+          },
+          {
+            "column": null,
+            "check": "timezone",
+            "severity": "info",
+            "detail": "All 2 date/time column(s) are TZ-naive \u2014 stored values are implicitly in server timezone '(UTC+01:00) Sarajevo, Skopje, Warsaw, Zagreb'.",
+            "recommendation": "During ingestion, treat all timestamps as '(UTC+01:00) Sarajevo, Skopje, Warsaw, Zagreb' and convert to UTC.",
+            "server_timezone": "(UTC+01:00) Sarajevo, Skopje, Warsaw, Zagreb",
+            "columns": [
+              {
+                "column": "xdttm_ins",
+                "type": "datetime",
+                "effective_timezone": "(UTC+01:00) Sarajevo, Skopje, Warsaw, Zagreb",
+                "is_tz_aware": false
+              },
+              {
+                "column": "xdttm_last_ins_upd",
+                "type": "datetime",
+                "effective_timezone": "(UTC+01:00) Sarajevo, Skopje, Warsaw, Zagreb",
+                "is_tz_aware": false
+              }
+            ],
+            "distinct_timezones": [
+              "(UTC+01:00) Sarajevo, Skopje, Warsaw, Zagreb"
+            ],
+            "tz_aware_count": 0,
+            "tz_naive_count": 2
+          }
+        ]
+      }
+    },
+    {
+      "table": "spt_fallback_dev",
+      "schema": "dbo",
+      "columns": [
+        {
+          "name": "xserver_name",
+          "type": "varchar(30)",
+          "nullable": false,
+          "is_incremental": false,
+          "cardinality": 0,
+          "null_count": 0,
+          "data_category": "nominal",
+          "semantic_class": null,
+          "unit_context": null
+        },
+        {
+          "name": "xdttm_ins",
+          "type": "datetime",
+          "nullable": false,
+          "is_incremental": false,
+          "column_timezone": "(UTC+01:00) Sarajevo, Skopje, Warsaw, Zagreb",
+          "cardinality": 0,
+          "null_count": 0,
+          "data_category": "continuous",
+          "semantic_class": null,
+          "unit_context": null
+        },
+        {
+          "name": "xdttm_last_ins_upd",
+          "type": "datetime",
+          "nullable": false,
+          "is_incremental": false,
+          "column_timezone": "(UTC+01:00) Sarajevo, Skopje, Warsaw, Zagreb",
+          "cardinality": 0,
+          "null_count": 0,
+          "data_category": "continuous",
+          "semantic_class": null,
+          "unit_context": null
+        },
+        {
+          "name": "xfallback_low",
+          "type": "integer",
+          "nullable": true,
+          "is_incremental": false,
+          "cardinality": 0,
+          "null_count": 0,
+          "data_category": "discrete",
+          "semantic_class": null,
+          "unit_context": null
+        },
+        {
+          "name": "xfallback_drive",
+          "type": "char(2)",
+          "nullable": true,
+          "is_incremental": false,
+          "cardinality": 0,
+          "null_count": 0,
+          "data_category": "nominal",
+          "semantic_class": null,
+          "unit_context": null
+        },
+        {
+          "name": "low",
+          "type": "integer",
+          "nullable": false,
+          "is_incremental": false,
+          "cardinality": 0,
+          "null_count": 0,
+          "data_category": "discrete",
+          "semantic_class": null,
+          "unit_context": null
+        },
+        {
+          "name": "high",
+          "type": "integer",
+          "nullable": false,
+          "is_incremental": false,
+          "cardinality": 0,
+          "null_count": 0,
+          "data_category": "discrete",
+          "semantic_class": null,
+          "unit_context": null
+        },
+        {
+          "name": "status",
+          "type": "smallint",
+          "nullable": false,
+          "is_incremental": false,
+          "cardinality": 0,
+          "null_count": 0,
+          "data_category": "discrete",
+          "semantic_class": "category",
+          "unit_context": null
+        },
+        {
+          "name": "name",
+          "type": "varchar(30)",
+          "nullable": false,
+          "is_incremental": false,
+          "cardinality": 0,
+          "null_count": 0,
+          "data_category": "nominal",
+          "semantic_class": null,
+          "unit_context": null
+        },
+        {
+          "name": "phyname",
+          "type": "varchar(127)",
+          "nullable": false,
+          "is_incremental": false,
+          "cardinality": 0,
+          "null_count": 0,
+          "data_category": "nominal",
+          "semantic_class": null,
+          "unit_context": null
+        }
+      ],
+      "table_description": null,
+      "primary_keys": [],
+      "foreign_keys": [],
+      "row_count": 0,
+      "field_classifications": {
+        "status": "categorical"
+      },
+      "sensitive_fields": {},
+      "incremental_columns": [],
+      "partition_columns": [],
+      "join_candidates": [],
+      "unit_summary": {
+        "columns_with_units": 0,
+        "columns_without_units": 10,
+        "mixed_unit_groups": [],
+        "unknown_unit_columns": []
+      },
+      "cdc_enabled": false,
+      "has_primary_key": false,
+      "has_foreign_keys": false,
+      "has_sensitive_fields": false,
+      "data_quality": {
+        "findings": [
+          {
+            "column": null,
+            "check": "missing_primary_key",
+            "severity": "critical",
+            "detail": "Table has no primary key defined",
+            "recommendation": "Add a primary key to ensure row uniqueness and enable efficient lookups"
+          },
+          {
+            "column": null,
+            "check": "delete_management",
+            "severity": "warning",
+            "detail": "No soft-delete column detected and CDC is not enabled. Table likely uses hard deletes invisible to incremental ingestion.",
+            "recommendation": "Consider: (1) Add soft-delete column, (2) Enable CDC via ALTER TABLE \u2026 REPLICA IDENTITY FULL, or (3) Plan periodic full-load syncs.",
+            "delete_strategy": "hard_delete",
+            "soft_delete_column": null,
+            "soft_delete_type": null,
+            "has_audit_trail": false
+          },
+          {
+            "column": null,
+            "check": "timezone",
+            "severity": "info",
+            "detail": "All 2 date/time column(s) are TZ-naive \u2014 stored values are implicitly in server timezone '(UTC+01:00) Sarajevo, Skopje, Warsaw, Zagreb'.",
+            "recommendation": "During ingestion, treat all timestamps as '(UTC+01:00) Sarajevo, Skopje, Warsaw, Zagreb' and convert to UTC.",
+            "server_timezone": "(UTC+01:00) Sarajevo, Skopje, Warsaw, Zagreb",
+            "columns": [
+              {
+                "column": "xdttm_ins",
+                "type": "datetime",
+                "effective_timezone": "(UTC+01:00) Sarajevo, Skopje, Warsaw, Zagreb",
+                "is_tz_aware": false
+              },
+              {
+                "column": "xdttm_last_ins_upd",
+                "type": "datetime",
+                "effective_timezone": "(UTC+01:00) Sarajevo, Skopje, Warsaw, Zagreb",
+                "is_tz_aware": false
+              }
+            ],
+            "distinct_timezones": [
+              "(UTC+01:00) Sarajevo, Skopje, Warsaw, Zagreb"
+            ],
+            "tz_aware_count": 0,
+            "tz_naive_count": 2
+          }
+        ]
+      }
+    },
+    {
+      "table": "spt_fallback_usg",
+      "schema": "dbo",
+      "columns": [
+        {
+          "name": "xserver_name",
+          "type": "varchar(30)",
+          "nullable": false,
+          "is_incremental": false,
+          "cardinality": 0,
+          "null_count": 0,
+          "data_category": "nominal",
+          "semantic_class": null,
+          "unit_context": null
+        },
+        {
+          "name": "xdttm_ins",
+          "type": "datetime",
+          "nullable": false,
+          "is_incremental": false,
+          "column_timezone": "(UTC+01:00) Sarajevo, Skopje, Warsaw, Zagreb",
+          "cardinality": 0,
+          "null_count": 0,
+          "data_category": "continuous",
+          "semantic_class": null,
+          "unit_context": null
+        },
+        {
+          "name": "xdttm_last_ins_upd",
+          "type": "datetime",
+          "nullable": false,
+          "is_incremental": false,
+          "column_timezone": "(UTC+01:00) Sarajevo, Skopje, Warsaw, Zagreb",
+          "cardinality": 0,
+          "null_count": 0,
+          "data_category": "continuous",
+          "semantic_class": null,
+          "unit_context": null
+        },
+        {
+          "name": "xfallback_vstart",
+          "type": "integer",
+          "nullable": true,
+          "is_incremental": false,
+          "cardinality": 0,
+          "null_count": 0,
+          "data_category": "discrete",
+          "semantic_class": null,
+          "unit_context": null
+        },
+        {
+          "name": "dbid",
+          "type": "smallint",
+          "nullable": false,
+          "is_incremental": false,
+          "cardinality": 0,
+          "null_count": 0,
+          "data_category": "discrete",
+          "semantic_class": null,
+          "unit_context": null
+        },
+        {
+          "name": "segmap",
+          "type": "integer",
+          "nullable": false,
+          "is_incremental": false,
+          "cardinality": 0,
+          "null_count": 0,
+          "data_category": "discrete",
+          "semantic_class": null,
+          "unit_context": null
+        },
+        {
+          "name": "lstart",
+          "type": "integer",
+          "nullable": false,
+          "is_incremental": false,
+          "cardinality": 0,
+          "null_count": 0,
+          "data_category": "discrete",
+          "semantic_class": null,
+          "unit_context": null
+        },
+        {
+          "name": "sizepg",
+          "type": "integer",
+          "nullable": false,
+          "is_incremental": false,
+          "cardinality": 0,
+          "null_count": 0,
+          "data_category": "discrete",
+          "semantic_class": null,
+          "unit_context": null
+        },
+        {
+          "name": "vstart",
+          "type": "integer",
+          "nullable": false,
+          "is_incremental": false,
+          "cardinality": 0,
+          "null_count": 0,
+          "data_category": "discrete",
+          "semantic_class": null,
+          "unit_context": null
+        }
+      ],
+      "table_description": null,
+      "primary_keys": [],
+      "foreign_keys": [],
+      "row_count": 0,
+      "field_classifications": {},
+      "sensitive_fields": {},
+      "incremental_columns": [],
+      "partition_columns": [],
+      "join_candidates": [],
+      "unit_summary": {
+        "columns_with_units": 0,
+        "columns_without_units": 9,
+        "mixed_unit_groups": [],
+        "unknown_unit_columns": []
+      },
+      "cdc_enabled": false,
+      "has_primary_key": false,
+      "has_foreign_keys": false,
+      "has_sensitive_fields": false,
+      "data_quality": {
+        "findings": [
+          {
+            "column": null,
+            "check": "missing_primary_key",
+            "severity": "critical",
+            "detail": "Table has no primary key defined",
+            "recommendation": "Add a primary key to ensure row uniqueness and enable efficient lookups"
+          },
+          {
+            "column": null,
+            "check": "delete_management",
+            "severity": "warning",
+            "detail": "No soft-delete column detected and CDC is not enabled. Table likely uses hard deletes invisible to incremental ingestion.",
+            "recommendation": "Consider: (1) Add soft-delete column, (2) Enable CDC via ALTER TABLE \u2026 REPLICA IDENTITY FULL, or (3) Plan periodic full-load syncs.",
+            "delete_strategy": "hard_delete",
+            "soft_delete_column": null,
+            "soft_delete_type": null,
+            "has_audit_trail": false
+          },
+          {
+            "column": null,
+            "check": "timezone",
+            "severity": "info",
+            "detail": "All 2 date/time column(s) are TZ-naive \u2014 stored values are implicitly in server timezone '(UTC+01:00) Sarajevo, Skopje, Warsaw, Zagreb'.",
+            "recommendation": "During ingestion, treat all timestamps as '(UTC+01:00) Sarajevo, Skopje, Warsaw, Zagreb' and convert to UTC.",
+            "server_timezone": "(UTC+01:00) Sarajevo, Skopje, Warsaw, Zagreb",
+            "columns": [
+              {
+                "column": "xdttm_ins",
+                "type": "datetime",
+                "effective_timezone": "(UTC+01:00) Sarajevo, Skopje, Warsaw, Zagreb",
+                "is_tz_aware": false
+              },
+              {
+                "column": "xdttm_last_ins_upd",
+                "type": "datetime",
+                "effective_timezone": "(UTC+01:00) Sarajevo, Skopje, Warsaw, Zagreb",
+                "is_tz_aware": false
+              }
+            ],
+            "distinct_timezones": [
+              "(UTC+01:00) Sarajevo, Skopje, Warsaw, Zagreb"
+            ],
+            "tz_aware_count": 0,
+            "tz_naive_count": 2
+          }
+        ]
+      }
+    },
+    {
+      "table": "spt_monitor",
+      "schema": "dbo",
+      "columns": [
+        {
+          "name": "lastrun",
+          "type": "datetime",
+          "nullable": false,
+          "is_incremental": false,
+          "column_timezone": "(UTC+01:00) Sarajevo, Skopje, Warsaw, Zagreb",
+          "cardinality": 1,
+          "null_count": 0,
+          "data_range": {
+            "min": "2025-09-09 18:16:47.810000",
+            "max": "2025-09-09 18:16:47.810000"
+          },
+          "data_category": "continuous",
+          "semantic_class": null,
+          "unit_context": null
+        },
+        {
+          "name": "cpu_busy",
+          "type": "integer",
+          "nullable": false,
+          "is_incremental": false,
+          "cardinality": 1,
+          "null_count": 0,
+          "data_range": {
+            "min": "31",
+            "max": "31"
+          },
+          "data_category": "discrete",
+          "semantic_class": null,
+          "unit_context": null
+        },
+        {
+          "name": "io_busy",
+          "type": "integer",
+          "nullable": false,
+          "is_incremental": false,
+          "cardinality": 1,
+          "null_count": 0,
+          "data_range": {
+            "min": "19",
+            "max": "19"
+          },
+          "data_category": "discrete",
+          "semantic_class": null,
+          "unit_context": null
+        },
+        {
+          "name": "idle",
+          "type": "integer",
+          "nullable": false,
+          "is_incremental": false,
+          "cardinality": 1,
+          "null_count": 0,
+          "data_range": {
+            "min": "5838",
+            "max": "5838"
+          },
+          "data_category": "discrete",
+          "semantic_class": null,
+          "unit_context": null
+        },
+        {
+          "name": "pack_received",
+          "type": "integer",
+          "nullable": false,
+          "is_incremental": false,
+          "cardinality": 1,
+          "null_count": 0,
+          "data_range": {
+            "min": "39",
+            "max": "39"
+          },
+          "data_category": "discrete",
+          "semantic_class": null,
+          "unit_context": {
+            "detected_unit": "pack",
+            "canonical_unit": "ea",
+            "unit_system": "business",
+            "conversion": {
+              "factor_to_canonical": 1.0,
+              "offset_to_canonical": 0.0,
+              "formula": "canonical = value * 1.0 + 0.0"
+            },
+            "detection_confidence": "medium",
+            "detection_source": "name",
+            "notes": "Values should be normalized from 'pack' to canonical 'ea'."
+          }
+        },
+        {
+          "name": "pack_sent",
+          "type": "integer",
+          "nullable": false,
+          "is_incremental": false,
+          "cardinality": 1,
+          "null_count": 0,
+          "data_range": {
+            "min": "39",
+            "max": "39"
+          },
+          "data_category": "discrete",
+          "semantic_class": null,
+          "unit_context": {
+            "detected_unit": "pack",
+            "canonical_unit": "ea",
+            "unit_system": "business",
+            "conversion": {
+              "factor_to_canonical": 1.0,
+              "offset_to_canonical": 0.0,
+              "formula": "canonical = value * 1.0 + 0.0"
+            },
+            "detection_confidence": "medium",
+            "detection_source": "name",
+            "notes": "Values should be normalized from 'pack' to canonical 'ea'."
+          }
+        },
+        {
+          "name": "connections",
+          "type": "integer",
+          "nullable": false,
+          "is_incremental": false,
+          "cardinality": 1,
+          "null_count": 0,
+          "data_range": {
+            "min": "70",
+            "max": "70"
+          },
+          "data_category": "discrete",
+          "semantic_class": null,
+          "unit_context": null
+        },
+        {
+          "name": "pack_errors",
+          "type": "integer",
+          "nullable": false,
+          "is_incremental": false,
+          "cardinality": 1,
+          "null_count": 0,
+          "data_range": {
+            "min": "0",
+            "max": "0"
+          },
+          "data_category": "discrete",
+          "semantic_class": null,
+          "unit_context": {
+            "detected_unit": "pack",
+            "canonical_unit": "ea",
+            "unit_system": "business",
+            "conversion": {
+              "factor_to_canonical": 1.0,
+              "offset_to_canonical": 0.0,
+              "formula": "canonical = value * 1.0 + 0.0"
+            },
+            "detection_confidence": "medium",
+            "detection_source": "name",
+            "notes": "Values should be normalized from 'pack' to canonical 'ea'."
+          }
+        },
+        {
+          "name": "total_read",
+          "type": "integer",
+          "nullable": false,
+          "is_incremental": false,
+          "cardinality": 1,
+          "null_count": 0,
+          "data_range": {
+            "min": "0",
+            "max": "0"
+          },
+          "data_category": "discrete",
+          "semantic_class": "currency_amount",
+          "unit_context": null
+        },
+        {
+          "name": "total_write",
+          "type": "integer",
+          "nullable": false,
+          "is_incremental": false,
+          "cardinality": 1,
+          "null_count": 0,
+          "data_range": {
+            "min": "0",
+            "max": "0"
+          },
+          "data_category": "discrete",
+          "semantic_class": "currency_amount",
+          "unit_context": null
+        },
+        {
+          "name": "total_errors",
+          "type": "integer",
+          "nullable": false,
+          "is_incremental": false,
+          "cardinality": 1,
+          "null_count": 0,
+          "data_range": {
+            "min": "0",
+            "max": "0"
+          },
+          "data_category": "discrete",
+          "semantic_class": "currency_amount",
+          "unit_context": null
+        }
+      ],
+      "table_description": null,
+      "primary_keys": [],
+      "foreign_keys": [],
+      "row_count": 1,
+      "field_classifications": {
+        "total_read": "pricing",
+        "total_write": "pricing",
+        "total_errors": "pricing"
+      },
+      "sensitive_fields": {},
+      "incremental_columns": [],
+      "partition_columns": [],
+      "join_candidates": [],
+      "unit_summary": {
+        "columns_with_units": 3,
+        "columns_without_units": 8,
+        "mixed_unit_groups": [],
+        "unknown_unit_columns": []
+      },
+      "cdc_enabled": false,
+      "has_primary_key": false,
+      "has_foreign_keys": false,
+      "has_sensitive_fields": false,
+      "data_quality": {
+        "findings": [
+          {
+            "column": null,
+            "check": "missing_primary_key",
+            "severity": "critical",
+            "detail": "Table has no primary key defined",
+            "recommendation": "Add a primary key to ensure row uniqueness and enable efficient lookups"
+          },
+          {
+            "column": null,
+            "check": "delete_management",
+            "severity": "warning",
+            "detail": "No soft-delete column detected and CDC is not enabled. Table likely uses hard deletes invisible to incremental ingestion.",
+            "recommendation": "Consider: (1) Add soft-delete column, (2) Enable CDC via ALTER TABLE \u2026 REPLICA IDENTITY FULL, or (3) Plan periodic full-load syncs.",
+            "delete_strategy": "hard_delete",
+            "soft_delete_column": null,
+            "soft_delete_type": null,
+            "has_audit_trail": false
+          },
+          {
+            "column": null,
+            "check": "timezone",
+            "severity": "info",
+            "detail": "All 1 date/time column(s) are TZ-naive \u2014 stored values are implicitly in server timezone '(UTC+01:00) Sarajevo, Skopje, Warsaw, Zagreb'.",
+            "recommendation": "During ingestion, treat all timestamps as '(UTC+01:00) Sarajevo, Skopje, Warsaw, Zagreb' and convert to UTC.",
+            "server_timezone": "(UTC+01:00) Sarajevo, Skopje, Warsaw, Zagreb",
+            "columns": [
+              {
+                "column": "lastrun",
+                "type": "datetime",
+                "effective_timezone": "(UTC+01:00) Sarajevo, Skopje, Warsaw, Zagreb",
+                "is_tz_aware": false
+              }
+            ],
+            "distinct_timezones": [
+              "(UTC+01:00) Sarajevo, Skopje, Warsaw, Zagreb"
+            ],
+            "tz_aware_count": 0,
+            "tz_naive_count": 1
+          }
+        ]
+      }
+    }
+  ]
+}

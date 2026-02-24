@@ -240,6 +240,18 @@ unit_aliases:
   g/cm3: g_cm3
   lb/ft3: lb_ft3
 
+  # Count / Packaging
+  ea: ea
+  each: ea
+  piece: ea
+  pieces: ea
+  box: box
+  boxes: box
+  case: case
+  cases: case
+  pack: pack
+  packs: pack
+
 unit_conversion:
   # Length canonical: m
   m: { canonical_unit: m, unit_system: metric, factor_to_canonical: 1.0, offset_to_canonical: 0.0, dimension: length }
@@ -366,3 +378,9 @@ unit_conversion:
   kg_m3: { canonical_unit: kg_m3, unit_system: metric, factor_to_canonical: 1.0, offset_to_canonical: 0.0, dimension: density }
   g_cm3: { canonical_unit: kg_m3, unit_system: metric, factor_to_canonical: 1000.0, offset_to_canonical: 0.0, dimension: density }
   lb_ft3: { canonical_unit: kg_m3, unit_system: imperial, factor_to_canonical: 16.0184634, offset_to_canonical: 0.0, dimension: density }
+
+  # Quantity canonical: ea
+  ea: { canonical_unit: ea, unit_system: business, factor_to_canonical: 1.0, offset_to_canonical: 0.0, dimension: quantity }
+  box: { canonical_unit: ea, unit_system: business, factor_to_canonical: 1.0, offset_to_canonical: 0.0, dimension: quantity }
+  case: { canonical_unit: ea, unit_system: business, factor_to_canonical: 1.0, offset_to_canonical: 0.0, dimension: quantity }
+  pack: { canonical_unit: ea, unit_system: business, factor_to_canonical: 1.0, offset_to_canonical: 0.0, dimension: quantity }

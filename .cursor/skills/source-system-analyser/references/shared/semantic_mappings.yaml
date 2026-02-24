@@ -25,5 +25,7 @@ semantic_patterns:
     semantic_class: "power"
   - pattern: "(density|specific_gravity|kg_m3|lb_ft3|g_cm3)"
     semantic_class: "density"
+  - pattern: "(^|_)(quantity|qty|count|on_hand|stock_qty|ordered_qty|sold_qty)($|_)"
+    semantic_class: "quantity"
   - pattern: "(sku|product_code|product_id|item_code|part_number)"
     semantic_class: "product_identifier"

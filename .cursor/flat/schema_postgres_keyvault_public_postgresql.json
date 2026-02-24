@@ -1,11 +1,11 @@
 {
   "metadata": {
-    "generated_at": "2026-02-23T10:10:56.528423+00:00",
+    "generated_at": "2026-02-24T13:15:56.084354+00:00",
     "database_url": "aws-1-eu-west-1.pooler.supabase.com:5432/postgres",
     "schema_filter": "public",
     "total_tables": 10,
     "total_rows": 35,
-    "total_findings": 43
+    "total_findings": 69
   },
   "connection": {
     "host": "aws-1-eu-west-1.pooler.supabase.com",
@@ -21,11 +21,11 @@
   },
   "data_quality_summary": {
     "critical": 0,
-    "warning": 18,
-    "info": 25,
+    "warning": 30,
+    "info": 39,
     "by_check": {
-      "controlled_value_candidate": 7,
-      "nullable_but_never_null": 13,
+      "controlled_value_candidate": 12,
+      "nullable_but_never_null": 27,
       "missing_primary_key": 0,
       "missing_foreign_key": 0,
       "format_inconsistency": 0,
@@ -33,8 +33,8 @@
       "delete_management": 10,
       "late_arriving_data": 3,
       "timezone": 10,
-      "unit_unknown": 0,
-      "unit_noncanonical_but_convertible": 0,
+      "unit_unknown": 3,
+      "unit_noncanonical_but_convertible": 4,
       "unit_mismatch_within_semantic_group": 0
     },
     "constraints_found": {
@@ -355,7 +355,7 @@
             "max": "2023-06-01"
           },
           "data_category": "continuous",
-          "semantic_class": null,
+          "semantic_class": "timestamp",
           "unit_context": null
         },
         {
@@ -404,6 +404,7 @@
       "row_count": 3,
       "field_classifications": {
         "email": "contact",
+        "hire_date": "temporal",
         "created_at": "temporal",
         "updated_at": "temporal"
       },
@@ -575,8 +576,16 @@
             "max": "120"
           },
           "data_category": "discrete",
-          "semantic_class": "count",
-          "unit_context": null
+          "semantic_class": "quantity",
+          "unit_context": {
+            "detected_unit": null,
+            "canonical_unit": null,
+            "unit_system": "unknown",
+            "conversion": null,
+            "detection_confidence": "low",
+            "detection_source": "combined",
+            "notes": "Semantic class suggests units, but no explicit source unit token was detected."
+          }
         },
         {
           "name": "reorder_level",
@@ -606,7 +615,7 @@
             "max": "2026-02-03 14:48:25.951501+00:00"
           },
           "data_category": "continuous",
-          "semantic_class": null,
+          "semantic_class": "timestamp",
           "unit_context": null
         },
         {
@@ -640,9 +649,64 @@
           "data_category": "continuous",
           "semantic_class": "timestamp",
           "unit_context": null
+        },
+        {
+          "name": "stock_value",
+          "type": "numeric(10,2)",
+          "nullable": true,
+          "is_incremental": false,
+          "cardinality": 6,
+          "null_count": 0,
+          "data_range": {
+            "min": "35.00",
+            "max": "120.00"
+          },
+          "data_category": "continuous",
+          "semantic_class": null,
+          "unit_context": {
+            "detected_unit": "ea",
+            "canonical_unit": "ea",
+            "unit_system": "business",
+            "conversion": {
+              "factor_to_canonical": 1.0,
+              "offset_to_canonical": 0.0,
+              "formula": "canonical = value * 1.0 + 0.0"
+            },
+            "detection_confidence": "low",
+            "detection_source": "companion_column:stock_unit",
+            "notes": "Inferred from companion unit column 'stock_unit'."
+          }
+        },
+        {
+          "name": "stock_unit",
+          "type": "text",
+          "nullable": true,
+          "is_incremental": false,
+          "column_description": "Current stock unit label.",
+          "cardinality": 1,
+          "null_count": 0,
+          "data_range": {
+            "min": "ea",
+            "max": "ea"
+          },
+          "data_category": "nominal",
+          "semantic_class": null,
+          "unit_context": {
+            "detected_unit": "ea",
+            "canonical_unit": "ea",
+            "unit_system": "business",
+            "conversion": {
+              "factor_to_canonical": 1.0,
+              "offset_to_canonical": 0.0,
+              "formula": "canonical = value * 1.0 + 0.0"
+            },
+            "detection_confidence": "low",
+            "detection_source": "sample_values",
+            "notes": null
+          }
         }
       ],
-      "table_description": null,
+      "table_description": "Current stock levels with normalized stock unit representation.",
       "primary_keys": [
         "inventory_id"
       ],
@@ -659,6 +723,7 @@
       "row_count": 6,
       "field_classifications": {
         "quantity_on_hand": "quantity",
+        "last_restocked_at": "temporal",
         "created_at": "temporal",
         "updated_at": "temporal"
       },
@@ -688,10 +753,12 @@
         }
       ],
       "unit_summary": {
-        "columns_with_units": 0,
+        "columns_with_units": 2,
         "columns_without_units": 8,
         "mixed_unit_groups": [],
-        "unknown_unit_columns": []
+        "unknown_unit_columns": [
+          "quantity_on_hand"
+        ]
       },
       "cdc_enabled": false,
       "has_primary_key": true,
@@ -700,7 +767,32 @@
       "data_quality": {
         "findings": [
           {
+            "column": "stock_unit",
+            "check": "controlled_value_candidate",
+            "severity": "warning",
+            "detail": "Text column with 1 distinct value(s) ('ea') but no CHECK, ENUM, or FK constraint",
+            "recommendation": "Add a CHECK constraint, convert to an ENUM type, or create a lookup/reference table to prevent invalid values",
+            "distinct_values": [
+              "ea"
+            ],
+            "cardinality": 1
+          },
+          {
             "column": "last_restocked_at",
+            "check": "nullable_but_never_null",
+            "severity": "info",
+            "detail": "Column is nullable but has 0 NULLs across 6 row(s)",
+            "recommendation": "Consider adding a NOT NULL constraint if the column should always have a value"
+          },
+          {
+            "column": "stock_value",
+            "check": "nullable_but_never_null",
+            "severity": "info",
+            "detail": "Column is nullable but has 0 NULLs across 6 row(s)",
+            "recommendation": "Consider adding a NOT NULL constraint if the column should always have a value"
+          },
+          {
+            "column": "stock_unit",
             "check": "nullable_but_never_null",
             "severity": "info",
             "detail": "Column is nullable but has 0 NULLs across 6 row(s)",
@@ -749,6 +841,13 @@
             ],
             "tz_aware_count": 0,
             "tz_naive_count": 3
+          },
+          {
+            "column": "quantity_on_hand",
+            "check": "unit_unknown",
+            "severity": "warning",
+            "detail": "Column semantic class 'quantity' has unknown source units.",
+            "recommendation": "Add explicit source unit mapping for this field to enable safe aggregation."
           }
         ]
       }
@@ -904,13 +1003,158 @@
           "data_category": "continuous",
           "semantic_class": "timestamp",
           "unit_context": null
+        },
+        {
+          "name": "weight_value",
+          "type": "numeric(10,2)",
+          "nullable": true,
+          "is_incremental": false,
+          "cardinality": 5,
+          "null_count": 0,
+          "data_range": {
+            "min": "0.75",
+            "max": "1.75"
+          },
+          "data_category": "continuous",
+          "semantic_class": "mass",
+          "unit_context": {
+            "detected_unit": "lb",
+            "canonical_unit": "kg",
+            "unit_system": "imperial",
+            "conversion": {
+              "factor_to_canonical": 0.45359237,
+              "offset_to_canonical": 0.0,
+              "formula": "canonical = value * 0.45359237 + 0.0"
+            },
+            "detection_confidence": "low",
+            "detection_source": "companion_column:weight_unit",
+            "notes": "Inferred from companion unit column 'weight_unit'."
+          }
+        },
+        {
+          "name": "weight_unit",
+          "type": "text",
+          "nullable": true,
+          "is_incremental": false,
+          "column_description": "Source weight unit (kg/lb) used for unit inference testing.",
+          "cardinality": 2,
+          "null_count": 0,
+          "data_range": {
+            "min": "kg",
+            "max": "lb"
+          },
+          "data_category": "nominal",
+          "semantic_class": "mass",
+          "unit_context": {
+            "detected_unit": "lb",
+            "canonical_unit": "kg",
+            "unit_system": "imperial",
+            "conversion": {
+              "factor_to_canonical": 0.45359237,
+              "offset_to_canonical": 0.0,
+              "formula": "canonical = value * 0.45359237 + 0.0"
+            },
+            "detection_confidence": "low",
+            "detection_source": "sample_values",
+            "notes": "Values should be normalized from 'lb' to canonical 'kg'."
+          }
+        },
+        {
+          "name": "length_value",
+          "type": "numeric(10,2)",
+          "nullable": true,
+          "is_incremental": false,
+          "cardinality": 5,
+          "null_count": 0,
+          "data_range": {
+            "min": "11.50",
+            "max": "17.50"
+          },
+          "data_category": "continuous",
+          "semantic_class": "length",
+          "unit_context": {
+            "detected_unit": "in",
+            "canonical_unit": "m",
+            "unit_system": "imperial",
+            "conversion": {
+              "factor_to_canonical": 0.0254,
+              "offset_to_canonical": 0.0,
+              "formula": "canonical = value * 0.0254 + 0.0"
+            },
+            "detection_confidence": "low",
+            "detection_source": "companion_column:length_unit",
+            "notes": "Inferred from companion unit column 'length_unit'."
+          }
+        },
+        {
+          "name": "length_unit",
+          "type": "text",
+          "nullable": true,
+          "is_incremental": false,
+          "column_description": "Source length unit (cm/in) used for unit inference testing.",
+          "cardinality": 2,
+          "null_count": 0,
+          "data_range": {
+            "min": "cm",
+            "max": "in"
+          },
+          "data_category": "nominal",
+          "semantic_class": "length",
+          "unit_context": {
+            "detected_unit": "in",
+            "canonical_unit": "m",
+            "unit_system": "imperial",
+            "conversion": {
+              "factor_to_canonical": 0.0254,
+              "offset_to_canonical": 0.0,
+              "formula": "canonical = value * 0.0254 + 0.0"
+            },
+            "detection_confidence": "low",
+            "detection_source": "sample_values",
+            "notes": "Values should be normalized from 'in' to canonical 'm'."
+          }
+        },
+        {
+          "name": "product_description",
+          "type": "text",
+          "nullable": true,
+          "is_incremental": false,
+          "cardinality": 5,
+          "null_count": 0,
+          "data_range": {
+            "min": "Product Apples Gala 1kg in Produce category.",
+            "max": "Product Whole Milk 1L in Dairy category."
+          },
+          "data_category": "nominal",
+          "semantic_class": null,
+          "unit_context": null
+        },
+        {
+          "name": "primary_supplier_id",
+          "type": "bigint",
+          "nullable": true,
+          "is_incremental": false,
+          "column_description": "Primary supplier relationship used for join candidate detection.",
+          "cardinality": 2,
+          "null_count": 0,
+          "data_range": {
+            "min": "1",
+            "max": "2"
+          },
+          "data_category": "discrete",
+          "semantic_class": null,
+          "unit_context": null
         }
       ],
-      "table_description": null,
+      "table_description": "Master product catalog including physical units for analyzer unit-context testing.",
       "primary_keys": [
         "product_id"
       ],
       "foreign_keys": [
+        {
+          "column": "primary_supplier_id",
+          "references": "suppliers.supplier_id"
+        },
         {
           "column": "supplier_id",
           "references": "suppliers.supplier_id"
@@ -936,6 +1180,12 @@
       ],
       "join_candidates": [
         {
+          "column": "primary_supplier_id",
+          "target_table": "suppliers",
+          "target_column": "supplier_id",
+          "confidence": "high"
+        },
+        {
           "column": "supplier_id",
           "target_table": "suppliers",
           "target_column": "supplier_id",
@@ -943,8 +1193,8 @@
         }
       ],
       "unit_summary": {
-        "columns_with_units": 0,
-        "columns_without_units": 10,
+        "columns_with_units": 4,
+        "columns_without_units": 12,
         "mixed_unit_groups": [],
         "unknown_unit_columns": []
       },
@@ -967,6 +1217,72 @@
               "Produce"
             ],
             "cardinality": 4
+          },
+          {
+            "column": "weight_unit",
+            "check": "controlled_value_candidate",
+            "severity": "warning",
+            "detail": "Text column with 2 distinct value(s) ('kg', 'lb') but no CHECK, ENUM, or FK constraint",
+            "recommendation": "Add a CHECK constraint, convert to an ENUM type, or create a lookup/reference table to prevent invalid values",
+            "distinct_values": [
+              "kg",
+              "lb"
+            ],
+            "cardinality": 2
+          },
+          {
+            "column": "length_unit",
+            "check": "controlled_value_candidate",
+            "severity": "warning",
+            "detail": "Text column with 2 distinct value(s) ('cm', 'in') but no CHECK, ENUM, or FK constraint",
+            "recommendation": "Add a CHECK constraint, convert to an ENUM type, or create a lookup/reference table to prevent invalid values",
+            "distinct_values": [
+              "cm",
+              "in"
+            ],
+            "cardinality": 2
+          },
+          {
+            "column": "weight_value",
+            "check": "nullable_but_never_null",
+            "severity": "info",
+            "detail": "Column is nullable but has 0 NULLs across 5 row(s)",
+            "recommendation": "Consider adding a NOT NULL constraint if the column should always have a value"
+          },
+          {
+            "column": "weight_unit",
+            "check": "nullable_but_never_null",
+            "severity": "info",
+            "detail": "Column is nullable but has 0 NULLs across 5 row(s)",
+            "recommendation": "Consider adding a NOT NULL constraint if the column should always have a value"
+          },
+          {
+            "column": "length_value",
+            "check": "nullable_but_never_null",
+            "severity": "info",
+            "detail": "Column is nullable but has 0 NULLs across 5 row(s)",
+            "recommendation": "Consider adding a NOT NULL constraint if the column should always have a value"
+          },
+          {
+            "column": "length_unit",
+            "check": "nullable_but_never_null",
+            "severity": "info",
+            "detail": "Column is nullable but has 0 NULLs across 5 row(s)",
+            "recommendation": "Consider adding a NOT NULL constraint if the column should always have a value"
+          },
+          {
+            "column": "product_description",
+            "check": "nullable_but_never_null",
+            "severity": "info",
+            "detail": "Column is nullable but has 0 NULLs across 5 row(s)",
+            "recommendation": "Consider adding a NOT NULL constraint if the column should always have a value"
+          },
+          {
+            "column": "primary_supplier_id",
+            "check": "nullable_but_never_null",
+            "severity": "info",
+            "detail": "Column is nullable but has 0 NULLs across 5 row(s)",
+            "recommendation": "Consider adding a NOT NULL constraint if the column should always have a value"
           },
           {
             "column": "active",
@@ -1005,6 +1321,42 @@
             ],
             "tz_aware_count": 0,
             "tz_naive_count": 2
+          },
+          {
+            "column": "weight_value",
+            "check": "unit_noncanonical_but_convertible",
+            "severity": "warning",
+            "detail": "Column uses 'lb' while canonical unit is 'kg'.",
+            "recommendation": "Convert values to canonical unit during ingestion using the provided conversion metadata.",
+            "detected_unit": "lb",
+            "canonical_unit": "kg"
+          },
+          {
+            "column": "weight_unit",
+            "check": "unit_noncanonical_but_convertible",
+            "severity": "warning",
+            "detail": "Column uses 'lb' while canonical unit is 'kg'.",
+            "recommendation": "Convert values to canonical unit during ingestion using the provided conversion metadata.",
+            "detected_unit": "lb",
+            "canonical_unit": "kg"
+          },
+          {
+            "column": "length_value",
+            "check": "unit_noncanonical_but_convertible",
+            "severity": "warning",
+            "detail": "Column uses 'in' while canonical unit is 'm'.",
+            "recommendation": "Convert values to canonical unit during ingestion using the provided conversion metadata.",
+            "detected_unit": "in",
+            "canonical_unit": "m"
+          },
+          {
+            "column": "length_unit",
+            "check": "unit_noncanonical_but_convertible",
+            "severity": "warning",
+            "detail": "Column uses 'in' while canonical unit is 'm'.",
+            "recommendation": "Convert values to canonical unit during ingestion using the provided conversion metadata.",
+            "detected_unit": "in",
+            "canonical_unit": "m"
           }
         ]
       }
@@ -1070,8 +1422,16 @@
             "max": "200"
           },
           "data_category": "discrete",
-          "semantic_class": "count",
-          "unit_context": null
+          "semantic_class": "quantity",
+          "unit_context": {
+            "detected_unit": null,
+            "canonical_unit": null,
+            "unit_system": "unknown",
+            "conversion": null,
+            "detection_confidence": "low",
+            "detection_source": "combined",
+            "notes": "Semantic class suggests units, but no explicit source unit token was detected."
+          }
         },
         {
           "name": "unit_cost",
@@ -1119,9 +1479,64 @@
           "data_category": "continuous",
           "semantic_class": "timestamp",
           "unit_context": null
+        },
+        {
+          "name": "ordered_qty_value",
+          "type": "numeric(10,2)",
+          "nullable": true,
+          "is_incremental": false,
+          "cardinality": 4,
+          "null_count": 0,
+          "data_range": {
+            "min": "60.00",
+            "max": "200.00"
+          },
+          "data_category": "continuous",
+          "semantic_class": "quantity",
+          "unit_context": {
+            "detected_unit": "ea",
+            "canonical_unit": "ea",
+            "unit_system": "business",
+            "conversion": {
+              "factor_to_canonical": 1.0,
+              "offset_to_canonical": 0.0,
+              "formula": "canonical = value * 1.0 + 0.0"
+            },
+            "detection_confidence": "low",
+            "detection_source": "companion_column:ordered_qty_unit",
+            "notes": "Inferred from companion unit column 'ordered_qty_unit'."
+          }
+        },
+        {
+          "name": "ordered_qty_unit",
+          "type": "text",
+          "nullable": true,
+          "is_incremental": false,
+          "column_description": "Ordered quantity unit (ea/box).",
+          "cardinality": 2,
+          "null_count": 0,
+          "data_range": {
+            "min": "box",
+            "max": "ea"
+          },
+          "data_category": "nominal",
+          "semantic_class": "quantity",
+          "unit_context": {
+            "detected_unit": "ea",
+            "canonical_unit": "ea",
+            "unit_system": "business",
+            "conversion": {
+              "factor_to_canonical": 1.0,
+              "offset_to_canonical": 0.0,
+              "formula": "canonical = value * 1.0 + 0.0"
+            },
+            "detection_confidence": "low",
+            "detection_source": "sample_values",
+            "notes": null
+          }
         }
       ],
-      "table_description": null,
+      "table_description": "Line items with order quantities and explicit unit labels.",
       "primary_keys": [
         "po_item_id"
       ],
@@ -1140,7 +1555,9 @@
         "quantity": "quantity",
         "unit_cost": "pricing",
         "created_at": "temporal",
-        "updated_at": "temporal"
+        "updated_at": "temporal",
+        "ordered_qty_value": "quantity",
+        "ordered_qty_unit": "quantity"
       },
       "sensitive_fields": {},
       "incremental_columns": [
@@ -1167,10 +1584,12 @@
         }
       ],
       "unit_summary": {
-        "columns_with_units": 0,
+        "columns_with_units": 2,
         "columns_without_units": 7,
         "mixed_unit_groups": [],
-        "unknown_unit_columns": []
+        "unknown_unit_columns": [
+          "quantity"
+        ]
       },
       "cdc_enabled": false,
       "has_primary_key": true,
@@ -1178,6 +1597,32 @@
       "has_sensitive_fields": false,
       "data_quality": {
         "findings": [
+          {
+            "column": "ordered_qty_unit",
+            "check": "controlled_value_candidate",
+            "severity": "warning",
+            "detail": "Text column with 2 distinct value(s) ('box', 'ea') but no CHECK, ENUM, or FK constraint",
+            "recommendation": "Add a CHECK constraint, convert to an ENUM type, or create a lookup/reference table to prevent invalid values",
+            "distinct_values": [
+              "box",
+              "ea"
+            ],
+            "cardinality": 2
+          },
+          {
+            "column": "ordered_qty_value",
+            "check": "nullable_but_never_null",
+            "severity": "info",
+            "detail": "Column is nullable but has 0 NULLs across 4 row(s)",
+            "recommendation": "Consider adding a NOT NULL constraint if the column should always have a value"
+          },
+          {
+            "column": "ordered_qty_unit",
+            "check": "nullable_but_never_null",
+            "severity": "info",
+            "detail": "Column is nullable but has 0 NULLs across 4 row(s)",
+            "recommendation": "Consider adding a NOT NULL constraint if the column should always have a value"
+          },
           {
             "column": null,
             "check": "delete_management",
@@ -1215,6 +1660,13 @@
             ],
             "tz_aware_count": 0,
             "tz_naive_count": 2
+          },
+          {
+            "column": "quantity",
+            "check": "unit_unknown",
+            "severity": "warning",
+            "detail": "Column semantic class 'quantity' has unknown source units.",
+            "recommendation": "Add explicit source unit mapping for this field to enable safe aggregation."
           }
         ]
       }
@@ -1295,7 +1747,7 @@
             "max": "2025-11-05"
           },
           "data_category": "continuous",
-          "semantic_class": null,
+          "semantic_class": "timestamp",
           "unit_context": null
         },
         {
@@ -1310,7 +1762,7 @@
             "max": "2025-11-08"
           },
           "data_category": "continuous",
-          "semantic_class": null,
+          "semantic_class": "timestamp",
           "unit_context": null
         },
         {
@@ -1344,13 +1796,33 @@
           "data_category": "continuous",
           "semantic_class": "timestamp",
           "unit_context": null
+        },
+        {
+          "name": "approver_employee_id",
+          "type": "bigint",
+          "nullable": true,
+          "is_incremental": false,
+          "column_description": "Approver employee foreign key for procurement workflow.",
+          "cardinality": 2,
+          "null_count": 0,
+          "data_range": {
+            "min": "1",
+            "max": "3"
+          },
+          "data_category": "discrete",
+          "semantic_class": null,
+          "unit_context": null
         }
       ],
-      "table_description": null,
+      "table_description": "Procurement headers including approver employee relationship.",
       "primary_keys": [
         "po_id"
       ],
       "foreign_keys": [
+        {
+          "column": "approver_employee_id",
+          "references": "employees.employee_id"
+        },
         {
           "column": "store_id",
           "references": "stores.store_id"
@@ -1363,6 +1835,8 @@
       "row_count": 2,
       "field_classifications": {
         "status": "categorical",
+        "order_date": "temporal",
+        "expected_date": "temporal",
         "created_at": "temporal",
         "updated_at": "temporal"
       },
@@ -1380,6 +1854,12 @@
       ],
       "join_candidates": [
         {
+          "column": "approver_employee_id",
+          "target_table": "employees",
+          "target_column": "employee_id",
+          "confidence": "high"
+        },
+        {
           "column": "store_id",
           "target_table": "stores",
           "target_column": "store_id",
@@ -1394,7 +1874,7 @@
       ],
       "unit_summary": {
         "columns_with_units": 0,
-        "columns_without_units": 8,
+        "columns_without_units": 9,
         "mixed_unit_groups": [],
         "unknown_unit_columns": []
       },
@@ -1418,6 +1898,13 @@
           },
           {
             "column": "expected_date",
+            "check": "nullable_but_never_null",
+            "severity": "info",
+            "detail": "Column is nullable but has 0 NULLs across 2 row(s)",
+            "recommendation": "Consider adding a NOT NULL constraint if the column should always have a value"
+          },
+          {
+            "column": "approver_employee_id",
             "check": "nullable_but_never_null",
             "severity": "info",
             "detail": "Column is nullable but has 0 NULLs across 2 row(s)",
@@ -1545,8 +2032,16 @@
             "max": "3"
           },
           "data_category": "discrete",
-          "semantic_class": "count",
-          "unit_context": null
+          "semantic_class": "quantity",
+          "unit_context": {
+            "detected_unit": null,
+            "canonical_unit": null,
+            "unit_system": "unknown",
+            "conversion": null,
+            "detection_confidence": "low",
+            "detection_source": "combined",
+            "notes": "Semantic class suggests units, but no explicit source unit token was detected."
+          }
         },
         {
           "name": "unit_price",
@@ -1594,9 +2089,64 @@
           "data_category": "continuous",
           "semantic_class": "timestamp",
           "unit_context": null
+        },
+        {
+          "name": "sold_qty_value",
+          "type": "numeric(10,2)",
+          "nullable": true,
+          "is_incremental": false,
+          "cardinality": 3,
+          "null_count": 0,
+          "data_range": {
+            "min": "1.00",
+            "max": "3.00"
+          },
+          "data_category": "continuous",
+          "semantic_class": "quantity",
+          "unit_context": {
+            "detected_unit": "ea",
+            "canonical_unit": "ea",
+            "unit_system": "business",
+            "conversion": {
+              "factor_to_canonical": 1.0,
+              "offset_to_canonical": 0.0,
+              "formula": "canonical = value * 1.0 + 0.0"
+            },
+            "detection_confidence": "low",
+            "detection_source": "companion_column:sold_qty_unit",
+            "notes": "Inferred from companion unit column 'sold_qty_unit'."
+          }
+        },
+        {
+          "name": "sold_qty_unit",
+          "type": "text",
+          "nullable": true,
+          "is_incremental": false,
+          "column_description": "Sold quantity unit (ea/box).",
+          "cardinality": 2,
+          "null_count": 0,
+          "data_range": {
+            "min": "box",
+            "max": "ea"
+          },
+          "data_category": "nominal",
+          "semantic_class": "quantity",
+          "unit_context": {
+            "detected_unit": "ea",
+            "canonical_unit": "ea",
+            "unit_system": "business",
+            "conversion": {
+              "factor_to_canonical": 1.0,
+              "offset_to_canonical": 0.0,
+              "formula": "canonical = value * 1.0 + 0.0"
+            },
+            "detection_confidence": "low",
+            "detection_source": "sample_values",
+            "notes": null
+          }
         }
       ],
-      "table_description": null,
+      "table_description": "Sales line items with sold quantity and explicit unit labels.",
       "primary_keys": [
         "sales_order_item_id"
       ],
@@ -1615,7 +2165,9 @@
         "quantity": "quantity",
         "unit_price": "pricing",
         "created_at": "temporal",
-        "updated_at": "temporal"
+        "updated_at": "temporal",
+        "sold_qty_value": "quantity",
+        "sold_qty_unit": "quantity"
       },
       "sensitive_fields": {},
       "incremental_columns": [
@@ -1642,10 +2194,12 @@
         }
       ],
       "unit_summary": {
-        "columns_with_units": 0,
+        "columns_with_units": 2,
         "columns_without_units": 7,
         "mixed_unit_groups": [],
-        "unknown_unit_columns": []
+        "unknown_unit_columns": [
+          "quantity"
+        ]
       },
       "cdc_enabled": false,
       "has_primary_key": true,
@@ -1653,6 +2207,32 @@
       "has_sensitive_fields": false,
       "data_quality": {
         "findings": [
+          {
+            "column": "sold_qty_unit",
+            "check": "controlled_value_candidate",
+            "severity": "warning",
+            "detail": "Text column with 2 distinct value(s) ('box', 'ea') but no CHECK, ENUM, or FK constraint",
+            "recommendation": "Add a CHECK constraint, convert to an ENUM type, or create a lookup/reference table to prevent invalid values",
+            "distinct_values": [
+              "box",
+              "ea"
+            ],
+            "cardinality": 2
+          },
+          {
+            "column": "sold_qty_value",
+            "check": "nullable_but_never_null",
+            "severity": "info",
+            "detail": "Column is nullable but has 0 NULLs across 5 row(s)",
+            "recommendation": "Consider adding a NOT NULL constraint if the column should always have a value"
+          },
+          {
+            "column": "sold_qty_unit",
+            "check": "nullable_but_never_null",
+            "severity": "info",
+            "detail": "Column is nullable but has 0 NULLs across 5 row(s)",
+            "recommendation": "Consider adding a NOT NULL constraint if the column should always have a value"
+          },
           {
             "column": null,
             "check": "delete_management",
@@ -1690,6 +2270,13 @@
             ],
             "tz_aware_count": 0,
             "tz_naive_count": 2
+          },
+          {
+            "column": "quantity",
+            "check": "unit_unknown",
+            "severity": "warning",
+            "detail": "Column semantic class 'quantity' has unknown source units.",
+            "recommendation": "Add explicit source unit mapping for this field to enable safe aggregation."
           }
         ]
       }
@@ -1771,7 +2358,7 @@
             "max": "2026-02-04 11:48:25.951501+00:00"
           },
           "data_category": "continuous",
-          "semantic_class": null,
+          "semantic_class": "timestamp",
           "unit_context": null
         },
         {
@@ -1835,13 +2422,33 @@
           "data_category": "continuous",
           "semantic_class": "timestamp",
           "unit_context": null
+        },
+        {
+          "name": "sales_rep_employee_id",
+          "type": "bigint",
+          "nullable": true,
+          "is_incremental": false,
+          "column_description": "Sales representative foreign key for order ownership.",
+          "cardinality": 2,
+          "null_count": 0,
+          "data_range": {
+            "min": "2",
+            "max": "3"
+          },
+          "data_category": "discrete",
+          "semantic_class": null,
+          "unit_context": null
         }
       ],
-      "table_description": null,
+      "table_description": "Sales headers including assigned sales representative relationship.",
       "primary_keys": [
         "sales_order_id"
       ],
       "foreign_keys": [
+        {
+          "column": "sales_rep_employee_id",
+          "references": "employees.employee_id"
+        },
         {
           "column": "customer_id",
           "references": "customers.customer_id"
@@ -1857,6 +2464,7 @@
       ],
       "row_count": 3,
       "field_classifications": {
+        "order_date": "temporal",
         "status": "categorical",
         "total_amount": "pricing",
         "created_at": "temporal",
@@ -1874,6 +2482,12 @@
         "updated_at"
       ],
       "join_candidates": [
+        {
+          "column": "sales_rep_employee_id",
+          "target_table": "employees",
+          "target_column": "employee_id",
+          "confidence": "high"
+        },
         {
           "column": "customer_id",
           "target_table": "customers",
@@ -1895,7 +2509,7 @@
       ],
       "unit_summary": {
         "columns_with_units": 0,
-        "columns_without_units": 9,
+        "columns_without_units": 10,
         "mixed_unit_groups": [],
         "unknown_unit_columns": []
       },
@@ -1919,6 +2533,13 @@
           },
           {
             "column": "customer_id",
+            "check": "nullable_but_never_null",
+            "severity": "info",
+            "detail": "Column is nullable but has 0 NULLs across 3 row(s)",
+            "recommendation": "Consider adding a NOT NULL constraint if the column should always have a value"
+          },
+          {
+            "column": "sales_rep_employee_id",
             "check": "nullable_but_never_null",
             "severity": "info",
             "detail": "Column is nullable but has 0 NULLs across 3 row(s)",

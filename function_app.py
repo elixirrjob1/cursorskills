@@ -52,8 +52,8 @@ def _json_response(payload: dict, status: int = 200) -> func.HttpResponse:
     )
 
 
-def _unauthorized() -> func.HttpResponse:
-    return _json_response({"detail": "Unauthorized"}, status=401)
+def _unauthorized(schema: str) -> func.HttpResponse:
+    return _json_response({"detail": "Unauthorized", "schema": schema}, status=401)
 
 
 def _validate_bearer(req: func.HttpRequest) -> bool:
@@ -66,62 +66,68 @@ def _validate_bearer(req: func.HttpRequest) -> bool:
     return auth[7:].strip() == token
 
 
-def _schema() -> str:
+def _default_schema() -> str:
     return os.environ.get("SCHEMA", "public").strip() or "public"
+
+
+def _resolve_schema(req: func.HttpRequest) -> str:
+    requested = (req.params.get("schema") or "").strip()
+    if requested:
+        return requested
+    return _default_schema()
 
 
 @app.route(route="api/tables", methods=["GET"])
 def list_tables(req: func.HttpRequest) -> func.HttpResponse:
+    schema = _resolve_schema(req)
     try:
         _init()
     except Exception as exc:
-        return _json_response({"detail": str(exc)}, status=503)
+        return _json_response({"detail": str(exc), "schema": schema}, status=503)
     if not _validate_bearer(req):
-        return _unauthorized()
-    schema = _schema()
+        return _unauthorized(schema)
     try:
         tables = _db.get_tables_metadata(schema)
         return _json_response({"schema": schema, "tables": tables})
     except Exception:
-        return _json_response({"detail": "Database error"}, status=500)
+        return _json_response({"detail": "Database error", "schema": schema}, status=500)
 
 
 @app.route(route="api/{table}", methods=["GET"])
 def get_table(req: func.HttpRequest) -> func.HttpResponse:
+    schema = _resolve_schema(req)
     try:
         _init()
     except Exception as exc:
-        return _json_response({"detail": str(exc)}, status=503)
+        return _json_response({"detail": str(exc), "schema": schema}, status=503)
     if not _validate_bearer(req):
-        return _unauthorized()
+        return _unauthorized(schema)
 
     table = (req.route_params.get("table") or "").strip()
     if table == "tables":
         return list_tables(req)
     if not table:
-        return _json_response({"detail": "Table not found"}, status=404)
+        return _json_response({"detail": "Table not found", "schema": schema}, status=404)
 
     try:
         limit = int(req.params.get("limit", "100"))
         offset = int(req.params.get("offset", "0"))
     except ValueError:
-        return _json_response({"detail": "limit and offset must be integers"}, status=400)
+        return _json_response({"detail": "limit and offset must be integers", "schema": schema}, status=400)
     if limit < 1 or limit > 1000:
-        return _json_response({"detail": "limit must be between 1 and 1000"}, status=400)
+        return _json_response({"detail": "limit must be between 1 and 1000", "schema": schema}, status=400)
     if offset < 0:
-        return _json_response({"detail": "offset must be >= 0"}, status=400)
-
-    schema = _schema()
+        return _json_response({"detail": "offset must be >= 0", "schema": schema}, status=400)
     try:
         metadata = _db.get_table_metadata(schema, table)
     except Exception:
-        return _json_response({"detail": "Database error"}, status=500)
+        return _json_response({"detail": "Database error", "schema": schema}, status=500)
     if metadata is None:
-        return _json_response({"detail": "Table not found"}, status=404)
+        return _json_response({"detail": "Table not found", "schema": schema}, status=404)
 
     resolved_table = _db.resolve_table_name(schema, table)
     if not resolved_table:
-        return _json_response({"detail": "Table not found"}, status=404)
+        return _json_response({"detail": "Table not found", "schema": schema}, status=404)
 
     try:
         rows = _db.get_table_data(resolved_table, schema, limit=limit, offset=offset)
@@ -134,6 +140,6 @@ def get_table(req: func.HttpRequest) -> func.HttpResponse:
             }
         )
     except ValueError as exc:
-        return _json_response({"detail": str(exc)}, status=400)
+        return _json_response({"detail": str(exc), "schema": schema}, status=400)
     except Exception:
-        return _json_response({"detail": "Database error"}, status=500)
+        return _json_response({"detail": "Database error", "schema": schema}, status=500)

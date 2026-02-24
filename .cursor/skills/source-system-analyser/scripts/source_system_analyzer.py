@@ -523,12 +523,14 @@ def _load_context_rules() -> Dict[str, Any]:
 
 _FIELD_CLASS_TO_SEMANTIC = {
     "pricing": "currency_amount",
-    "quantity": "count",
+    "quantity": "quantity",
     "categorical": "category",
     "temporal": "timestamp",
     "contact": "contact",
 }
 _UNITFUL_SEMANTIC_CLASSES = {
+    "quantity",
+    "count",
     "length",
     "area",
     "volume",
@@ -543,6 +545,11 @@ _UNITFUL_SEMANTIC_CLASSES = {
     "power",
     "density",
 }
+
+
+def _is_explicit_unit_column_name(col_name: str) -> bool:
+    lower = str(col_name or "").lower()
+    return lower.endswith("_unit") or lower.endswith("_value")
 
 
 def _infer_semantic_class(col_name: str, field_classification: Optional[str]) -> Optional[str]:
@@ -599,6 +606,10 @@ def _build_unit_context(
     semantic_class: Optional[str],
     sample_values: Optional[List[Any]] = None,
 ) -> Optional[Dict[str, Any]]:
+    # Avoid false positives on non-unit columns (e.g., free-text addresses).
+    if semantic_class not in _UNITFUL_SEMANTIC_CLASSES and not _is_explicit_unit_column_name(col_name):
+        return None
+
     rules = _load_context_rules()
     aliases = rules.get("unit_aliases", {})
     conversions = rules.get("unit_conversion", {})
@@ -659,6 +670,54 @@ def _build_unit_context(
     }
 
 
+def _unit_companion_base(col_name: str) -> Optional[str]:
+    lower = str(col_name or "").lower()
+    if lower.endswith("_unit"):
+        return lower[:-5]
+    if lower.endswith("_value"):
+        return lower[:-6]
+    return None
+
+
+def _propagate_unit_context_from_companion(columns: List[Dict[str, Any]]) -> None:
+    """Propagate unit context from *_unit columns to paired *_value columns."""
+    by_name = {str(c.get("name", "")).lower(): c for c in columns}
+
+    for col in columns:
+        name = str(col.get("name", "")).lower()
+        if not name.endswith("_value"):
+            continue
+        base = _unit_companion_base(name)
+        if not base:
+            continue
+        unit_col = by_name.get(f"{base}_unit")
+        if not unit_col:
+            continue
+
+        unit_ctx = unit_col.get("unit_context")
+        value_ctx = col.get("unit_context")
+        if not isinstance(unit_ctx, dict):
+            continue
+
+        detected = unit_ctx.get("detected_unit")
+        if not detected:
+            continue
+
+        if isinstance(value_ctx, dict) and value_ctx.get("detected_unit"):
+            continue
+
+        propagated = {
+            "detected_unit": unit_ctx.get("detected_unit"),
+            "canonical_unit": unit_ctx.get("canonical_unit"),
+            "unit_system": unit_ctx.get("unit_system", "unknown"),
+            "conversion": unit_ctx.get("conversion"),
+            "detection_confidence": "low",
+            "detection_source": f"companion_column:{unit_col.get('name')}",
+            "notes": f"Inferred from companion unit column '{unit_col.get('name')}'.",
+        }
+        col["unit_context"] = propagated
+
+
 def _build_unit_summary(columns: List[Dict[str, Any]]) -> Dict[str, Any]:
     with_units = 0
     unknown_cols: List[str] = []
@@ -692,6 +751,8 @@ def classify_field(col_name: str) -> Optional[str]:
         return "pricing"
     elif any(kw in col_name_lower for kw in ["quantity", "qty"]):
         return "quantity"
+    elif col_name_lower.endswith("_at") or any(kw in col_name_lower for kw in ["date", "time", "timestamp"]):
+        return "temporal"
     elif any(kw in col_name_lower for kw in ["category", "type", "status"]):
         return "categorical"
     elif "created" in col_name_lower or any(kw in col_name_lower for kw in ["updated", "modified"]):
@@ -1513,13 +1574,20 @@ def analyze_source_system(
                 total_rows += row_count
                 table_schema = schema or "public"
 
-                sample_data = None
-                if include_sample_data:
-                    try:
-                        colnames, rows = fetch_sample_rows(engine, table_name, limit=10, schema=table_schema, adapter=adapter)
-                        sample_data = {col: [row[i] for row in rows] for i, col in enumerate(colnames)}
-                    except Exception:
-                        pass
+                # Always fetch lightweight samples for unit inference.
+                # sample_data is only included in output when include_sample_data=True.
+                sample_values_by_col = None
+                sample_data_output = None
+                try:
+                    colnames, rows = fetch_sample_rows(engine, table_name, limit=10, schema=table_schema, adapter=adapter)
+                    raw_sample = {str(col): [row[i] for row in rows] for i, col in enumerate(colnames)}
+                    # SQL dialects/drivers may return column names in different casing.
+                    # Keep a normalized lowercase map for resilient lookups.
+                    sample_values_by_col = {k.lower(): v for k, v in raw_sample.items()}
+                    if include_sample_data:
+                        sample_data_output = raw_sample
+                except Exception:
+                    pass
 
                 field_classifications = {col["name"]: c for col in table_columns if (c := classify_field(col["name"]))}
                 sensitive_fields = detect_sensitive_fields(table_columns)
@@ -1550,10 +1618,11 @@ def analyze_source_system(
                     field_classification = field_classifications.get(col["name"])
                     semantic_class = _infer_semantic_class(col["name"], field_classification)
                     col_dict["semantic_class"] = semantic_class
-                    sample_values = sample_data.get(col["name"], []) if isinstance(sample_data, dict) else None
+                    sample_values = sample_values_by_col.get(str(col["name"]).lower(), []) if isinstance(sample_values_by_col, dict) else None
                     col_dict["unit_context"] = _build_unit_context(col["name"], semantic_class, sample_values=sample_values)
                     enriched_columns.append(col_dict)
 
+                _propagate_unit_context_from_companion(enriched_columns)
                 unit_summary = _build_unit_summary(enriched_columns)
 
                 table_entry = {
@@ -1573,8 +1642,8 @@ def analyze_source_system(
                     "has_foreign_keys": len(fk_columns) > 0,
                     "has_sensitive_fields": len(sensitive_fields) > 0,
                 }
-                if sample_data:
-                    table_entry["sample_data"] = sample_data
+                if sample_data_output:
+                    table_entry["sample_data"] = sample_data_output
                 enriched_tables.append(table_entry)
             except Exception as e:
                 logger.warning(f"Skipped table '{table_name}': {e}")

@@ -9,19 +9,28 @@ from api import db
 router = APIRouter(prefix="/api", tags=["data"])
 
 
-def _schema() -> str:
+def _default_schema() -> str:
     return os.environ.get("SCHEMA", "public").strip() or "public"
 
 
+def _resolve_schema(schema: str | None) -> str:
+    if schema and schema.strip():
+        return schema.strip()
+    return _default_schema()
+
+
 @router.get("/tables")
-async def list_tables(_: None = Depends(require_bearer_token)):
+async def list_tables(
+    _: None = Depends(require_bearer_token),
+    schema: str | None = Query(None, description="Database schema to query; defaults to SCHEMA env or 'public'."),
+):
     """List tables with schema.json-compatible structural metadata."""
+    schema_name = _resolve_schema(schema)
     try:
-        schema = _schema()
-        tables = db.get_tables_metadata(schema)
-        return {"schema": schema, "tables": tables}
+        tables = db.get_tables_metadata(schema_name)
+        return {"schema": schema_name, "tables": tables}
     except Exception as e:
-        raise HTTPException(status_code=500, detail="Database error") from e
+        raise HTTPException(status_code=500, detail={"detail": "Database error", "schema": schema_name}) from e
 
 
 @router.get("/{table}")
@@ -30,28 +39,29 @@ async def get_table(
     _: None = Depends(require_bearer_token),
     limit: int = Query(100, ge=1, le=1000),
     offset: int = Query(0, ge=0),
+    schema: str | None = Query(None, description="Database schema to query; defaults to SCHEMA env or 'public'."),
 ):
     """Return rows and metadata from the given table. Supports limit and offset."""
-    schema = _schema()
+    schema_name = _resolve_schema(schema)
     try:
-        metadata = db.get_table_metadata(schema, table)
+        metadata = db.get_table_metadata(schema_name, table)
     except Exception as e:
-        raise HTTPException(status_code=500, detail="Database error") from e
+        raise HTTPException(status_code=500, detail={"detail": "Database error", "schema": schema_name}) from e
     if metadata is None:
-        raise HTTPException(status_code=404, detail="Table not found")
+        raise HTTPException(status_code=404, detail={"detail": "Table not found", "schema": schema_name})
 
-    resolved_table = db.resolve_table_name(schema, table)
+    resolved_table = db.resolve_table_name(schema_name, table)
     if not resolved_table:
-        raise HTTPException(status_code=404, detail="Table not found")
+        raise HTTPException(status_code=404, detail={"detail": "Table not found", "schema": schema_name})
     try:
-        rows = db.get_table_data(resolved_table, schema, limit=limit, offset=offset)
+        rows = db.get_table_data(resolved_table, schema_name, limit=limit, offset=offset)
         return {
-            "schema": schema,
+            "schema": schema_name,
             "table": resolved_table,
             "metadata": metadata,
             "data": rows,
         }
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e)) from e
+        raise HTTPException(status_code=400, detail={"detail": str(e), "schema": schema_name}) from e
     except Exception as e:
-        raise HTTPException(status_code=500, detail="Database error") from e
+        raise HTTPException(status_code=500, detail={"detail": "Database error", "schema": schema_name}) from e

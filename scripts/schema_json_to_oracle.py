@@ -22,7 +22,12 @@ ORACLE_URL = os.environ.get("ORACLE_URL")
 if not DATABASE_URL or not ORACLE_URL:
     raise SystemExit("DATABASE_URL and ORACLE_URL must be set (in .env or Key Vault)")
 
-SCHEMA_JSON = Path(__file__).resolve().parent.parent / "schema.json"
+REPO_ROOT = Path(__file__).resolve().parent.parent
+SCHEMA_CANDIDATES = [
+    REPO_ROOT / "LATEST_SCHEMA" / "schema_public_postgresql.json",
+    REPO_ROOT / "schema.json",
+]
+SCHEMA_JSON = next((p for p in SCHEMA_CANDIDATES if p.exists()), SCHEMA_CANDIDATES[-1])
 with open(SCHEMA_JSON) as f:
     schema = json.load(f)
 
@@ -118,6 +123,290 @@ def fetch_pg_unique_constraints(pg_engine) -> list:
         return [(r[0], r[1], r[2]) for r in rows]
 
 
+def _table_exists_oracle(conn, owner: str, table_name: str) -> bool:
+    row = conn.execute(
+        text(
+            """
+            SELECT 1
+            FROM all_tables
+            WHERE owner = :owner AND table_name = :table_name
+            """
+        ),
+        {"owner": owner, "table_name": table_name},
+    ).fetchone()
+    return bool(row)
+
+
+def _column_exists_oracle(conn, owner: str, table_name: str, column_name: str) -> bool:
+    row = conn.execute(
+        text(
+            """
+            SELECT 1
+            FROM all_tab_columns
+            WHERE owner = :owner AND table_name = :table_name AND column_name = :column_name
+            """
+        ),
+        {"owner": owner, "table_name": table_name, "column_name": column_name},
+    ).fetchone()
+    return bool(row)
+
+
+def _fk_exists_oracle(conn, owner: str, constraint_name: str) -> bool:
+    row = conn.execute(
+        text(
+            """
+            SELECT 1
+            FROM all_constraints
+            WHERE owner = :owner
+              AND constraint_type = 'R'
+              AND UPPER(constraint_name) = UPPER(:constraint_name)
+            """
+        ),
+        {"owner": owner, "constraint_name": constraint_name},
+    ).fetchone()
+    return bool(row)
+
+
+def _ensure_column_oracle(conn, owner: str, table_name: str, column_name: str, column_type: str) -> None:
+    if not _table_exists_oracle(conn, owner, table_name):
+        return
+    if _column_exists_oracle(conn, owner, table_name, column_name):
+        return
+    conn.execute(
+        text(
+            f'ALTER TABLE "{owner}"."{table_name}" ADD ("{column_name}" {column_type})'
+        )
+    )
+
+
+def _ensure_fk_oracle(
+    conn,
+    owner: str,
+    table_name: str,
+    constraint_name: str,
+    column_name: str,
+    ref_table: str,
+    ref_column: str,
+) -> None:
+    if not _table_exists_oracle(conn, owner, table_name) or not _table_exists_oracle(conn, owner, ref_table):
+        return
+    if not _column_exists_oracle(conn, owner, table_name, column_name) or not _column_exists_oracle(conn, owner, ref_table, ref_column):
+        return
+    if _fk_exists_oracle(conn, owner, constraint_name):
+        return
+    conn.execute(
+        text(
+            f"""
+            ALTER TABLE "{owner}"."{table_name}"
+            ADD CONSTRAINT {constraint_name}
+            FOREIGN KEY ("{column_name}") REFERENCES "{owner}"."{ref_table}" ("{ref_column}")
+            """
+        )
+    )
+
+
+def _oracle_literal(value: str) -> str:
+    return "'" + value.replace("'", "''") + "'"
+
+
+def enrich_for_analyzer_testing_oracle(oracle_engine, owner: str = ORACLE_SCHEMA) -> None:
+    with oracle_engine.connect() as conn:
+        _ensure_column_oracle(conn, owner, "products", "weight_value", "NUMBER(10,2)")
+        _ensure_column_oracle(conn, owner, "products", "weight_unit", "VARCHAR2(16)")
+        _ensure_column_oracle(conn, owner, "products", "length_value", "NUMBER(10,2)")
+        _ensure_column_oracle(conn, owner, "products", "length_unit", "VARCHAR2(16)")
+        _ensure_column_oracle(conn, owner, "products", "product_description", "CLOB")
+
+        _ensure_column_oracle(conn, owner, "purchase_order_items", "ordered_qty_value", "NUMBER(10,2)")
+        _ensure_column_oracle(conn, owner, "purchase_order_items", "ordered_qty_unit", "VARCHAR2(16)")
+
+        _ensure_column_oracle(conn, owner, "sales_order_items", "sold_qty_value", "NUMBER(10,2)")
+        _ensure_column_oracle(conn, owner, "sales_order_items", "sold_qty_unit", "VARCHAR2(16)")
+
+        _ensure_column_oracle(conn, owner, "inventory", "stock_value", "NUMBER(10,2)")
+        _ensure_column_oracle(conn, owner, "inventory", "stock_unit", "VARCHAR2(16)")
+
+        _ensure_column_oracle(conn, owner, "purchase_orders", "approver_employee_id", "NUMBER(19)")
+        _ensure_column_oracle(conn, owner, "sales_orders", "sales_rep_employee_id", "NUMBER(19)")
+        _ensure_column_oracle(conn, owner, "products", "primary_supplier_id", "NUMBER(19)")
+
+        if _table_exists_oracle(conn, owner, "products"):
+            conn.execute(
+                text(
+                    f"""
+                    UPDATE "{owner}"."products"
+                    SET "weight_value" = ROUND(0.50 + (MOD("product_id", 20) * 0.25), 2),
+                        "weight_unit" = CASE WHEN MOD("product_id", 2) = 0 THEN 'kg' ELSE 'lb' END,
+                        "length_value" = ROUND(10 + (MOD("product_id", 30) * 1.5), 2),
+                        "length_unit" = CASE WHEN MOD("product_id", 2) = 0 THEN 'cm' ELSE 'in' END,
+                        "product_description" = 'Product ' || NVL("name", 'unknown') || ' in ' || NVL("category", 'general') || ' category.',
+                        "primary_supplier_id" = NVL("primary_supplier_id", "supplier_id")
+                    """
+                )
+            )
+            if _table_exists_oracle(conn, owner, "suppliers"):
+                conn.execute(
+                    text(
+                        f"""
+                        UPDATE "{owner}"."products"
+                        SET "primary_supplier_id" = (
+                            SELECT MIN(s."supplier_id")
+                            FROM "{owner}"."suppliers" s
+                        )
+                        WHERE "primary_supplier_id" IS NULL
+                        """
+                    )
+                )
+
+        if _table_exists_oracle(conn, owner, "purchase_order_items"):
+            conn.execute(
+                text(
+                    f"""
+                    UPDATE "{owner}"."purchase_order_items"
+                    SET "ordered_qty_value" = NVL("quantity", 0),
+                        "ordered_qty_unit" = CASE WHEN MOD("po_item_id", 3) = 0 THEN 'box' ELSE 'ea' END
+                    """
+                )
+            )
+
+        if _table_exists_oracle(conn, owner, "sales_order_items"):
+            conn.execute(
+                text(
+                    f"""
+                    UPDATE "{owner}"."sales_order_items"
+                    SET "sold_qty_value" = NVL("quantity", 0),
+                        "sold_qty_unit" = CASE WHEN MOD("sales_order_item_id", 3) = 0 THEN 'box' ELSE 'ea' END
+                    """
+                )
+            )
+
+        if _table_exists_oracle(conn, owner, "inventory"):
+            conn.execute(
+                text(
+                    f"""
+                    UPDATE "{owner}"."inventory"
+                    SET "stock_value" = NVL("quantity_on_hand", 0),
+                        "stock_unit" = 'ea'
+                    """
+                )
+            )
+
+        if _table_exists_oracle(conn, owner, "purchase_orders") and _table_exists_oracle(conn, owner, "employees"):
+            conn.execute(
+                text(
+                    f"""
+                    UPDATE "{owner}"."purchase_orders" po
+                    SET "approver_employee_id" = (
+                        SELECT MIN(e."employee_id")
+                        FROM "{owner}"."employees" e
+                        WHERE e."store_id" = po."store_id"
+                    )
+                    WHERE po."approver_employee_id" IS NULL
+                    """
+                )
+            )
+            conn.execute(
+                text(
+                    f"""
+                    UPDATE "{owner}"."purchase_orders"
+                    SET "approver_employee_id" = (
+                        SELECT MIN(e."employee_id")
+                        FROM "{owner}"."employees" e
+                    )
+                    WHERE "approver_employee_id" IS NULL
+                    """
+                )
+            )
+
+        if _table_exists_oracle(conn, owner, "sales_orders"):
+            conn.execute(
+                text(
+                    f"""
+                    UPDATE "{owner}"."sales_orders"
+                    SET "sales_rep_employee_id" = NVL("sales_rep_employee_id", "employee_id")
+                    """
+                )
+            )
+            if _table_exists_oracle(conn, owner, "employees"):
+                conn.execute(
+                    text(
+                        f"""
+                        UPDATE "{owner}"."sales_orders" so
+                        SET "sales_rep_employee_id" = (
+                            SELECT MIN(e."employee_id")
+                            FROM "{owner}"."employees" e
+                            WHERE e."store_id" = so."store_id"
+                        )
+                        WHERE so."sales_rep_employee_id" IS NULL
+                        """
+                    )
+                )
+
+        _ensure_fk_oracle(
+            conn,
+            owner,
+            "purchase_orders",
+            "FK_PO_APPROVER_EMP",
+            "approver_employee_id",
+            "employees",
+            "employee_id",
+        )
+        _ensure_fk_oracle(
+            conn,
+            owner,
+            "sales_orders",
+            "FK_SO_SALES_REP_EMP",
+            "sales_rep_employee_id",
+            "employees",
+            "employee_id",
+        )
+        _ensure_fk_oracle(
+            conn,
+            owner,
+            "products",
+            "FK_PRODUCTS_PRIMARY_SUP",
+            "primary_supplier_id",
+            "suppliers",
+            "supplier_id",
+        )
+
+        table_descriptions = {
+            "products": "Master product catalog including physical units for analyzer unit-context testing.",
+            "purchase_order_items": "Line items with order quantities and explicit unit labels.",
+            "sales_order_items": "Sales line items with sold quantity and explicit unit labels.",
+            "inventory": "Current stock levels with normalized stock unit representation.",
+            "purchase_orders": "Procurement headers including approver employee relationship.",
+            "sales_orders": "Sales headers including assigned sales representative relationship.",
+        }
+        column_descriptions = {
+            ("products", "weight_value"): "Measured product weight value.",
+            ("products", "weight_unit"): "Source weight unit (kg/lb) used for unit inference testing.",
+            ("products", "length_value"): "Measured product length value.",
+            ("products", "length_unit"): "Source length unit (cm/in) used for unit inference testing.",
+            ("products", "product_description"): "Human-readable product description for text semantics.",
+            ("products", "primary_supplier_id"): "Primary supplier relationship used for join candidate detection.",
+            ("purchase_order_items", "ordered_qty_value"): "Ordered quantity as numeric value.",
+            ("purchase_order_items", "ordered_qty_unit"): "Ordered quantity unit (ea/box).",
+            ("sales_order_items", "sold_qty_value"): "Sold quantity as numeric value.",
+            ("sales_order_items", "sold_qty_unit"): "Sold quantity unit (ea/box).",
+            ("inventory", "stock_value"): "Current stock quantity as numeric value.",
+            ("inventory", "stock_unit"): "Current stock unit label.",
+            ("purchase_orders", "approver_employee_id"): "Approver employee foreign key for procurement workflow.",
+            ("sales_orders", "sales_rep_employee_id"): "Sales representative foreign key for order ownership.",
+        }
+        for table_name, description in table_descriptions.items():
+            if _table_exists_oracle(conn, owner, table_name):
+                conn.execute(text(f'COMMENT ON TABLE "{owner}"."{table_name}" IS {_oracle_literal(description)}'))
+        for (table_name, column_name), description in column_descriptions.items():
+            if _column_exists_oracle(conn, owner, table_name, column_name):
+                conn.execute(
+                    text(f'COMMENT ON COLUMN "{owner}"."{table_name}"."{column_name}" IS {_oracle_literal(description)}'),
+                )
+
+        conn.commit()
+
+
+
 def main():
     pg = create_engine(DATABASE_URL)
     oracle = create_engine(ORACLE_URL)
@@ -175,6 +464,8 @@ def main():
                 )
             ora_conn.commit()
         print(f"  {name}: {len(rows)} rows")
+
+    enrich_for_analyzer_testing_oracle(oracle, ORACLE_SCHEMA)
 
     print("Done. Tables in app schema:")
     with oracle.connect() as conn:

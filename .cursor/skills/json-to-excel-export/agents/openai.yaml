@@ -1,0 +1,3 @@
+interface:
+  display_name: "JSON to Excel"
+  short_description: "Export schema JSON to styled Excel tabs"

@@ -370,13 +370,72 @@ def detect_sensitive_fields(columns: List[Dict]) -> Dict[str, str]:
     return result
 
 
-def detect_partition_columns(columns: List[Dict], table_name: Optional[str] = None, schema: str = "public", engine=None, adapter=None) -> List[str]:
-    """Detect partition key columns for a table."""
+def _detect_partition_columns_exact(engine: Engine, table_name: str, schema: str) -> List[str]:
+    """Detect physically configured partition columns from dialect catalogs."""
+    try:
+        dialect_name = str(engine.dialect.name or "").lower()
+        with engine.connect() as conn:
+            if dialect_name == "mssql":
+                rows = conn.execute(text("""
+                    SELECT c.name
+                    FROM sys.indexes i
+                    JOIN sys.index_columns ic ON i.object_id = ic.object_id AND i.index_id = ic.index_id
+                    JOIN sys.columns c ON ic.object_id = c.object_id AND ic.column_id = c.column_id
+                    JOIN sys.tables t ON i.object_id = t.object_id
+                    JOIN sys.schemas s ON t.schema_id = s.schema_id
+                    WHERE s.name = :schema AND t.name = :table
+                        AND i.type = 1
+                        AND i.data_space_id IN (SELECT data_space_id FROM sys.data_spaces WHERE type = 'P')
+                    ORDER BY ic.key_ordinal
+                """), {"schema": schema, "table": table_name}).fetchall()
+                return [r[0] for r in rows] if rows else []
+
+            if dialect_name == "postgresql":
+                rows = conn.execute(text("""
+                    SELECT a.attname
+                    FROM pg_partitioned_table pt
+                    JOIN pg_class c ON c.oid = pt.partrelid
+                    JOIN pg_namespace n ON n.oid = c.relnamespace
+                    JOIN pg_attribute a ON a.attrelid = c.oid AND a.attnum = ANY(pt.partattrs::smallint[])
+                    WHERE c.relname = :tbl AND n.nspname = :sch
+                    ORDER BY a.attnum
+                """), {"tbl": table_name, "sch": schema}).fetchall()
+                return [r[0] for r in rows] if rows else []
+
+            if dialect_name == "oracle":
+                rows = conn.execute(text("""
+                    SELECT COLUMN_NAME
+                    FROM ALL_PART_KEY_COLUMNS
+                    WHERE OWNER = :schema AND NAME = :table AND OBJECT_TYPE = 'TABLE'
+                    ORDER BY COLUMN_POSITION
+                """), {"schema": schema.upper(), "table": table_name.upper()}).fetchall()
+                return [r[0] for r in rows] if rows else []
+    except Exception:
+        pass
+    return []
+
+
+def detect_partition_columns(
+    columns: List[Dict],
+    table_name: Optional[str] = None,
+    schema: str = "public",
+    engine=None,
+    adapter=None,
+) -> tuple[List[str], str]:
+    """Return partition columns and detection mode: exact|candidate|none."""
     if adapter and engine and table_name:
-        return adapter.detect_partition_columns(engine, table_name, schema, columns)
+        exact_columns = _detect_partition_columns_exact(engine, table_name, schema)
+        if exact_columns:
+            return exact_columns, "exact"
+        candidates = adapter.detect_partition_columns(engine, table_name, schema, columns)
+        if candidates:
+            return candidates, "candidate"
+        return [], "none"
     if adapter:
-        return adapter.detect_partition_columns(engine or object(), table_name or "", schema, columns)
-    return []  # No adapter: use heuristic from base
+        candidates = adapter.detect_partition_columns(engine or object(), table_name or "", schema, columns)
+        if candidates:
+            return candidates, "candidate"
+    return [], "none"
 
 
 def detect_incremental_columns(columns: List[Dict], pk_columns: List[str]) -> List[str]:
@@ -682,6 +741,7 @@ def _unit_companion_base(col_name: str) -> Optional[str]:
 def _propagate_unit_context_from_companion(columns: List[Dict[str, Any]]) -> None:
     """Propagate unit context from *_unit columns to paired *_value columns."""
     by_name = {str(c.get("name", "")).lower(): c for c in columns}
+    max_low_cardinality = 5
 
     for col in columns:
         name = str(col.get("name", "")).lower()
@@ -706,13 +766,25 @@ def _propagate_unit_context_from_companion(columns: List[Dict[str, Any]]) -> Non
         if isinstance(value_ctx, dict) and value_ctx.get("detected_unit"):
             continue
 
+        # Raise confidence when companion unit column is strongly controlled:
+        # no NULLs and very low cardinality (typically 1-3 unit labels).
+        companion_cardinality = unit_col.get("cardinality")
+        companion_null_count = unit_col.get("null_count")
+        companion_is_controlled = (
+            isinstance(companion_cardinality, (int, float))
+            and isinstance(companion_null_count, (int, float))
+            and int(companion_null_count) == 0
+            and int(companion_cardinality) <= max_low_cardinality
+        )
+        propagated_confidence = "medium" if companion_is_controlled else "low"
+
         propagated = {
             "detected_unit": unit_ctx.get("detected_unit"),
             "canonical_unit": unit_ctx.get("canonical_unit"),
             "unit_system": unit_ctx.get("unit_system", "unknown"),
             "conversion": unit_ctx.get("conversion"),
-            "detection_confidence": "low",
-            "detection_source": f"companion_column:{unit_col.get('name')}",
+            "detection_confidence": propagated_confidence,
+            "detection_source": f"companion_column({unit_col.get('name')})",
             "notes": f"Inferred from companion unit column '{unit_col.get('name')}'.",
         }
         col["unit_context"] = propagated
@@ -1591,7 +1663,13 @@ def analyze_source_system(
 
                 field_classifications = {col["name"]: c for col in table_columns if (c := classify_field(col["name"]))}
                 sensitive_fields = detect_sensitive_fields(table_columns)
-                partition_columns = detect_partition_columns(table_columns, table_name=table_name, schema=table_schema, engine=engine, adapter=adapter)
+                partition_columns, partition_mode = detect_partition_columns(
+                    table_columns,
+                    table_name=table_name,
+                    schema=table_schema,
+                    engine=engine,
+                    adapter=adapter,
+                )
                 incremental_columns = detect_incremental_columns(table_columns, pk_columns)
                 cdc_enabled = adapter.detect_cdc_enabled(engine, table_name, table_schema) if adapter else False
                 col_statistics = fetch_column_statistics(engine, table_name, table_columns, schema=table_schema, row_count=row_count, adapter=adapter)
@@ -1634,7 +1712,6 @@ def analyze_source_system(
                     "field_classifications": field_classifications,
                     "sensitive_fields": sensitive_fields,
                     "incremental_columns": incremental_columns,
-                    "partition_columns": partition_columns,
                     "join_candidates": join_candidates,
                     "unit_summary": unit_summary,
                     "cdc_enabled": cdc_enabled,
@@ -1642,6 +1719,12 @@ def analyze_source_system(
                     "has_foreign_keys": len(fk_columns) > 0,
                     "has_sensitive_fields": len(sensitive_fields) > 0,
                 }
+                if partition_mode == "exact":
+                    table_entry["partition_columns"] = partition_columns
+                elif partition_mode == "candidate":
+                    table_entry["partition_columns_candidates"] = partition_columns
+                else:
+                    table_entry["partition_columns"] = []
                 if sample_data_output:
                     table_entry["sample_data"] = sample_data_output
                 enriched_tables.append(table_entry)
@@ -1733,6 +1816,9 @@ def analyze_source_system(
                 "contacts": [],
                 "delete_management_instruction": "",
                 "restrictions": "",
+                "late_arriving_data_manual": "",
+                "volume_size_projection_manual": "",
+                "field_context_manual": "",
             },
             "data_quality_summary": data_quality_summary,
             "tables": enriched_tables,

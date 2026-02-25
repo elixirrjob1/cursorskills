@@ -142,6 +142,245 @@ def _unit_fields(column):
     }
 
 
+def _compact_json(value):
+    if value in (None, "", [], {}):
+        return ""
+    try:
+        return json.dumps(value, ensure_ascii=True, separators=(",", ":"))
+    except Exception:
+        return _cell_value(value)
+
+
+def _contacts_rows(source_system_context):
+    contacts = source_system_context.get("contacts", [])
+    rows = []
+    if isinstance(contacts, list):
+        for c in contacts:
+            if isinstance(c, dict):
+                rows.append(
+                    {
+                        "contact_name": c.get("name", ""),
+                        "role": c.get("role", ""),
+                        "email": c.get("email", ""),
+                        "phone": c.get("phone", ""),
+                        "notes": c.get("notes", ""),
+                    }
+                )
+            else:
+                rows.append(
+                    {
+                        "contact_name": _cell_value(c),
+                        "role": "",
+                        "email": "",
+                        "phone": "",
+                        "notes": "",
+                    }
+                )
+    # Provide blank fillable lines for manual completion.
+    while len(rows) < 8:
+        rows.append({"contact_name": "", "role": "", "email": "", "phone": "", "notes": ""})
+    return rows
+
+
+def _delete_management_rows(source_system_context):
+    instruction = source_system_context.get("delete_management_instruction", "")
+    rows = [
+        {
+            "table_name": "",
+            "delete_strategy": "",
+            "instruction": _cell_value(instruction),
+            "notes": "",
+        }
+    ]
+    while len(rows) < 8:
+        rows.append({"table_name": "", "delete_strategy": "", "instruction": "", "notes": ""})
+    return rows
+
+
+def _restrictions_rows(source_system_context):
+    restrictions = source_system_context.get("restrictions", "")
+    rows = []
+    if isinstance(restrictions, list):
+        for r in restrictions:
+            if isinstance(r, dict):
+                rows.append(
+                    {
+                        "restriction_type": r.get("type", ""),
+                        "scope": r.get("scope", ""),
+                        "details": r.get("details", ""),
+                        "owner": r.get("owner", ""),
+                    }
+                )
+            else:
+                rows.append(
+                    {
+                        "restriction_type": "",
+                        "scope": "",
+                        "details": _cell_value(r),
+                        "owner": "",
+                    }
+                )
+    elif isinstance(restrictions, dict):
+        rows.append(
+            {
+                "restriction_type": restrictions.get("type", ""),
+                "scope": restrictions.get("scope", ""),
+                "details": restrictions.get("details", ""),
+                "owner": restrictions.get("owner", ""),
+            }
+        )
+    else:
+        rows.append({"restriction_type": "", "scope": "", "details": _cell_value(restrictions), "owner": ""})
+
+    while len(rows) < 8:
+        rows.append({"restriction_type": "", "scope": "", "details": "", "owner": ""})
+    return rows
+
+
+def _late_arriving_manual_rows(source_system_context):
+    rows = [
+        {
+            "table_name": "",
+            "business_date_column": "",
+            "system_ts_column": "",
+            "lookback_days": "",
+            "policy_notes": _cell_value(source_system_context.get("late_arriving_data_manual", "")),
+        }
+    ]
+    while len(rows) < 8:
+        rows.append(
+            {
+                "table_name": "",
+                "business_date_column": "",
+                "system_ts_column": "",
+                "lookback_days": "",
+                "policy_notes": "",
+            }
+        )
+    return rows
+
+
+def _volume_projection_manual_rows(source_system_context):
+    rows = [
+        {
+            "entity_scope": "",
+            "projection_horizon_months": "",
+            "growth_assumption_pct": "",
+            "basis": "",
+            "notes": _cell_value(source_system_context.get("volume_size_projection_manual", "")),
+        }
+    ]
+    while len(rows) < 8:
+        rows.append(
+            {
+                "entity_scope": "",
+                "projection_horizon_months": "",
+                "growth_assumption_pct": "",
+                "basis": "",
+                "notes": "",
+            }
+        )
+    return rows
+
+
+def _field_context_manual_rows(source_system_context):
+    rows = [
+        {
+            "table_name": "",
+            "column_name": "",
+            "business_context": _cell_value(source_system_context.get("field_context_manual", "")),
+            "transformation_notes": "",
+            "owner": "",
+        }
+    ]
+    while len(rows) < 8:
+        rows.append(
+            {
+                "table_name": "",
+                "column_name": "",
+                "business_context": "",
+                "transformation_notes": "",
+                "owner": "",
+            }
+        )
+    return rows
+
+
+def _row_from_finding(schema_name, table_name, idx, finding):
+    if not isinstance(finding, dict):
+        return {
+            "schema": schema_name,
+            "table_name": table_name,
+            "finding_index": idx,
+            "check": "",
+            "severity": "",
+            "column": "",
+            "detail": _cell_value(finding),
+            "recommendation": "",
+            "distinct_values": "",
+            "suggested_domain": "",
+            "sample_values": "",
+            "cardinality": "",
+            "delete_strategy": "",
+            "soft_delete_column": "",
+            "soft_delete_type": "",
+            "has_audit_trail": "",
+            "business_date_column": "",
+            "system_ts_column": "",
+            "server_timezone": "",
+            "timezone_columns": "",
+            "distinct_timezones": "",
+            "tz_aware_count": "",
+            "tz_naive_count": "",
+            "detected_unit": "",
+            "canonical_unit": "",
+            "extra_json": "",
+        }
+
+    lag_stats = finding.get("lag_stats") or {}
+    if not isinstance(lag_stats, dict):
+        lag_stats = {}
+
+    known_keys = {
+        "check", "severity", "column", "detail", "recommendation",
+        "distinct_values", "suggested_domain", "sample_values", "cardinality",
+        "delete_strategy", "soft_delete_column", "soft_delete_type", "has_audit_trail",
+        "business_date_column", "system_ts_column", "recommended_lookback_days", "lag_stats",
+        "server_timezone", "columns", "distinct_timezones", "tz_aware_count", "tz_naive_count",
+        "detected_unit", "canonical_unit",
+    }
+    extra_fields = {k: v for k, v in finding.items() if k not in known_keys}
+
+    return {
+        "schema": schema_name,
+        "table_name": table_name,
+        "finding_index": idx,
+        "check": finding.get("check", ""),
+        "severity": finding.get("severity", ""),
+        "column": finding.get("column", ""),
+        "detail": finding.get("detail", ""),
+        "recommendation": finding.get("recommendation", ""),
+        "distinct_values": _cell_value(finding.get("distinct_values", "")),
+        "suggested_domain": _cell_value(finding.get("suggested_domain", "")),
+        "sample_values": _cell_value(finding.get("sample_values", "")),
+        "cardinality": finding.get("cardinality", ""),
+        "delete_strategy": finding.get("delete_strategy", ""),
+        "soft_delete_column": finding.get("soft_delete_column", ""),
+        "soft_delete_type": finding.get("soft_delete_type", ""),
+        "has_audit_trail": _cell_value(finding.get("has_audit_trail", "")),
+        "business_date_column": finding.get("business_date_column", ""),
+        "system_ts_column": finding.get("system_ts_column", ""),
+        "server_timezone": finding.get("server_timezone", ""),
+        "timezone_columns": _compact_json(finding.get("columns")),
+        "distinct_timezones": _cell_value(finding.get("distinct_timezones", "")),
+        "tz_aware_count": finding.get("tz_aware_count", ""),
+        "tz_naive_count": finding.get("tz_naive_count", ""),
+        "detected_unit": finding.get("detected_unit", ""),
+        "canonical_unit": finding.get("canonical_unit", ""),
+        "extra_json": _compact_json(extra_fields),
+    }
+
+
 def _derive_database(connection, metadata):
     db = connection.get("database")
     if db:
@@ -164,6 +403,7 @@ def _collect_sheets(payload):
     connection = payload.get("connection", {}) or {}
     metadata = payload.get("metadata", {}) or {}
     data_quality_summary = payload.get("data_quality_summary", {}) or {}
+    source_system_context = payload.get("source_system_context", {}) or {}
     first_table_schema = tables[0].get("schema", "") if tables else ""
 
     source_name = (
@@ -189,6 +429,8 @@ def _collect_sheets(payload):
         {"metric": "source_type", "value": source_type},
         {"metric": "database", "value": _derive_database(connection, metadata)},
         {"metric": "schema", "value": schema_name},
+        {"metric": "port", "value": connection.get("port", "")},
+        {"metric": "database_timezone", "value": connection.get("timezone", "")},
         {"metric": "tables_count", "value": len(tables)},
     ]
     dq_by_check_rows = []
@@ -223,6 +465,8 @@ def _collect_sheets(payload):
     fk_rows = []
     sample_rows = []
     unit_rows = []
+    data_quality_findings_rows = []
+    data_quality_lag_rows = []
 
     for table in tables:
         schema_name = table.get("schema", "")
@@ -241,6 +485,7 @@ def _collect_sheets(payload):
                 "foreign_key_count": len(foreign_keys),
                 "incremental_columns": _join_list(table.get("incremental_columns", [])),
                 "partition_columns": _join_list(table.get("partition_columns", [])),
+                "partition_columns_candidates": _join_list(table.get("partition_columns_candidates", [])),
                 "sensitive_fields": _flatten_sensitive_fields(sensitive_fields),
                 "table_description": table.get("table_description", ""),
                 "cdc_enabled": table.get("cdc_enabled", ""),
@@ -343,6 +588,37 @@ def _collect_sheets(payload):
                     }
                 )
 
+        findings = ((table.get("data_quality") or {}).get("findings") or [])
+        for idx, finding in enumerate(findings, start=1):
+            data_quality_findings_rows.append(
+                _row_from_finding(schema_name, table_name, idx, finding)
+            )
+            if isinstance(finding, dict) and finding.get("check") == "late_arriving_data":
+                lag_stats = finding.get("lag_stats") or {}
+                if not isinstance(lag_stats, dict):
+                    lag_stats = {}
+                data_quality_lag_rows.append(
+                    {
+                        "schema": schema_name,
+                        "table_name": table_name,
+                        "finding_index": idx,
+                        "severity": finding.get("severity", ""),
+                        "business_date_column": finding.get("business_date_column", ""),
+                        "system_ts_column": finding.get("system_ts_column", ""),
+                        "recommended_lookback_days": finding.get("recommended_lookback_days", ""),
+                        "lag_total_rows_compared": lag_stats.get("total_rows_compared", ""),
+                        "lag_min_lag_hours": lag_stats.get("min_lag_hours", ""),
+                        "lag_avg_lag_hours": lag_stats.get("avg_lag_hours", ""),
+                        "lag_p95_lag_hours": lag_stats.get("p95_lag_hours", ""),
+                        "lag_max_lag_hours": lag_stats.get("max_lag_hours", ""),
+                        "lag_max_lag_days": lag_stats.get("max_lag_days", ""),
+                        "lag_rows_late_over_1d": lag_stats.get("rows_late_over_1d", ""),
+                        "lag_rows_late_over_7d": lag_stats.get("rows_late_over_7d", ""),
+                        "detail": finding.get("detail", ""),
+                        "recommendation": finding.get("recommendation", ""),
+                    }
+                )
+
     summary_sections = [("Overview", summary)]
     if dq_by_check_rows:
         summary_sections.append(("DataQualityByCheck", dq_by_check_rows))
@@ -351,8 +627,20 @@ def _collect_sheets(payload):
     if dq_other_rows:
         summary_sections.append(("DataQualityDetails", dq_other_rows))
 
+    source_context_sections = [
+        ("ContactsManual", _contacts_rows(source_system_context)),
+        ("DeleteManagementManual", _delete_management_rows(source_system_context)),
+        ("RestrictionsManual", _restrictions_rows(source_system_context)),
+        ("LateArrivingDataManual", _late_arriving_manual_rows(source_system_context)),
+        ("VolumeSizeProjectionManual", _volume_projection_manual_rows(source_system_context)),
+        ("FieldContextManual", _field_context_manual_rows(source_system_context)),
+    ]
+
     sheets = {
         "Summary": {"sections": summary_sections},
+        "SourceContextManual": {"sections": source_context_sections},
+        "DataQualityFindings": data_quality_findings_rows,
+        "latearivingdata": data_quality_lag_rows,
         "Tables": table_rows,
         "Columns": column_rows,
         "JoinCandidates": join_rows,
@@ -390,6 +678,15 @@ def _write_sheet(ws, rows):
     else:
         ws.append(["No rows"])
     _style_sheet(ws)
+    if ws.title == "DataQualityFindings":
+        wrap_cols = {"detail", "recommendation", "timezone_columns", "extra_json"}
+        for idx, header in enumerate(headers, start=1):
+            if header in wrap_cols:
+                col_letter = ws.cell(row=1, column=idx).column_letter
+                ws.column_dimensions[col_letter].width = 60
+                for r in range(2, ws.max_row + 1):
+                    cell = ws.cell(row=r, column=idx)
+                    cell.alignment = Alignment(horizontal="left", vertical="top", wrap_text=True)
 
 
 def _write_multi_section_sheet(ws, sections):
@@ -427,12 +724,29 @@ def _write_multi_section_sheet(ws, sections):
         col_letter = col[0].column_letter
         max_len = max(len(str(cell.value)) if cell.value is not None else 0 for cell in col)
         ws.column_dimensions[col_letter].width = min(max(12, max_len + 2), 80)
+    if ws.title == "SourceContextManual":
+        for row in ws.iter_rows(min_row=1, max_row=ws.max_row, min_col=1, max_col=ws.max_column):
+            for cell in row:
+                cell.alignment = Alignment(horizontal="left", vertical="top", wrap_text=True)
+        # Wider manual input fields for easier data entry.
+        ws.column_dimensions["A"].width = 24
+        ws.column_dimensions["B"].width = 24
+        ws.column_dimensions["C"].width = 64
+        ws.column_dimensions["D"].width = 28
+        ws.column_dimensions["E"].width = 36
 
 
 def _write_workbook(sheet_rows, output_path):
     wb = Workbook()
     first = True
     for sheet_name, rows in sheet_rows.items():
+        if isinstance(rows, dict) and isinstance(rows.get("sections"), list):
+            has_data = any(section_rows for _, section_rows in rows["sections"])
+            if not has_data:
+                continue
+        elif isinstance(rows, list) and not rows:
+            continue
+
         if first:
             ws = wb.active
             ws.title = sheet_name
@@ -447,6 +761,10 @@ def _write_workbook(sheet_rows, output_path):
                 _write_sheet(ws, sections[0][1])
             else:
                 _write_multi_section_sheet(ws, sections)
+    if first:
+        ws = wb.active
+        ws.title = "Summary"
+        _write_sheet(ws, [])
     wb.save(output_path)
 
 

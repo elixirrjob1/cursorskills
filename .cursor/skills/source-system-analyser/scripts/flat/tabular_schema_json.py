@@ -580,6 +580,9 @@ def cmd_to_json(args: argparse.Namespace) -> None:
             "contacts": [],
             "delete_management_instruction": "",
             "restrictions": "",
+            "late_arriving_data_manual": "",
+            "volume_size_projection_manual": "",
+            "field_context_manual": "",
         },
         "data_quality_summary": {
             "critical": 0,

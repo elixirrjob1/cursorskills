@@ -1,6 +1,6 @@
 {
   "metadata": {
-    "generated_at": "2026-02-24T11:03:09.080560+00:00",
+    "generated_at": "2026-02-25T11:17:45.541905+00:00",
     "database_url": "localhost:1433/master?driver=ODBC+Driver+18+for+SQL+Server&TrustServerCertificate=yes",
     "schema_filter": "dbo",
     "total_tables": 5,
@@ -783,19 +783,7 @@
           },
           "data_category": "discrete",
           "semantic_class": null,
-          "unit_context": {
-            "detected_unit": "pack",
-            "canonical_unit": "ea",
-            "unit_system": "business",
-            "conversion": {
-              "factor_to_canonical": 1.0,
-              "offset_to_canonical": 0.0,
-              "formula": "canonical = value * 1.0 + 0.0"
-            },
-            "detection_confidence": "medium",
-            "detection_source": "name",
-            "notes": "Values should be normalized from 'pack' to canonical 'ea'."
-          }
+          "unit_context": null
         },
         {
           "name": "pack_sent",
@@ -810,19 +798,7 @@
           },
           "data_category": "discrete",
           "semantic_class": null,
-          "unit_context": {
-            "detected_unit": "pack",
-            "canonical_unit": "ea",
-            "unit_system": "business",
-            "conversion": {
-              "factor_to_canonical": 1.0,
-              "offset_to_canonical": 0.0,
-              "formula": "canonical = value * 1.0 + 0.0"
-            },
-            "detection_confidence": "medium",
-            "detection_source": "name",
-            "notes": "Values should be normalized from 'pack' to canonical 'ea'."
-          }
+          "unit_context": null
         },
         {
           "name": "connections",
@@ -852,19 +828,7 @@
           },
           "data_category": "discrete",
           "semantic_class": null,
-          "unit_context": {
-            "detected_unit": "pack",
-            "canonical_unit": "ea",
-            "unit_system": "business",
-            "conversion": {
-              "factor_to_canonical": 1.0,
-              "offset_to_canonical": 0.0,
-              "formula": "canonical = value * 1.0 + 0.0"
-            },
-            "detection_confidence": "medium",
-            "detection_source": "name",
-            "notes": "Values should be normalized from 'pack' to canonical 'ea'."
-          }
+          "unit_context": null
         },
         {
           "name": "total_read",
@@ -926,8 +890,8 @@
       "partition_columns": [],
       "join_candidates": [],
       "unit_summary": {
-        "columns_with_units": 3,
-        "columns_without_units": 8,
+        "columns_with_units": 0,
+        "columns_without_units": 11,
         "mixed_unit_groups": [],
         "unknown_unit_columns": []
       },

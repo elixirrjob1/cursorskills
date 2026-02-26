@@ -651,6 +651,29 @@ def _collect_sheets(payload):
     return sheets
 
 
+def _chunk_text(value, size=30000):
+    if not value:
+        return []
+    return [value[i : i + size] for i in range(0, len(value), size)]
+
+
+def _roundtrip_sheets(payload):
+    # Store the complete original payload in hidden sheets so reverse conversion
+    # can preserve fields that are not represented in user-facing tabs.
+    raw = json.dumps(payload, ensure_ascii=True, separators=(",", ":"))
+    chunks = _chunk_text(raw)
+    return {
+        "__rt_meta": [
+            {"key": "format_version", "value": "1"},
+            {"key": "payload_chunks", "value": len(chunks)},
+        ],
+        "__rt_payload": [
+            {"chunk_index": i + 1, "payload_chunk": chunk}
+            for i, chunk in enumerate(chunks)
+        ],
+    }
+
+
 def _style_sheet(ws):
     header_fill = PatternFill(start_color="1F4E78", end_color="1F4E78", fill_type="solid")
     header_font = Font(color="FFFFFF", bold=True)
@@ -761,6 +784,8 @@ def _write_workbook(sheet_rows, output_path):
                 _write_sheet(ws, sections[0][1])
             else:
                 _write_multi_section_sheet(ws, sections)
+        if sheet_name.startswith("__rt_"):
+            ws.sheet_state = "hidden"
     if first:
         ws = wb.active
         ws.title = "Summary"
@@ -783,6 +808,7 @@ def main():
 
     payload = json.loads(input_path.read_text(encoding="utf-8"))
     sheet_rows = _collect_sheets(payload)
+    sheet_rows.update(_roundtrip_sheets(payload))
     _write_workbook(sheet_rows, output_path)
     row_count = sum(len(v) for v in sheet_rows.values())
     print(f"Wrote {row_count} rows across {len(sheet_rows)} sheets to {output_path}")

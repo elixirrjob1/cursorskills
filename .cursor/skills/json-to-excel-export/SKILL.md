@@ -25,6 +25,23 @@ Example:
   .cursor/flat/schema_postgres_keyvault_public_public_postgresql.xlsx
 ```
 
+Reverse (Excel back to JSON):
+
+```bash
+.venv/bin/python .cursor/skills/json-to-excel-export/scripts/excel_to_json.py \
+  <input_xlsx> \
+  <output_json>
+```
+
+Restore original payload only (ignore visible sheet edits):
+
+```bash
+.venv/bin/python .cursor/skills/json-to-excel-export/scripts/excel_to_json.py \
+  <input_xlsx> \
+  <output_json> \
+  --no-apply-edits
+```
+
 ## Output Shape
 
 Workbook tabs:
@@ -43,8 +60,12 @@ Formatting:
 - Auto-sized columns
 - Nested JSON fields are flattened into readable columns/text (no raw payload column)
 - Any nested JSON/list field on any sheet is emitted as its own table block on that same sheet.
+- Hidden round-trip tabs (`__rt_*`) store the full original JSON payload for lossless reconstruction.
 
 ## Notes
 
 - Requires `openpyxl` in the active environment.
 - If `output_xlsx` is omitted, the script writes next to input with `.xlsx` extension.
+- Reverse conversion applies visible sheet edits by default across all exported tabs (`Summary`, `SourceContextManual`, `DataQualityFindings`, `latearivingdata`, `Tables`, `Columns`, `JoinCandidates`, `ForeignKeys`, `SampleData`, `Units`).
+- Non-exported fields remain intact because reconstruction starts from hidden full payload.
+- Use `--no-apply-edits` for exact original payload restore.

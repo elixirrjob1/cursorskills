@@ -15,7 +15,15 @@
     "timezone": "(UTC) Coordinated Universal Time"
   },
   "source_system_context": {
-    "contacts": [],
+    "contacts": [
+      {
+        "name": "test",
+        "role": "test",
+        "email": "test",
+        "phone": "test",
+        "notes": "test"
+      }
+    ],
     "delete_management_instruction": "",
     "restrictions": "",
     "late_arriving_data_manual": "",

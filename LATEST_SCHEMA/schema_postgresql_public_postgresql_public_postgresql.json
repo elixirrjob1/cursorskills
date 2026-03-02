@@ -1,18 +1,18 @@
 {
   "metadata": {
-    "generated_at": "2026-03-02T09:30:37.095101+00:00",
-    "database_url": "pioneertest.database.windows.net:1433/free-sql-db-3300567?driver=ODBC+Driver+18+for+SQL+Server&TrustServerCertificate=yes",
-    "schema_filter": "dbo",
+    "generated_at": "2026-03-02T10:01:56.816114+00:00",
+    "database_url": "aws-1-eu-west-1.pooler.supabase.com:5432/postgres",
+    "schema_filter": "public",
     "total_tables": 10,
     "total_rows": 35,
     "total_findings": 69
   },
   "connection": {
-    "host": "pioneertest.database.windows.net",
-    "port": "1433",
-    "database": "free-sql-db-3300567",
-    "driver": "mssql",
-    "timezone": "(UTC) Coordinated Universal Time"
+    "host": "aws-1-eu-west-1.pooler.supabase.com",
+    "port": "5432",
+    "database": "postgres",
+    "driver": "postgresql",
+    "timezone": "UTC"
   },
   "source_system_context": {
     "contacts": [],
@@ -282,7 +282,7 @@
         "concept_id": "temporal.date_only",
         "column_count": 4,
         "table_count": 3,
-        "avg_confidence": 0.97,
+        "avg_confidence": 0.89,
         "alias_groups": [
           "expected_date",
           "hire_date",
@@ -295,7 +295,6 @@
           "sales_orders.order_date"
         ],
         "signals": [
-          "cross_table_consensus",
           "name",
           "profile",
           "table_context",
@@ -374,7 +373,7 @@
   "tables": [
     {
       "table": "customers",
-      "schema": "dbo",
+      "schema": "public",
       "columns": [
         {
           "name": "customer_id",
@@ -407,7 +406,7 @@
         },
         {
           "name": "first_name",
-          "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+          "type": "text",
           "nullable": false,
           "is_incremental": false,
           "cardinality": 3,
@@ -423,7 +422,7 @@
           "concept_confidence": 0.6,
           "concept_evidence": [
             "name token: first_name",
-            "type hint: nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+            "type hint: text",
             "table context: customers"
           ],
           "concept_sources": [
@@ -435,7 +434,7 @@
         },
         {
           "name": "last_name",
-          "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+          "type": "text",
           "nullable": false,
           "is_incremental": false,
           "cardinality": 3,
@@ -451,7 +450,7 @@
           "concept_confidence": 0.6,
           "concept_evidence": [
             "name token: last_name",
-            "type hint: nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+            "type hint: text",
             "table context: customers"
           ],
           "concept_sources": [
@@ -463,7 +462,7 @@
         },
         {
           "name": "email",
-          "type": "nvarchar(450)",
+          "type": "text",
           "nullable": true,
           "is_incremental": false,
           "cardinality": 3,
@@ -479,7 +478,7 @@
           "concept_confidence": 1.0,
           "concept_evidence": [
             "name token: email",
-            "type hint: nvarchar(450)",
+            "type hint: text",
             "legacy field classification: contact",
             "value pattern: email",
             "table context: customers",
@@ -496,7 +495,7 @@
         },
         {
           "name": "phone",
-          "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+          "type": "text",
           "nullable": true,
           "is_incremental": false,
           "cardinality": 3,
@@ -512,7 +511,7 @@
           "concept_confidence": 1.0,
           "concept_evidence": [
             "name token: phone",
-            "type hint: nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+            "type hint: text",
             "legacy field classification: contact",
             "value pattern: phone",
             "table context: customers",
@@ -529,15 +528,15 @@
         },
         {
           "name": "created_at",
-          "type": "datetime2",
+          "type": "timestamp",
           "nullable": false,
           "is_incremental": false,
-          "column_timezone": "(UTC) Coordinated Universal Time",
+          "column_timezone": "UTC",
           "cardinality": 1,
           "null_count": 0,
           "data_range": {
-            "min": "2026-02-04 14:48:25.951501",
-            "max": "2026-02-04 14:48:25.951501"
+            "min": "2026-02-04 14:48:25.951501+00:00",
+            "max": "2026-02-04 14:48:25.951501+00:00"
           },
           "data_category": "continuous",
           "semantic_class": "timestamp",
@@ -546,7 +545,7 @@
           "concept_confidence": 1.0,
           "concept_evidence": [
             "name token: created_at",
-            "type hint: datetime2",
+            "type hint: timestamp",
             "legacy field classification: temporal",
             "value pattern: timestamp",
             "table context: customers"
@@ -562,15 +561,15 @@
         },
         {
           "name": "updated_at",
-          "type": "datetime2",
+          "type": "timestamp",
           "nullable": false,
           "is_incremental": false,
-          "column_timezone": "(UTC) Coordinated Universal Time",
+          "column_timezone": "UTC",
           "cardinality": 1,
           "null_count": 0,
           "data_range": {
-            "min": "2026-02-04 14:48:25.951501",
-            "max": "2026-02-04 14:48:25.951501"
+            "min": "2026-02-04 14:48:25.951501+00:00",
+            "max": "2026-02-04 14:48:25.951501+00:00"
           },
           "data_category": "continuous",
           "semantic_class": "timestamp",
@@ -579,7 +578,7 @@
           "concept_confidence": 1.0,
           "concept_evidence": [
             "name token: updated_at",
-            "type hint: datetime2",
+            "type hint: timestamp",
             "legacy field classification: temporal",
             "value pattern: timestamp",
             "table context: customers"
@@ -672,25 +671,25 @@
             "column": null,
             "check": "timezone",
             "severity": "info",
-            "detail": "All 2 date/time column(s) are TZ-naive \u2014 stored values are implicitly in server timezone '(UTC) Coordinated Universal Time'.",
-            "recommendation": "During ingestion, treat all timestamps as '(UTC) Coordinated Universal Time' and convert to UTC.",
-            "server_timezone": "(UTC) Coordinated Universal Time",
+            "detail": "All 2 date/time column(s) use timezone 'UTC'.",
+            "recommendation": "Treat all timestamps as 'UTC' during ingestion.",
+            "server_timezone": "UTC",
             "columns": [
               {
                 "column": "created_at",
-                "type": "datetime2",
-                "effective_timezone": "(UTC) Coordinated Universal Time",
+                "type": "timestamp",
+                "effective_timezone": "UTC",
                 "is_tz_aware": false
               },
               {
                 "column": "updated_at",
-                "type": "datetime2",
-                "effective_timezone": "(UTC) Coordinated Universal Time",
+                "type": "timestamp",
+                "effective_timezone": "UTC",
                 "is_tz_aware": false
               }
             ],
             "distinct_timezones": [
-              "(UTC) Coordinated Universal Time"
+              "UTC"
             ],
             "tz_aware_count": 0,
             "tz_naive_count": 2
@@ -700,7 +699,7 @@
     },
     {
       "table": "employees",
-      "schema": "dbo",
+      "schema": "public",
       "columns": [
         {
           "name": "employee_id",
@@ -761,7 +760,7 @@
         },
         {
           "name": "first_name",
-          "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+          "type": "text",
           "nullable": false,
           "is_incremental": false,
           "cardinality": 3,
@@ -777,7 +776,7 @@
           "concept_confidence": 0.55,
           "concept_evidence": [
             "name token: first_name",
-            "type hint: nvarchar collate \"sql_latin1_general_cp1_ci_as\""
+            "type hint: text"
           ],
           "concept_sources": [
             "name",
@@ -787,7 +786,7 @@
         },
         {
           "name": "last_name",
-          "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+          "type": "text",
           "nullable": false,
           "is_incremental": false,
           "cardinality": 3,
@@ -803,7 +802,7 @@
           "concept_confidence": 0.55,
           "concept_evidence": [
             "name token: last_name",
-            "type hint: nvarchar collate \"sql_latin1_general_cp1_ci_as\""
+            "type hint: text"
           ],
           "concept_sources": [
             "name",
@@ -813,7 +812,7 @@
         },
         {
           "name": "email",
-          "type": "nvarchar(450)",
+          "type": "text",
           "nullable": false,
           "is_incremental": false,
           "cardinality": 3,
@@ -829,7 +828,7 @@
           "concept_confidence": 1.0,
           "concept_evidence": [
             "name token: email",
-            "type hint: nvarchar(450)",
+            "type hint: text",
             "legacy field classification: contact",
             "value pattern: email",
             "sensitive hint: pii_contact"
@@ -844,7 +843,7 @@
         },
         {
           "name": "role",
-          "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+          "type": "text",
           "nullable": false,
           "is_incremental": false,
           "cardinality": 3,
@@ -860,7 +859,7 @@
           "concept_confidence": 0.65,
           "concept_evidence": [
             "name token: role",
-            "type hint: nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+            "type hint: text",
             "profile heuristic matched"
           ],
           "concept_sources": [
@@ -904,15 +903,15 @@
         },
         {
           "name": "created_at",
-          "type": "datetime2",
+          "type": "timestamp",
           "nullable": false,
           "is_incremental": false,
-          "column_timezone": "(UTC) Coordinated Universal Time",
+          "column_timezone": "UTC",
           "cardinality": 1,
           "null_count": 0,
           "data_range": {
-            "min": "2026-02-04 14:48:25.951501",
-            "max": "2026-02-04 14:48:25.951501"
+            "min": "2026-02-04 14:48:25.951501+00:00",
+            "max": "2026-02-04 14:48:25.951501+00:00"
           },
           "data_category": "continuous",
           "semantic_class": "timestamp",
@@ -921,7 +920,7 @@
           "concept_confidence": 1.0,
           "concept_evidence": [
             "name token: created_at",
-            "type hint: datetime2",
+            "type hint: timestamp",
             "legacy field classification: temporal",
             "value pattern: timestamp",
             "table context: employees"
@@ -937,15 +936,15 @@
         },
         {
           "name": "updated_at",
-          "type": "datetime2",
+          "type": "timestamp",
           "nullable": false,
           "is_incremental": false,
-          "column_timezone": "(UTC) Coordinated Universal Time",
+          "column_timezone": "UTC",
           "cardinality": 1,
           "null_count": 0,
           "data_range": {
-            "min": "2026-02-04 14:48:25.951501",
-            "max": "2026-02-04 14:48:25.951501"
+            "min": "2026-02-04 14:48:25.951501+00:00",
+            "max": "2026-02-04 14:48:25.951501+00:00"
           },
           "data_category": "continuous",
           "semantic_class": "timestamp",
@@ -954,7 +953,7 @@
           "concept_confidence": 1.0,
           "concept_evidence": [
             "name token: updated_at",
-            "type hint: datetime2",
+            "type hint: timestamp",
             "legacy field classification: temporal",
             "value pattern: timestamp",
             "table context: employees"
@@ -1082,25 +1081,25 @@
             "column": null,
             "check": "timezone",
             "severity": "info",
-            "detail": "All 2 date/time column(s) are TZ-naive \u2014 stored values are implicitly in server timezone '(UTC) Coordinated Universal Time'.",
-            "recommendation": "During ingestion, treat all timestamps as '(UTC) Coordinated Universal Time' and convert to UTC.",
-            "server_timezone": "(UTC) Coordinated Universal Time",
+            "detail": "All 2 date/time column(s) use timezone 'UTC'.",
+            "recommendation": "Treat all timestamps as 'UTC' during ingestion.",
+            "server_timezone": "UTC",
             "columns": [
               {
                 "column": "created_at",
-                "type": "datetime2",
-                "effective_timezone": "(UTC) Coordinated Universal Time",
+                "type": "timestamp",
+                "effective_timezone": "UTC",
                 "is_tz_aware": false
               },
               {
                 "column": "updated_at",
-                "type": "datetime2",
-                "effective_timezone": "(UTC) Coordinated Universal Time",
+                "type": "timestamp",
+                "effective_timezone": "UTC",
                 "is_tz_aware": false
               }
             ],
             "distinct_timezones": [
-              "(UTC) Coordinated Universal Time"
+              "UTC"
             ],
             "tz_aware_count": 0,
             "tz_naive_count": 2
@@ -1110,7 +1109,7 @@
     },
     {
       "table": "inventory",
-      "schema": "dbo",
+      "schema": "public",
       "columns": [
         {
           "name": "inventory_id",
@@ -1266,15 +1265,15 @@
         },
         {
           "name": "last_restocked_at",
-          "type": "datetime2",
+          "type": "timestamp",
           "nullable": true,
           "is_incremental": false,
-          "column_timezone": "(UTC) Coordinated Universal Time",
+          "column_timezone": "UTC",
           "cardinality": 5,
           "null_count": 0,
           "data_range": {
-            "min": "2026-01-30 14:48:25.951501",
-            "max": "2026-02-03 14:48:25.951501"
+            "min": "2026-01-30 14:48:25.951501+00:00",
+            "max": "2026-02-03 14:48:25.951501+00:00"
           },
           "data_category": "continuous",
           "semantic_class": "timestamp",
@@ -1283,7 +1282,7 @@
           "concept_confidence": 1.0,
           "concept_evidence": [
             "name token: last_restocked_at",
-            "type hint: datetime2",
+            "type hint: timestamp",
             "legacy field classification: temporal",
             "value pattern: timestamp",
             "table context: inventory"
@@ -1299,15 +1298,15 @@
         },
         {
           "name": "created_at",
-          "type": "datetime2",
+          "type": "timestamp",
           "nullable": false,
           "is_incremental": false,
-          "column_timezone": "(UTC) Coordinated Universal Time",
+          "column_timezone": "UTC",
           "cardinality": 1,
           "null_count": 0,
           "data_range": {
-            "min": "2026-02-04 14:48:25.951501",
-            "max": "2026-02-04 14:48:25.951501"
+            "min": "2026-02-04 14:48:25.951501+00:00",
+            "max": "2026-02-04 14:48:25.951501+00:00"
           },
           "data_category": "continuous",
           "semantic_class": "timestamp",
@@ -1316,7 +1315,7 @@
           "concept_confidence": 1.0,
           "concept_evidence": [
             "name token: created_at",
-            "type hint: datetime2",
+            "type hint: timestamp",
             "legacy field classification: temporal",
             "value pattern: timestamp",
             "table context: inventory"
@@ -1332,15 +1331,15 @@
         },
         {
           "name": "updated_at",
-          "type": "datetime2",
+          "type": "timestamp",
           "nullable": false,
           "is_incremental": false,
-          "column_timezone": "(UTC) Coordinated Universal Time",
+          "column_timezone": "UTC",
           "cardinality": 1,
           "null_count": 0,
           "data_range": {
-            "min": "2026-02-04 14:48:25.951501",
-            "max": "2026-02-04 14:48:25.951501"
+            "min": "2026-02-04 14:48:25.951501+00:00",
+            "max": "2026-02-04 14:48:25.951501+00:00"
           },
           "data_category": "continuous",
           "semantic_class": "timestamp",
@@ -1349,7 +1348,7 @@
           "concept_confidence": 1.0,
           "concept_evidence": [
             "name token: updated_at",
-            "type hint: datetime2",
+            "type hint: timestamp",
             "legacy field classification: temporal",
             "value pattern: timestamp",
             "table context: inventory"
@@ -1402,7 +1401,7 @@
         },
         {
           "name": "stock_unit",
-          "type": "nvarchar(16)",
+          "type": "text",
           "nullable": true,
           "is_incremental": false,
           "column_description": "Current stock unit label.",
@@ -1559,31 +1558,31 @@
             "column": null,
             "check": "timezone",
             "severity": "info",
-            "detail": "All 3 date/time column(s) are TZ-naive \u2014 stored values are implicitly in server timezone '(UTC) Coordinated Universal Time'.",
-            "recommendation": "During ingestion, treat all timestamps as '(UTC) Coordinated Universal Time' and convert to UTC.",
-            "server_timezone": "(UTC) Coordinated Universal Time",
+            "detail": "All 3 date/time column(s) use timezone 'UTC'.",
+            "recommendation": "Treat all timestamps as 'UTC' during ingestion.",
+            "server_timezone": "UTC",
             "columns": [
               {
                 "column": "last_restocked_at",
-                "type": "datetime2",
-                "effective_timezone": "(UTC) Coordinated Universal Time",
+                "type": "timestamp",
+                "effective_timezone": "UTC",
                 "is_tz_aware": false
               },
               {
                 "column": "created_at",
-                "type": "datetime2",
-                "effective_timezone": "(UTC) Coordinated Universal Time",
+                "type": "timestamp",
+                "effective_timezone": "UTC",
                 "is_tz_aware": false
               },
               {
                 "column": "updated_at",
-                "type": "datetime2",
-                "effective_timezone": "(UTC) Coordinated Universal Time",
+                "type": "timestamp",
+                "effective_timezone": "UTC",
                 "is_tz_aware": false
               }
             ],
             "distinct_timezones": [
-              "(UTC) Coordinated Universal Time"
+              "UTC"
             ],
             "tz_aware_count": 0,
             "tz_naive_count": 3
@@ -1600,7 +1599,7 @@
     },
     {
       "table": "products",
-      "schema": "dbo",
+      "schema": "public",
       "columns": [
         {
           "name": "product_id",
@@ -1661,7 +1660,7 @@
         },
         {
           "name": "sku",
-          "type": "nvarchar(450)",
+          "type": "text",
           "nullable": false,
           "is_incremental": false,
           "cardinality": 5,
@@ -1677,7 +1676,7 @@
           "concept_confidence": 0.7,
           "concept_evidence": [
             "name token: sku",
-            "type hint: nvarchar(450)",
+            "type hint: text",
             "semantic class hint: product_identifier"
           ],
           "concept_sources": [
@@ -1689,7 +1688,7 @@
         },
         {
           "name": "name",
-          "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+          "type": "text",
           "nullable": false,
           "is_incremental": false,
           "cardinality": 5,
@@ -1705,7 +1704,7 @@
           "concept_confidence": 0.55,
           "concept_evidence": [
             "name token: name",
-            "type hint: nvarchar collate \"sql_latin1_general_cp1_ci_as\""
+            "type hint: text"
           ],
           "concept_sources": [
             "name",
@@ -1715,7 +1714,7 @@
         },
         {
           "name": "category",
-          "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+          "type": "text",
           "nullable": false,
           "is_incremental": false,
           "cardinality": 4,
@@ -1731,7 +1730,7 @@
           "concept_confidence": 0.8,
           "concept_evidence": [
             "name token: category",
-            "type hint: nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+            "type hint: text",
             "legacy field classification: categorical",
             "profile heuristic matched"
           ],
@@ -1806,7 +1805,7 @@
         },
         {
           "name": "active",
-          "type": "bit",
+          "type": "boolean",
           "nullable": false,
           "is_incremental": false,
           "cardinality": 1,
@@ -1827,15 +1826,15 @@
         },
         {
           "name": "created_at",
-          "type": "datetime2",
+          "type": "timestamp",
           "nullable": false,
           "is_incremental": false,
-          "column_timezone": "(UTC) Coordinated Universal Time",
+          "column_timezone": "UTC",
           "cardinality": 1,
           "null_count": 0,
           "data_range": {
-            "min": "2026-02-04 14:48:25.951501",
-            "max": "2026-02-04 14:48:25.951501"
+            "min": "2026-02-04 14:48:25.951501+00:00",
+            "max": "2026-02-04 14:48:25.951501+00:00"
           },
           "data_category": "continuous",
           "semantic_class": "timestamp",
@@ -1844,7 +1843,7 @@
           "concept_confidence": 1.0,
           "concept_evidence": [
             "name token: created_at",
-            "type hint: datetime2",
+            "type hint: timestamp",
             "legacy field classification: temporal",
             "value pattern: timestamp",
             "table context: products"
@@ -1860,15 +1859,15 @@
         },
         {
           "name": "updated_at",
-          "type": "datetime2",
+          "type": "timestamp",
           "nullable": false,
           "is_incremental": false,
-          "column_timezone": "(UTC) Coordinated Universal Time",
+          "column_timezone": "UTC",
           "cardinality": 1,
           "null_count": 0,
           "data_range": {
-            "min": "2026-02-04 14:48:25.951501",
-            "max": "2026-02-04 14:48:25.951501"
+            "min": "2026-02-04 14:48:25.951501+00:00",
+            "max": "2026-02-04 14:48:25.951501+00:00"
           },
           "data_category": "continuous",
           "semantic_class": "timestamp",
@@ -1877,7 +1876,7 @@
           "concept_confidence": 1.0,
           "concept_evidence": [
             "name token: updated_at",
-            "type hint: datetime2",
+            "type hint: timestamp",
             "legacy field classification: temporal",
             "value pattern: timestamp",
             "table context: products"
@@ -1890,44 +1889,6 @@
             "values"
           ],
           "concept_alias_group": "updated_at"
-        },
-        {
-          "name": "weight_unit",
-          "type": "nvarchar(16)",
-          "nullable": true,
-          "is_incremental": false,
-          "column_description": "Source weight unit (kg/lb) used for unit inference testing.",
-          "cardinality": 2,
-          "null_count": 0,
-          "data_range": {
-            "min": "kg",
-            "max": "lb"
-          },
-          "data_category": "nominal",
-          "semantic_class": "mass",
-          "unit_context": {
-            "detected_unit": "lb",
-            "canonical_unit": "kg",
-            "unit_system": "imperial",
-            "conversion": {
-              "factor_to_canonical": 0.45359237,
-              "offset_to_canonical": 0.0,
-              "formula": "canonical = value * 0.45359237 + 0.0"
-            },
-            "detection_confidence": "low",
-            "detection_source": "sample_values",
-            "notes": "Values should be normalized from 'lb' to canonical 'kg'."
-          },
-          "concept_id": null,
-          "concept_confidence": 0.15,
-          "concept_evidence": [
-            "value pattern: quantity",
-            "ambiguous runner-up concept"
-          ],
-          "concept_sources": [
-            "values"
-          ],
-          "concept_alias_group": null
         },
         {
           "name": "weight_value",
@@ -1963,6 +1924,44 @@
           ],
           "concept_sources": [
             "profile"
+          ],
+          "concept_alias_group": null
+        },
+        {
+          "name": "weight_unit",
+          "type": "text",
+          "nullable": true,
+          "is_incremental": false,
+          "column_description": "Source weight unit (kg/lb) used for unit inference testing.",
+          "cardinality": 2,
+          "null_count": 0,
+          "data_range": {
+            "min": "kg",
+            "max": "lb"
+          },
+          "data_category": "nominal",
+          "semantic_class": "mass",
+          "unit_context": {
+            "detected_unit": "lb",
+            "canonical_unit": "kg",
+            "unit_system": "imperial",
+            "conversion": {
+              "factor_to_canonical": 0.45359237,
+              "offset_to_canonical": 0.0,
+              "formula": "canonical = value * 0.45359237 + 0.0"
+            },
+            "detection_confidence": "low",
+            "detection_source": "sample_values",
+            "notes": "Values should be normalized from 'lb' to canonical 'kg'."
+          },
+          "concept_id": null,
+          "concept_confidence": 0.15,
+          "concept_evidence": [
+            "value pattern: quantity",
+            "ambiguous runner-up concept"
+          ],
+          "concept_sources": [
+            "values"
           ],
           "concept_alias_group": null
         },
@@ -2005,7 +2004,7 @@
         },
         {
           "name": "length_unit",
-          "type": "nvarchar(16)",
+          "type": "text",
           "nullable": true,
           "is_incremental": false,
           "column_description": "Source length unit (cm/in) used for unit inference testing.",
@@ -2043,7 +2042,7 @@
         },
         {
           "name": "product_description",
-          "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+          "type": "text",
           "nullable": true,
           "is_incremental": false,
           "cardinality": 5,
@@ -2058,7 +2057,7 @@
           "concept_id": null,
           "concept_confidence": 0.1,
           "concept_evidence": [
-            "type hint: nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+            "type hint: text",
             "profile heuristic matched",
             "ambiguous runner-up concept"
           ],
@@ -2212,14 +2211,14 @@
             "cardinality": 2
           },
           {
-            "column": "weight_unit",
+            "column": "weight_value",
             "check": "nullable_but_never_null",
             "severity": "info",
             "detail": "Column is nullable but has 0 NULLs across 5 row(s)",
             "recommendation": "Consider adding a NOT NULL constraint if the column should always have a value"
           },
           {
-            "column": "weight_value",
+            "column": "weight_unit",
             "check": "nullable_but_never_null",
             "severity": "info",
             "detail": "Column is nullable but has 0 NULLs across 5 row(s)",
@@ -2268,31 +2267,31 @@
             "column": null,
             "check": "timezone",
             "severity": "info",
-            "detail": "All 2 date/time column(s) are TZ-naive \u2014 stored values are implicitly in server timezone '(UTC) Coordinated Universal Time'.",
-            "recommendation": "During ingestion, treat all timestamps as '(UTC) Coordinated Universal Time' and convert to UTC.",
-            "server_timezone": "(UTC) Coordinated Universal Time",
+            "detail": "All 2 date/time column(s) use timezone 'UTC'.",
+            "recommendation": "Treat all timestamps as 'UTC' during ingestion.",
+            "server_timezone": "UTC",
             "columns": [
               {
                 "column": "created_at",
-                "type": "datetime2",
-                "effective_timezone": "(UTC) Coordinated Universal Time",
+                "type": "timestamp",
+                "effective_timezone": "UTC",
                 "is_tz_aware": false
               },
               {
                 "column": "updated_at",
-                "type": "datetime2",
-                "effective_timezone": "(UTC) Coordinated Universal Time",
+                "type": "timestamp",
+                "effective_timezone": "UTC",
                 "is_tz_aware": false
               }
             ],
             "distinct_timezones": [
-              "(UTC) Coordinated Universal Time"
+              "UTC"
             ],
             "tz_aware_count": 0,
             "tz_naive_count": 2
           },
           {
-            "column": "weight_unit",
+            "column": "weight_value",
             "check": "unit_noncanonical_but_convertible",
             "severity": "warning",
             "detail": "Column uses 'lb' while canonical unit is 'kg'.",
@@ -2301,7 +2300,7 @@
             "canonical_unit": "kg"
           },
           {
-            "column": "weight_value",
+            "column": "weight_unit",
             "check": "unit_noncanonical_but_convertible",
             "severity": "warning",
             "detail": "Column uses 'lb' while canonical unit is 'kg'.",
@@ -2332,7 +2331,7 @@
     },
     {
       "table": "purchase_order_items",
-      "schema": "dbo",
+      "schema": "public",
       "columns": [
         {
           "name": "po_item_id",
@@ -2494,15 +2493,15 @@
         },
         {
           "name": "created_at",
-          "type": "datetime2",
+          "type": "timestamp",
           "nullable": false,
           "is_incremental": false,
-          "column_timezone": "(UTC) Coordinated Universal Time",
+          "column_timezone": "UTC",
           "cardinality": 1,
           "null_count": 0,
           "data_range": {
-            "min": "2026-02-04 14:48:25.951501",
-            "max": "2026-02-04 14:48:25.951501"
+            "min": "2026-02-04 14:48:25.951501+00:00",
+            "max": "2026-02-04 14:48:25.951501+00:00"
           },
           "data_category": "continuous",
           "semantic_class": "timestamp",
@@ -2511,7 +2510,7 @@
           "concept_confidence": 1.0,
           "concept_evidence": [
             "name token: created_at",
-            "type hint: datetime2",
+            "type hint: timestamp",
             "legacy field classification: temporal",
             "value pattern: timestamp",
             "table context: purchase_order_items"
@@ -2527,15 +2526,15 @@
         },
         {
           "name": "updated_at",
-          "type": "datetime2",
+          "type": "timestamp",
           "nullable": false,
           "is_incremental": false,
-          "column_timezone": "(UTC) Coordinated Universal Time",
+          "column_timezone": "UTC",
           "cardinality": 1,
           "null_count": 0,
           "data_range": {
-            "min": "2026-02-04 14:48:25.951501",
-            "max": "2026-02-04 14:48:25.951501"
+            "min": "2026-02-04 14:48:25.951501+00:00",
+            "max": "2026-02-04 14:48:25.951501+00:00"
           },
           "data_category": "continuous",
           "semantic_class": "timestamp",
@@ -2544,7 +2543,7 @@
           "concept_confidence": 1.0,
           "concept_evidence": [
             "name token: updated_at",
-            "type hint: datetime2",
+            "type hint: timestamp",
             "legacy field classification: temporal",
             "value pattern: timestamp",
             "table context: purchase_order_items"
@@ -2603,7 +2602,7 @@
         },
         {
           "name": "ordered_qty_unit",
-          "type": "nvarchar(16)",
+          "type": "text",
           "nullable": true,
           "is_incremental": false,
           "column_description": "Ordered quantity unit (ea/box).",
@@ -2756,25 +2755,25 @@
             "column": null,
             "check": "timezone",
             "severity": "info",
-            "detail": "All 2 date/time column(s) are TZ-naive \u2014 stored values are implicitly in server timezone '(UTC) Coordinated Universal Time'.",
-            "recommendation": "During ingestion, treat all timestamps as '(UTC) Coordinated Universal Time' and convert to UTC.",
-            "server_timezone": "(UTC) Coordinated Universal Time",
+            "detail": "All 2 date/time column(s) use timezone 'UTC'.",
+            "recommendation": "Treat all timestamps as 'UTC' during ingestion.",
+            "server_timezone": "UTC",
             "columns": [
               {
                 "column": "created_at",
-                "type": "datetime2",
-                "effective_timezone": "(UTC) Coordinated Universal Time",
+                "type": "timestamp",
+                "effective_timezone": "UTC",
                 "is_tz_aware": false
               },
               {
                 "column": "updated_at",
-                "type": "datetime2",
-                "effective_timezone": "(UTC) Coordinated Universal Time",
+                "type": "timestamp",
+                "effective_timezone": "UTC",
                 "is_tz_aware": false
               }
             ],
             "distinct_timezones": [
-              "(UTC) Coordinated Universal Time"
+              "UTC"
             ],
             "tz_aware_count": 0,
             "tz_naive_count": 2
@@ -2791,7 +2790,7 @@
     },
     {
       "table": "purchase_orders",
-      "schema": "dbo",
+      "schema": "public",
       "columns": [
         {
           "name": "po_id",
@@ -2880,7 +2879,7 @@
         },
         {
           "name": "status",
-          "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+          "type": "text",
           "nullable": false,
           "is_incremental": false,
           "cardinality": 2,
@@ -2896,7 +2895,7 @@
           "concept_confidence": 1.0,
           "concept_evidence": [
             "name token: statu",
-            "type hint: nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+            "type hint: text",
             "legacy field classification: categorical",
             "value pattern: status",
             "profile heuristic matched"
@@ -2975,15 +2974,15 @@
         },
         {
           "name": "created_at",
-          "type": "datetime2",
+          "type": "timestamp",
           "nullable": false,
           "is_incremental": false,
-          "column_timezone": "(UTC) Coordinated Universal Time",
+          "column_timezone": "UTC",
           "cardinality": 1,
           "null_count": 0,
           "data_range": {
-            "min": "2026-02-04 14:48:25.951501",
-            "max": "2026-02-04 14:48:25.951501"
+            "min": "2026-02-04 14:48:25.951501+00:00",
+            "max": "2026-02-04 14:48:25.951501+00:00"
           },
           "data_category": "continuous",
           "semantic_class": "timestamp",
@@ -2992,7 +2991,7 @@
           "concept_confidence": 1.0,
           "concept_evidence": [
             "name token: created_at",
-            "type hint: datetime2",
+            "type hint: timestamp",
             "legacy field classification: temporal",
             "value pattern: timestamp",
             "table context: purchase_orders"
@@ -3008,15 +3007,15 @@
         },
         {
           "name": "updated_at",
-          "type": "datetime2",
+          "type": "timestamp",
           "nullable": false,
           "is_incremental": false,
-          "column_timezone": "(UTC) Coordinated Universal Time",
+          "column_timezone": "UTC",
           "cardinality": 1,
           "null_count": 0,
           "data_range": {
-            "min": "2026-02-04 14:48:25.951501",
-            "max": "2026-02-04 14:48:25.951501"
+            "min": "2026-02-04 14:48:25.951501+00:00",
+            "max": "2026-02-04 14:48:25.951501+00:00"
           },
           "data_category": "continuous",
           "semantic_class": "timestamp",
@@ -3025,7 +3024,7 @@
           "concept_confidence": 1.0,
           "concept_evidence": [
             "name token: updated_at",
-            "type hint: datetime2",
+            "type hint: timestamp",
             "legacy field classification: temporal",
             "value pattern: timestamp",
             "table context: purchase_orders"
@@ -3210,25 +3209,25 @@
             "column": null,
             "check": "timezone",
             "severity": "info",
-            "detail": "All 2 date/time column(s) are TZ-naive \u2014 stored values are implicitly in server timezone '(UTC) Coordinated Universal Time'.",
-            "recommendation": "During ingestion, treat all timestamps as '(UTC) Coordinated Universal Time' and convert to UTC.",
-            "server_timezone": "(UTC) Coordinated Universal Time",
+            "detail": "All 2 date/time column(s) use timezone 'UTC'.",
+            "recommendation": "Treat all timestamps as 'UTC' during ingestion.",
+            "server_timezone": "UTC",
             "columns": [
               {
                 "column": "created_at",
-                "type": "datetime2",
-                "effective_timezone": "(UTC) Coordinated Universal Time",
+                "type": "timestamp",
+                "effective_timezone": "UTC",
                 "is_tz_aware": false
               },
               {
                 "column": "updated_at",
-                "type": "datetime2",
-                "effective_timezone": "(UTC) Coordinated Universal Time",
+                "type": "timestamp",
+                "effective_timezone": "UTC",
                 "is_tz_aware": false
               }
             ],
             "distinct_timezones": [
-              "(UTC) Coordinated Universal Time"
+              "UTC"
             ],
             "tz_aware_count": 0,
             "tz_naive_count": 2
@@ -3238,7 +3237,7 @@
     },
     {
       "table": "sales_order_items",
-      "schema": "dbo",
+      "schema": "public",
       "columns": [
         {
           "name": "sales_order_item_id",
@@ -3400,15 +3399,15 @@
         },
         {
           "name": "created_at",
-          "type": "datetime2",
+          "type": "timestamp",
           "nullable": false,
           "is_incremental": false,
-          "column_timezone": "(UTC) Coordinated Universal Time",
+          "column_timezone": "UTC",
           "cardinality": 1,
           "null_count": 0,
           "data_range": {
-            "min": "2026-02-04 14:48:25.951501",
-            "max": "2026-02-04 14:48:25.951501"
+            "min": "2026-02-04 14:48:25.951501+00:00",
+            "max": "2026-02-04 14:48:25.951501+00:00"
           },
           "data_category": "continuous",
           "semantic_class": "timestamp",
@@ -3417,7 +3416,7 @@
           "concept_confidence": 1.0,
           "concept_evidence": [
             "name token: created_at",
-            "type hint: datetime2",
+            "type hint: timestamp",
             "legacy field classification: temporal",
             "value pattern: timestamp",
             "table context: sales_order_items"
@@ -3433,15 +3432,15 @@
         },
         {
           "name": "updated_at",
-          "type": "datetime2",
+          "type": "timestamp",
           "nullable": false,
           "is_incremental": false,
-          "column_timezone": "(UTC) Coordinated Universal Time",
+          "column_timezone": "UTC",
           "cardinality": 1,
           "null_count": 0,
           "data_range": {
-            "min": "2026-02-04 14:48:25.951501",
-            "max": "2026-02-04 14:48:25.951501"
+            "min": "2026-02-04 14:48:25.951501+00:00",
+            "max": "2026-02-04 14:48:25.951501+00:00"
           },
           "data_category": "continuous",
           "semantic_class": "timestamp",
@@ -3450,7 +3449,7 @@
           "concept_confidence": 1.0,
           "concept_evidence": [
             "name token: updated_at",
-            "type hint: datetime2",
+            "type hint: timestamp",
             "legacy field classification: temporal",
             "value pattern: timestamp",
             "table context: sales_order_items"
@@ -3509,7 +3508,7 @@
         },
         {
           "name": "sold_qty_unit",
-          "type": "nvarchar(16)",
+          "type": "text",
           "nullable": true,
           "is_incremental": false,
           "column_description": "Sold quantity unit (ea/box).",
@@ -3662,25 +3661,25 @@
             "column": null,
             "check": "timezone",
             "severity": "info",
-            "detail": "All 2 date/time column(s) are TZ-naive \u2014 stored values are implicitly in server timezone '(UTC) Coordinated Universal Time'.",
-            "recommendation": "During ingestion, treat all timestamps as '(UTC) Coordinated Universal Time' and convert to UTC.",
-            "server_timezone": "(UTC) Coordinated Universal Time",
+            "detail": "All 2 date/time column(s) use timezone 'UTC'.",
+            "recommendation": "Treat all timestamps as 'UTC' during ingestion.",
+            "server_timezone": "UTC",
             "columns": [
               {
                 "column": "created_at",
-                "type": "datetime2",
-                "effective_timezone": "(UTC) Coordinated Universal Time",
+                "type": "timestamp",
+                "effective_timezone": "UTC",
                 "is_tz_aware": false
               },
               {
                 "column": "updated_at",
-                "type": "datetime2",
-                "effective_timezone": "(UTC) Coordinated Universal Time",
+                "type": "timestamp",
+                "effective_timezone": "UTC",
                 "is_tz_aware": false
               }
             ],
             "distinct_timezones": [
-              "(UTC) Coordinated Universal Time"
+              "UTC"
             ],
             "tz_aware_count": 0,
             "tz_naive_count": 2
@@ -3697,7 +3696,7 @@
     },
     {
       "table": "sales_orders",
-      "schema": "dbo",
+      "schema": "public",
       "columns": [
         {
           "name": "sales_order_id",
@@ -3814,40 +3813,37 @@
         },
         {
           "name": "order_date",
-          "type": "datetime2",
+          "type": "timestamp",
           "nullable": false,
           "is_incremental": false,
-          "column_timezone": "(UTC) Coordinated Universal Time",
+          "column_timezone": "UTC",
           "cardinality": 3,
           "null_count": 0,
           "data_range": {
-            "min": "2026-02-03 14:48:25.951501",
-            "max": "2026-02-04 11:48:25.951501"
+            "min": "2026-02-03 14:48:25.951501+00:00",
+            "max": "2026-02-04 11:48:25.951501+00:00"
           },
           "data_category": "continuous",
           "semantic_class": "timestamp",
           "unit_context": null,
           "concept_id": "temporal.date_only",
-          "concept_confidence": 0.9,
+          "concept_confidence": 0.55,
           "concept_evidence": [
             "name token: order_date",
-            "type hint: datetime2",
             "legacy field classification: temporal",
             "table context: sales_orders",
-            "cross-table consensus: 2 similar columns"
+            "ambiguous runner-up concept"
           ],
           "concept_sources": [
-            "cross_table_consensus",
             "name",
             "profile",
-            "table_context",
-            "type"
+            "table_context"
           ],
           "concept_alias_group": "order_date"
         },
         {
           "name": "status",
-          "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+          "type": "text",
           "nullable": false,
           "is_incremental": false,
           "cardinality": 2,
@@ -3863,7 +3859,7 @@
           "concept_confidence": 1.0,
           "concept_evidence": [
             "name token: statu",
-            "type hint: nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+            "type hint: text",
             "legacy field classification: categorical",
             "value pattern: status",
             "profile heuristic matched"
@@ -3911,15 +3907,15 @@
         },
         {
           "name": "created_at",
-          "type": "datetime2",
+          "type": "timestamp",
           "nullable": false,
           "is_incremental": false,
-          "column_timezone": "(UTC) Coordinated Universal Time",
+          "column_timezone": "UTC",
           "cardinality": 1,
           "null_count": 0,
           "data_range": {
-            "min": "2026-02-04 14:48:25.951501",
-            "max": "2026-02-04 14:48:25.951501"
+            "min": "2026-02-04 14:48:25.951501+00:00",
+            "max": "2026-02-04 14:48:25.951501+00:00"
           },
           "data_category": "continuous",
           "semantic_class": "timestamp",
@@ -3928,7 +3924,7 @@
           "concept_confidence": 1.0,
           "concept_evidence": [
             "name token: created_at",
-            "type hint: datetime2",
+            "type hint: timestamp",
             "legacy field classification: temporal",
             "value pattern: timestamp",
             "table context: sales_orders"
@@ -3944,15 +3940,15 @@
         },
         {
           "name": "updated_at",
-          "type": "datetime2",
+          "type": "timestamp",
           "nullable": false,
           "is_incremental": false,
-          "column_timezone": "(UTC) Coordinated Universal Time",
+          "column_timezone": "UTC",
           "cardinality": 1,
           "null_count": 0,
           "data_range": {
-            "min": "2026-02-04 14:48:25.951501",
-            "max": "2026-02-04 14:48:25.951501"
+            "min": "2026-02-04 14:48:25.951501+00:00",
+            "max": "2026-02-04 14:48:25.951501+00:00"
           },
           "data_category": "continuous",
           "semantic_class": "timestamp",
@@ -3961,7 +3957,7 @@
           "concept_confidence": 1.0,
           "concept_evidence": [
             "name token: updated_at",
-            "type hint: datetime2",
+            "type hint: timestamp",
             "legacy field classification: temporal",
             "value pattern: timestamp",
             "table context: sales_orders"
@@ -4011,15 +4007,15 @@
       ],
       "foreign_keys": [
         {
+          "column": "sales_rep_employee_id",
+          "references": "employees.employee_id"
+        },
+        {
           "column": "customer_id",
           "references": "customers.customer_id"
         },
         {
           "column": "employee_id",
-          "references": "employees.employee_id"
-        },
-        {
-          "column": "sales_rep_employee_id",
           "references": "employees.employee_id"
         },
         {
@@ -4043,6 +4039,12 @@
       ],
       "join_candidates": [
         {
+          "column": "sales_rep_employee_id",
+          "target_table": "employees",
+          "target_column": "employee_id",
+          "confidence": "high"
+        },
+        {
           "column": "customer_id",
           "target_table": "customers",
           "target_column": "customer_id",
@@ -4050,12 +4052,6 @@
         },
         {
           "column": "employee_id",
-          "target_table": "employees",
-          "target_column": "employee_id",
-          "confidence": "high"
-        },
-        {
-          "column": "sales_rep_employee_id",
           "target_table": "employees",
           "target_column": "employee_id",
           "confidence": "high"
@@ -4091,7 +4087,9 @@
           "temporal.date_only": 1,
           "temporal.updated_at": 1
         },
-        "low_confidence_columns": []
+        "low_confidence_columns": [
+          "order_date"
+        ]
       },
       "data_quality": {
         "findings": [
@@ -4156,31 +4154,31 @@
             "column": null,
             "check": "timezone",
             "severity": "info",
-            "detail": "All 3 date/time column(s) are TZ-naive \u2014 stored values are implicitly in server timezone '(UTC) Coordinated Universal Time'.",
-            "recommendation": "During ingestion, treat all timestamps as '(UTC) Coordinated Universal Time' and convert to UTC.",
-            "server_timezone": "(UTC) Coordinated Universal Time",
+            "detail": "All 3 date/time column(s) use timezone 'UTC'.",
+            "recommendation": "Treat all timestamps as 'UTC' during ingestion.",
+            "server_timezone": "UTC",
             "columns": [
               {
                 "column": "order_date",
-                "type": "datetime2",
-                "effective_timezone": "(UTC) Coordinated Universal Time",
+                "type": "timestamp",
+                "effective_timezone": "UTC",
                 "is_tz_aware": false
               },
               {
                 "column": "created_at",
-                "type": "datetime2",
-                "effective_timezone": "(UTC) Coordinated Universal Time",
+                "type": "timestamp",
+                "effective_timezone": "UTC",
                 "is_tz_aware": false
               },
               {
                 "column": "updated_at",
-                "type": "datetime2",
-                "effective_timezone": "(UTC) Coordinated Universal Time",
+                "type": "timestamp",
+                "effective_timezone": "UTC",
                 "is_tz_aware": false
               }
             ],
             "distinct_timezones": [
-              "(UTC) Coordinated Universal Time"
+              "UTC"
             ],
             "tz_aware_count": 0,
             "tz_naive_count": 3
@@ -4190,7 +4188,7 @@
     },
     {
       "table": "stores",
-      "schema": "dbo",
+      "schema": "public",
       "columns": [
         {
           "name": "store_id",
@@ -4223,7 +4221,7 @@
         },
         {
           "name": "name",
-          "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+          "type": "text",
           "nullable": false,
           "is_incremental": false,
           "cardinality": 2,
@@ -4239,7 +4237,7 @@
           "concept_confidence": 0.55,
           "concept_evidence": [
             "name token: name",
-            "type hint: nvarchar collate \"sql_latin1_general_cp1_ci_as\""
+            "type hint: text"
           ],
           "concept_sources": [
             "name",
@@ -4249,7 +4247,7 @@
         },
         {
           "name": "code",
-          "type": "nvarchar(450)",
+          "type": "text",
           "nullable": false,
           "is_incremental": false,
           "cardinality": 2,
@@ -4264,7 +4262,7 @@
           "concept_id": null,
           "concept_confidence": 0.1,
           "concept_evidence": [
-            "type hint: nvarchar(450)",
+            "type hint: text",
             "profile heuristic matched",
             "ambiguous runner-up concept"
           ],
@@ -4276,7 +4274,7 @@
         },
         {
           "name": "address",
-          "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+          "type": "text",
           "nullable": true,
           "is_incremental": false,
           "cardinality": 2,
@@ -4292,7 +4290,7 @@
           "concept_confidence": 0.55,
           "concept_evidence": [
             "name token: address",
-            "type hint: nvarchar collate \"sql_latin1_general_cp1_ci_as\""
+            "type hint: text"
           ],
           "concept_sources": [
             "name",
@@ -4302,7 +4300,7 @@
         },
         {
           "name": "city",
-          "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+          "type": "text",
           "nullable": true,
           "is_incremental": false,
           "cardinality": 2,
@@ -4317,7 +4315,7 @@
           "concept_id": null,
           "concept_confidence": 0.1,
           "concept_evidence": [
-            "type hint: nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+            "type hint: text",
             "profile heuristic matched",
             "ambiguous runner-up concept"
           ],
@@ -4329,7 +4327,7 @@
         },
         {
           "name": "state",
-          "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+          "type": "text",
           "nullable": true,
           "is_incremental": false,
           "cardinality": 2,
@@ -4344,7 +4342,7 @@
           "concept_id": null,
           "concept_confidence": 0.1,
           "concept_evidence": [
-            "type hint: nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+            "type hint: text",
             "profile heuristic matched",
             "ambiguous runner-up concept"
           ],
@@ -4356,7 +4354,7 @@
         },
         {
           "name": "postal_code",
-          "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+          "type": "text",
           "nullable": true,
           "is_incremental": false,
           "cardinality": 2,
@@ -4372,7 +4370,7 @@
           "concept_confidence": 0.55,
           "concept_evidence": [
             "name token: postal_code",
-            "type hint: nvarchar collate \"sql_latin1_general_cp1_ci_as\""
+            "type hint: text"
           ],
           "concept_sources": [
             "name",
@@ -4382,7 +4380,7 @@
         },
         {
           "name": "phone",
-          "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+          "type": "text",
           "nullable": true,
           "is_incremental": false,
           "cardinality": 2,
@@ -4398,7 +4396,7 @@
           "concept_confidence": 1.0,
           "concept_evidence": [
             "name token: phone",
-            "type hint: nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+            "type hint: text",
             "legacy field classification: contact",
             "value pattern: phone",
             "sensitive hint: pii_contact"
@@ -4413,15 +4411,15 @@
         },
         {
           "name": "created_at",
-          "type": "datetime2",
+          "type": "timestamp",
           "nullable": false,
           "is_incremental": false,
-          "column_timezone": "(UTC) Coordinated Universal Time",
+          "column_timezone": "UTC",
           "cardinality": 1,
           "null_count": 0,
           "data_range": {
-            "min": "2026-02-04 14:48:25.951501",
-            "max": "2026-02-04 14:48:25.951501"
+            "min": "2026-02-04 14:48:25.951501+00:00",
+            "max": "2026-02-04 14:48:25.951501+00:00"
           },
           "data_category": "continuous",
           "semantic_class": "timestamp",
@@ -4430,7 +4428,7 @@
           "concept_confidence": 1.0,
           "concept_evidence": [
             "name token: created_at",
-            "type hint: datetime2",
+            "type hint: timestamp",
             "legacy field classification: temporal",
             "value pattern: timestamp",
             "table context: stores"
@@ -4446,15 +4444,15 @@
         },
         {
           "name": "updated_at",
-          "type": "datetime2",
+          "type": "timestamp",
           "nullable": false,
           "is_incremental": false,
-          "column_timezone": "(UTC) Coordinated Universal Time",
+          "column_timezone": "UTC",
           "cardinality": 1,
           "null_count": 0,
           "data_range": {
-            "min": "2026-02-04 14:48:25.951501",
-            "max": "2026-02-04 14:48:25.951501"
+            "min": "2026-02-04 14:48:25.951501+00:00",
+            "max": "2026-02-04 14:48:25.951501+00:00"
           },
           "data_category": "continuous",
           "semantic_class": "timestamp",
@@ -4463,7 +4461,7 @@
           "concept_confidence": 1.0,
           "concept_evidence": [
             "name token: updated_at",
-            "type hint: datetime2",
+            "type hint: timestamp",
             "legacy field classification: temporal",
             "value pattern: timestamp",
             "table context: stores"
@@ -4620,25 +4618,25 @@
             "column": null,
             "check": "timezone",
             "severity": "info",
-            "detail": "All 2 date/time column(s) are TZ-naive \u2014 stored values are implicitly in server timezone '(UTC) Coordinated Universal Time'.",
-            "recommendation": "During ingestion, treat all timestamps as '(UTC) Coordinated Universal Time' and convert to UTC.",
-            "server_timezone": "(UTC) Coordinated Universal Time",
+            "detail": "All 2 date/time column(s) use timezone 'UTC'.",
+            "recommendation": "Treat all timestamps as 'UTC' during ingestion.",
+            "server_timezone": "UTC",
             "columns": [
               {
                 "column": "created_at",
-                "type": "datetime2",
-                "effective_timezone": "(UTC) Coordinated Universal Time",
+                "type": "timestamp",
+                "effective_timezone": "UTC",
                 "is_tz_aware": false
               },
               {
                 "column": "updated_at",
-                "type": "datetime2",
-                "effective_timezone": "(UTC) Coordinated Universal Time",
+                "type": "timestamp",
+                "effective_timezone": "UTC",
                 "is_tz_aware": false
               }
             ],
             "distinct_timezones": [
-              "(UTC) Coordinated Universal Time"
+              "UTC"
             ],
             "tz_aware_count": 0,
             "tz_naive_count": 2
@@ -4648,7 +4646,7 @@
     },
     {
       "table": "suppliers",
-      "schema": "dbo",
+      "schema": "public",
       "columns": [
         {
           "name": "supplier_id",
@@ -4681,7 +4679,7 @@
         },
         {
           "name": "name",
-          "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+          "type": "text",
           "nullable": false,
           "is_incremental": false,
           "cardinality": 2,
@@ -4697,7 +4695,7 @@
           "concept_confidence": 0.55,
           "concept_evidence": [
             "name token: name",
-            "type hint: nvarchar collate \"sql_latin1_general_cp1_ci_as\""
+            "type hint: text"
           ],
           "concept_sources": [
             "name",
@@ -4707,7 +4705,7 @@
         },
         {
           "name": "contact_name",
-          "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+          "type": "text",
           "nullable": true,
           "is_incremental": false,
           "cardinality": 2,
@@ -4723,7 +4721,7 @@
           "concept_confidence": 0.55,
           "concept_evidence": [
             "name token: contact_name",
-            "type hint: nvarchar collate \"sql_latin1_general_cp1_ci_as\""
+            "type hint: text"
           ],
           "concept_sources": [
             "name",
@@ -4733,7 +4731,7 @@
         },
         {
           "name": "email",
-          "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+          "type": "text",
           "nullable": true,
           "is_incremental": false,
           "cardinality": 2,
@@ -4749,7 +4747,7 @@
           "concept_confidence": 1.0,
           "concept_evidence": [
             "name token: email",
-            "type hint: nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+            "type hint: text",
             "legacy field classification: contact",
             "value pattern: email",
             "sensitive hint: pii_contact"
@@ -4764,7 +4762,7 @@
         },
         {
           "name": "phone",
-          "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+          "type": "text",
           "nullable": true,
           "is_incremental": false,
           "cardinality": 2,
@@ -4780,7 +4778,7 @@
           "concept_confidence": 1.0,
           "concept_evidence": [
             "name token: phone",
-            "type hint: nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+            "type hint: text",
             "legacy field classification: contact",
             "value pattern: phone",
             "sensitive hint: pii_contact"
@@ -4795,15 +4793,15 @@
         },
         {
           "name": "created_at",
-          "type": "datetime2",
+          "type": "timestamp",
           "nullable": false,
           "is_incremental": false,
-          "column_timezone": "(UTC) Coordinated Universal Time",
+          "column_timezone": "UTC",
           "cardinality": 1,
           "null_count": 0,
           "data_range": {
-            "min": "2026-02-04 14:48:25.951501",
-            "max": "2026-02-04 14:48:25.951501"
+            "min": "2026-02-04 14:48:25.951501+00:00",
+            "max": "2026-02-04 14:48:25.951501+00:00"
           },
           "data_category": "continuous",
           "semantic_class": "timestamp",
@@ -4812,7 +4810,7 @@
           "concept_confidence": 1.0,
           "concept_evidence": [
             "name token: created_at",
-            "type hint: datetime2",
+            "type hint: timestamp",
             "legacy field classification: temporal",
             "value pattern: timestamp",
             "table context: suppliers"
@@ -4828,15 +4826,15 @@
         },
         {
           "name": "updated_at",
-          "type": "datetime2",
+          "type": "timestamp",
           "nullable": false,
           "is_incremental": false,
-          "column_timezone": "(UTC) Coordinated Universal Time",
+          "column_timezone": "UTC",
           "cardinality": 1,
           "null_count": 0,
           "data_range": {
-            "min": "2026-02-04 14:48:25.951501",
-            "max": "2026-02-04 14:48:25.951501"
+            "min": "2026-02-04 14:48:25.951501+00:00",
+            "max": "2026-02-04 14:48:25.951501+00:00"
           },
           "data_category": "continuous",
           "semantic_class": "timestamp",
@@ -4845,7 +4843,7 @@
           "concept_confidence": 1.0,
           "concept_evidence": [
             "name token: updated_at",
-            "type hint: datetime2",
+            "type hint: timestamp",
             "legacy field classification: temporal",
             "value pattern: timestamp",
             "table context: suppliers"
@@ -4948,25 +4946,25 @@
             "column": null,
             "check": "timezone",
             "severity": "info",
-            "detail": "All 2 date/time column(s) are TZ-naive \u2014 stored values are implicitly in server timezone '(UTC) Coordinated Universal Time'.",
-            "recommendation": "During ingestion, treat all timestamps as '(UTC) Coordinated Universal Time' and convert to UTC.",
-            "server_timezone": "(UTC) Coordinated Universal Time",
+            "detail": "All 2 date/time column(s) use timezone 'UTC'.",
+            "recommendation": "Treat all timestamps as 'UTC' during ingestion.",
+            "server_timezone": "UTC",
             "columns": [
               {
                 "column": "created_at",
-                "type": "datetime2",
-                "effective_timezone": "(UTC) Coordinated Universal Time",
+                "type": "timestamp",
+                "effective_timezone": "UTC",
                 "is_tz_aware": false
               },
               {
                 "column": "updated_at",
-                "type": "datetime2",
-                "effective_timezone": "(UTC) Coordinated Universal Time",
+                "type": "timestamp",
+                "effective_timezone": "UTC",
                 "is_tz_aware": false
               }
             ],
             "distinct_timezones": [
-              "(UTC) Coordinated Universal Time"
+              "UTC"
             ],
             "tz_aware_count": 0,
             "tz_naive_count": 2

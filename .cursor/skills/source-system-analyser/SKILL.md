@@ -23,6 +23,7 @@ Source routes:
 Load these before executing any source workflow:
 - Prerequisites: `references/shared/prerequisites.md`
 - Output contract: `references/shared/output-schema.md`
+- Classification review workflow: `references/shared/classification-review-workflow.md`
 - Troubleshooting: `references/shared/troubleshooting.md`
 
 ## Backward Compatibility

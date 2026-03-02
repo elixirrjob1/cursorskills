@@ -1,0 +1,12 @@
+Database Connection Instructions
+================================
+
+PostgreSQL
+----------
+Schema Name: public
+Key Vault Secret Name: DATABASE-URL
+
+MSSQL
+-----
+Schema Name: dbo
+Key Vault Secret Name: AZURE-MSSQL-URL

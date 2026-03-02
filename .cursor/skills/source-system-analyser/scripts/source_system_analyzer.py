@@ -604,6 +604,161 @@ _UNITFUL_SEMANTIC_CLASSES = {
     "power",
     "density",
 }
+_CONCEPT_RULES: List[Dict[str, Any]] = [
+    {
+        "concept_id": "contact.email",
+        "field_classification": "contact",
+        "name_tokens": ("email", "mail", "email_address", "email_addr"),
+        "type_tokens": ("varchar", "char", "text", "citext", "name"),
+        "value_detector": "email",
+    },
+    {
+        "concept_id": "contact.phone",
+        "field_classification": "contact",
+        "name_tokens": ("phone", "mobile", "telephone", "cell", "fax"),
+        "type_tokens": ("varchar", "char", "text"),
+        "value_detector": "phone",
+    },
+    {
+        "concept_id": "contact.address",
+        "field_classification": None,
+        "name_tokens": ("address", "street", "postal", "zip"),
+        "type_tokens": ("varchar", "char", "text"),
+        "value_detector": None,
+    },
+    {
+        "concept_id": "contact.person_name",
+        "field_classification": None,
+        "name_tokens": ("first_name", "last_name", "full_name", "display_name", "contact_name", "name"),
+        "type_tokens": ("varchar", "char", "text", "name"),
+        "value_detector": None,
+    },
+    {
+        "concept_id": "identifier.external_id",
+        "field_classification": None,
+        "name_tokens": ("id", "identifier", "external_id", "uuid", "guid"),
+        "type_tokens": ("uuid", "char", "varchar", "text", "int", "bigint"),
+        "value_detector": None,
+    },
+    {
+        "concept_id": "identifier.product_code",
+        "field_classification": None,
+        "name_tokens": ("sku", "product_code", "item_code"),
+        "type_tokens": ("varchar", "char", "text", "int", "bigint"),
+        "semantic_class": "product_identifier",
+        "value_detector": None,
+    },
+    {
+        "concept_id": "identifier.foreign_key",
+        "field_classification": None,
+        "name_tokens": ("_id", "_fk", "_key", "_ref"),
+        "type_tokens": ("int", "bigint", "uuid", "char", "varchar"),
+        "value_detector": None,
+    },
+    {
+        "concept_id": "temporal.created_at",
+        "field_classification": "temporal",
+        "name_tokens": ("created_at", "created_on", "creation_date", "insert_ts", "inserted_at"),
+        "type_tokens": ("timestamp", "datetime", "date", "time"),
+        "value_detector": "timestamp",
+    },
+    {
+        "concept_id": "temporal.updated_at",
+        "field_classification": "temporal",
+        "name_tokens": ("updated_at", "updated_on", "modified_at", "last_updated_at"),
+        "type_tokens": ("timestamp", "datetime", "date", "time"),
+        "value_detector": "timestamp",
+    },
+    {
+        "concept_id": "temporal.event_time",
+        "field_classification": "temporal",
+        "name_tokens": ("event_time", "event_at", "occurred_at", "timestamp", "ts", "restocked_at", "last_restocked_at"),
+        "type_tokens": ("timestamp", "datetime", "date", "time"),
+        "value_detector": "timestamp",
+    },
+    {
+        "concept_id": "temporal.date_only",
+        "field_classification": "temporal",
+        "name_tokens": ("date", "business_date", "as_of_date"),
+        "type_tokens": ("date",),
+        "value_detector": "date_only",
+    },
+    {
+        "concept_id": "finance.currency_amount",
+        "field_classification": "pricing",
+        "name_tokens": ("price", "cost", "amount", "total", "subtotal", "balance"),
+        "type_tokens": ("numeric", "decimal", "money", "float", "double", "real"),
+        "semantic_class": "currency_amount",
+        "value_detector": "currency_amount",
+    },
+    {
+        "concept_id": "measure.quantity",
+        "field_classification": "quantity",
+        "name_tokens": ("quantity", "qty", "count", "units", "volume"),
+        "type_tokens": ("int", "bigint", "smallint", "numeric", "decimal", "number"),
+        "semantic_class": "quantity",
+        "value_detector": "quantity",
+    },
+    {
+        "concept_id": "entity.status",
+        "field_classification": "categorical",
+        "name_tokens": ("status",),
+        "type_tokens": ("varchar", "char", "text", "enum"),
+        "value_detector": "status",
+    },
+    {
+        "concept_id": "entity.category",
+        "field_classification": "categorical",
+        "name_tokens": ("category", "segment", "group"),
+        "type_tokens": ("varchar", "char", "text", "enum"),
+        "value_detector": "status",
+    },
+    {
+        "concept_id": "entity.type",
+        "field_classification": "categorical",
+        "name_tokens": ("type", "kind", "class", "role"),
+        "type_tokens": ("varchar", "char", "text", "enum"),
+        "value_detector": "status",
+    },
+    {
+        "concept_id": "credential.secret",
+        "field_classification": None,
+        "name_tokens": ("password", "secret", "token", "api_key", "key"),
+        "type_tokens": ("varchar", "char", "text"),
+        "value_detector": None,
+    },
+    {
+        "concept_id": "network.ip_address",
+        "field_classification": None,
+        "name_tokens": ("ip", "ip_address", "client_ip"),
+        "type_tokens": ("inet", "cidr", "varchar", "char", "text"),
+        "value_detector": "ip_address",
+    },
+]
+_CONCEPT_ALIAS_EXACT = {
+    "email_address": "email",
+    "email_addr": "email",
+    "primary_email": "email",
+    "mail": "email",
+    "phone_number": "phone",
+    "mobile_number": "phone",
+    "telephone_number": "phone",
+    "cell_number": "phone",
+    "created_on": "created_at",
+    "creation_date": "created_at",
+    "insert_ts": "created_at",
+    "inserted_at": "created_at",
+    "updated_on": "updated_at",
+    "modified_at": "updated_at",
+    "last_updated_at": "updated_at",
+    "event_at": "event_time",
+    "occurred_at": "event_time",
+    "unit_price": "price",
+    "total_amount": "amount",
+    "item_count": "count",
+}
+_NON_SEMANTIC_NAME_TOKENS = {"tbl", "table", "col", "column", "field", "value", "data"}
+_LOW_SIGNAL_ALIAS_GROUPS = {"name", "code", "value", "data"}
 
 
 def _is_explicit_unit_column_name(col_name: str) -> bool:
@@ -832,6 +987,416 @@ def classify_field(col_name: str) -> Optional[str]:
     elif any(kw in col_name_lower for kw in ["email", "phone"]):
         return "contact"
     return None
+
+
+def _normalize_name_tokens(name: str) -> List[str]:
+    normalized = re.sub(r"[^a-z0-9]+", "_", str(name or "").lower()).strip("_")
+    if not normalized:
+        return []
+    tokens = [token for token in normalized.split("_") if token and token not in _NON_SEMANTIC_NAME_TOKENS]
+    collapsed: List[str] = []
+    for token in tokens:
+        if len(token) > 3 and token.endswith("s") and not token.endswith("ss"):
+            token = token[:-1]
+        collapsed.append(token)
+    return collapsed
+
+
+def _normalize_column_alias(col_name: str) -> str:
+    normalized = re.sub(r"[^a-z0-9]+", "_", str(col_name or "").lower()).strip("_")
+    if not normalized:
+        return ""
+    if normalized in _CONCEPT_ALIAS_EXACT:
+        return _CONCEPT_ALIAS_EXACT[normalized]
+    tokens = _normalize_name_tokens(normalized)
+    if not tokens:
+        return normalized
+    if "email" in tokens or "mail" in tokens:
+        return "email"
+    if any(token in {"phone", "mobile", "telephone", "cell", "fax"} for token in tokens):
+        return "phone"
+    if {"created", "at"}.issubset(set(tokens)) or "created" in tokens:
+        return "created_at"
+    if {"updated", "at"}.issubset(set(tokens)) or "updated" in tokens or "modified" in tokens:
+        return "updated_at"
+    if "event" in tokens:
+        return "event_time"
+    if "price" in tokens:
+        return "price"
+    if "amount" in tokens or "total" in tokens:
+        return "amount"
+    if "count" in tokens:
+        return "count"
+    if tokens[-1] in {"id", "uuid", "guid"}:
+        return "id"
+    return "_".join(tokens)
+
+
+def _matches_token_rule(tokens: List[str], raw_name: str, rule_tokens: tuple[str, ...]) -> bool:
+    token_set = set(tokens)
+    for rule_token in rule_tokens:
+        if rule_token.startswith("_") and raw_name.endswith(rule_token):
+            return True
+        split_rule = [part for part in rule_token.split("_") if part]
+        if split_rule and set(split_rule).issubset(token_set):
+            return True
+        if rule_token in token_set:
+            return True
+        if len(rule_token) >= 4:
+            if re.search(rf"(?:^|_){re.escape(rule_token)}(?:$|_)", raw_name):
+                return True
+    return False
+
+
+def _is_email_value(value: Any) -> bool:
+    sval = str(value or "").strip()
+    return bool(re.fullmatch(r"[^@\s]+@[^@\s]+\.[^@\s]+", sval))
+
+
+def _is_phone_value(value: Any) -> bool:
+    sval = str(value or "").strip()
+    digits = re.sub(r"\D", "", sval)
+    return 7 <= len(digits) <= 15 and bool(re.fullmatch(r"[\d\+\-\(\)\.\s]+", sval))
+
+
+def _is_ip_value(value: Any) -> bool:
+    sval = str(value or "").strip()
+    ipv4 = re.fullmatch(r"(?:\d{1,3}\.){3}\d{1,3}", sval)
+    ipv6 = ":" in sval and re.fullmatch(r"[0-9a-fA-F:]+", sval)
+    return bool(ipv4 or ipv6)
+
+
+def _is_timestamp_value(value: Any) -> bool:
+    sval = str(value or "").strip()
+    return bool(
+        re.fullmatch(r"\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+\-]\d{2}:\d{2})?", sval)
+        or re.fullmatch(r"\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}", sval)
+    )
+
+
+def _is_date_only_value(value: Any) -> bool:
+    sval = str(value or "").strip()
+    return bool(re.fullmatch(r"\d{4}-\d{2}-\d{2}", sval))
+
+
+def _detect_value_signal(detector: Optional[str], sample_values: List[Any], col_type: str, tokens: List[str]) -> bool:
+    values = [value for value in sample_values if value not in (None, "")]
+    if detector == "email":
+        return bool(values) and sum(1 for value in values[:10] if _is_email_value(value)) >= max(1, min(3, len(values[:10]) // 2))
+    if detector == "phone":
+        return bool(values) and sum(1 for value in values[:10] if _is_phone_value(value)) >= max(1, min(3, len(values[:10]) // 2))
+    if detector == "ip_address":
+        return bool(values) and sum(1 for value in values[:10] if _is_ip_value(value)) >= max(1, min(3, len(values[:10]) // 2))
+    if detector == "timestamp":
+        if "date" in col_type and "time" not in col_type and values:
+            return False
+        return bool(values) and sum(1 for value in values[:10] if _is_timestamp_value(value)) >= max(1, min(3, len(values[:10]) // 2))
+    if detector == "date_only":
+        return bool(values) and sum(1 for value in values[:10] if _is_date_only_value(value)) >= max(1, min(3, len(values[:10]) // 2))
+    if detector == "status":
+        if not values:
+            return False
+        lower_values = [str(value).strip().lower() for value in values[:10] if str(value).strip()]
+        distinct = set(lower_values)
+        status_terms = {
+            "active", "inactive", "pending", "cancelled", "canceled", "open", "closed",
+            "complete", "completed", "processing", "shipped", "received", "approved",
+            "rejected", "draft", "paid", "unpaid", "available", "unavailable",
+        }
+        return 1 <= len(distinct) <= 5 and bool(distinct.intersection(status_terms))
+    if detector == "currency_amount":
+        return any(token in {"price", "cost", "amount", "total", "balance"} for token in tokens)
+    if detector == "quantity":
+        return any(token in {"quantity", "qty", "count", "unit"} for token in tokens)
+    return False
+
+
+def _type_matches_rule(col_type: str, type_tokens: tuple[str, ...]) -> bool:
+    lowered = str(col_type or "").lower()
+    return any(token in lowered for token in type_tokens)
+
+
+def _profile_signal(column: Dict[str, Any], table: Dict[str, Any], concept_id: str) -> bool:
+    row_count = int(table.get("row_count") or 0)
+    cardinality = column.get("cardinality")
+    if concept_id in {"entity.status", "entity.category", "entity.type"}:
+        if isinstance(cardinality, int) and row_count > 0:
+            return cardinality <= max(10, row_count // 2)
+    if concept_id == "identifier.external_id":
+        if isinstance(cardinality, int) and row_count > 0:
+            return cardinality >= max(1, int(row_count * 0.8))
+    if concept_id == "measure.quantity":
+        return str(column.get("type", "")).lower().find("int") >= 0
+    return False
+
+
+def _table_context_signal(table_name: str, concept_id: str) -> bool:
+    table_tokens = set(_normalize_name_tokens(table_name))
+    if concept_id.startswith("contact.") and table_tokens.intersection({"customer", "user", "contact", "member", "account"}):
+        return True
+    if concept_id.startswith("finance.") and table_tokens.intersection({"order", "invoice", "payment", "billing", "transaction"}):
+        return True
+    if concept_id.startswith("temporal.") and table_tokens:
+        return True
+    return False
+
+
+def _build_column_feature_record(table: Dict[str, Any], column: Dict[str, Any], field_classification: Optional[str], sensitive_category: Optional[str]) -> Dict[str, Any]:
+    tokens = _normalize_name_tokens(str(column.get("name", "")))
+    sample_values = list(column.get("_sample_values") or [])
+    join_candidate_columns = {
+        str(candidate.get("column"))
+        for candidate in table.get("join_candidates", [])
+        if candidate.get("column")
+    }
+    foreign_key_columns = {
+        str(fk.get("column"))
+        for fk in table.get("foreign_keys", [])
+        if fk.get("column")
+    }
+    return {
+        "table": str(table.get("table")),
+        "schema": str(table.get("schema")),
+        "column_name": str(column.get("name")),
+        "normalized_name": re.sub(r"[^a-z0-9]+", "_", str(column.get("name", "")).lower()).strip("_"),
+        "alias_group": _normalize_column_alias(str(column.get("name", ""))),
+        "tokens": tokens,
+        "type": str(column.get("type", "")),
+        "field_classification": field_classification,
+        "sensitive_category": sensitive_category,
+        "semantic_class": column.get("semantic_class"),
+        "data_category": column.get("data_category"),
+        "sample_values": sample_values,
+        "table_context": _normalize_name_tokens(str(table.get("table"))),
+        "is_join_candidate": str(column.get("name")) in join_candidate_columns,
+        "is_foreign_key": str(column.get("name")) in foreign_key_columns,
+        "column_ref": column,
+        "table_ref": table,
+        "candidate_scores": [],
+    }
+
+
+def _score_column_concepts(feature_record: Dict[str, Any]) -> List[Dict[str, Any]]:
+    scores: List[Dict[str, Any]] = []
+    tokens = feature_record["tokens"]
+    raw_name = feature_record["normalized_name"]
+    col_type = feature_record["type"]
+    for rule in _CONCEPT_RULES:
+        evidence: List[str] = []
+        sources: List[str] = []
+        score = 0.0
+        if _matches_token_rule(tokens, raw_name, rule.get("name_tokens", ())):
+            score += 0.45
+            evidence.append(f"name token: {feature_record['alias_group'] or raw_name}")
+            sources.append("name")
+        if _type_matches_rule(col_type, tuple(rule.get("type_tokens", ()))):
+            score += 0.10
+            evidence.append(f"type hint: {col_type}")
+            sources.append("type")
+        if rule.get("field_classification") and feature_record.get("field_classification") == rule.get("field_classification"):
+            score += 0.15
+            evidence.append(f"legacy field classification: {feature_record['field_classification']}")
+            sources.append("profile")
+        if rule.get("semantic_class") and feature_record.get("semantic_class") == rule.get("semantic_class"):
+            score += 0.15
+            evidence.append(f"semantic class hint: {feature_record['semantic_class']}")
+            sources.append("profile")
+        if rule["concept_id"] == "identifier.foreign_key" and (feature_record.get("is_join_candidate") or feature_record.get("is_foreign_key")):
+            score += 0.35
+            evidence.append("structural hint: join candidate")
+            sources.append("profile")
+        if rule["concept_id"] == "identifier.product_code" and feature_record.get("is_join_candidate"):
+            score = max(0.0, score - 0.20)
+            evidence.append("join candidate reduces product-code confidence")
+            sources.append("profile")
+        if _detect_value_signal(rule.get("value_detector"), feature_record["sample_values"], col_type, tokens):
+            score += 0.25
+            evidence.append(f"value pattern: {rule.get('value_detector')}")
+            sources.append("values")
+        if _profile_signal(feature_record["column_ref"], feature_record["table_ref"], rule["concept_id"]):
+            score += 0.10
+            evidence.append("profile heuristic matched")
+            sources.append("profile")
+        if _table_context_signal(feature_record["table"], rule["concept_id"]):
+            score += 0.05
+            evidence.append(f"table context: {feature_record['table']}")
+            sources.append("table_context")
+        if feature_record.get("sensitive_category") and rule["concept_id"] in {"credential.secret", "network.ip_address", "contact.email", "contact.phone"}:
+            score += 0.10
+            evidence.append(f"sensitive hint: {feature_record['sensitive_category']}")
+            sources.append("profile")
+        if score > 0:
+            scores.append(
+                {
+                    "concept_id": rule["concept_id"],
+                    "score": min(score, 1.0),
+                    "evidence": evidence,
+                    "sources": sorted(set(sources)),
+                }
+            )
+    scores.sort(key=lambda item: item["score"], reverse=True)
+    return scores
+
+
+def _cluster_columns_for_consensus(feature_records: List[Dict[str, Any]]) -> Dict[str, List[Dict[str, Any]]]:
+    clusters: Dict[str, List[Dict[str, Any]]] = {}
+    for record in feature_records:
+        alias_group = record.get("alias_group") or record.get("normalized_name")
+        if not alias_group:
+            continue
+        clusters.setdefault(str(alias_group), []).append(record)
+    return clusters
+
+
+def _apply_cross_table_consensus(feature_records: List[Dict[str, Any]], clusters: Dict[str, List[Dict[str, Any]]]) -> None:
+    for alias_group, records in clusters.items():
+        if alias_group in _LOW_SIGNAL_ALIAS_GROUPS or len(records) < 2:
+            continue
+        distinct_tables = {record["table"] for record in records}
+        if len(distinct_tables) < 2:
+            continue
+        top_candidates = []
+        for record in records:
+            if record["candidate_scores"]:
+                top_candidates.append(record["candidate_scores"][0])
+        if not top_candidates:
+            continue
+        high_confidence = [item for item in top_candidates if item["score"] >= 0.70]
+        if not high_confidence:
+            continue
+        dominant_counts = Counter(item["concept_id"] for item in high_confidence)
+        dominant_concept, dominant_count = dominant_counts.most_common(1)[0]
+        if dominant_count < 2:
+            continue
+        conflicting = [item for item in high_confidence if item["concept_id"] != dominant_concept and item["score"] >= 0.85]
+        if conflicting:
+            continue
+        for record in records:
+            scores = record["candidate_scores"]
+            existing = next((item for item in scores if item["concept_id"] == dominant_concept), None)
+            if existing is None:
+                existing = {
+                    "concept_id": dominant_concept,
+                    "score": 0.0,
+                    "evidence": [],
+                    "sources": [],
+                }
+                scores.append(existing)
+            if existing["score"] >= 0.85:
+                continue
+            existing["score"] = min(existing["score"] + 0.15, 1.0)
+            existing["evidence"] = existing["evidence"] + [f"cross-table consensus: {dominant_count} similar columns"]
+            existing["sources"] = sorted(set(existing["sources"] + ["cross_table_consensus"]))
+            scores.sort(key=lambda item: item["score"], reverse=True)
+
+
+def _choose_best_concept(candidate_scores: List[Dict[str, Any]]) -> Dict[str, Any]:
+    if not candidate_scores:
+        return {"concept_id": None, "confidence": 0.0, "evidence": [], "sources": [], "alias_group": None}
+    best = dict(candidate_scores[0])
+    confidence = float(best["score"])
+    if len(candidate_scores) > 1 and abs(candidate_scores[0]["score"] - candidate_scores[1]["score"]) <= 0.10:
+        confidence = max(0.0, confidence - 0.10)
+        best["evidence"] = list(best.get("evidence", [])) + ["ambiguous runner-up concept"]
+    if confidence < 0.55:
+        return {
+            "concept_id": None,
+            "confidence": round(confidence, 2),
+            "evidence": list(best.get("evidence", [])),
+            "sources": list(best.get("sources", [])),
+            "alias_group": None,
+        }
+    return {
+        "concept_id": best["concept_id"],
+        "confidence": round(min(confidence, 1.0), 2),
+        "evidence": list(best.get("evidence", [])),
+        "sources": list(best.get("sources", [])),
+        "alias_group": None,
+    }
+
+
+def _build_classification_summary(table: Dict[str, Any]) -> Dict[str, Any]:
+    concept_counts = Counter()
+    low_confidence_columns: List[str] = []
+    for column in table.get("columns", []):
+        concept_id = column.get("concept_id")
+        if concept_id:
+            concept_counts[str(concept_id)] += 1
+        confidence = float(column.get("concept_confidence") or 0.0)
+        if confidence and confidence < 0.60:
+            low_confidence_columns.append(str(column.get("name")))
+    return {
+        "concept_counts": dict(sorted(concept_counts.items())),
+        "low_confidence_columns": sorted(low_confidence_columns),
+    }
+
+
+def _build_concept_registry(tables: List[Dict[str, Any]]) -> Dict[str, Any]:
+    grouped: Dict[str, List[Dict[str, Any]]] = {}
+    for table in tables:
+        for column in table.get("columns", []):
+            concept_id = column.get("concept_id")
+            if concept_id:
+                grouped.setdefault(str(concept_id), []).append(
+                    {
+                        "table": str(table.get("table")),
+                        "column": str(column.get("name")),
+                        "confidence": float(column.get("concept_confidence") or 0.0),
+                        "alias_group": str(column.get("concept_alias_group") or ""),
+                        "sources": list(column.get("concept_sources") or []),
+                    }
+                )
+    concepts = []
+    for concept_id in sorted(grouped.keys()):
+        members = grouped[concept_id]
+        confidences = [member["confidence"] for member in members]
+        concepts.append(
+            {
+                "concept_id": concept_id,
+                "column_count": len(members),
+                "table_count": len({member["table"] for member in members}),
+                "avg_confidence": round(sum(confidences) / len(confidences), 2) if confidences else 0.0,
+                "alias_groups": sorted({member["alias_group"] for member in members if member["alias_group"]}),
+                "sample_columns": [f"{member['table']}.{member['column']}" for member in members[:5]],
+                "signals": sorted({source for member in members for source in member["sources"]}),
+            }
+        )
+    return {
+        "version": 1,
+        "taxonomy": "domain-dot",
+        "generated_from_tables": len(tables),
+        "concepts": concepts,
+    }
+
+
+def _apply_concept_classification(tables: List[Dict[str, Any]]) -> Dict[str, Any]:
+    feature_records: List[Dict[str, Any]] = []
+    for table in tables:
+        field_classifications = table.get("field_classifications", {})
+        sensitive_fields = table.get("sensitive_fields", {})
+        for column in table.get("columns", []):
+            record = _build_column_feature_record(
+                table,
+                column,
+                field_classifications.get(column.get("name")),
+                sensitive_fields.get(column.get("name")),
+            )
+            record["candidate_scores"] = _score_column_concepts(record)
+            feature_records.append(record)
+    clusters = _cluster_columns_for_consensus(feature_records)
+    _apply_cross_table_consensus(feature_records, clusters)
+    for record in feature_records:
+        chosen = _choose_best_concept(record["candidate_scores"])
+        column = record["column_ref"]
+        column["concept_id"] = chosen["concept_id"]
+        column["concept_confidence"] = chosen["confidence"]
+        column["concept_evidence"] = chosen["evidence"]
+        column["concept_sources"] = chosen["sources"]
+        column["concept_alias_group"] = record["alias_group"] if chosen["concept_id"] else None
+        column.pop("_sample_values", None)
+    for table in tables:
+        table["classification_summary"] = _build_classification_summary(table)
+    return _build_concept_registry(tables)
 
 
 _JOIN_CANDIDATE_SUFFIXES = ("_id", "_key", "_code", "_ref", "_fk")
@@ -1697,6 +2262,8 @@ def analyze_source_system(
                     semantic_class = _infer_semantic_class(col["name"], field_classification)
                     col_dict["semantic_class"] = semantic_class
                     sample_values = sample_values_by_col.get(str(col["name"]).lower(), []) if isinstance(sample_values_by_col, dict) else None
+                    if sample_values:
+                        col_dict["_sample_values"] = list(sample_values)
                     col_dict["unit_context"] = _build_unit_context(col["name"], semantic_class, sample_values=sample_values)
                     enriched_columns.append(col_dict)
 
@@ -1730,6 +2297,8 @@ def analyze_source_system(
                 enriched_tables.append(table_entry)
             except Exception as e:
                 logger.warning(f"Skipped table '{table_name}': {e}")
+
+        concept_registry = _apply_concept_classification(enriched_tables)
 
         # ---- Data quality checks (supported dialects only) ----
         data_quality_summary = {}
@@ -1820,6 +2389,7 @@ def analyze_source_system(
                 "volume_size_projection_manual": "",
                 "field_context_manual": "",
             },
+            "concept_registry": concept_registry,
             "data_quality_summary": data_quality_summary,
             "tables": enriched_tables,
         }

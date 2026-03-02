@@ -21,9 +21,9 @@ cp .env.example .env
 
 # 4. Run any skill (from your project dir)
 .venv/bin/python ~/.cursor/skills/source-system-analyser/scripts/source_system_analyzer.py "$DATABASE_URL" schema.json public
-.venv/bin/python ~/.cursor/skills/volume-projection/scripts/collector.py "$DATABASE_URL" --setup && \
-.venv/bin/python ~/.cursor/skills/volume-projection/scripts/collector.py "$DATABASE_URL" --collect
-.venv/bin/python ~/.cursor/skills/volume-projection/scripts/predictor.py "$DATABASE_URL" capacity_report.json
+.venv/bin/python ~/.cursor/skills/source-system-analyser/scripts/volume_projection/collector.py "$DATABASE_URL" --setup && \
+.venv/bin/python ~/.cursor/skills/source-system-analyser/scripts/volume_projection/collector.py "$DATABASE_URL" --collect
+.venv/bin/python ~/.cursor/skills/source-system-analyser/scripts/volume_projection/predictor.py "$DATABASE_URL" capacity_report.json
 ```
 
 Or just ask Cursor: *"Analyze my database"*, *"Run a data quality check"*, *"Project storage growth"* — skills are picked up automatically.
@@ -57,11 +57,25 @@ Connects to a PostgreSQL database and produces a combined `schema.json` with ful
   "$DATABASE_URL" schema.json public
 ```
 
-**Output:** `schema.json` — one JSON file with schema metadata and `data_quality` section (findings, summary, recommendations). Used as input by Volume Projection.
+**Output:** `schema.json` — one JSON file with schema metadata and `data_quality` section (findings, summary, recommendations). Used as input by the Volume Projection module.
+
+### Improving Classification Iteratively
+
+Large databases should be improved iteratively, not “solved” in one rule change. A good review loop is: run the analyzer, inspect `concept_id: null`, low `concept_confidence`, and obvious false positives, then fix one family of fields and rerun.
+
+What to prioritize first:
+- Wrong concepts: false positives are more damaging than `null`
+- High-value nulls: IDs, timestamps, money, status/type/category, contact fields
+- Repeated patterns: aliases or field families that appear across many tables
+
+Treat `null` as a review queue, not a failure. If `last_restocked_at` comes back `null`, inspect `concept_evidence`, sample values, and table context; if the pattern repeats, add a small reusable alias or concept rule and rerun.
+
+Detailed workflow and copy-ready Cursor prompts:
+- `.cursor/skills/source-system-analyser/references/shared/classification-review-workflow.md`
 
 ---
 
-### 2. Volume Projection
+### 2. Volume Projection (included in Source System Analyser)
 
 Collects table sizes, churn metrics, and growth history from PostgreSQL, stores them in a `prediction` schema, and generates capacity forecasts for 6/12/24 month horizons.
 
@@ -76,15 +90,15 @@ Two components:
 
 ```bash
 # One-time setup (creates prediction schema and tables)
-.venv/bin/python ~/.cursor/skills/volume-projection/scripts/collector.py \
+.venv/bin/python ~/.cursor/skills/source-system-analyser/scripts/volume_projection/collector.py \
   "$DATABASE_URL" --setup
 
 # Collect metrics (run regularly, e.g. monthly)
-.venv/bin/python ~/.cursor/skills/volume-projection/scripts/collector.py \
+.venv/bin/python ~/.cursor/skills/source-system-analyser/scripts/volume_projection/collector.py \
   "$DATABASE_URL" --collect --schema public
 
 # Generate capacity report
-.venv/bin/python ~/.cursor/skills/volume-projection/scripts/predictor.py \
+.venv/bin/python ~/.cursor/skills/source-system-analyser/scripts/volume_projection/predictor.py \
   "$DATABASE_URL" capacity_report.json
 ```
 
@@ -92,11 +106,11 @@ Two components:
 
 ## Recommended Workflow
 
-Run the skills in this order for a complete source system assessment:
+Run this sequence for a complete source system assessment:
 
 ```
 1. Source System Analyser  →  schema.json         (schema + data quality in one pass)
-2. Volume Projection       →  capacity_report.json (plan capacity)
+2. Volume Projection module (inside Source System Analyser) → capacity_report.json (plan capacity)
 ```
 
 ## Feature Coverage
@@ -110,7 +124,7 @@ These skills address the following source system preparation concerns:
 | Delete management (soft-delete, hard-delete, CDC) | Source System Analyser | Done |
 | Late-arriving data (lag analysis, lookback windows) | Source System Analyser | Done |
 | Timezone (server TZ, per-column TZ, mixed-TZ detection) | Source System Analyser | Done |
-| Volume / size projection (growth trends, capacity forecasts) | Volume Projection | Done |
+| Volume / size projection (growth trends, capacity forecasts) | Source System Analyser (volume projection module) | Done |
 
 ## Installation
 
@@ -123,7 +137,7 @@ cp -r .cursor/skills/* ~/.cursor/skills/
 
 # Verify
 ls ~/.cursor/skills/
-# source-system-analyser/  volume-projection/
+# source-system-analyser/  azure-keyvault-deployer/  json-to-excel-export/
 ```
 
 Then open your project in Cursor and ask: *"Analyze my database"*, *"Run a data quality check"*, etc.
@@ -206,12 +220,14 @@ The **API key (Bearer token)** is stored in **Azure Key Vault**; do not commit i
       │   ├── README.md
       │   ├── SKILL.md
       │   └── scripts/
-      │       └── source_system_analyzer.py
-      └── volume-projection/
-          ├── SKILL.md
-          └── scripts/
-              ├── collector.py
-              └── predictor.py
+      │       ├── source_system_analyzer.py
+      │       └── volume_projection/
+      │           ├── collector.py
+      │           └── predictor.py
+      ├── azure-keyvault-deployer/
+      │   └── SKILL.md
+      └── json-to-excel-export/
+          └── SKILL.md
 ```
 
 ## Agent Usage

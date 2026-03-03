@@ -2154,14 +2154,13 @@ def _build_table_data_quality(findings: List[Dict]) -> Dict[str, Any]:
 # Main entry: analyze_source_system
 # ============================================================================
 
-def analyze_source_system(
+def build_source_system_document(
     database_url: str,
-    output_path: str,
     schema: Optional[str] = None,
     include_sample_data: bool = False,
     dialect_override: Optional[str] = None,
 ) -> Dict[str, Any]:
-    """Analyze source database schema and data quality, save combined output to schema.json."""
+    """Analyze source database schema and data quality and return the schema document."""
     engine = get_engine(database_url)
     dialect = dialect_override or engine.dialect.name
     adapter = get_adapter(dialect)
@@ -2171,13 +2170,6 @@ def analyze_source_system(
 
     schema = schema or (adapter.resolve_default_schema(engine) if adapter else "public")
     logger.info(f"Starting source system analysis for schema: {schema}")
-
-    # Append schema and dialect to output filename: schema.json -> schema_public_postgresql.json
-    out_path = Path(output_path)
-    base = out_path.stem
-    ext = out_path.suffix or ".json"
-    parent = out_path.parent
-    output_path = str(parent / f"{base}_{schema}_{dialect}{ext}")
 
     try:
         schema_meta = fetch_schema_metadata(engine, schema=schema)
@@ -2394,16 +2386,46 @@ def analyze_source_system(
             "tables": enriched_tables,
         }
 
-        logger.info(f"Saving to {output_path}")
-        with open(output_path, "w", encoding="utf-8") as f:
-            json.dump(schema_document, f, indent=2, default=str)
-
-        logger.info(f"Done — {len(enriched_tables)} tables, {total_findings} data quality findings")
         return schema_document
 
     except Exception as e:
         logger.error(f"Error analyzing source system: {e}")
         raise
+
+
+def analyze_source_system(
+    database_url: str,
+    output_path: str,
+    schema: Optional[str] = None,
+    include_sample_data: bool = False,
+    dialect_override: Optional[str] = None,
+) -> Dict[str, Any]:
+    """Analyze source database schema and data quality, save combined output to schema.json."""
+    schema_document = build_source_system_document(
+        database_url,
+        schema=schema,
+        include_sample_data=include_sample_data,
+        dialect_override=dialect_override,
+    )
+
+    schema_name = str(schema_document.get("metadata", {}).get("schema_filter") or schema or "public")
+    dialect = str(schema_document.get("connection", {}).get("driver") or dialect_override or "unknown")
+
+    # Append schema and dialect to output filename: schema.json -> schema_public_postgresql.json
+    out_path = Path(output_path)
+    base = out_path.stem
+    ext = out_path.suffix or ".json"
+    parent = out_path.parent
+    output_path = str(parent / f"{base}_{schema_name}_{dialect}{ext}")
+
+    logger.info(f"Saving to {output_path}")
+    with open(output_path, "w", encoding="utf-8") as f:
+        json.dump(schema_document, f, indent=2, default=str)
+
+    total_tables = len(schema_document.get("tables", []))
+    total_findings = int(schema_document.get("metadata", {}).get("total_findings", 0) or 0)
+    logger.info(f"Done — {total_tables} tables, {total_findings} data quality findings")
+    return schema_document
 
 
 if __name__ == "__main__":

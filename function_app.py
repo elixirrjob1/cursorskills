@@ -16,13 +16,15 @@ from scripts.keyvault_loader import load_env
 app = func.FunctionApp(http_auth_level=func.AuthLevel.ANONYMOUS)
 _initialized = False
 _db = None
+_analyzer_service = None
 
 
 def _init() -> None:
-    global _initialized, _db
+    global _initialized, _db, _analyzer_service
     if _initialized:
         return
     from sqlalchemy import create_engine
+    from api import analyzer_service
     from api import db as db_module
 
     load_env()
@@ -41,6 +43,7 @@ def _init() -> None:
     )
     db_module.set_engine(engine)
     _db = db_module
+    _analyzer_service = analyzer_service
     _initialized = True
 
 
@@ -77,6 +80,35 @@ def _resolve_schema(req: func.HttpRequest) -> str:
     return _default_schema()
 
 
+def _schema_not_found(schema: str) -> func.HttpResponse:
+    return _json_response({"detail": f"No tables found for schema '{schema}'", "schema": schema}, status=404)
+
+
+@app.route(route="api/config", methods=["GET"])
+def get_config(req: func.HttpRequest) -> func.HttpResponse:
+    schema = _default_schema()
+    try:
+        _init()
+    except Exception as exc:
+        return _json_response({"detail": str(exc), "schema": schema}, status=503)
+    if not _validate_bearer(req):
+        return _unauthorized(schema)
+    try:
+        engine = _db.get_engine()
+        url = engine.url
+        return _json_response(
+            {
+                "default_schema": schema,
+                "dialect": str(engine.dialect.name or ""),
+                "host": str(url.host or ""),
+                "port": str(url.port or ""),
+                "database": str(url.database or ""),
+            }
+        )
+    except Exception:
+        return _json_response({"detail": "Database error", "schema": schema}, status=500)
+
+
 @app.route(route="api/tables", methods=["GET"])
 def list_tables(req: func.HttpRequest) -> func.HttpResponse:
     schema = _resolve_schema(req)
@@ -88,7 +120,27 @@ def list_tables(req: func.HttpRequest) -> func.HttpResponse:
         return _unauthorized(schema)
     try:
         tables = _db.get_tables_metadata(schema)
+        if not tables:
+            return _schema_not_found(schema)
         return _json_response({"schema": schema, "tables": tables})
+    except Exception:
+        return _json_response({"detail": "Database error", "schema": schema}, status=500)
+
+
+@app.route(route="api/analyze", methods=["GET"])
+def analyze_schema(req: func.HttpRequest) -> func.HttpResponse:
+    schema = _resolve_schema(req)
+    try:
+        _init()
+    except Exception as exc:
+        return _json_response({"detail": str(exc), "schema": schema}, status=503)
+    if not _validate_bearer(req):
+        return _unauthorized(schema)
+    try:
+        document = _analyzer_service.get_analyzer_document(schema)
+        return _json_response(document)
+    except _analyzer_service.AnalyzerSchemaError as exc:
+        return _json_response({"detail": str(exc), "schema": schema}, status=404)
     except Exception:
         return _json_response({"detail": "Database error", "schema": schema}, status=500)
 
@@ -123,6 +175,11 @@ def get_table(req: func.HttpRequest) -> func.HttpResponse:
     except Exception:
         return _json_response({"detail": "Database error", "schema": schema}, status=500)
     if metadata is None:
+        try:
+            if not _db.get_tables_metadata(schema):
+                return _schema_not_found(schema)
+        except Exception:
+            return _json_response({"detail": "Database error", "schema": schema}, status=500)
         return _json_response({"detail": "Table not found", "schema": schema}, status=404)
 
     resolved_table = _db.resolve_table_name(schema, table)

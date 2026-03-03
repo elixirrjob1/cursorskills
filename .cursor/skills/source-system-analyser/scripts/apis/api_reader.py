@@ -14,6 +14,7 @@ import argparse
 import json
 import os
 import sys
+from pathlib import Path
 from typing import List, Optional
 from urllib.parse import quote, unquote, urljoin, urlparse
 
@@ -375,18 +376,48 @@ def _filename_from_url(url: str) -> str:
     return name or "download.bin"
 
 
+def _looks_like_json_content_type(content_type: Optional[str]) -> bool:
+    if not content_type:
+        return False
+    lowered = content_type.lower()
+    return "json" in lowered or lowered.endswith("+json")
+
+
+def _json_destination_path(destination: str) -> str:
+    path = Path(destination)
+    if path.suffix.lower() == ".json":
+        return str(path)
+    return str(path.with_name(path.name + ".json"))
+
+
 def _fetch_url(session: requests.Session, url: str, timeout: int, destination: Optional[str] = None) -> dict:
     try:
         r = session.get(url, timeout=timeout, stream=bool(destination))
         entry = {"status_code": r.status_code}
         if destination:
-            with open(destination, "wb") as f:
-                for chunk in r.iter_content(chunk_size=1024 * 64):
-                    if chunk:
-                        f.write(chunk)
-            entry["downloaded_to"] = destination
-            entry["content_type"] = r.headers.get("Content-Type")
-            entry["content_length"] = r.headers.get("Content-Length")
+            content_type = r.headers.get("Content-Type")
+            content_length = r.headers.get("Content-Length")
+            if _looks_like_json_content_type(content_type):
+                actual_destination = _json_destination_path(destination)
+                try:
+                    payload = r.json() if r.content else None
+                    with open(actual_destination, "w", encoding="utf-8") as f:
+                        json.dump(payload, f, indent=2, default=str)
+                        f.write("\n")
+                except Exception:
+                    with open(actual_destination, "wb") as f:
+                        for chunk in r.iter_content(chunk_size=1024 * 64):
+                            if chunk:
+                                f.write(chunk)
+                entry["downloaded_to"] = actual_destination
+            else:
+                with open(destination, "wb") as f:
+                    for chunk in r.iter_content(chunk_size=1024 * 64):
+                        if chunk:
+                            f.write(chunk)
+                entry["downloaded_to"] = destination
+            entry["content_type"] = content_type
+            entry["content_length"] = content_length
             return entry
         try:
             entry["data"] = r.json() if r.content else None

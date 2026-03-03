@@ -5,10 +5,14 @@ Working API base URL:
 https://skillssimapifilip20260218.azurewebsites.net
 
 Available endpoints:
+- GET /api/config
+- GET /api/analyze?schema=<schema_name>
 - GET /api/tables?schema=<schema_name>
 - GET /api/{table}?limit=100&offset=0&schema=<schema_name>
 
 Response shape:
+- /api/config: active API connection details (`default_schema`, `dialect`, `host`, `port`, `database`).
+- /api/analyze: full analyzer-compatible `schema.json` response with `metadata`, `connection`, `source_system_context`, `concept_registry`, `data_quality_summary`, and `tables`.
 - /api/tables: `tables` is a list of per-table metadata objects, and response includes `schema` used.
 - /api/{table}: includes `metadata`, `data`, and `schema` used.
 
@@ -24,13 +28,21 @@ Optional (for local project scripts using Key Vault):
 - AZURE_USER_NAME=
 
 Quick test commands:
-1) List tables
+1) Inspect active API config
 curl -H "Authorization: Bearer $API_AUTH_TOKEN" \
-  "$API_BASE_URL/api/tables?schema=public"
+  "$API_BASE_URL/api/config"
 
-2) Read customers (first 3)
+2) Run analyzer-compatible schema export
 curl -H "Authorization: Bearer $API_AUTH_TOKEN" \
-  "$API_BASE_URL/api/customers?limit=3&schema=public"
+  "$API_BASE_URL/api/analyze?schema=dbo"
+
+3) List tables
+curl -H "Authorization: Bearer $API_AUTH_TOKEN" \
+  "$API_BASE_URL/api/tables?schema=dbo"
+
+4) Read customers (first 3)
+curl -H "Authorization: Bearer $API_AUTH_TOKEN" \
+  "$API_BASE_URL/api/customers?limit=3&schema=dbo"
 
 Example .env snippet:
 API_BASE_URL=https://skillssimapifilip20260218.azurewebsites.net
@@ -39,3 +51,6 @@ API_AUTH_TOKEN=replace_with_real_token
 Notes:
 - API returns 401 when token is missing/invalid.
 - API currently reads from Azure MSSQL (schema: dbo).
+- `schema=public` is not valid on the deployed MSSQL app; use `dbo` or omit the schema query param.
+- When the requested schema has no tables, the API returns `404` with a schema-specific message.
+- `/api/{table}` only returns `Table not found` when the schema is valid but the table name is not.

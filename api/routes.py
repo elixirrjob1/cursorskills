@@ -3,6 +3,7 @@
 import os
 from fastapi import APIRouter, Depends, HTTPException, Query
 
+from api import analyzer_service
 from api.auth import require_bearer_token
 from api import db
 
@@ -19,6 +20,30 @@ def _resolve_schema(schema: str | None) -> str:
     return _default_schema()
 
 
+def _raise_schema_not_found(schema_name: str) -> None:
+    raise HTTPException(status_code=404, detail={"detail": f"No tables found for schema '{schema_name}'", "schema": schema_name})
+
+
+@router.get("/config")
+async def get_config(
+    _: None = Depends(require_bearer_token),
+):
+    """Return active API configuration details useful to clients."""
+    schema_name = _default_schema()
+    try:
+        engine = db.get_engine()
+        url = engine.url
+        return {
+            "default_schema": schema_name,
+            "dialect": str(engine.dialect.name or ""),
+            "host": str(url.host or ""),
+            "port": str(url.port or ""),
+            "database": str(url.database or ""),
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail={"detail": "Database error", "schema": schema_name}) from e
+
+
 @router.get("/tables")
 async def list_tables(
     _: None = Depends(require_bearer_token),
@@ -28,7 +53,26 @@ async def list_tables(
     schema_name = _resolve_schema(schema)
     try:
         tables = db.get_tables_metadata(schema_name)
+        if not tables:
+            _raise_schema_not_found(schema_name)
         return {"schema": schema_name, "tables": tables}
+    except Exception as e:
+        if isinstance(e, HTTPException):
+            raise
+        raise HTTPException(status_code=500, detail={"detail": "Database error", "schema": schema_name}) from e
+
+
+@router.get("/analyze")
+async def analyze_schema(
+    _: None = Depends(require_bearer_token),
+    schema: str | None = Query(None, description="Database schema to analyze; defaults to SCHEMA env or 'public'."),
+):
+    """Return the full analyzer-compatible schema.json document for the selected schema."""
+    schema_name = _resolve_schema(schema)
+    try:
+        return analyzer_service.get_analyzer_document(schema_name)
+    except analyzer_service.AnalyzerSchemaError as e:
+        raise HTTPException(status_code=404, detail={"detail": str(e), "schema": schema_name}) from e
     except Exception as e:
         raise HTTPException(status_code=500, detail={"detail": "Database error", "schema": schema_name}) from e
 
@@ -45,7 +89,13 @@ async def get_table(
     schema_name = _resolve_schema(schema)
     try:
         metadata = db.get_table_metadata(schema_name, table)
+        if metadata is None:
+            tables = db.get_tables_metadata(schema_name)
+            if not tables:
+                _raise_schema_not_found(schema_name)
     except Exception as e:
+        if isinstance(e, HTTPException):
+            raise
         raise HTTPException(status_code=500, detail={"detail": "Database error", "schema": schema_name}) from e
     if metadata is None:
         raise HTTPException(status_code=404, detail={"detail": "Table not found", "schema": schema_name})

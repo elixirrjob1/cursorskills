@@ -202,12 +202,20 @@ A read-only REST API is deployed as an Azure Function for testing and integratio
 |------|--------|
 | **Base URL** | `https://skillssimapifilip20260218.azurewebsites.net` |
 | **Auth** | `Authorization: Bearer <token>` (required) |
-| **Endpoints** | `GET /api/tables?schema=<schema>`, `GET /api/{table}?limit=100&offset=0&schema=<schema>` |
+| **Endpoints** | `GET /api/config`, `GET /api/analyze?schema=<schema>`, `GET /api/tables?schema=<schema>`, `GET /api/{table}?limit=100&offset=0&schema=<schema>` |
 
 Response notes:
+- `GET /api/config` returns the active default schema plus connection metadata (`dialect`, `host`, `port`, `database`) so clients can discover the deployed environment.
+- `GET /api/analyze` returns the full analyzer-compatible `schema.json` document (`metadata`, `connection`, `source_system_context`, `concept_registry`, `data_quality_summary`, `tables`).
 - `GET /api/tables` returns `tables` as table metadata objects (schema-aligned structural metadata), not only table names.
 - `GET /api/{table}` returns `metadata` plus `data`.
 - API responses always include the `schema` actually used; you can override with query param `schema`.
+- For the currently deployed Azure MSSQL app, the active schema is `dbo`, so live examples should use `schema=dbo` or omit the query param.
+
+Endpoint behavior notes:
+- `/api/config` is lightweight and does not run the full analyzer.
+- If the requested schema has no tables, `/api/analyze`, `/api/tables`, and `/api/{table}` return `404` with a schema-specific message.
+- If the schema exists but the table does not, `/api/{table}` returns `404` with `Table not found`.
 
 The **API key (Bearer token)** is stored in **Azure Key Vault**; do not commit it. For local use, set `API_AUTH_TOKEN` in `.env` or obtain it from Key Vault (e.g. via `KEYVAULT_NAME` and your Key Vault loader). See `API_CONNECTION_INSTRUCTIONS.txt` for details.
 

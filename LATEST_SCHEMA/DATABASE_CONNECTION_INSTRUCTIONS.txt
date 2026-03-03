@@ -9,4 +9,20 @@ Key Vault Secret Name: DATABASE-URL
 MSSQL
 -----
 Schema Name: dbo
-Key Vault Secret Name: AZURE-MSSQL-URL
+Database URL Key Vault Secret Name: AZURE-MSSQL-URL
+Schema Key Vault Secret Name: AZURE-MSSQL-SCHEMA
+
+API
+---
+Base URL: https://skillssimapifilip20260218.azurewebsites.net
+Config Endpoint: /api/config
+Default Deployed Schema: dbo
+API Auth Header: Authorization: Bearer <API_AUTH_TOKEN>
+API Auth Key Vault Secret Name: API-AUTH-TOKEN
+Key Vault Name: skills-fmaric-kv
+
+Live API notes
+--------------
+- Use `/api/config` to discover the active default schema and connection metadata before calling data endpoints.
+- On the currently deployed Azure MSSQL app, the active schema is `dbo`.
+- `/api/analyze`, `/api/tables`, and `/api/{table}` return `404` with a schema-specific message when the requested schema has no tables.

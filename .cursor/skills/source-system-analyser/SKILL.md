@@ -32,6 +32,7 @@ Keep existing database analyzer entrypoint unchanged:
 
 ```bash
 .venv/bin/python scripts/source_system_analyzer.py <database_url> <output_json_path> [schema] [--dialect postgresql|mssql|oracle]
+# or: .venv/bin/python scripts/source_system_analyzer.py --database-url-secret AZURE-MSSQL-URL <output_json_path> [schema]
 ```
 
 The merged API and tabular flows are now available directly inside this skill:

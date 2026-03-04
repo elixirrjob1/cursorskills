@@ -52,6 +52,10 @@ Connects to a PostgreSQL database and produces a combined `schema.json` with ful
 .venv/bin/python ~/.cursor/skills/source-system-analyser/scripts/source_system_analyzer.py \
   <database_url> <output_json> [schema]
 
+# Or load DB URL directly from Azure Key Vault (no wrapper script needed)
+.venv/bin/python ~/.cursor/skills/source-system-analyser/scripts/source_system_analyzer.py \
+  --database-url-secret AZURE-MSSQL-URL <output_json> [schema]
+
 # Example
 .venv/bin/python ~/.cursor/skills/source-system-analyser/scripts/source_system_analyzer.py \
   "$DATABASE_URL" schema.json public

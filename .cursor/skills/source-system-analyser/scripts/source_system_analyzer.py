@@ -9,6 +9,7 @@ Produces a combined schema.json with:
 
 Usage:
     python source_system_analyzer.py <database_url> <output_json_path> [schema]
+    python source_system_analyzer.py --database-url-secret AZURE-MSSQL-URL <output_json_path> [schema]
 """
 
 import math
@@ -57,6 +58,79 @@ def _load_env_file() -> None:
             except Exception:
                 pass
             break
+
+
+def _fetch_keyvault_secret(secret_name: str, keyvault_name: Optional[str] = None) -> str:
+    """Fetch one secret from Azure Key Vault."""
+    vault_name = str(keyvault_name or os.environ.get("KEYVAULT_NAME") or "").strip()
+    if not vault_name:
+        raise ValueError("KEYVAULT_NAME is required to fetch database URL from Azure Key Vault")
+    name = str(secret_name or "").strip()
+    if not name:
+        raise ValueError("Secret name is required for Azure Key Vault lookup")
+    try:
+        from azure.identity import DefaultAzureCredential  # type: ignore
+        from azure.keyvault.secrets import SecretClient  # type: ignore
+    except Exception as e:
+        raise RuntimeError("Azure Key Vault dependencies are missing. Install azure-identity and azure-keyvault-secrets.") from e
+
+    client = SecretClient(vault_url=f"https://{vault_name}.vault.azure.net/", credential=DefaultAzureCredential())
+    secret = client.get_secret(name)
+    value = str(secret.value or "").strip()
+    if not value:
+        raise RuntimeError(f"Secret '{name}' in Key Vault '{vault_name}' is empty")
+    return value
+
+
+def _parse_keyvault_ref(database_url_arg: Optional[str]) -> Optional[str]:
+    """Parse keyvault URI references like keyvault://SECRET or kv://SECRET."""
+    raw = str(database_url_arg or "").strip()
+    if not raw:
+        return None
+    for prefix in ("keyvault://", "kv://", "secret://"):
+        if raw.lower().startswith(prefix):
+            secret_name = raw[len(prefix):].strip()
+            return secret_name or None
+    return None
+
+
+def _resolve_database_url(
+    database_url_arg: Optional[str],
+    database_url_secret: Optional[str] = None,
+    keyvault_name: Optional[str] = None,
+) -> str:
+    """
+    Resolve database URL from direct arg, Key Vault secret reference, or environment.
+    Priority:
+    1) --database-url-secret
+    2) positional keyvault://... reference
+    3) positional literal URL
+    4) DATABASE_URL env
+    5) DATABASE_URL_SECRET / DATABASE_URL_KEYVAULT_SECRET env
+    """
+    if database_url_secret:
+        return _fetch_keyvault_secret(database_url_secret, keyvault_name=keyvault_name)
+
+    ref_secret = _parse_keyvault_ref(database_url_arg)
+    if ref_secret:
+        return _fetch_keyvault_secret(ref_secret, keyvault_name=keyvault_name)
+
+    literal = str(database_url_arg or "").strip()
+    if literal:
+        return literal
+
+    env_database_url = str(os.environ.get("DATABASE_URL") or "").strip()
+    if env_database_url:
+        return env_database_url
+
+    env_secret = str(os.environ.get("DATABASE_URL_SECRET") or os.environ.get("DATABASE_URL_KEYVAULT_SECRET") or "").strip()
+    if env_secret:
+        return _fetch_keyvault_secret(env_secret, keyvault_name=keyvault_name)
+
+    raise ValueError(
+        "Database URL is missing. Provide a URL arg, --database-url-secret <secret-name>, "
+        "keyvault://<secret-name>, DATABASE_URL, or DATABASE_URL_SECRET."
+    )
 
 
 logger = logging.getLogger(__name__)
@@ -340,20 +414,11 @@ def fetch_column_statistics(engine, table_name: str, columns: List[Dict], schema
 # Metadata detection (from database_analyzer)
 # ============================================================================
 
-_SENSITIVE_PATTERNS: List[tuple] = [
-    ("ssn", "government_id"), ("social_security", "government_id"), ("tax_id", "government_id"),
-    ("passport", "government_id"), ("national_id", "government_id"), ("driver_license", "government_id"),
-    ("credit_card", "financial"), ("card_number", "financial"), ("bank_account", "financial"),
-    ("routing_number", "financial"), ("iban", "financial"), ("salary", "financial"),
-    ("email", "pii_contact"), ("phone", "pii_contact"), ("mobile", "pii_contact"),
-    ("date_of_birth", "pii_personal"), ("dob", "pii_personal"), ("gender", "pii_personal"),
-    ("address", "pii_address"), ("street", "pii_address"), ("postal_code", "pii_address"),
-    ("ip_address", "network_identity"), ("password", "credential"), ("secret", "credential"),
-    ("token", "credential"), ("api_key", "credential"),
-]
-_SENSITIVE_TYPES = {"inet": "network_identity", "cidr": "network_identity", "macaddr": "network_identity"}
+_SENSITIVE_PATTERNS: List[tuple[str, str]] = []
+_SENSITIVE_TYPES: Dict[str, str] = {}
 def detect_sensitive_fields(columns: List[Dict]) -> Dict[str, str]:
     """Return {col_name: sensitivity_category} for columns that look sensitive."""
+    _load_context_rules()
     result = {}
     for col in columns:
         name_lower = col["name"].lower()
@@ -543,18 +608,19 @@ def _default_context_rules() -> Dict[str, Any]:
 
 
 def _load_context_rules() -> Dict[str, Any]:
-    global _RULES_CACHE
+    global _RULES_CACHE, _CONCEPT_RULES, _CONCEPT_ALIAS_EXACT, _FIELD_CLASS_TO_SEMANTIC, _LEGACY_FIELD_RULES, _SENSITIVE_PATTERNS, _SENSITIVE_TYPES
     if _RULES_CACHE is not None:
         return _RULES_CACHE
 
     rules = _default_context_rules()
     if yaml is None:
-        _RULES_CACHE = rules
-        return rules
+        raise RuntimeError("PyYAML is required to load concept rules from references/shared/concepts/concept_rules.yaml")
 
     shared_dir = (_script_dir.parent / "references" / "shared").resolve()
     semantic_path = shared_dir / "semantic_mappings.yaml"
     unit_path = shared_dir / "unit_mappings.yaml"
+    concept_path = shared_dir / "concepts" / "concept_rules.yaml"
+    sensitivity_path = shared_dir / "concepts" / "sensitivity_rules.yaml"
 
     try:
         if semantic_path.exists():
@@ -576,17 +642,114 @@ def _load_context_rules() -> Dict[str, Any]:
     except Exception as e:
         logger.warning("Could not load unit mappings from %s: %s", unit_path, e)
 
+    if not concept_path.exists():
+        raise FileNotFoundError(f"Required concept rules file not found: {concept_path}")
+    with open(concept_path, encoding="utf-8") as f:
+        concept_data = yaml.safe_load(f) or {}
+    concept_rules = concept_data.get("concept_rules")
+    if not isinstance(concept_rules, list) or not concept_rules:
+        raise ValueError(f"Invalid concept rules in {concept_path}: 'concept_rules' must be a non-empty list")
+    cleaned_rules: List[Dict[str, Any]] = []
+    for index, rule in enumerate(concept_rules):
+        if not isinstance(rule, dict):
+            raise ValueError(f"Invalid concept rule #{index} in {concept_path}: each rule must be an object")
+        concept_id = str(rule.get("concept_id") or "").strip()
+        if not concept_id:
+            raise ValueError(f"Invalid concept rule #{index} in {concept_path}: missing concept_id")
+        cleaned_rules.append(dict(rule))
+    _CONCEPT_RULES = cleaned_rules
+    alias_exact = concept_data.get("concept_alias_exact")
+    if not isinstance(alias_exact, dict) or not alias_exact:
+        raise ValueError(f"Invalid concept aliases in {concept_path}: 'concept_alias_exact' must be a non-empty object")
+    cleaned_aliases: Dict[str, str] = {}
+    for key, value in alias_exact.items():
+        norm_key = str(key).strip().lower()
+        norm_value = str(value).strip().lower()
+        if not norm_key or not norm_value:
+            raise ValueError(f"Invalid concept alias entry in {concept_path}: keys/values must be non-empty strings")
+        cleaned_aliases[norm_key] = norm_value
+    _CONCEPT_ALIAS_EXACT = cleaned_aliases
+    field_map = concept_data.get("field_class_to_semantic")
+    if not isinstance(field_map, dict) or not field_map:
+        raise ValueError(f"Invalid field-class mapping in {concept_path}: 'field_class_to_semantic' must be a non-empty object")
+    cleaned_field_map: Dict[str, str] = {}
+    for key, value in field_map.items():
+        norm_key = str(key).strip().lower()
+        norm_value = str(value).strip()
+        if not norm_key or not norm_value:
+            raise ValueError(f"Invalid field-class mapping entry in {concept_path}: keys/values must be non-empty strings")
+        cleaned_field_map[norm_key] = norm_value
+    _FIELD_CLASS_TO_SEMANTIC = cleaned_field_map
+    legacy_rules = concept_data.get("legacy_field_rules")
+    if not isinstance(legacy_rules, list) or not legacy_rules:
+        raise ValueError(f"Invalid legacy field rules in {concept_path}: 'legacy_field_rules' must be a non-empty list")
+    cleaned_legacy_rules: List[Dict[str, Any]] = []
+    for index, rule in enumerate(legacy_rules):
+        if not isinstance(rule, dict):
+            raise ValueError(f"Invalid legacy field rule #{index} in {concept_path}: each rule must be an object")
+        field_classification = str(rule.get("field_classification") or "").strip().lower()
+        if not field_classification:
+            raise ValueError(f"Invalid legacy field rule #{index} in {concept_path}: missing field_classification")
+        contains_any = [str(v).strip().lower() for v in list(rule.get("contains_any") or []) if str(v).strip()]
+        endswith_any = [str(v).strip().lower() for v in list(rule.get("endswith_any") or []) if str(v).strip()]
+        if not contains_any and not endswith_any:
+            raise ValueError(
+                f"Invalid legacy field rule #{index} in {concept_path}: requires contains_any and/or endswith_any"
+            )
+        cleaned_legacy_rules.append(
+            {
+                "field_classification": field_classification,
+                "contains_any": contains_any,
+                "endswith_any": endswith_any,
+            }
+        )
+    _LEGACY_FIELD_RULES = cleaned_legacy_rules
+
+    if not sensitivity_path.exists():
+        raise FileNotFoundError(f"Required sensitivity rules file not found: {sensitivity_path}")
+    with open(sensitivity_path, encoding="utf-8") as f:
+        sensitivity_data = yaml.safe_load(f) or {}
+    sensitive_name_patterns = sensitivity_data.get("sensitive_name_patterns")
+    if not isinstance(sensitive_name_patterns, list) or not sensitive_name_patterns:
+        raise ValueError(
+            f"Invalid sensitivity rules in {sensitivity_path}: 'sensitive_name_patterns' must be a non-empty list"
+        )
+    cleaned_sensitive_patterns: List[tuple[str, str]] = []
+    for index, item in enumerate(sensitive_name_patterns):
+        if not isinstance(item, dict):
+            raise ValueError(
+                f"Invalid sensitive_name_patterns entry #{index} in {sensitivity_path}: each entry must be an object"
+            )
+        pattern = str(item.get("pattern") or "").strip().lower()
+        category = str(item.get("category") or "").strip()
+        if not pattern or not category:
+            raise ValueError(
+                f"Invalid sensitive_name_patterns entry #{index} in {sensitivity_path}: pattern/category are required"
+            )
+        cleaned_sensitive_patterns.append((pattern, category))
+    _SENSITIVE_PATTERNS = cleaned_sensitive_patterns
+
+    sensitive_type_patterns = sensitivity_data.get("sensitive_type_patterns")
+    if not isinstance(sensitive_type_patterns, dict) or not sensitive_type_patterns:
+        raise ValueError(
+            f"Invalid sensitivity rules in {sensitivity_path}: 'sensitive_type_patterns' must be a non-empty object"
+        )
+    cleaned_sensitive_types: Dict[str, str] = {}
+    for key, value in sensitive_type_patterns.items():
+        type_token = str(key).strip().lower()
+        category = str(value).strip()
+        if not type_token or not category:
+            raise ValueError(
+                f"Invalid sensitive_type_patterns entry in {sensitivity_path}: keys/values must be non-empty strings"
+            )
+        cleaned_sensitive_types[type_token] = category
+    _SENSITIVE_TYPES = cleaned_sensitive_types
+
     _RULES_CACHE = rules
     return rules
 
 
-_FIELD_CLASS_TO_SEMANTIC = {
-    "pricing": "currency_amount",
-    "quantity": "quantity",
-    "categorical": "category",
-    "temporal": "timestamp",
-    "contact": "contact",
-}
+_FIELD_CLASS_TO_SEMANTIC: Dict[str, str] = {}
 _UNITFUL_SEMANTIC_CLASSES = {
     "quantity",
     "count",
@@ -604,159 +767,9 @@ _UNITFUL_SEMANTIC_CLASSES = {
     "power",
     "density",
 }
-_CONCEPT_RULES: List[Dict[str, Any]] = [
-    {
-        "concept_id": "contact.email",
-        "field_classification": "contact",
-        "name_tokens": ("email", "mail", "email_address", "email_addr"),
-        "type_tokens": ("varchar", "char", "text", "citext", "name"),
-        "value_detector": "email",
-    },
-    {
-        "concept_id": "contact.phone",
-        "field_classification": "contact",
-        "name_tokens": ("phone", "mobile", "telephone", "cell", "fax"),
-        "type_tokens": ("varchar", "char", "text"),
-        "value_detector": "phone",
-    },
-    {
-        "concept_id": "contact.address",
-        "field_classification": None,
-        "name_tokens": ("address", "street", "postal", "zip"),
-        "type_tokens": ("varchar", "char", "text"),
-        "value_detector": None,
-    },
-    {
-        "concept_id": "contact.person_name",
-        "field_classification": None,
-        "name_tokens": ("first_name", "last_name", "full_name", "display_name", "contact_name", "name"),
-        "type_tokens": ("varchar", "char", "text", "name"),
-        "value_detector": None,
-    },
-    {
-        "concept_id": "identifier.external_id",
-        "field_classification": None,
-        "name_tokens": ("id", "identifier", "external_id", "uuid", "guid"),
-        "type_tokens": ("uuid", "char", "varchar", "text", "int", "bigint"),
-        "value_detector": None,
-    },
-    {
-        "concept_id": "identifier.product_code",
-        "field_classification": None,
-        "name_tokens": ("sku", "product_code", "item_code"),
-        "type_tokens": ("varchar", "char", "text", "int", "bigint"),
-        "semantic_class": "product_identifier",
-        "value_detector": None,
-    },
-    {
-        "concept_id": "identifier.foreign_key",
-        "field_classification": None,
-        "name_tokens": ("_id", "_fk", "_key", "_ref"),
-        "type_tokens": ("int", "bigint", "uuid", "char", "varchar"),
-        "value_detector": None,
-    },
-    {
-        "concept_id": "temporal.created_at",
-        "field_classification": "temporal",
-        "name_tokens": ("created_at", "created_on", "creation_date", "insert_ts", "inserted_at"),
-        "type_tokens": ("timestamp", "datetime", "date", "time"),
-        "value_detector": "timestamp",
-    },
-    {
-        "concept_id": "temporal.updated_at",
-        "field_classification": "temporal",
-        "name_tokens": ("updated_at", "updated_on", "modified_at", "last_updated_at"),
-        "type_tokens": ("timestamp", "datetime", "date", "time"),
-        "value_detector": "timestamp",
-    },
-    {
-        "concept_id": "temporal.event_time",
-        "field_classification": "temporal",
-        "name_tokens": ("event_time", "event_at", "occurred_at", "timestamp", "ts", "restocked_at", "last_restocked_at"),
-        "type_tokens": ("timestamp", "datetime", "date", "time"),
-        "value_detector": "timestamp",
-    },
-    {
-        "concept_id": "temporal.date_only",
-        "field_classification": "temporal",
-        "name_tokens": ("date", "business_date", "as_of_date"),
-        "type_tokens": ("date",),
-        "value_detector": "date_only",
-    },
-    {
-        "concept_id": "finance.currency_amount",
-        "field_classification": "pricing",
-        "name_tokens": ("price", "cost", "amount", "total", "subtotal", "balance"),
-        "type_tokens": ("numeric", "decimal", "money", "float", "double", "real"),
-        "semantic_class": "currency_amount",
-        "value_detector": "currency_amount",
-    },
-    {
-        "concept_id": "measure.quantity",
-        "field_classification": "quantity",
-        "name_tokens": ("quantity", "qty", "count", "units", "volume"),
-        "type_tokens": ("int", "bigint", "smallint", "numeric", "decimal", "number"),
-        "semantic_class": "quantity",
-        "value_detector": "quantity",
-    },
-    {
-        "concept_id": "entity.status",
-        "field_classification": "categorical",
-        "name_tokens": ("status",),
-        "type_tokens": ("varchar", "char", "text", "enum"),
-        "value_detector": "status",
-    },
-    {
-        "concept_id": "entity.category",
-        "field_classification": "categorical",
-        "name_tokens": ("category", "segment", "group"),
-        "type_tokens": ("varchar", "char", "text", "enum"),
-        "value_detector": "status",
-    },
-    {
-        "concept_id": "entity.type",
-        "field_classification": "categorical",
-        "name_tokens": ("type", "kind", "class", "role"),
-        "type_tokens": ("varchar", "char", "text", "enum"),
-        "value_detector": "status",
-    },
-    {
-        "concept_id": "credential.secret",
-        "field_classification": None,
-        "name_tokens": ("password", "secret", "token", "api_key", "key"),
-        "type_tokens": ("varchar", "char", "text"),
-        "value_detector": None,
-    },
-    {
-        "concept_id": "network.ip_address",
-        "field_classification": None,
-        "name_tokens": ("ip", "ip_address", "client_ip"),
-        "type_tokens": ("inet", "cidr", "varchar", "char", "text"),
-        "value_detector": "ip_address",
-    },
-]
-_CONCEPT_ALIAS_EXACT = {
-    "email_address": "email",
-    "email_addr": "email",
-    "primary_email": "email",
-    "mail": "email",
-    "phone_number": "phone",
-    "mobile_number": "phone",
-    "telephone_number": "phone",
-    "cell_number": "phone",
-    "created_on": "created_at",
-    "creation_date": "created_at",
-    "insert_ts": "created_at",
-    "inserted_at": "created_at",
-    "updated_on": "updated_at",
-    "modified_at": "updated_at",
-    "last_updated_at": "updated_at",
-    "event_at": "event_time",
-    "occurred_at": "event_time",
-    "unit_price": "price",
-    "total_amount": "amount",
-    "item_count": "count",
-}
+_CONCEPT_RULES: List[Dict[str, Any]] = []
+_CONCEPT_ALIAS_EXACT: Dict[str, str] = {}
+_LEGACY_FIELD_RULES: List[Dict[str, Any]] = []
 _NON_SEMANTIC_NAME_TOKENS = {"tbl", "table", "col", "column", "field", "value", "data"}
 _LOW_SIGNAL_ALIAS_GROUPS = {"name", "code", "value", "data"}
 
@@ -767,10 +780,11 @@ def _is_explicit_unit_column_name(col_name: str) -> bool:
 
 
 def _infer_semantic_class(col_name: str, field_classification: Optional[str]) -> Optional[str]:
+    _load_context_rules()
     if field_classification in _FIELD_CLASS_TO_SEMANTIC:
         return _FIELD_CLASS_TO_SEMANTIC[field_classification]
     lower = col_name.lower()
-    rules = _load_context_rules()
+    rules = _RULES_CACHE or {}
     for rule in rules.get("semantic_patterns", []):
         if not isinstance(rule, dict):
             continue
@@ -972,20 +986,16 @@ def _build_unit_summary(columns: List[Dict[str, Any]]) -> Dict[str, Any]:
 
 
 def classify_field(col_name: str) -> Optional[str]:
-    """Classify a field based on its name."""
-    col_name_lower = col_name.lower()
-    if any(kw in col_name_lower for kw in ["price", "cost", "amount", "total", "subtotal"]):
-        return "pricing"
-    elif any(kw in col_name_lower for kw in ["quantity", "qty"]):
-        return "quantity"
-    elif col_name_lower.endswith("_at") or any(kw in col_name_lower for kw in ["date", "time", "timestamp"]):
-        return "temporal"
-    elif any(kw in col_name_lower for kw in ["category", "type", "status"]):
-        return "categorical"
-    elif "created" in col_name_lower or any(kw in col_name_lower for kw in ["updated", "modified"]):
-        return "temporal"
-    elif any(kw in col_name_lower for kw in ["email", "phone"]):
-        return "contact"
+    """Classify a field based on configured legacy rule ordering."""
+    _load_context_rules()
+    col_name_lower = str(col_name or "").lower()
+    for rule in _LEGACY_FIELD_RULES:
+        contains_any = list(rule.get("contains_any") or [])
+        endswith_any = list(rule.get("endswith_any") or [])
+        contains_match = bool(contains_any and any(kw in col_name_lower for kw in contains_any))
+        endswith_match = bool(endswith_any and any(col_name_lower.endswith(sfx) for sfx in endswith_any))
+        if contains_match or endswith_match:
+            return str(rule.get("field_classification"))
     return None
 
 
@@ -1003,6 +1013,7 @@ def _normalize_name_tokens(name: str) -> List[str]:
 
 
 def _normalize_column_alias(col_name: str) -> str:
+    _load_context_rules()
     normalized = re.sub(r"[^a-z0-9]+", "_", str(col_name or "").lower()).strip("_")
     if not normalized:
         return ""
@@ -1370,6 +1381,7 @@ def _build_concept_registry(tables: List[Dict[str, Any]]) -> Dict[str, Any]:
 
 
 def _apply_concept_classification(tables: List[Dict[str, Any]]) -> Dict[str, Any]:
+    _load_context_rules()
     feature_records: List[Dict[str, Any]] = []
     for table in tables:
         field_classifications = table.get("field_classifications", {})
@@ -2433,15 +2445,35 @@ if __name__ == "__main__":
     import sys
     _load_env_file()
     parser = argparse.ArgumentParser(description="Analyze source database schema and data quality")
-    parser.add_argument("database_url", help="Database connection URL")
+    parser.add_argument(
+        "database_url",
+        nargs="?",
+        default=None,
+        help="Database URL, or keyvault://<secret-name> reference (optional when --database-url-secret is used)",
+    )
     parser.add_argument("output_json_path", help="Path for schema.json output")
     parser.add_argument("schema", nargs="?", default=None, help="Schema to analyze (default: from DATABASE_SCHEMA/SCHEMA env or dialect default)")
     parser.add_argument("--dialect", choices=["postgresql", "mssql", "oracle"], default=None,
                         help="Override dialect (default: inferred from URL)")
+    parser.add_argument(
+        "--database-url-secret",
+        default=None,
+        help="Azure Key Vault secret name containing the database URL (e.g. AZURE-MSSQL-URL)",
+    )
+    parser.add_argument(
+        "--keyvault-name",
+        default=None,
+        help="Azure Key Vault name override (defaults to KEYVAULT_NAME env var)",
+    )
     args = parser.parse_args()
+    database_url = _resolve_database_url(
+        args.database_url,
+        database_url_secret=args.database_url_secret,
+        keyvault_name=args.keyvault_name,
+    )
     schema = args.schema or os.environ.get("DATABASE_SCHEMA") or os.environ.get("SCHEMA")
     analyze_source_system(
-        args.database_url,
+        database_url,
         args.output_json_path,
         schema=schema,
         dialect_override=args.dialect,

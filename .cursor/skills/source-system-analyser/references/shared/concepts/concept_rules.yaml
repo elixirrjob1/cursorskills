@@ -1,0 +1,155 @@
+concept_rules:
+  - concept_id: "contact.email"
+    field_classification: "contact"
+    name_tokens: ["email", "mail", "email_address", "email_addr"]
+    type_tokens: ["varchar", "char", "text", "citext", "name"]
+    value_detector: "email"
+
+  - concept_id: "contact.phone"
+    field_classification: "contact"
+    name_tokens: ["phone", "mobile", "telephone", "cell", "fax"]
+    type_tokens: ["varchar", "char", "text"]
+    value_detector: "phone"
+
+  - concept_id: "contact.address"
+    field_classification: null
+    name_tokens: ["address", "street", "postal", "zip"]
+    type_tokens: ["varchar", "char", "text"]
+    value_detector: null
+
+  - concept_id: "contact.person_name"
+    field_classification: null
+    name_tokens: ["first_name", "last_name", "full_name", "display_name", "contact_name", "name"]
+    type_tokens: ["varchar", "char", "text", "name"]
+    value_detector: null
+
+  - concept_id: "identifier.external_id"
+    field_classification: null
+    name_tokens: ["id", "identifier", "external_id", "uuid", "guid"]
+    type_tokens: ["uuid", "char", "varchar", "text", "int", "bigint"]
+    value_detector: null
+
+  - concept_id: "identifier.product_code"
+    field_classification: null
+    name_tokens: ["sku", "product_code", "item_code"]
+    type_tokens: ["varchar", "char", "text", "int", "bigint"]
+    semantic_class: "product_identifier"
+    value_detector: null
+
+  - concept_id: "identifier.foreign_key"
+    field_classification: null
+    name_tokens: ["_id", "_fk", "_key", "_ref"]
+    type_tokens: ["int", "bigint", "uuid", "char", "varchar"]
+    value_detector: null
+
+  - concept_id: "temporal.created_at"
+    field_classification: "temporal"
+    name_tokens: ["created_at", "created_on", "creation_date", "insert_ts", "inserted_at"]
+    type_tokens: ["timestamp", "datetime", "date", "time"]
+    value_detector: "timestamp"
+
+  - concept_id: "temporal.updated_at"
+    field_classification: "temporal"
+    name_tokens: ["updated_at", "updated_on", "modified_at", "last_updated_at"]
+    type_tokens: ["timestamp", "datetime", "date", "time"]
+    value_detector: "timestamp"
+
+  - concept_id: "temporal.event_time"
+    field_classification: "temporal"
+    name_tokens: ["event_time", "event_at", "occurred_at", "timestamp", "ts", "restocked_at", "last_restocked_at"]
+    type_tokens: ["timestamp", "datetime", "date", "time"]
+    value_detector: "timestamp"
+
+  - concept_id: "temporal.date_only"
+    field_classification: "temporal"
+    name_tokens: ["date", "business_date", "as_of_date"]
+    type_tokens: ["date"]
+    value_detector: "date_only"
+
+  - concept_id: "finance.currency_amount"
+    field_classification: "pricing"
+    name_tokens: ["price", "cost", "amount", "total", "subtotal", "balance"]
+    type_tokens: ["numeric", "decimal", "money", "float", "double", "real"]
+    semantic_class: "currency_amount"
+    value_detector: "currency_amount"
+
+  - concept_id: "measure.quantity"
+    field_classification: "quantity"
+    name_tokens: ["quantity", "qty", "count", "units", "volume"]
+    type_tokens: ["int", "bigint", "smallint", "numeric", "decimal", "number"]
+    semantic_class: "quantity"
+    value_detector: "quantity"
+
+  - concept_id: "entity.status"
+    field_classification: "categorical"
+    name_tokens: ["status"]
+    type_tokens: ["varchar", "char", "text", "enum"]
+    value_detector: "status"
+
+  - concept_id: "entity.category"
+    field_classification: "categorical"
+    name_tokens: ["category", "segment", "group"]
+    type_tokens: ["varchar", "char", "text", "enum"]
+    value_detector: "status"
+
+  - concept_id: "entity.type"
+    field_classification: "categorical"
+    name_tokens: ["type", "kind", "class", "role"]
+    type_tokens: ["varchar", "char", "text", "enum"]
+    value_detector: "status"
+
+  - concept_id: "credential.secret"
+    field_classification: null
+    name_tokens: ["password", "secret", "token", "api_key", "key"]
+    type_tokens: ["varchar", "char", "text"]
+    value_detector: null
+
+  - concept_id: "network.ip_address"
+    field_classification: null
+    name_tokens: ["ip", "ip_address", "client_ip"]
+    type_tokens: ["inet", "cidr", "varchar", "char", "text"]
+    value_detector: "ip_address"
+
+concept_alias_exact:
+  email_address: "email"
+  email_addr: "email"
+  primary_email: "email"
+  mail: "email"
+  phone_number: "phone"
+  mobile_number: "phone"
+  telephone_number: "phone"
+  cell_number: "phone"
+  created_on: "created_at"
+  creation_date: "created_at"
+  insert_ts: "created_at"
+  inserted_at: "created_at"
+  updated_on: "updated_at"
+  modified_at: "updated_at"
+  last_updated_at: "updated_at"
+  event_at: "event_time"
+  occurred_at: "event_time"
+  unit_price: "price"
+  total_amount: "amount"
+  item_count: "count"
+
+field_class_to_semantic:
+  pricing: "currency_amount"
+  quantity: "quantity"
+  categorical: "category"
+  temporal: "timestamp"
+  contact: "contact"
+
+legacy_field_rules:
+  - field_classification: "pricing"
+    contains_any: ["price", "cost", "amount", "total", "subtotal"]
+  - field_classification: "quantity"
+    contains_any: ["quantity", "qty"]
+  - field_classification: "temporal"
+    endswith_any: ["_at"]
+    contains_any: ["date", "time", "timestamp"]
+  - field_classification: "categorical"
+    contains_any: ["category", "type", "status"]
+  - field_classification: "temporal"
+    contains_any: ["created", "updated", "modified"]
+  - field_classification: "contact"
+    contains_any: ["email", "phone"]

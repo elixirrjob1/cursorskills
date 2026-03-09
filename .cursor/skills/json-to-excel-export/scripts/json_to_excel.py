@@ -398,6 +398,225 @@ def _derive_database(connection, metadata):
     return ""
 
 
+def _sheet_name(base_name, used_names):
+    cleaned = "".join("_" if ch in '[]:*?/\\' else ch for ch in str(base_name or "Table"))
+    cleaned = cleaned.strip("'").strip() or "Table"
+    candidate = cleaned[:31] or "Table"
+    counter = 1
+    while candidate in used_names:
+        suffix = f"_{counter}"
+        candidate = f"{cleaned[: max(0, 31 - len(suffix))]}{suffix}" or f"Table{suffix}"
+        counter += 1
+    used_names.add(candidate)
+    return candidate
+
+
+def _table_overview_row(table):
+    return {
+        "schema": table.get("schema", ""),
+        "table_name": table.get("table", ""),
+        "row_count": table.get("row_count", ""),
+        "has_primary_key": table.get("has_primary_key", ""),
+        "has_foreign_keys": table.get("has_foreign_keys", ""),
+        "has_sensitive_fields": table.get("has_sensitive_fields", ""),
+        "cdc_enabled": table.get("cdc_enabled", ""),
+        "primary_keys": _join_list(table.get("primary_keys", [])),
+        "incremental_columns": _join_list(table.get("incremental_columns", [])),
+        "partition_columns": _join_list(table.get("partition_columns", [])),
+        "partition_columns_candidates": _join_list(table.get("partition_columns_candidates", [])),
+        "table_description": table.get("table_description", ""),
+        "classification_summary_json": _compact_json(table.get("classification_summary")),
+        "unit_summary_json": _compact_json(table.get("unit_summary")),
+    }
+
+
+def _simple_value_rows(values, key_name):
+    rows = []
+    for idx, value in enumerate(values or [], start=1):
+        rows.append(
+            {
+                "item_index": idx,
+                key_name: _cell_value(value),
+            }
+        )
+    return rows
+
+
+def _mapping_rows(mapping, value_name):
+    if not isinstance(mapping, dict):
+        return []
+    return [
+        {"column_name": key, value_name: _cell_value(value)}
+        for key, value in mapping.items()
+    ]
+
+
+def _column_rows(table):
+    rows = []
+    for column in table.get("columns", []) or []:
+        unit_data = _unit_fields(column)
+        rows.append(
+            {
+                "column_name": column.get("name", ""),
+                "data_type": column.get("type", ""),
+                "nullable": column.get("nullable", ""),
+                "is_incremental": column.get("is_incremental", ""),
+                "cardinality": column.get("cardinality", ""),
+                "null_count": column.get("null_count", ""),
+                "data_category": column.get("data_category", ""),
+                "semantic_class": column.get("semantic_class", ""),
+                "description": column.get("description", ""),
+                "concept_id": column.get("concept_id", ""),
+                "concept_confidence": column.get("concept_confidence", ""),
+                "concept_alias_group": column.get("concept_alias_group", ""),
+                "concept_evidence_json": _compact_json(column.get("concept_evidence")),
+                "concept_sources_json": _compact_json(column.get("concept_sources")),
+                "unit": unit_data["unit"],
+                "unit_source": unit_data["unit_source"],
+                "canonical_unit": unit_data["canonical_unit"],
+                "unit_system": unit_data["unit_system"],
+                "unit_confidence": unit_data["unit_confidence"],
+                "unit_notes": unit_data["unit_notes"],
+                "factor_to_canonical": unit_data["factor_to_canonical"],
+                "offset_to_canonical": unit_data["offset_to_canonical"],
+                "conversion_formula": unit_data["conversion_formula"],
+                "range_min": (column.get("data_range") or {}).get("min", ""),
+                "range_max": (column.get("data_range") or {}).get("max", ""),
+            }
+        )
+    return rows
+
+
+def _join_candidate_rows(table):
+    rows = []
+    for candidate in table.get("join_candidates", []) or []:
+        if isinstance(candidate, dict):
+            rows.append(
+                {
+                    "column_name": candidate.get("column", ""),
+                    "target_table": candidate.get("target_table", ""),
+                    "target_column": candidate.get("target_column", ""),
+                    "confidence": candidate.get("confidence", ""),
+                }
+            )
+        else:
+            rows.append(
+                {
+                    "column_name": "",
+                    "target_table": _cell_value(candidate),
+                    "target_column": "",
+                    "confidence": "",
+                }
+            )
+    return rows
+
+
+def _foreign_key_rows(table):
+    return [
+        {
+            "column_name": fk.get("column", ""),
+            "references": fk.get("references", ""),
+        }
+        for fk in (table.get("foreign_keys", []) or [])
+        if isinstance(fk, dict)
+    ]
+
+
+def _sample_data_rows(table):
+    rows = []
+    for sample_col, values in (table.get("sample_data", {}) or {}).items():
+        if not isinstance(values, list):
+            values = [values]
+        for idx, value in enumerate(values, start=1):
+            rows.append(
+                {
+                    "sample_column": sample_col,
+                    "sample_index": idx,
+                    "sample_value": _cell_value(value),
+                }
+            )
+    return rows
+
+
+def _table_findings_rows(table):
+    schema_name = table.get("schema", "")
+    table_name = table.get("table", "")
+    return [
+        _row_from_finding(schema_name, table_name, idx, finding)
+        for idx, finding in enumerate(((table.get("data_quality") or {}).get("findings") or []), start=1)
+    ]
+
+
+def _source_system_sections(metadata, connection, source_system_context):
+    metadata_rows = [{"property": key, "value": _cell_value(value)} for key, value in metadata.items()]
+    connection_rows = [{"property": key, "value": _cell_value(value)} for key, value in connection.items()]
+    sections = [
+        ("Metadata", metadata_rows or [{"property": "", "value": ""}]),
+        ("Connection", connection_rows or [{"property": "", "value": ""}]),
+    ]
+    sections.extend(
+        [
+            ("ContactsManual", _contacts_rows(source_system_context)),
+            ("DeleteManagementManual", _delete_management_rows(source_system_context)),
+            ("RestrictionsManual", _restrictions_rows(source_system_context)),
+            ("LateArrivingDataManual", _late_arriving_manual_rows(source_system_context)),
+            ("VolumeSizeProjectionManual", _volume_projection_manual_rows(source_system_context)),
+            ("FieldContextManual", _field_context_manual_rows(source_system_context)),
+        ]
+    )
+    return sections
+
+
+def _table_sheet_sections(table):
+    sections = [("Overview", [_table_overview_row(table)])]
+
+    primary_keys = _simple_value_rows(table.get("primary_keys", []), "column_name")
+    if primary_keys:
+        sections.append(("PrimaryKeys", primary_keys))
+
+    foreign_keys = _foreign_key_rows(table)
+    if foreign_keys:
+        sections.append(("ForeignKeys", foreign_keys))
+
+    incremental = _simple_value_rows(table.get("incremental_columns", []), "column_name")
+    if incremental:
+        sections.append(("IncrementalColumns", incremental))
+
+    partition = _simple_value_rows(table.get("partition_columns", []), "column_name")
+    if partition:
+        sections.append(("PartitionColumns", partition))
+
+    partition_candidates = _simple_value_rows(table.get("partition_columns_candidates", []), "column_name")
+    if partition_candidates:
+        sections.append(("PartitionColumnCandidates", partition_candidates))
+
+    join_candidates = _join_candidate_rows(table)
+    if join_candidates:
+        sections.append(("JoinCandidates", join_candidates))
+
+    field_classifications = _mapping_rows(table.get("field_classifications"), "classification")
+    if field_classifications:
+        sections.append(("FieldClassifications", field_classifications))
+
+    sensitive_fields = _mapping_rows(table.get("sensitive_fields"), "sensitivity_label")
+    if sensitive_fields:
+        sections.append(("SensitiveFields", sensitive_fields))
+
+    columns = _column_rows(table)
+    if columns:
+        sections.append(("Columns", columns))
+
+    sample_data = _sample_data_rows(table)
+    if sample_data:
+        sections.append(("SampleData", sample_data))
+
+    findings = _table_findings_rows(table)
+    if findings:
+        sections.append(("DataQualityFindings", findings))
+
+    return sections
+
+
 def _collect_sheets(payload):
     tables = payload.get("tables", []) or []
     connection = payload.get("connection", {}) or {}
@@ -459,165 +678,16 @@ def _collect_sheets(payload):
         else:
             summary.append({"metric": f"data_quality_{key}", "value": _cell_value(value)})
 
-    table_rows = []
-    column_rows = []
-    join_rows = []
-    fk_rows = []
-    sample_rows = []
-    unit_rows = []
     data_quality_findings_rows = []
-    data_quality_lag_rows = []
 
     for table in tables:
         schema_name = table.get("schema", "")
         table_name = table.get("table", "")
-        foreign_keys = table.get("foreign_keys", []) or []
-        sensitive_fields = table.get("sensitive_fields", {}) or {}
-
-        table_rows.append(
-            {
-                "schema": schema_name,
-                "table_name": table_name,
-                "row_count": table.get("row_count", ""),
-                "has_primary_key": table.get("has_primary_key", ""),
-                "primary_keys": _join_list(table.get("primary_keys", [])),
-                "has_foreign_keys": table.get("has_foreign_keys", ""),
-                "foreign_key_count": len(foreign_keys),
-                "incremental_columns": _join_list(table.get("incremental_columns", [])),
-                "partition_columns": _join_list(table.get("partition_columns", [])),
-                "partition_columns_candidates": _join_list(table.get("partition_columns_candidates", [])),
-                "sensitive_fields": _flatten_sensitive_fields(sensitive_fields),
-                "table_description": table.get("table_description", ""),
-                "cdc_enabled": table.get("cdc_enabled", ""),
-            }
-        )
-
-        for fk in foreign_keys:
-            fk_rows.append(
-                {
-                    "schema": schema_name,
-                    "table_name": table_name,
-                    "column_name": fk.get("column", ""),
-                    "references": fk.get("references", ""),
-                }
-            )
-
-        for column in table.get("columns", []) or []:
-            unit_data = _unit_fields(column)
-            column_rows.append(
-                {
-                    "schema": schema_name,
-                    "table_name": table_name,
-                    "column_name": column.get("name", ""),
-                    "data_type": column.get("type", ""),
-                    "nullable": column.get("nullable", ""),
-                    "is_incremental": column.get("is_incremental", ""),
-                    "cardinality": column.get("cardinality", ""),
-                    "null_count": column.get("null_count", ""),
-                    "data_category": column.get("data_category", ""),
-                    "semantic_class": column.get("semantic_class", ""),
-                    "description": column.get("description", ""),
-                    "unit": unit_data["unit"],
-                    "unit_source": unit_data["unit_source"],
-                    "canonical_unit": unit_data["canonical_unit"],
-                    "unit_system": unit_data["unit_system"],
-                    "unit_confidence": unit_data["unit_confidence"],
-                    "unit_notes": unit_data["unit_notes"],
-                    "factor_to_canonical": unit_data["factor_to_canonical"],
-                    "offset_to_canonical": unit_data["offset_to_canonical"],
-                    "conversion_formula": unit_data["conversion_formula"],
-                    "range_min": (column.get("data_range") or {}).get("min", ""),
-                    "range_max": (column.get("data_range") or {}).get("max", ""),
-                }
-            )
-
-            if unit_data["unit"] or unit_data["canonical_unit"] or unit_data["unit_source"]:
-                unit_rows.append(
-                    {
-                        "schema": schema_name,
-                        "table_name": table_name,
-                        "column_name": column.get("name", ""),
-                        "unit": unit_data["unit"],
-                        "unit_source": unit_data["unit_source"],
-                        "canonical_unit": unit_data["canonical_unit"],
-                        "unit_system": unit_data["unit_system"],
-                        "unit_confidence": unit_data["unit_confidence"],
-                        "unit_notes": unit_data["unit_notes"],
-                        "factor_to_canonical": unit_data["factor_to_canonical"],
-                        "offset_to_canonical": unit_data["offset_to_canonical"],
-                        "conversion_formula": unit_data["conversion_formula"],
-                    }
-                )
-
-        for candidate in table.get("join_candidates", []) or []:
-            if isinstance(candidate, dict):
-                join_rows.append(
-                    {
-                        "schema": schema_name,
-                        "table_name": table_name,
-                        "column_name": candidate.get("column", ""),
-                        "target_table": candidate.get("target_table", ""),
-                        "target_column": candidate.get("target_column", ""),
-                        "confidence": candidate.get("confidence", ""),
-                    }
-                )
-            else:
-                join_rows.append(
-                    {
-                        "schema": schema_name,
-                        "table_name": table_name,
-                        "column_name": "",
-                        "target_table": _cell_value(candidate),
-                        "target_column": "",
-                        "confidence": "",
-                    }
-                )
-
-        sample_data = table.get("sample_data", {}) or {}
-        for sample_col, values in sample_data.items():
-            if not isinstance(values, list):
-                values = [values]
-            for idx, value in enumerate(values):
-                sample_rows.append(
-                    {
-                        "schema": schema_name,
-                        "table_name": table_name,
-                        "sample_column": sample_col,
-                        "sample_index": idx + 1,
-                        "sample_value": _cell_value(value),
-                    }
-                )
-
         findings = ((table.get("data_quality") or {}).get("findings") or [])
         for idx, finding in enumerate(findings, start=1):
             data_quality_findings_rows.append(
                 _row_from_finding(schema_name, table_name, idx, finding)
             )
-            if isinstance(finding, dict) and finding.get("check") == "late_arriving_data":
-                lag_stats = finding.get("lag_stats") or {}
-                if not isinstance(lag_stats, dict):
-                    lag_stats = {}
-                data_quality_lag_rows.append(
-                    {
-                        "schema": schema_name,
-                        "table_name": table_name,
-                        "finding_index": idx,
-                        "severity": finding.get("severity", ""),
-                        "business_date_column": finding.get("business_date_column", ""),
-                        "system_ts_column": finding.get("system_ts_column", ""),
-                        "recommended_lookback_days": finding.get("recommended_lookback_days", ""),
-                        "lag_total_rows_compared": lag_stats.get("total_rows_compared", ""),
-                        "lag_min_lag_hours": lag_stats.get("min_lag_hours", ""),
-                        "lag_avg_lag_hours": lag_stats.get("avg_lag_hours", ""),
-                        "lag_p95_lag_hours": lag_stats.get("p95_lag_hours", ""),
-                        "lag_max_lag_hours": lag_stats.get("max_lag_hours", ""),
-                        "lag_max_lag_days": lag_stats.get("max_lag_days", ""),
-                        "lag_rows_late_over_1d": lag_stats.get("rows_late_over_1d", ""),
-                        "lag_rows_late_over_7d": lag_stats.get("rows_late_over_7d", ""),
-                        "detail": finding.get("detail", ""),
-                        "recommendation": finding.get("recommendation", ""),
-                    }
-                )
 
     summary_sections = [("Overview", summary)]
     if dq_by_check_rows:
@@ -627,27 +697,16 @@ def _collect_sheets(payload):
     if dq_other_rows:
         summary_sections.append(("DataQualityDetails", dq_other_rows))
 
-    source_context_sections = [
-        ("ContactsManual", _contacts_rows(source_system_context)),
-        ("DeleteManagementManual", _delete_management_rows(source_system_context)),
-        ("RestrictionsManual", _restrictions_rows(source_system_context)),
-        ("LateArrivingDataManual", _late_arriving_manual_rows(source_system_context)),
-        ("VolumeSizeProjectionManual", _volume_projection_manual_rows(source_system_context)),
-        ("FieldContextManual", _field_context_manual_rows(source_system_context)),
-    ]
-
     sheets = {
         "Summary": {"sections": summary_sections},
-        "SourceContextManual": {"sections": source_context_sections},
+        "SourceSystem": {"sections": _source_system_sections(metadata, connection, source_system_context)},
         "DataQualityFindings": data_quality_findings_rows,
-        "latearivingdata": data_quality_lag_rows,
-        "Tables": table_rows,
-        "Columns": column_rows,
-        "JoinCandidates": join_rows,
-        "ForeignKeys": fk_rows,
-        "SampleData": sample_rows,
-        "Units": unit_rows,
     }
+    used_sheet_names = set(sheets.keys())
+    for table in tables:
+        sheets[_sheet_name(table.get("table", "Table"), used_sheet_names)] = {
+            "sections": _table_sheet_sections(table)
+        }
     return sheets
 
 
@@ -664,7 +723,7 @@ def _roundtrip_sheets(payload):
     chunks = _chunk_text(raw)
     return {
         "__rt_meta": [
-            {"key": "format_version", "value": "1"},
+            {"key": "format_version", "value": "2"},
             {"key": "payload_chunks", "value": len(chunks)},
         ],
         "__rt_payload": [
@@ -747,7 +806,7 @@ def _write_multi_section_sheet(ws, sections):
         col_letter = col[0].column_letter
         max_len = max(len(str(cell.value)) if cell.value is not None else 0 for cell in col)
         ws.column_dimensions[col_letter].width = min(max(12, max_len + 2), 80)
-    if ws.title == "SourceContextManual":
+    if ws.title == "SourceSystem":
         for row in ws.iter_rows(min_row=1, max_row=ws.max_row, min_col=1, max_col=ws.max_column):
             for cell in row:
                 cell.alignment = Alignment(horizontal="left", vertical="top", wrap_text=True)

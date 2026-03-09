@@ -7,6 +7,19 @@ from urllib.parse import parse_qs, urlparse
 from openpyxl import load_workbook
 
 
+GLOBAL_SHEETS = {"Summary", "SourceSystem", "DataQualityFindings"}
+LEGACY_VISIBLE_SHEETS = {
+    "SourceContextManual",
+    "latearivingdata",
+    "Tables",
+    "Columns",
+    "JoinCandidates",
+    "ForeignKeys",
+    "SampleData",
+    "Units",
+}
+
+
 def _norm(value):
     if value is None:
         return ""
@@ -246,6 +259,19 @@ def _tables_index(payload):
     return idx
 
 
+def _visible_table_sheets(wb):
+    names = []
+    for ws in wb.worksheets:
+        if ws.sheet_state != "visible":
+            continue
+        if ws.title.startswith("__rt_"):
+            continue
+        if ws.title in GLOBAL_SHEETS or ws.title in LEGACY_VISIBLE_SHEETS:
+            continue
+        names.append(ws.title)
+    return names
+
+
 def _columns_index(table):
     idx = {}
     for col in table.get("columns", []) or []:
@@ -455,6 +481,67 @@ def _apply_source_context_sheet(wb, payload):
     if fc_rows:
         sctx["field_context_manual"] = fc_rows[0].get("business_context", "")
         sctx["field_context_manual_rows"] = fc_rows
+
+
+def _apply_source_system_sheet(wb, payload):
+    if "SourceSystem" not in wb.sheetnames:
+        return
+
+    sections = _read_multi_sections(wb["SourceSystem"])
+    metadata = payload.setdefault("metadata", {})
+    connection = payload.setdefault("connection", {})
+
+    for row in sections.get("Metadata", []):
+        key = str(_norm(row.get("property")))
+        if not key:
+            continue
+        _set_if_changed(metadata, key, row.get("value"), parser=lambda v, key=key: _coerce_like(metadata.get(key), v))
+
+    for row in sections.get("Connection", []):
+        key = str(_norm(row.get("property")))
+        if not key:
+            continue
+        _set_if_changed(connection, key, row.get("value"), parser=lambda v, key=key: _coerce_like(connection.get(key), v))
+
+    source_context_sections = {
+        "ContactsManual": sections.get("ContactsManual", []),
+        "DeleteManagementManual": sections.get("DeleteManagementManual", []),
+        "RestrictionsManual": sections.get("RestrictionsManual", []),
+        "LateArrivingDataManual": sections.get("LateArrivingDataManual", []),
+        "VolumeSizeProjectionManual": sections.get("VolumeSizeProjectionManual", []),
+        "FieldContextManual": sections.get("FieldContextManual", []),
+    }
+    if any(source_context_sections.values()):
+        # Reuse the legacy manual-section mapping by projecting the new tab shape.
+        class _WorkbookProxy:
+            sheetnames = ["SourceContextManual"]
+
+            def __init__(self, source_sections):
+                self._source_sections = source_sections
+
+            def __getitem__(self, key):
+                return self._source_sections
+
+        class _SectionSheet:
+            def __init__(self, sections_map):
+                self._sections_map = sections_map
+
+            def iter_rows(self, values_only=True):
+                rows = []
+                for section_name, section_rows in self._sections_map.items():
+                    rows.append((section_name,))
+                    headers = list(section_rows[0].keys()) if section_rows else ["note"]
+                    rows.append(tuple(headers))
+                    if section_rows:
+                        for section_row in section_rows:
+                            rows.append(tuple(section_row.get(header) for header in headers))
+                    else:
+                        rows.append(("No rows",))
+                    rows.append(tuple())
+                return rows
+
+        proxy = _WorkbookProxy(_SectionSheet(source_context_sections))
+        _apply_source_context_sheet(proxy, payload)
 
 
 def _apply_tables_sheet(wb, payload, tindex):
@@ -860,8 +947,187 @@ def _apply_late_arriving_sheet(wb, tindex):
         _set_if_changed(lag, "rows_late_over_7d", row.get("lag_rows_late_over_7d"), parser=lambda v: _coerce_like(lag.get("rows_late_over_7d"), v))
 
 
+def _apply_table_sheet_overview(table, row):
+    _set_if_changed(table, "schema", row.get("schema"))
+    _set_if_changed(table, "table", row.get("table_name"))
+    _set_if_changed(table, "row_count", row.get("row_count"), parser=lambda v: _coerce_like(table.get("row_count"), v))
+    _set_if_changed(table, "has_primary_key", row.get("has_primary_key"), parser=_parse_bool)
+    _set_if_changed(table, "has_foreign_keys", row.get("has_foreign_keys"), parser=_parse_bool)
+    _set_if_changed(table, "has_sensitive_fields", row.get("has_sensitive_fields"), parser=_parse_bool)
+    _set_if_changed(table, "cdc_enabled", row.get("cdc_enabled"), parser=_parse_bool)
+    _set_if_changed(table, "primary_keys", row.get("primary_keys"), parser=_split_csv)
+    _set_if_changed(table, "incremental_columns", row.get("incremental_columns"), parser=_split_csv)
+    _set_if_changed(table, "partition_columns", row.get("partition_columns"), parser=_split_csv)
+    _set_if_changed(table, "partition_columns_candidates", row.get("partition_columns_candidates"), parser=_split_csv)
+    _set_if_changed(table, "table_description", row.get("table_description"))
+
+    for sheet_key, json_key in {
+        "classification_summary_json": "classification_summary",
+        "unit_summary_json": "unit_summary",
+    }.items():
+        raw = row.get(sheet_key)
+        if _is_blank(raw):
+            continue
+        parsed = _parse_json_text(raw)
+        old = table.get(json_key)
+        if not _equals_display(raw, json.dumps(old, ensure_ascii=True, separators=(",", ":")) if old not in (None, "") else ""):
+            table[json_key] = parsed
+
+
+def _collect_name_rows(rows, key_name="column_name"):
+    values = []
+    for row in rows:
+        value = str(_norm(row.get(key_name)))
+        if value:
+            values.append(value)
+    return values
+
+
+def _apply_table_detail_sheets(wb, payload):
+    table_sheets = _visible_table_sheets(wb)
+    if not table_sheets:
+        return
+
+    tindex = _tables_index(payload)
+    for sheet_name in table_sheets:
+        sections = _read_multi_sections(wb[sheet_name])
+        overview_rows = sections.get("Overview", [])
+        if not overview_rows:
+            continue
+        overview = overview_rows[0]
+        schema = str(_norm(overview.get("schema")))
+        table_name = str(_norm(overview.get("table_name")))
+        if not schema or not table_name:
+            continue
+
+        table = _ensure_table(payload, tindex, schema, table_name)
+        _apply_table_sheet_overview(table, overview)
+
+        primary_keys = _collect_name_rows(sections.get("PrimaryKeys", []))
+        if primary_keys:
+            table["primary_keys"] = primary_keys
+            table["has_primary_key"] = True
+
+        incremental = _collect_name_rows(sections.get("IncrementalColumns", []))
+        if incremental:
+            table["incremental_columns"] = incremental
+
+        partition = _collect_name_rows(sections.get("PartitionColumns", []))
+        if partition:
+            table["partition_columns"] = partition
+
+        partition_candidates = _collect_name_rows(sections.get("PartitionColumnCandidates", []))
+        if partition_candidates:
+            table["partition_columns_candidates"] = partition_candidates
+
+        fk_rows = sections.get("ForeignKeys", [])
+        if fk_rows:
+            table["foreign_keys"] = [
+                {
+                    "column": _norm(row.get("column_name")),
+                    "references": _norm(row.get("references")),
+                }
+                for row in fk_rows
+                if _norm(row.get("column_name")) or _norm(row.get("references"))
+            ]
+            table["has_foreign_keys"] = len(table["foreign_keys"]) > 0
+
+        join_rows = sections.get("JoinCandidates", [])
+        if join_rows:
+            table["join_candidates"] = []
+            for row in join_rows:
+                candidate = {
+                    "column": _norm(row.get("column_name")),
+                    "target_table": _norm(row.get("target_table")),
+                    "target_column": _norm(row.get("target_column")),
+                    "confidence": _parse_number(row.get("confidence")),
+                }
+                if candidate["column"] or candidate["target_table"] or candidate["target_column"]:
+                    table["join_candidates"].append(candidate)
+
+        classification_rows = sections.get("FieldClassifications", [])
+        if classification_rows:
+            table["field_classifications"] = {
+                str(_norm(row.get("column_name"))): _norm(row.get("classification"))
+                for row in classification_rows
+                if _norm(row.get("column_name"))
+            }
+
+        sensitive_rows = sections.get("SensitiveFields", [])
+        if sensitive_rows:
+            table["sensitive_fields"] = {
+                str(_norm(row.get("column_name"))): _norm(row.get("sensitivity_label"))
+                for row in sensitive_rows
+                if _norm(row.get("column_name"))
+            }
+            table["has_sensitive_fields"] = len(table["sensitive_fields"]) > 0
+
+        for row in sections.get("Columns", []):
+            column_name = str(_norm(row.get("column_name")))
+            if not column_name:
+                continue
+            col = _ensure_column(table, column_name)
+            _apply_columns_row(col, row)
+            for sheet_key, json_key in {
+                "concept_id": "concept_id",
+                "concept_alias_group": "concept_alias_group",
+            }.items():
+                _set_if_changed(col, json_key, row.get(sheet_key))
+            for sheet_key, json_key in {
+                "concept_confidence": "concept_confidence",
+                "concept_evidence_json": "concept_evidence",
+                "concept_sources_json": "concept_sources",
+            }.items():
+                raw = row.get(sheet_key)
+                if _is_blank(raw):
+                    continue
+                if sheet_key.endswith("_json"):
+                    parsed = _parse_json_text(raw)
+                    old = col.get(json_key)
+                    if not _equals_display(raw, json.dumps(old, ensure_ascii=True, separators=(",", ":")) if old not in (None, "") else ""):
+                        col[json_key] = parsed
+                else:
+                    _set_if_changed(col, json_key, raw, parser=lambda v, key=json_key: _coerce_like(col.get(key), v))
+
+        sample_rows = sections.get("SampleData", [])
+        if sample_rows:
+            table["sample_data"] = {}
+            for row in sample_rows:
+                sample_col = str(_norm(row.get("sample_column")))
+                if not sample_col:
+                    continue
+                values = table["sample_data"].setdefault(sample_col, [])
+                idx_raw = _parse_number(row.get("sample_index"))
+                try:
+                    idx = int(idx_raw) - 1
+                except Exception:
+                    idx = len(values)
+                while idx >= len(values):
+                    values.append("")
+                values[idx] = _coerce_like(values[idx], row.get("sample_value"))
+
+        finding_rows = sections.get("DataQualityFindings", [])
+        if finding_rows:
+            table.setdefault("data_quality", {})["findings"] = []
+            # Build a temporary standalone worksheet representation with the section rows only.
+            class _SectionOnlySheet:
+                def __init__(self, rows):
+                    self._rows = rows
+
+                def iter_rows(self, values_only=True):
+                    headers = list(self._rows[0].keys()) if self._rows else []
+                    out = [tuple(headers)]
+                    for row in self._rows:
+                        out.append(tuple(row.get(header) for header in headers))
+                    return out
+
+            section_wb = type("_SectionWorkbook", (), {"sheetnames": ["DataQualityFindings"], "__getitem__": lambda self, key: _SectionOnlySheet(finding_rows)})()
+            _apply_data_quality_findings(section_wb, {(schema, table_name): table})
+
+
 def apply_all_visible_edits(wb, payload):
     _apply_summary_sheet(wb, payload)
+    _apply_source_system_sheet(wb, payload)
     _apply_source_context_sheet(wb, payload)
 
     tindex = _tables_index(payload)
@@ -873,6 +1139,7 @@ def apply_all_visible_edits(wb, payload):
     _apply_sample_data(wb, tindex)
     _apply_data_quality_findings(wb, tindex)
     _apply_late_arriving_sheet(wb, tindex)
+    _apply_table_detail_sheets(wb, payload)
 
 
 def main():

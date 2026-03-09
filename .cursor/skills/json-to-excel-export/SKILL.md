@@ -46,12 +46,10 @@ Restore original payload only (ignore visible sheet edits):
 
 Workbook tabs:
 - `Summary`
-- `Tables`
-- `Columns`
-- `JoinCandidates`
-- `ForeignKeys`
-- `SampleData`
-- `Units`
+- `SourceSystem`
+- `DataQualityFindings`
+- one worksheet per source table
+- hidden round-trip tabs (`__rt_*`)
 
 Formatting:
 - Styled header row
@@ -66,6 +64,6 @@ Formatting:
 
 - Requires `openpyxl` in the active environment.
 - If `output_xlsx` is omitted, the script writes next to input with `.xlsx` extension.
-- Reverse conversion applies visible sheet edits by default across all exported tabs (`Summary`, `SourceContextManual`, `DataQualityFindings`, `latearivingdata`, `Tables`, `Columns`, `JoinCandidates`, `ForeignKeys`, `SampleData`, `Units`).
+- Reverse conversion applies visible sheet edits by default across the current workbook layout (`Summary`, `SourceSystem`, per-table worksheets, `DataQualityFindings`) and remains backward-compatible with legacy tabs.
 - Non-exported fields remain intact because reconstruction starts from hidden full payload.
 - Use `--no-apply-edits` for exact original payload restore.

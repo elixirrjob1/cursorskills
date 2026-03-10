@@ -508,11 +508,18 @@ def detect_incremental_columns(columns: List[Dict], pk_columns: List[str]) -> Li
     inc_cols = []
     for col in columns:
         name_lower = col["name"].lower()
-        if col.get("is_incremental"):
-            inc_cols.append(col["name"])
-        elif any(kw in name_lower for kw in ["updated_at", "modified_at", "changed_at", "last_modified"]):
-            inc_cols.append(col["name"])
-        elif name_lower == "created_at":
+        if any(
+            kw in name_lower
+            for kw in [
+                "updated_at",
+                "modified_at",
+                "changed_at",
+                "last_modified",
+                "last_updated",
+                "updated_on",
+                "modified_on",
+            ]
+        ):
             inc_cols.append(col["name"])
     return inc_cols
 
@@ -2270,6 +2277,10 @@ def build_source_system_document(
                         col_dict["_sample_values"] = list(sample_values)
                     col_dict["unit_context"] = _build_unit_context(col["name"], semantic_class, sample_values=sample_values)
                     enriched_columns.append(col_dict)
+
+                incremental_lower = {c.lower() for c in incremental_columns}
+                for col_dict in enriched_columns:
+                    col_dict["is_incremental"] = col_dict["name"].lower() in incremental_lower
 
                 _propagate_unit_context_from_companion(enriched_columns)
                 unit_summary = _build_unit_summary(enriched_columns)

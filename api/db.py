@@ -246,18 +246,21 @@ def _is_temporal_type(type_name: str) -> bool:
 
 
 def _infer_incremental_columns(columns: list[dict[str, Any]], primary_keys: list[str]) -> list[str]:
-    pk_lower = {c.lower() for c in primary_keys}
     common_incremental = {
-        "created_at",
         "updated_at",
         "modified_at",
         "last_updated_at",
+        "updated_on",
+        "modified_on",
+        "last_updated_on",
+        "last_modified_at",
+        "last_modified_on",
     }
     result: list[str] = []
     for col in columns:
         name = str(col["name"])
         lowered = name.lower()
-        if lowered in pk_lower or lowered in common_incremental:
+        if lowered in common_incremental:
             result.append(name)
     return result
 

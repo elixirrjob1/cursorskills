@@ -61,7 +61,17 @@ class SourceSystemAnalyzerIncrementalTests(unittest.TestCase):
 
         self.assertEqual(result, {})
 
-    def test_build_source_system_document_includes_projection_fields(self):
+    def test_collect_projection_inputs_runs_setup_and_collect(self):
+        fake_engine = object()
+
+        with patch.object(MODULE.collector, "run_setup") as run_setup, \
+             patch.object(MODULE.collector, "run_collect") as run_collect:
+            MODULE._collect_projection_inputs(fake_engine, "dbo")
+
+        run_setup.assert_called_once_with(fake_engine)
+        run_collect.assert_called_once_with(fake_engine, schema="dbo")
+
+    def test_build_source_system_document_uses_direct_history_projection_fallback(self):
         fake_engine = types.SimpleNamespace(dialect=types.SimpleNamespace(name="postgresql"))
 
         with patch.object(MODULE, "get_engine", return_value=fake_engine), \
@@ -79,7 +89,42 @@ class SourceSystemAnalyzerIncrementalTests(unittest.TestCase):
              patch.object(MODULE, "parse_connection_info", return_value={"driver": "postgresql"}), \
              patch.object(MODULE, "fetch_database_timezone", return_value="UTC"), \
              patch.object(MODULE, "fetch_row_counts", return_value={"customers": 10}), \
+             patch.object(MODULE, "_collect_projection_inputs"), \
+             patch.object(MODULE, "_projection_lookup", return_value={}), \
+             patch.object(MODULE, "_direct_history_projection_lookup", return_value={("public", "customers"): {"row_count_projection_1y": 18, "row_count_projection_2y": 26, "row_count_projection_5y": 50}}), \
+             patch.object(MODULE, "fetch_sample_rows", return_value=(["customer_id"], [])), \
+             patch.object(MODULE, "detect_partition_columns", return_value=([], "exact")), \
+             patch.object(MODULE, "detect_incremental_columns", return_value=[]), \
+             patch.object(MODULE, "fetch_column_statistics", return_value={}), \
+             patch.object(MODULE, "detect_join_candidates", return_value=[]), \
+             patch.object(MODULE, "_apply_concept_classification", return_value={"concepts": []}):
+            result = MODULE.build_source_system_document("postgresql://user:pass@localhost:5432/demo", schema="public")
+
+        self.assertEqual(result["tables"][0]["row_count_projection_1y"], 18)
+        self.assertEqual(result["tables"][0]["row_count_projection_2y"], 26)
+        self.assertEqual(result["tables"][0]["row_count_projection_5y"], 50)
+
+    def test_build_source_system_document_prefers_direct_history_projection_fields(self):
+        fake_engine = types.SimpleNamespace(dialect=types.SimpleNamespace(name="postgresql"))
+
+        with patch.object(MODULE, "get_engine", return_value=fake_engine), \
+             patch.object(MODULE, "get_adapter", return_value=None), \
+             patch.object(
+                 MODULE,
+                 "fetch_schema_metadata",
+                 return_value={
+                     "tables": ["customers"],
+                     "columns": {"customers": [{"name": "customer_id", "type": "integer", "nullable": False, "is_incremental": False}]},
+                     "primary_keys": {"customers": ["customer_id"]},
+                     "foreign_keys": {"customers": []},
+                 },
+             ), \
+             patch.object(MODULE, "parse_connection_info", return_value={"driver": "postgresql"}), \
+             patch.object(MODULE, "fetch_database_timezone", return_value="UTC"), \
+             patch.object(MODULE, "fetch_row_counts", return_value={"customers": 10}), \
+             patch.object(MODULE, "_collect_projection_inputs"), \
              patch.object(MODULE, "_projection_lookup", return_value={("public", "customers"): {"row_count_projection_1y": 15, "row_count_projection_2y": 20, "row_count_projection_5y": 35}}), \
+             patch.object(MODULE, "_direct_history_projection_lookup", return_value={("public", "customers"): {"row_count_projection_1y": 99, "row_count_projection_2y": 99, "row_count_projection_5y": 99}}), \
              patch.object(MODULE, "fetch_sample_rows", return_value=(["customer_id"], [])), \
              patch.object(MODULE, "detect_partition_columns", return_value=([], "exact")), \
              patch.object(MODULE, "detect_incremental_columns", return_value=[]), \
@@ -90,9 +135,9 @@ class SourceSystemAnalyzerIncrementalTests(unittest.TestCase):
 
         self.assertEqual(len(result["tables"]), 1)
         self.assertEqual(result["tables"][0]["row_count"], 10)
-        self.assertEqual(result["tables"][0]["row_count_projection_1y"], 15)
-        self.assertEqual(result["tables"][0]["row_count_projection_2y"], 20)
-        self.assertEqual(result["tables"][0]["row_count_projection_5y"], 35)
+        self.assertEqual(result["tables"][0]["row_count_projection_1y"], 99)
+        self.assertEqual(result["tables"][0]["row_count_projection_2y"], 99)
+        self.assertEqual(result["tables"][0]["row_count_projection_5y"], 99)
 
     def test_detect_incremental_columns_prefers_update_watermark(self):
         columns = [

@@ -84,11 +84,19 @@ def _write_profile(ins: int, upd: int, dele: int) -> str:
     return "mixed"
 
 
-def _estimate_projection_rows(row_count: int, avg_monthly_growth: float) -> tuple[int, int, int]:
+def _estimate_projection_rows(row_count: int, monthly_growth_rate: float, use_slope: bool = False) -> tuple[int, int, int]:
+    """
+    Estimate projected row counts using monthly growth rate.
+    
+    Args:
+        row_count: Current row count
+        monthly_growth_rate: Either avg_monthly_growth (simple average) or slope (linear regression)
+        use_slope: If True, monthly_growth_rate is from linear regression slope
+    """
     return (
-        max(0, int(row_count + avg_monthly_growth * 12)),
-        max(0, int(row_count + avg_monthly_growth * 24)),
-        max(0, int(row_count + avg_monthly_growth * 60)),
+        max(0, int(row_count + monthly_growth_rate * 12)),
+        max(0, int(row_count + monthly_growth_rate * 24)),
+        max(0, int(row_count + monthly_growth_rate * 60)),
     )
 
 
@@ -191,8 +199,10 @@ def build_projection_report(engine: Engine) -> dict:
             ).fetchall()
 
             avg_monthly_growth = 0.0
+            slope = None
             trend = "stable"
             r1y = r2y = r5y = row_count
+            projection_method = "none"
 
             if len(growth_rows) >= 2:
                 x = [float(i) for i in range(len(growth_rows))]
@@ -205,7 +215,16 @@ def build_projection_report(engine: Engine) -> dict:
                 elif slope < -0.1 * avg_monthly_growth:
                     trend = "decreasing"
 
-                r1y, r2y, r5y = _estimate_projection_rows(row_count, avg_monthly_growth)
+                # Use linear regression slope for projection if we have sufficient data (6+ months)
+                # Otherwise fallback to simple average
+                if len(growth_rows) >= 6:
+                    # Linear regression: slope represents monthly growth rate from cumulative trend
+                    r1y, r2y, r5y = _estimate_projection_rows(row_count, slope, use_slope=True)
+                    projection_method = "linear_regression"
+                else:
+                    # Simple average for short history
+                    r1y, r2y, r5y = _estimate_projection_rows(row_count, avg_monthly_growth, use_slope=False)
+                    projection_method = "average"
 
             index_overhead = (index_size / table_data_size) if table_data_size else 1.0
             if index_overhead < 0.1:
@@ -237,6 +256,8 @@ def build_projection_report(engine: Engine) -> dict:
                         "avg_monthly_growth_rows": round(avg_monthly_growth, 2),
                         "trend_direction": trend,
                         "data_points": len(growth_rows),
+                        "projection_method": projection_method,
+                        "linear_regression_slope": round(slope, 2) if len(growth_rows) >= 2 else None,
                     },
                     "projections": {
                         "1_year": {"estimated_rows": r1y, "estimated_size_bytes": s1y, "estimated_size_human": _format_bytes(s1y)},

@@ -1,6 +1,6 @@
 {
   "metadata": {
-    "generated_at": "2026-03-12T14:51:36.241603+00:00",
+    "generated_at": "2026-03-12T15:25:12.285698+00:00",
     "database_url": "pioneertest.database.windows.net:1433/free-sql-db-3300567?driver=ODBC+Driver+18+for+SQL+Server&TrustServerCertificate=yes&timeout=30",
     "schema_filter": "dbo",
     "total_tables": 10,
@@ -629,7 +629,7 @@
       "has_sensitive_fields": true,
       "row_count_projection_1y": 126,
       "row_count_projection_2y": 152,
-      "row_count_projection_5y": 230,
+      "row_count_projection_5y": 232,
       "partition_columns_candidates": [
         "created_at",
         "updated_at"
@@ -1027,7 +1027,7 @@
       "has_sensitive_fields": true,
       "row_count_projection_1y": 35,
       "row_count_projection_2y": 50,
-      "row_count_projection_5y": 95,
+      "row_count_projection_5y": 96,
       "partition_columns_candidates": [
         "hire_date",
         "created_at",
@@ -1484,9 +1484,9 @@
       "has_primary_key": true,
       "has_foreign_keys": true,
       "has_sensitive_fields": false,
-      "row_count_projection_1y": 150,
-      "row_count_projection_2y": 200,
-      "row_count_projection_5y": 350,
+      "row_count_projection_1y": 146,
+      "row_count_projection_2y": 193,
+      "row_count_projection_5y": 334,
       "partition_columns_candidates": [
         "last_restocked_at",
         "created_at",
@@ -2097,8 +2097,8 @@
       "has_foreign_keys": true,
       "has_sensitive_fields": false,
       "row_count_projection_1y": 68,
-      "row_count_projection_2y": 87,
-      "row_count_projection_5y": 143,
+      "row_count_projection_2y": 86,
+      "row_count_projection_5y": 141,
       "partition_columns_candidates": [
         "created_at",
         "updated_at"
@@ -3001,9 +3001,9 @@
       "has_primary_key": true,
       "has_foreign_keys": true,
       "has_sensitive_fields": false,
-      "row_count_projection_1y": 154,
-      "row_count_projection_2y": 183,
-      "row_count_projection_5y": 272,
+      "row_count_projection_1y": 155,
+      "row_count_projection_2y": 185,
+      "row_count_projection_5y": 276,
       "partition_columns_candidates": [
         "order_date",
         "expected_date",
@@ -3934,7 +3934,7 @@
       "has_sensitive_fields": false,
       "row_count_projection_1y": 242,
       "row_count_projection_2y": 284,
-      "row_count_projection_5y": 410,
+      "row_count_projection_5y": 412,
       "partition_columns_candidates": [
         "order_date",
         "created_at",
@@ -4763,9 +4763,9 @@
       "has_primary_key": true,
       "has_foreign_keys": false,
       "has_sensitive_fields": true,
-      "row_count_projection_1y": 23,
-      "row_count_projection_2y": 36,
-      "row_count_projection_5y": 76,
+      "row_count_projection_1y": 22,
+      "row_count_projection_2y": 35,
+      "row_count_projection_5y": 74,
       "partition_columns_candidates": [
         "created_at",
         "updated_at"

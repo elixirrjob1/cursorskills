@@ -38,7 +38,7 @@ _script_dir = Path(__file__).resolve().parent
 if str(_script_dir) not in sys.path:
     sys.path.insert(0, str(_script_dir))
 from databases import get_adapter, get_adapter_for_engine
-from volume_projection import predictor
+from volume_projection import collector, predictor
 
 
 def _load_env_file() -> None:
@@ -172,6 +172,149 @@ def _projection_lookup(engine: Engine) -> Dict[tuple[str, str], Dict[str, int]]:
             "row_count_projection_2y": int((((projections.get("2_year") or {}).get("estimated_rows")) or 0)),
             "row_count_projection_5y": int((((projections.get("5_year") or {}).get("estimated_rows")) or 0)),
         }
+    return lookup
+
+
+def _collect_projection_inputs(engine: Engine, schema: str) -> None:
+    try:
+        collector.run_setup(engine)
+        collector.run_collect(engine, schema=schema)
+    except Exception as exc:
+        logger.warning("Volume projection collection unavailable: %s", exc)
+
+
+def _projection_ident(dialect: str, name: str) -> str:
+    if dialect == "mssql":
+        return f"[{name}]"
+    if dialect == "oracle":
+        return name
+    return f'"{name}"'
+
+
+def _projection_qualified_table(dialect: str, schema: str, table: str) -> str:
+    if dialect == "mssql":
+        return f"[{schema}].[{table}]"
+    if dialect == "oracle":
+        return f"{schema}.{table}"
+    return f'"{schema}"."{table}"'
+
+
+def _projection_history_column(conn: Any, dialect: str, schema: str, table_name: str) -> str | None:
+    candidates = ("created_at", "created_date", "inserted_at", "record_created_at", "insert_date", "insert_timestamp", "ingested_at")
+    if dialect == "oracle":
+        row = conn.execute(
+            text(
+                """
+                SELECT column_name
+                FROM all_tab_columns
+                WHERE owner = UPPER(:schema)
+                  AND table_name = UPPER(:table)
+                  AND LOWER(column_name) IN ('created_at', 'created_date', 'inserted_at', 'record_created_at', 'insert_date', 'insert_timestamp', 'ingested_at')
+                """
+            ),
+            {"schema": schema, "table": table_name},
+        ).fetchall()
+        found = {str(item[0]).lower(): str(item[0]) for item in row}
+    else:
+        row = conn.execute(
+            text(
+                """
+                SELECT column_name
+                FROM information_schema.columns
+                WHERE table_schema = :schema
+                  AND table_name = :table
+                  AND lower(column_name) IN ('created_at', 'created_date', 'inserted_at', 'record_created_at', 'insert_date', 'insert_timestamp', 'ingested_at')
+                """
+            ),
+            {"schema": schema, "table": table_name},
+        ).fetchall()
+        found = {str(item[0]).lower(): str(item[0]) for item in row}
+    for candidate in candidates:
+        if candidate in found:
+            return found[candidate]
+    return None
+
+
+def _direct_history_projection_lookup(engine: Engine, schema: str, tables: list[str], row_counts: Dict[str, int]) -> Dict[tuple[str, str], Dict[str, int]]:
+    dialect = engine.dialect.name
+    lookup: Dict[tuple[str, str], Dict[str, int]] = {}
+    with engine.connect() as conn:
+        for table_name in tables:
+            row_count = int(row_counts.get(table_name) or 0)
+            history_col = _projection_history_column(conn, dialect, schema, table_name)
+            if not history_col:
+                continue
+
+            qualified = _projection_qualified_table(dialect, schema, table_name)
+            col = _projection_ident(dialect, history_col)
+            if dialect == "postgresql":
+                query = text(
+                    f"""
+                    SELECT date_trunc('month', {col})::date AS period_start, COUNT(*) AS rows_added
+                    FROM {qualified}
+                    WHERE {col} IS NOT NULL
+                    GROUP BY date_trunc('month', {col})
+                    ORDER BY period_start
+                    """
+                )
+            elif dialect == "mssql":
+                query = text(
+                    f"""
+                    SELECT DATEFROMPARTS(YEAR({col}), MONTH({col}), 1) AS period_start, COUNT(*) AS rows_added
+                    FROM {qualified}
+                    WHERE {col} IS NOT NULL
+                    GROUP BY DATEFROMPARTS(YEAR({col}), MONTH({col}), 1)
+                    ORDER BY period_start
+                    """
+                )
+            else:
+                query = text(
+                    f"""
+                    SELECT TRUNC({col}, 'MM') AS period_start, COUNT(*) AS rows_added
+                    FROM {qualified}
+                    WHERE {col} IS NOT NULL
+                    GROUP BY TRUNC({col}, 'MM')
+                    ORDER BY period_start
+                    """
+                )
+
+            try:
+                rows = conn.execute(query).fetchall()
+            except Exception as exc:
+                logger.warning("Direct projection history unavailable for %s.%s: %s", schema, table_name, exc)
+                continue
+
+            if len(rows) < 2:
+                continue
+
+            # Calculate cumulative rows for linear regression
+            cumulative_rows = []
+            cumulative = 0
+            for row in rows:
+                cumulative += float(row[1] or 0)
+                cumulative_rows.append(cumulative)
+
+            # Calculate average monthly growth
+            avg_monthly_growth = sum(float(row[1] or 0) for row in rows) / len(rows)
+
+            # Use linear regression slope if we have sufficient data (6+ months)
+            # Otherwise fallback to simple average
+            if len(rows) >= 6:
+                # Linear regression: calculate slope from cumulative trend
+                x = [float(i) for i in range(len(rows))]
+                y = cumulative_rows
+                slope = predictor._linear_slope(x, y)
+                # Use slope as monthly growth rate for projection
+                r1y, r2y, r5y = predictor._estimate_projection_rows(row_count, slope, use_slope=True)
+            else:
+                # Simple average for short history
+                r1y, r2y, r5y = predictor._estimate_projection_rows(row_count, avg_monthly_growth, use_slope=False)
+
+            lookup[(schema, table_name)] = {
+                "row_count_projection_1y": int(r1y),
+                "row_count_projection_2y": int(r2y),
+                "row_count_projection_5y": int(r5y),
+            }
     return lookup
 
 
@@ -2294,7 +2437,11 @@ def build_source_system_document(
         connection_info = parse_connection_info(engine)
         db_timezone = fetch_database_timezone(engine, adapter=adapter)
         row_counts = fetch_row_counts(engine, tables, schema=schema, adapter=adapter)
-        projection_lookup = _projection_lookup(engine)
+        _collect_projection_inputs(engine, schema)
+        projection_lookup = _direct_history_projection_lookup(engine, schema, tables, row_counts)
+        stored_projection_lookup = _projection_lookup(engine)
+        for key, value in stored_projection_lookup.items():
+            projection_lookup.setdefault(key, value)
         table_descriptions = adapter.fetch_table_descriptions(engine, schema) if adapter else {}
         column_descriptions = adapter.fetch_column_descriptions(engine, schema) if adapter else {}
 

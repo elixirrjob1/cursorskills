@@ -19,8 +19,7 @@
     "delete_management_instruction": "",
     "restrictions": "",
     "late_arriving_data_manual": "",
-    "volume_size_projection_manual": "",
-    "field_context_manual": ""
+    "volume_size_projection_manual": ""
   },
   "concept_registry": {
     "version": 1,

@@ -133,6 +133,8 @@ concept_alias_exact:
   item_count: "count"
 
 field_class_to_semantic:
+  identifier: "identifier"
+  person_name: "person_name"
   pricing: "currency_amount"
   quantity: "quantity"
   categorical: "category"
@@ -140,6 +142,10 @@ field_class_to_semantic:
   contact: "contact"
 
 legacy_field_rules:
+  - field_classification: "identifier"
+    contains_any: ["customer_id", "customer_identifier", "client_id", "client_identifier", "member_id", "member_identifier", "cust_id"]
+  - field_classification: "person_name"
+    contains_any: ["first_name", "firstname", "given_name", "forename", "last_name", "lastname", "family_name", "surname", "full_name", "display_name", "contact_name", "person_name", "customer_name"]
   - field_classification: "pricing"
     contains_any: ["price", "cost", "amount", "total", "subtotal"]
   - field_classification: "quantity"

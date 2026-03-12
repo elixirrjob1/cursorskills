@@ -385,7 +385,6 @@ def analyze_api_data(discovery_file: Path, data_dir: Path, base_url: str) -> Dic
             "restrictions": "",
             "late_arriving_data_manual": "",
             "volume_size_projection_manual": "",
-            "field_context_manual": "",
         },
         "data_quality_summary": {
             "critical": severity_counts.get("critical", 0),

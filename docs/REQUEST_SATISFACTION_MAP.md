@@ -146,13 +146,10 @@ Per your specification, a requirement is **Satisfied** when the required JSON fi
   - `$.tables[*].columns[*].semantic_class`
   - `$.tables[*].field_classifications`
   - `$.tables[*].sensitive_fields`
-  - `$.source_system_context.field_context_manual`
 - Status: **Satisfied**
 - Why done:
   - Context structure exists for units, semantics, and sensitivity.
-  - Manual context field exists for non-source-provided detail.
 - Evidence:
-  - `source_system_context.field_context_manual = ""`
   - Columns with `unit_context`: `13`
   - Tables with `sensitive_fields`: `4`
 - JSON snippet:
@@ -172,7 +169,6 @@ Per your specification, a requirement is **Satisfied** when the required JSON fi
       }
     ]
   },
-  "field_context_manual": ""
 }
 ```
 

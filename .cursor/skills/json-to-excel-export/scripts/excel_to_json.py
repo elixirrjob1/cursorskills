@@ -7,7 +7,7 @@ from urllib.parse import parse_qs, urlparse
 from openpyxl import load_workbook
 
 
-GLOBAL_SHEETS = {"Summary", "SourceSystem", "DataQualityFindings"}
+GLOBAL_SHEETS = {"Summary", "SourceSystem", "DataQualityFindings", "Glossary"}
 LEGACY_VISIBLE_SHEETS = {
     "SourceContextManual",
     "latearivingdata",
@@ -418,9 +418,10 @@ def _apply_source_context_sheet(wb, payload):
 
     restrictions = []
     for row in sections.get("RestrictionsManual", []):
-        if _row_has_any(row, ["restriction_type", "scope", "details", "owner"]):
+        if _row_has_any(row, ["table_name", "restriction_type", "scope", "details", "owner"]):
             restrictions.append(
                 {
+                    "table_name": _norm(row.get("table_name")),
                     "type": _norm(row.get("restriction_type")),
                     "scope": _norm(row.get("scope")),
                     "details": _norm(row.get("details")),
@@ -466,23 +467,6 @@ def _apply_source_context_sheet(wb, payload):
         sctx["volume_size_projection_manual"] = vol_rows[0].get("notes", "")
         sctx["volume_size_projection_manual_rows"] = vol_rows
 
-    fc_rows = []
-    for row in sections.get("FieldContextManual", []):
-        if _row_has_any(row, ["table_name", "column_name", "business_context", "transformation_notes", "owner"]):
-            fc_rows.append(
-                {
-                    "table_name": _norm(row.get("table_name")),
-                    "column_name": _norm(row.get("column_name")),
-                    "business_context": _norm(row.get("business_context")),
-                    "transformation_notes": _norm(row.get("transformation_notes")),
-                    "owner": _norm(row.get("owner")),
-                }
-            )
-    if fc_rows:
-        sctx["field_context_manual"] = fc_rows[0].get("business_context", "")
-        sctx["field_context_manual_rows"] = fc_rows
-
-
 def _apply_source_system_sheet(wb, payload):
     if "SourceSystem" not in wb.sheetnames:
         return
@@ -509,7 +493,6 @@ def _apply_source_system_sheet(wb, payload):
         "RestrictionsManual": sections.get("RestrictionsManual", []),
         "LateArrivingDataManual": sections.get("LateArrivingDataManual", []),
         "VolumeSizeProjectionManual": sections.get("VolumeSizeProjectionManual", []),
-        "FieldContextManual": sections.get("FieldContextManual", []),
     }
     if any(source_context_sections.values()):
         # Reuse the legacy manual-section mapping by projecting the new tab shape.
@@ -569,7 +552,6 @@ def _apply_tables_sheet(wb, payload, tindex):
 def _apply_columns_row(col, row):
     _set_if_changed(col, "type", row.get("data_type"))
     _set_if_changed(col, "nullable", row.get("nullable"), parser=_parse_bool)
-    _set_if_changed(col, "is_incremental", row.get("is_incremental"), parser=_parse_bool)
     _set_if_changed(col, "cardinality", row.get("cardinality"), parser=lambda v: _coerce_like(col.get("cardinality"), v))
     _set_if_changed(col, "null_count", row.get("null_count"), parser=lambda v: _coerce_like(col.get("null_count"), v))
     _set_if_changed(col, "data_category", row.get("data_category"))
@@ -645,6 +627,31 @@ def _apply_columns_row(col, row):
         _set_if_changed(data_range, "max", row.get("range_max"), parser=lambda v: _coerce_like(data_range.get("max"), v))
 
 
+def _apply_column_annotations(table, column_name, row):
+    classification = _norm(row.get("classification"))
+    sensitivity_label = _norm(row.get("sensitivity_label"))
+
+    field_classifications = table.get("field_classifications")
+    if not isinstance(field_classifications, dict):
+        field_classifications = {}
+        table["field_classifications"] = field_classifications
+    if classification:
+        field_classifications[column_name] = classification
+    else:
+        field_classifications.pop(column_name, None)
+
+    sensitive_fields = table.get("sensitive_fields")
+    if not isinstance(sensitive_fields, dict):
+        sensitive_fields = {}
+        table["sensitive_fields"] = sensitive_fields
+    if sensitivity_label:
+        sensitive_fields[column_name] = sensitivity_label
+    else:
+        sensitive_fields.pop(column_name, None)
+
+    table["has_sensitive_fields"] = len(sensitive_fields) > 0
+
+
 def _apply_columns_sheet(wb, payload, tindex):
     if "Columns" not in wb.sheetnames:
         return
@@ -659,6 +666,7 @@ def _apply_columns_sheet(wb, payload, tindex):
         table = _ensure_table(payload, tindex, schema, table_name)
         col = _ensure_column(table, column_name)
         _apply_columns_row(col, row)
+        _apply_column_annotations(table, column_name, row)
 
 
 def _apply_units_sheet(wb, payload, tindex):
@@ -687,7 +695,6 @@ def _apply_units_sheet(wb, payload, tindex):
                 "conversion_formula": row.get("conversion_formula"),
                 "data_type": col.get("type", ""),
                 "nullable": col.get("nullable", ""),
-                "is_incremental": col.get("is_incremental", ""),
                 "cardinality": col.get("cardinality", ""),
                 "null_count": col.get("null_count", ""),
                 "data_category": col.get("data_category", ""),
@@ -1068,6 +1075,7 @@ def _apply_table_detail_sheets(wb, payload):
                 continue
             col = _ensure_column(table, column_name)
             _apply_columns_row(col, row)
+            _apply_column_annotations(table, column_name, row)
             for sheet_key, json_key in {
                 "concept_id": "concept_id",
                 "concept_alias_group": "concept_alias_group",

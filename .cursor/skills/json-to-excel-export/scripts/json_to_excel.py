@@ -9,6 +9,70 @@ from openpyxl import Workbook
 from openpyxl.styles import Alignment, Font, PatternFill
 
 
+_GLOSSARY_ROWS = [
+    {
+        "Field": "semantic_class",
+        "Description": "Specific meaning inferred for the column, such as email, timestamp, given_name, or customer_identifier.",
+    },
+    {
+        "Field": "concept_id",
+        "Description": "Normalized business concept assigned to the column, used to group similar fields across tables.",
+    },
+    {
+        "Field": "concept_confidence",
+        "Description": "Confidence score for the selected concept_id, typically between 0 and 1.",
+    },
+    {
+        "Field": "concept_alias_group",
+        "Description": "Normalized alias bucket used to compare similar column names across tables.",
+    },
+    {
+        "Field": "concept_evidence_json",
+        "Description": "Serialized JSON showing the signals that supported the chosen concept.",
+    },
+    {
+        "Field": "concept_sources_json",
+        "Description": "Serialized JSON list of source types used during concept inference, such as name, values, or profile.",
+    },
+    {
+        "Field": "unit",
+        "Description": "Detected source unit for the column, usually taken from the name or stored unit metadata.",
+    },
+    {
+        "Field": "unit_source",
+        "Description": "Where the unit came from, for example name-based detection or manually provided metadata.",
+    },
+    {
+        "Field": "canonical_unit",
+        "Description": "Normalized target unit used for consistent comparisons and conversions.",
+    },
+    {
+        "Field": "unit_system",
+        "Description": "Measurement system associated with the unit, such as metric or imperial.",
+    },
+    {
+        "Field": "unit_confidence",
+        "Description": "Confidence level for the detected unit assignment.",
+    },
+    {
+        "Field": "unit_notes",
+        "Description": "Additional notes about unit detection or normalization behavior.",
+    },
+    {
+        "Field": "factor_to_canonical",
+        "Description": "Multiplication factor used to convert the source unit into the canonical unit.",
+    },
+    {
+        "Field": "offset_to_canonical",
+        "Description": "Additive offset used during conversion to the canonical unit.",
+    },
+    {
+        "Field": "conversion_formula",
+        "Description": "Human-readable formula showing how to convert the source unit to the canonical unit.",
+    },
+]
+
+
 def _cell_value(value):
     if value is None:
         return ""
@@ -205,6 +269,7 @@ def _restrictions_rows(source_system_context):
             if isinstance(r, dict):
                 rows.append(
                     {
+                        "table_name": r.get("table_name", ""),
                         "restriction_type": r.get("type", ""),
                         "scope": r.get("scope", ""),
                         "details": r.get("details", ""),
@@ -214,6 +279,7 @@ def _restrictions_rows(source_system_context):
             else:
                 rows.append(
                     {
+                        "table_name": "",
                         "restriction_type": "",
                         "scope": "",
                         "details": _cell_value(r),
@@ -223,6 +289,7 @@ def _restrictions_rows(source_system_context):
     elif isinstance(restrictions, dict):
         rows.append(
             {
+                "table_name": restrictions.get("table_name", ""),
                 "restriction_type": restrictions.get("type", ""),
                 "scope": restrictions.get("scope", ""),
                 "details": restrictions.get("details", ""),
@@ -230,10 +297,10 @@ def _restrictions_rows(source_system_context):
             }
         )
     else:
-        rows.append({"restriction_type": "", "scope": "", "details": _cell_value(restrictions), "owner": ""})
+        rows.append({"table_name": "", "restriction_type": "", "scope": "", "details": _cell_value(restrictions), "owner": ""})
 
     while len(rows) < 8:
-        rows.append({"restriction_type": "", "scope": "", "details": "", "owner": ""})
+        rows.append({"table_name": "", "restriction_type": "", "scope": "", "details": "", "owner": ""})
     return rows
 
 
@@ -278,29 +345,6 @@ def _volume_projection_manual_rows(source_system_context):
                 "growth_assumption_pct": "",
                 "basis": "",
                 "notes": "",
-            }
-        )
-    return rows
-
-
-def _field_context_manual_rows(source_system_context):
-    rows = [
-        {
-            "table_name": "",
-            "column_name": "",
-            "business_context": _cell_value(source_system_context.get("field_context_manual", "")),
-            "transformation_notes": "",
-            "owner": "",
-        }
-    ]
-    while len(rows) < 8:
-        rows.append(
-            {
-                "table_name": "",
-                "column_name": "",
-                "business_context": "",
-                "transformation_notes": "",
-                "owner": "",
             }
         )
     return rows
@@ -427,6 +471,9 @@ def _table_overview_row(table):
         "table_description": table.get("table_description", ""),
         "classification_summary_json": _compact_json(table.get("classification_summary")),
         "unit_summary_json": _compact_json(table.get("unit_summary")),
+        "row_count_projection_1y": table.get("row_count_projection_1y", ""),
+        "row_count_projection_2y": table.get("row_count_projection_2y", ""),
+        "row_count_projection_5y": table.get("row_count_projection_5y", ""),
     }
 
 
@@ -453,14 +500,18 @@ def _mapping_rows(mapping, value_name):
 
 def _column_rows(table):
     rows = []
+    field_classifications = table.get("field_classifications") or {}
+    sensitive_fields = table.get("sensitive_fields") or {}
     for column in table.get("columns", []) or []:
         unit_data = _unit_fields(column)
+        column_name = column.get("name", "")
         rows.append(
             {
-                "column_name": column.get("name", ""),
+                "column_name": column_name,
                 "data_type": column.get("type", ""),
                 "nullable": column.get("nullable", ""),
-                "is_incremental": column.get("is_incremental", ""),
+                "classification": _cell_value(field_classifications.get(column_name, "")),
+                "sensitivity_label": _cell_value(sensitive_fields.get(column_name, "")),
                 "cardinality": column.get("cardinality", ""),
                 "null_count": column.get("null_count", ""),
                 "data_category": column.get("data_category", ""),
@@ -561,7 +612,6 @@ def _source_system_sections(metadata, connection, source_system_context):
             ("RestrictionsManual", _restrictions_rows(source_system_context)),
             ("LateArrivingDataManual", _late_arriving_manual_rows(source_system_context)),
             ("VolumeSizeProjectionManual", _volume_projection_manual_rows(source_system_context)),
-            ("FieldContextManual", _field_context_manual_rows(source_system_context)),
         ]
     )
     return sections
@@ -593,14 +643,6 @@ def _table_sheet_sections(table):
     join_candidates = _join_candidate_rows(table)
     if join_candidates:
         sections.append(("JoinCandidates", join_candidates))
-
-    field_classifications = _mapping_rows(table.get("field_classifications"), "classification")
-    if field_classifications:
-        sections.append(("FieldClassifications", field_classifications))
-
-    sensitive_fields = _mapping_rows(table.get("sensitive_fields"), "sensitivity_label")
-    if sensitive_fields:
-        sections.append(("SensitiveFields", sensitive_fields))
 
     columns = _column_rows(table)
     if columns:
@@ -701,6 +743,7 @@ def _collect_sheets(payload):
         "Summary": {"sections": summary_sections},
         "SourceSystem": {"sections": _source_system_sections(metadata, connection, source_system_context)},
         "DataQualityFindings": data_quality_findings_rows,
+        "Glossary": list(_GLOSSARY_ROWS),
     }
     used_sheet_names = set(sheets.keys())
     for table in tables:

@@ -1,4 +1,12 @@
 semantic_patterns:
+  - pattern: "(^|_)(customer|client|member|cust)(?:_)?(id|identifier|uuid|guid)($|_)"
+    semantic_class: "customer_identifier"
+  - pattern: "(^|_)(first_?name|firstname|given_?name|forename)($|_)"
+    semantic_class: "given_name"
+  - pattern: "(^|_)(last_?name|lastname|family_?name|surname)($|_)"
+    semantic_class: "family_name"
+  - pattern: "(^|_)(full_?name|display_?name|contact_?name|person_?name|customer_?name)($|_)"
+    semantic_class: "person_name"
   - pattern: "(length|height|width|depth|distance|diameter|radius|thickness|elevation|altitude|span)"
     semantic_class: "length"
   - pattern: "(area|surface|sq_?ft|sq_?m|square)"

@@ -84,7 +84,15 @@ def _write_profile(ins: int, upd: int, dele: int) -> str:
     return "mixed"
 
 
-def run_predict(engine: Engine, output_path: str) -> None:
+def _estimate_projection_rows(row_count: int, avg_monthly_growth: float) -> tuple[int, int, int]:
+    return (
+        max(0, int(row_count + avg_monthly_growth * 12)),
+        max(0, int(row_count + avg_monthly_growth * 24)),
+        max(0, int(row_count + avg_monthly_growth * 60)),
+    )
+
+
+def build_projection_report(engine: Engine) -> dict:
     d = engine.dialect.name
     cr = _pred_table(d, "collection_runs")
     ts = _pred_table(d, "table_size_snapshots")
@@ -106,9 +114,7 @@ def run_predict(engine: Engine, output_path: str) -> None:
 
         if not run_row:
             report["error"] = "No successful collection run found. Run collector first."
-            with open(output_path, "w", encoding="utf-8") as f:
-                json.dump(report, f, indent=2, default=str)
-            return
+            return report
 
         run_id = int(run_row[0])
         report["collection_run_id"] = run_id
@@ -186,7 +192,7 @@ def run_predict(engine: Engine, output_path: str) -> None:
 
             avg_monthly_growth = 0.0
             trend = "stable"
-            r6 = r12 = r24 = row_count
+            r1y = r2y = r5y = row_count
 
             if len(growth_rows) >= 2:
                 x = [float(i) for i in range(len(growth_rows))]
@@ -199,9 +205,7 @@ def run_predict(engine: Engine, output_path: str) -> None:
                 elif slope < -0.1 * avg_monthly_growth:
                     trend = "decreasing"
 
-                r6 = max(0, int(row_count + avg_monthly_growth * 6))
-                r12 = max(0, int(row_count + avg_monthly_growth * 12))
-                r24 = max(0, int(row_count + avg_monthly_growth * 24))
+                r1y, r2y, r5y = _estimate_projection_rows(row_count, avg_monthly_growth)
 
             index_overhead = (index_size / table_data_size) if table_data_size else 1.0
             if index_overhead < 0.1:
@@ -213,9 +217,9 @@ def run_predict(engine: Engine, output_path: str) -> None:
                     return int(rows_est * avg_row_size * index_overhead * bloat_factor)
                 return total_size
 
-            s6 = est_size(r6)
-            s12 = est_size(r12)
-            s24 = est_size(r24)
+            s1y = est_size(r1y)
+            s2y = est_size(r2y)
+            s5y = est_size(r5y)
 
             tables.append(
                 {
@@ -235,18 +239,18 @@ def run_predict(engine: Engine, output_path: str) -> None:
                         "data_points": len(growth_rows),
                     },
                     "projections": {
-                        "6_month": {"estimated_rows": r6, "estimated_size_bytes": s6, "estimated_size_human": _format_bytes(s6)},
-                        "12_month": {"estimated_rows": r12, "estimated_size_bytes": s12, "estimated_size_human": _format_bytes(s12)},
-                        "24_month": {"estimated_rows": r24, "estimated_size_bytes": s24, "estimated_size_human": _format_bytes(s24)},
+                        "1_year": {"estimated_rows": r1y, "estimated_size_bytes": s1y, "estimated_size_human": _format_bytes(s1y)},
+                        "2_year": {"estimated_rows": r2y, "estimated_size_bytes": s2y, "estimated_size_human": _format_bytes(s2y)},
+                        "5_year": {"estimated_rows": r5y, "estimated_size_bytes": s5y, "estimated_size_human": _format_bytes(s5y)},
                     },
                 }
             )
 
         report["tables"] = tables
 
-        total_6 = sum(t["projections"]["6_month"]["estimated_size_bytes"] for t in tables)
-        total_12 = sum(t["projections"]["12_month"]["estimated_size_bytes"] for t in tables)
-        total_24 = sum(t["projections"]["24_month"]["estimated_size_bytes"] for t in tables)
+        total_1y = sum(t["projections"]["1_year"]["estimated_size_bytes"] for t in tables)
+        total_2y = sum(t["projections"]["2_year"]["estimated_size_bytes"] for t in tables)
+        total_5y = sum(t["projections"]["5_year"]["estimated_size_bytes"] for t in tables)
 
         fastest = sorted(tables, key=lambda t: t["growth"]["avg_monthly_growth_rows"], reverse=True)[:5]
         largest = sorted(tables, key=lambda t: t["current"]["total_size_bytes"], reverse=True)[:5]
@@ -254,12 +258,12 @@ def run_predict(engine: Engine, output_path: str) -> None:
         report["summary"] = {
             "current_total_size_bytes": current_total,
             "current_total_size_human": _format_bytes(current_total),
-            "projected_6_month_size_bytes": total_6,
-            "projected_6_month_size_human": _format_bytes(total_6),
-            "projected_12_month_size_bytes": total_12,
-            "projected_12_month_size_human": _format_bytes(total_12),
-            "projected_24_month_size_bytes": total_24,
-            "projected_24_month_size_human": _format_bytes(total_24),
+            "projected_1_year_size_bytes": total_1y,
+            "projected_1_year_size_human": _format_bytes(total_1y),
+            "projected_2_year_size_bytes": total_2y,
+            "projected_2_year_size_human": _format_bytes(total_2y),
+            "projected_5_year_size_bytes": total_5y,
+            "projected_5_year_size_human": _format_bytes(total_5y),
             "tables_analyzed": len(tables),
             "fastest_growing_tables": [
                 {"table": t["table"], "avg_monthly_growth": t["growth"]["avg_monthly_growth_rows"]}
@@ -271,6 +275,11 @@ def run_predict(engine: Engine, output_path: str) -> None:
             ],
         }
 
+    return report
+
+
+def run_predict(engine: Engine, output_path: str) -> None:
+    report = build_projection_report(engine)
     with open(output_path, "w", encoding="utf-8") as f:
         json.dump(report, f, indent=2, default=str)
 

@@ -38,6 +38,7 @@ _script_dir = Path(__file__).resolve().parent
 if str(_script_dir) not in sys.path:
     sys.path.insert(0, str(_script_dir))
 from databases import get_adapter, get_adapter_for_engine
+from volume_projection import predictor
 
 
 def _load_env_file() -> None:
@@ -137,6 +138,41 @@ logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 
 _RULES_CACHE: Optional[Dict[str, Any]] = None
+
+
+def _default_row_count_projections(row_count: int) -> Dict[str, int]:
+    safe_row_count = int(row_count or 0)
+    return {
+        "row_count_projection_1y": safe_row_count,
+        "row_count_projection_2y": safe_row_count,
+        "row_count_projection_5y": safe_row_count,
+    }
+
+
+def _projection_lookup(engine: Engine) -> Dict[tuple[str, str], Dict[str, int]]:
+    try:
+        report = predictor.build_projection_report(engine)
+    except Exception as exc:
+        logger.warning("Volume projections unavailable: %s", exc)
+        return {}
+
+    if report.get("error"):
+        logger.info("Volume projections skipped: %s", report["error"])
+        return {}
+
+    lookup: Dict[tuple[str, str], Dict[str, int]] = {}
+    for table_report in report.get("tables", []) or []:
+        schema_name = str(table_report.get("schema") or "").strip()
+        table_name = str(table_report.get("table") or "").strip()
+        if not schema_name or not table_name:
+            continue
+        projections = table_report.get("projections") or {}
+        lookup[(schema_name, table_name)] = {
+            "row_count_projection_1y": int((((projections.get("1_year") or {}).get("estimated_rows")) or 0)),
+            "row_count_projection_2y": int((((projections.get("2_year") or {}).get("estimated_rows")) or 0)),
+            "row_count_projection_5y": int((((projections.get("5_year") or {}).get("estimated_rows")) or 0)),
+        }
+    return lookup
 
 
 # ============================================================================
@@ -788,8 +824,6 @@ def _is_explicit_unit_column_name(col_name: str) -> bool:
 
 def _infer_semantic_class(col_name: str, field_classification: Optional[str]) -> Optional[str]:
     _load_context_rules()
-    if field_classification in _FIELD_CLASS_TO_SEMANTIC:
-        return _FIELD_CLASS_TO_SEMANTIC[field_classification]
     lower = col_name.lower()
     rules = _RULES_CACHE or {}
     for rule in rules.get("semantic_patterns", []):
@@ -805,6 +839,8 @@ def _infer_semantic_class(col_name: str, field_classification: Optional[str]) ->
         except re.error:
             if pattern in lower:
                 return semantic_class
+    if field_classification in _FIELD_CLASS_TO_SEMANTIC:
+        return _FIELD_CLASS_TO_SEMANTIC[field_classification]
     return None
 
 
@@ -1916,6 +1952,58 @@ def check_delete_management(engine: Engine, tables: List[Dict], schema: str, ada
     return findings
 
 
+def _normalize_check_clause(check_clause: Any) -> str:
+    clause = str(check_clause or "").lower()
+    clause = re.sub(r'["`\[\]]', "", clause)
+    clause = re.sub(r"\s+", "", clause)
+    return clause
+
+
+def _has_timestamp_ordering_constraint(constraints: List[Dict[str, Any]]) -> bool:
+    for constraint in constraints or []:
+        normalized = _normalize_check_clause(constraint.get("check_clause"))
+        if not normalized:
+            continue
+        if "created_at<=updated_at" in normalized or "updated_at>=created_at" in normalized:
+            return True
+    return False
+
+
+def check_timestamp_ordering(tables: List[Dict], check_constraints: Dict[str, List[Dict[str, Any]]]) -> List[Dict]:
+    findings = []
+    for tbl in tables:
+        columns = tbl.get("columns", [])
+        column_map = {str(col.get("name", "")).lower(): col for col in columns}
+        created_col = column_map.get("created_at")
+        updated_col = column_map.get("updated_at")
+        if not created_col or not updated_col:
+            continue
+
+        table_name = str(tbl.get("table", ""))
+        if _has_timestamp_ordering_constraint(check_constraints.get(table_name, [])):
+            continue
+
+        updated_nullable = bool(updated_col.get("nullable"))
+        if updated_nullable:
+            recommendation = "Add CHECK (updated_at IS NULL OR created_at <= updated_at) to enforce temporal consistency."
+        else:
+            recommendation = "Add CHECK (created_at <= updated_at) to enforce temporal consistency."
+
+        findings.append(
+            {
+                "table": table_name,
+                "column": None,
+                "check": "timestamp_ordering",
+                "severity": "info",
+                "detail": "Table has both 'created_at' and 'updated_at' but no CHECK constraint guaranteeing created_at <= updated_at.",
+                "recommendation": recommendation,
+                "created_column": "created_at",
+                "updated_column": "updated_at",
+            }
+        )
+    return findings
+
+
 _BUSINESS_DATE_PATTERNS = ("order_date", "transaction_date", "payment_date", "event_date", "event_time", "ship_date", "delivery_date", "invoice_date", "booking_date", "sale_date", "purchase_date", "effective_date", "activity_date", "record_date", "entry_date", "posting_date", "trade_date", "settlement_date", "value_date", "hire_date")
 _SYSTEM_TS_PATTERNS = ("created_at", "inserted_at", "created_date", "record_created_at", "insert_date", "insert_timestamp", "ingested_at")
 
@@ -2206,6 +2294,7 @@ def build_source_system_document(
         connection_info = parse_connection_info(engine)
         db_timezone = fetch_database_timezone(engine, adapter=adapter)
         row_counts = fetch_row_counts(engine, tables, schema=schema, adapter=adapter)
+        projection_lookup = _projection_lookup(engine)
         table_descriptions = adapter.fetch_table_descriptions(engine, schema) if adapter else {}
         column_descriptions = adapter.fetch_column_descriptions(engine, schema) if adapter else {}
 
@@ -2301,6 +2390,8 @@ def build_source_system_document(
                     "has_foreign_keys": len(fk_columns) > 0,
                     "has_sensitive_fields": len(sensitive_fields) > 0,
                 }
+                table_entry.update(_default_row_count_projections(row_count))
+                table_entry.update(projection_lookup.get((table_schema, table_name), {}))
                 if partition_mode == "exact":
                     table_entry["partition_columns"] = partition_columns
                 elif partition_mode == "candidate":
@@ -2332,6 +2423,7 @@ def build_source_system_document(
             all_findings.extend(check_missing_foreign_keys(engine, enriched_tables, all_pks_dict, schema, adapter=adapter))
             all_findings.extend(check_format_inconsistency(engine, enriched_tables, schema, adapter=adapter))
             all_findings.extend(check_range_violations(engine, enriched_tables, schema, adapter=adapter))
+            all_findings.extend(check_timestamp_ordering(enriched_tables, check_constraints))
             all_findings.extend(check_delete_management(engine, enriched_tables, schema, adapter=adapter))
             all_findings.extend(check_late_arriving_data(engine, enriched_tables, schema, adapter=adapter))
             all_findings.extend(check_timezone(engine, enriched_tables, schema, adapter=adapter))
@@ -2365,7 +2457,7 @@ def build_source_system_document(
                         "controlled_value_candidate", "nullable_but_never_null",
                         "missing_primary_key", "missing_foreign_key",
                         "format_inconsistency", "range_violation",
-                        "delete_management", "late_arriving_data", "timezone",
+                        "timestamp_ordering", "delete_management", "late_arriving_data", "timezone",
                         "unit_unknown", "unit_noncanonical_but_convertible", "unit_mismatch_within_semantic_group",
                     )
                 },
@@ -2402,7 +2494,6 @@ def build_source_system_document(
                 "restrictions": "",
                 "late_arriving_data_manual": "",
                 "volume_size_projection_manual": "",
-                "field_context_manual": "",
             },
             "concept_registry": concept_registry,
             "data_quality_summary": data_quality_summary,

@@ -1,11 +1,11 @@
 {
   "metadata": {
-    "generated_at": "2026-03-10T14:21:15.152205+00:00",
+    "generated_at": "2026-03-12T12:19:18.667175+00:00",
     "database_url": "pioneertest.database.windows.net:1433/free-sql-db-3300567?driver=ODBC+Driver+18+for+SQL+Server&TrustServerCertificate=yes&timeout=30",
     "schema_filter": "dbo",
     "total_tables": 10,
     "total_rows": 35,
-    "total_findings": 69
+    "total_findings": 79
   },
   "connection": {
     "host": "pioneertest.database.windows.net",
@@ -19,8 +19,7 @@
     "delete_management_instruction": "",
     "restrictions": "",
     "late_arriving_data_manual": "",
-    "volume_size_projection_manual": "",
-    "field_context_manual": ""
+    "volume_size_projection_manual": ""
   },
   "concept_registry": {
     "version": 1,
@@ -350,7 +349,7 @@
   "data_quality_summary": {
     "critical": 0,
     "warning": 30,
-    "info": 39,
+    "info": 49,
     "by_check": {
       "controlled_value_candidate": 12,
       "nullable_but_never_null": 27,
@@ -358,6 +357,7 @@
       "missing_foreign_key": 0,
       "format_inconsistency": 0,
       "range_violation": 0,
+      "timestamp_ordering": 10,
       "delete_management": 10,
       "late_arriving_data": 3,
       "timezone": 10,
@@ -388,7 +388,7 @@
             "max": "3"
           },
           "data_category": "discrete",
-          "semantic_class": null,
+          "semantic_class": "customer_identifier",
           "unit_context": null,
           "concept_id": "identifier.foreign_key",
           "concept_confidence": 0.6,
@@ -417,7 +417,7 @@
             "max": "Noah"
           },
           "data_category": "nominal",
-          "semantic_class": null,
+          "semantic_class": "given_name",
           "unit_context": null,
           "concept_id": "contact.person_name",
           "concept_confidence": 0.6,
@@ -445,7 +445,7 @@
             "max": "Walsh"
           },
           "data_category": "nominal",
-          "semantic_class": null,
+          "semantic_class": "family_name",
           "unit_context": null,
           "concept_id": "contact.person_name",
           "concept_confidence": 0.6,
@@ -601,6 +601,9 @@
       "foreign_keys": [],
       "row_count": 3,
       "field_classifications": {
+        "customer_id": "identifier",
+        "first_name": "person_name",
+        "last_name": "person_name",
         "email": "contact",
         "phone": "contact",
         "created_at": "temporal",
@@ -624,6 +627,9 @@
       "has_primary_key": true,
       "has_foreign_keys": false,
       "has_sensitive_fields": true,
+      "row_count_projection_1y": 3,
+      "row_count_projection_2y": 3,
+      "row_count_projection_5y": 3,
       "partition_columns_candidates": [
         "created_at",
         "updated_at"
@@ -654,6 +660,15 @@
             "severity": "info",
             "detail": "Column is nullable but has 0 NULLs across 3 row(s)",
             "recommendation": "Consider adding a NOT NULL constraint if the column should always have a value"
+          },
+          {
+            "column": null,
+            "check": "timestamp_ordering",
+            "severity": "info",
+            "detail": "Table has both 'created_at' and 'updated_at' but no CHECK constraint guaranteeing created_at <= updated_at.",
+            "recommendation": "Add CHECK (created_at <= updated_at) to enforce temporal consistency.",
+            "created_column": "created_at",
+            "updated_column": "updated_at"
           },
           {
             "column": null,
@@ -769,7 +784,7 @@
             "max": "Saoirse"
           },
           "data_category": "nominal",
-          "semantic_class": null,
+          "semantic_class": "given_name",
           "unit_context": null,
           "concept_id": "contact.person_name",
           "concept_confidence": 0.55,
@@ -795,7 +810,7 @@
             "max": "Murphy"
           },
           "data_category": "nominal",
-          "semantic_class": null,
+          "semantic_class": "family_name",
           "unit_context": null,
           "concept_id": "contact.person_name",
           "concept_confidence": 0.55,
@@ -979,6 +994,8 @@
       ],
       "row_count": 3,
       "field_classifications": {
+        "first_name": "person_name",
+        "last_name": "person_name",
         "email": "contact",
         "hire_date": "temporal",
         "created_at": "temporal",
@@ -1008,6 +1025,9 @@
       "has_primary_key": true,
       "has_foreign_keys": true,
       "has_sensitive_fields": true,
+      "row_count_projection_1y": 3,
+      "row_count_projection_2y": 3,
+      "row_count_projection_5y": 3,
       "partition_columns_candidates": [
         "hire_date",
         "created_at",
@@ -1042,6 +1062,15 @@
               "Store Manager"
             ],
             "cardinality": 3
+          },
+          {
+            "column": null,
+            "check": "timestamp_ordering",
+            "severity": "info",
+            "detail": "Table has both 'created_at' and 'updated_at' but no CHECK constraint guaranteeing created_at <= updated_at.",
+            "recommendation": "Add CHECK (created_at <= updated_at) to enforce temporal consistency.",
+            "created_column": "created_at",
+            "updated_column": "updated_at"
           },
           {
             "column": null,
@@ -1486,6 +1515,9 @@
       "has_primary_key": true,
       "has_foreign_keys": true,
       "has_sensitive_fields": false,
+      "row_count_projection_1y": 6,
+      "row_count_projection_2y": 6,
+      "row_count_projection_5y": 6,
       "partition_columns_candidates": [
         "last_restocked_at",
         "created_at",
@@ -1537,6 +1569,15 @@
             "severity": "info",
             "detail": "Column is nullable but has 0 NULLs across 6 row(s)",
             "recommendation": "Consider adding a NOT NULL constraint if the column should always have a value"
+          },
+          {
+            "column": null,
+            "check": "timestamp_ordering",
+            "severity": "info",
+            "detail": "Table has both 'created_at' and 'updated_at' but no CHECK constraint guaranteeing created_at <= updated_at.",
+            "recommendation": "Add CHECK (created_at <= updated_at) to enforce temporal consistency.",
+            "created_column": "created_at",
+            "updated_column": "updated_at"
           },
           {
             "column": null,
@@ -2142,6 +2183,9 @@
       "has_primary_key": true,
       "has_foreign_keys": true,
       "has_sensitive_fields": false,
+      "row_count_projection_1y": 5,
+      "row_count_projection_2y": 5,
+      "row_count_projection_5y": 5,
       "partition_columns_candidates": [
         "created_at",
         "updated_at"
@@ -2244,6 +2288,15 @@
             "severity": "info",
             "detail": "Column is nullable but has 0 NULLs across 5 row(s)",
             "recommendation": "Consider adding a NOT NULL constraint if the column should always have a value"
+          },
+          {
+            "column": null,
+            "check": "timestamp_ordering",
+            "severity": "info",
+            "detail": "Table has both 'created_at' and 'updated_at' but no CHECK constraint guaranteeing created_at <= updated_at.",
+            "recommendation": "Add CHECK (created_at <= updated_at) to enforce temporal consistency.",
+            "created_column": "created_at",
+            "updated_column": "updated_at"
           },
           {
             "column": "active",
@@ -2689,6 +2742,9 @@
       "has_primary_key": true,
       "has_foreign_keys": true,
       "has_sensitive_fields": false,
+      "row_count_projection_1y": 4,
+      "row_count_projection_2y": 4,
+      "row_count_projection_5y": 4,
       "partition_columns_candidates": [
         "created_at",
         "updated_at"
@@ -2730,6 +2786,15 @@
             "severity": "info",
             "detail": "Column is nullable but has 0 NULLs across 4 row(s)",
             "recommendation": "Consider adding a NOT NULL constraint if the column should always have a value"
+          },
+          {
+            "column": null,
+            "check": "timestamp_ordering",
+            "severity": "info",
+            "detail": "Table has both 'created_at' and 'updated_at' but no CHECK constraint guaranteeing created_at <= updated_at.",
+            "recommendation": "Add CHECK (created_at <= updated_at) to enforce temporal consistency.",
+            "created_column": "created_at",
+            "updated_column": "updated_at"
           },
           {
             "column": null,
@@ -3119,6 +3184,9 @@
       "has_primary_key": true,
       "has_foreign_keys": true,
       "has_sensitive_fields": false,
+      "row_count_projection_1y": 2,
+      "row_count_projection_2y": 2,
+      "row_count_projection_5y": 2,
       "partition_columns_candidates": [
         "order_date",
         "expected_date",
@@ -3162,6 +3230,15 @@
             "severity": "info",
             "detail": "Column is nullable but has 0 NULLs across 2 row(s)",
             "recommendation": "Consider adding a NOT NULL constraint if the column should always have a value"
+          },
+          {
+            "column": null,
+            "check": "timestamp_ordering",
+            "severity": "info",
+            "detail": "Table has both 'created_at' and 'updated_at' but no CHECK constraint guaranteeing created_at <= updated_at.",
+            "recommendation": "Add CHECK (created_at <= updated_at) to enforce temporal consistency.",
+            "created_column": "created_at",
+            "updated_column": "updated_at"
           },
           {
             "column": null,
@@ -3591,6 +3668,9 @@
       "has_primary_key": true,
       "has_foreign_keys": true,
       "has_sensitive_fields": false,
+      "row_count_projection_1y": 5,
+      "row_count_projection_2y": 5,
+      "row_count_projection_5y": 5,
       "partition_columns_candidates": [
         "created_at",
         "updated_at"
@@ -3632,6 +3712,15 @@
             "severity": "info",
             "detail": "Column is nullable but has 0 NULLs across 5 row(s)",
             "recommendation": "Consider adding a NOT NULL constraint if the column should always have a value"
+          },
+          {
+            "column": null,
+            "check": "timestamp_ordering",
+            "severity": "info",
+            "detail": "Table has both 'created_at' and 'updated_at' but no CHECK constraint guaranteeing created_at <= updated_at.",
+            "recommendation": "Add CHECK (created_at <= updated_at) to enforce temporal consistency.",
+            "created_column": "created_at",
+            "updated_column": "updated_at"
           },
           {
             "column": null,
@@ -3754,7 +3843,7 @@
             "max": "3"
           },
           "data_category": "discrete",
-          "semantic_class": null,
+          "semantic_class": "customer_identifier",
           "unit_context": null,
           "concept_id": "identifier.foreign_key",
           "concept_confidence": 0.9,
@@ -4015,6 +4104,7 @@
       ],
       "row_count": 3,
       "field_classifications": {
+        "customer_id": "identifier",
         "order_date": "temporal",
         "status": "categorical",
         "total_amount": "pricing",
@@ -4061,6 +4151,9 @@
       "has_primary_key": true,
       "has_foreign_keys": true,
       "has_sensitive_fields": false,
+      "row_count_projection_1y": 3,
+      "row_count_projection_2y": 3,
+      "row_count_projection_5y": 3,
       "partition_columns_candidates": [
         "order_date",
         "created_at",
@@ -4104,6 +4197,15 @@
             "severity": "info",
             "detail": "Column is nullable but has 0 NULLs across 3 row(s)",
             "recommendation": "Consider adding a NOT NULL constraint if the column should always have a value"
+          },
+          {
+            "column": null,
+            "check": "timestamp_ordering",
+            "severity": "info",
+            "detail": "Table has both 'created_at' and 'updated_at' but no CHECK constraint guaranteeing created_at <= updated_at.",
+            "recommendation": "Add CHECK (created_at <= updated_at) to enforce temporal consistency.",
+            "created_column": "created_at",
+            "updated_column": "updated_at"
           },
           {
             "column": null,
@@ -4492,6 +4594,9 @@
       "has_primary_key": true,
       "has_foreign_keys": false,
       "has_sensitive_fields": true,
+      "row_count_projection_1y": 2,
+      "row_count_projection_2y": 2,
+      "row_count_projection_5y": 2,
       "partition_columns_candidates": [
         "created_at",
         "updated_at"
@@ -4586,6 +4691,15 @@
             "severity": "info",
             "detail": "Column is nullable but has 0 NULLs across 2 row(s)",
             "recommendation": "Consider adding a NOT NULL constraint if the column should always have a value"
+          },
+          {
+            "column": null,
+            "check": "timestamp_ordering",
+            "severity": "info",
+            "detail": "Table has both 'created_at' and 'updated_at' but no CHECK constraint guaranteeing created_at <= updated_at.",
+            "recommendation": "Add CHECK (created_at <= updated_at) to enforce temporal consistency.",
+            "created_column": "created_at",
+            "updated_column": "updated_at"
           },
           {
             "column": null,
@@ -4699,7 +4813,7 @@
             "max": "Eoin Byrne"
           },
           "data_category": "nominal",
-          "semantic_class": null,
+          "semantic_class": "person_name",
           "unit_context": null,
           "concept_id": "contact.person_name",
           "concept_confidence": 0.55,
@@ -4849,6 +4963,7 @@
       "foreign_keys": [],
       "row_count": 2,
       "field_classifications": {
+        "contact_name": "person_name",
         "email": "contact",
         "phone": "contact",
         "created_at": "temporal",
@@ -4872,6 +4987,9 @@
       "has_primary_key": true,
       "has_foreign_keys": false,
       "has_sensitive_fields": true,
+      "row_count_projection_1y": 2,
+      "row_count_projection_2y": 2,
+      "row_count_projection_5y": 2,
       "partition_columns_candidates": [
         "created_at",
         "updated_at"
@@ -4912,6 +5030,15 @@
             "severity": "info",
             "detail": "Column is nullable but has 0 NULLs across 2 row(s)",
             "recommendation": "Consider adding a NOT NULL constraint if the column should always have a value"
+          },
+          {
+            "column": null,
+            "check": "timestamp_ordering",
+            "severity": "info",
+            "detail": "Table has both 'created_at' and 'updated_at' but no CHECK constraint guaranteeing created_at <= updated_at.",
+            "recommendation": "Add CHECK (created_at <= updated_at) to enforce temporal consistency.",
+            "created_column": "created_at",
+            "updated_column": "updated_at"
           },
           {
             "column": null,

@@ -7,8 +7,8 @@ from pathlib import Path
 from openpyxl import load_workbook
 
 
-WRITER_PATH = Path("/home/filip/Projects/skills/.cursor/skills/json-to-excel-export/scripts/json_to_excel.py")
-READER_PATH = Path("/home/filip/Projects/skills/.cursor/skills/json-to-excel-export/scripts/excel_to_json.py")
+WRITER_PATH = Path("/home/fillip/projec/cursorskills/.cursor/skills/json-to-excel-export/scripts/json_to_excel.py")
+READER_PATH = Path("/home/fillip/projec/cursorskills/.cursor/skills/json-to-excel-export/scripts/excel_to_json.py")
 
 
 def _load_module(name, path):
@@ -100,6 +100,7 @@ class JsonExcelLayoutTests(unittest.TestCase):
             "source_system_context": {
                 "contacts": [{"name": "Alex", "role": "Owner", "email": "alex@example.com"}],
                 "delete_management_instruction": "Use soft deletes",
+                "restrictions": [{"table_name": "customers", "type": "privacy", "scope": "internal", "details": "Mask exports", "owner": "security"}],
             },
             "tables": [
                 {
@@ -109,6 +110,9 @@ class JsonExcelLayoutTests(unittest.TestCase):
                     "primary_keys": ["customer_id"],
                     "foreign_keys": [],
                     "row_count": 10,
+                    "row_count_projection_1y": 15,
+                    "row_count_projection_2y": 20,
+                    "row_count_projection_5y": 35,
                     "field_classifications": {"email": "contact"},
                     "sensitive_fields": {"email": "pii_contact"},
                     "incremental_columns": ["updated_at"],
@@ -178,6 +182,9 @@ class JsonExcelLayoutTests(unittest.TestCase):
                     "primary_keys": ["employee_id"],
                     "foreign_keys": [{"column": "manager_id", "references": "employees.employee_id"}],
                     "row_count": 5,
+                    "row_count_projection_1y": 5,
+                    "row_count_projection_2y": 5,
+                    "row_count_projection_5y": 5,
                     "field_classifications": {},
                     "sensitive_fields": {},
                     "incremental_columns": [],
@@ -222,6 +229,7 @@ class JsonExcelLayoutTests(unittest.TestCase):
             self.assertIn("Summary", wb.sheetnames)
             self.assertIn("SourceSystem", wb.sheetnames)
             self.assertIn("DataQualityFindings", wb.sheetnames)
+            self.assertIn("Glossary", wb.sheetnames)
             self.assertIn("customers", wb.sheetnames)
             self.assertIn("employees", wb.sheetnames)
             self.assertNotIn("Tables", wb.sheetnames)
@@ -230,10 +238,47 @@ class JsonExcelLayoutTests(unittest.TestCase):
             self.assertNotIn("JoinCandidates", wb.sheetnames)
 
             customer_sections = _section_rows(wb["customers"])
+            source_sections = _section_rows(wb["SourceSystem"])
+            glossary_rows = list(wb["Glossary"].iter_rows(values_only=True))
             self.assertIn("Overview", customer_sections)
             self.assertIn("Columns", customer_sections)
             self.assertIn("DataQualityFindings", customer_sections)
+            self.assertNotIn("FieldContextManual", source_sections)
+            self.assertNotIn("FieldClassifications", customer_sections)
+            self.assertNotIn("SensitiveFields", customer_sections)
+            self.assertEqual(glossary_rows[0], ("Field", "Description"))
+            glossary_fields = {row[0] for row in glossary_rows[1:] if row and row[0]}
+            self.assertTrue(
+                {
+                    "semantic_class",
+                    "concept_id",
+                    "concept_confidence",
+                    "concept_alias_group",
+                    "concept_evidence_json",
+                    "concept_sources_json",
+                    "unit",
+                    "unit_source",
+                    "canonical_unit",
+                    "unit_system",
+                    "unit_confidence",
+                    "unit_notes",
+                    "factor_to_canonical",
+                    "offset_to_canonical",
+                    "conversion_formula",
+                }.issubset(glossary_fields)
+            )
+            self.assertEqual(list(source_sections["RestrictionsManual"][0].keys())[0], "table_name")
+            self.assertIn("classification", customer_sections["Columns"][0])
+            self.assertIn("sensitivity_label", customer_sections["Columns"][0])
+            self.assertNotIn("is_incremental", customer_sections["Columns"][0])
+            self.assertEqual(
+                list(customer_sections["Overview"][0].keys())[-3:],
+                ["row_count_projection_1y", "row_count_projection_2y", "row_count_projection_5y"],
+            )
             self.assertEqual(customer_sections["Overview"][0]["table_name"], "customers")
+            self.assertEqual(customer_sections["Overview"][0]["row_count_projection_1y"], 15)
+            self.assertEqual(customer_sections["Overview"][0]["row_count_projection_2y"], 20)
+            self.assertEqual(customer_sections["Overview"][0]["row_count_projection_5y"], 35)
 
     def test_reader_applies_edits_from_source_and_table_sheets(self):
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -243,19 +288,30 @@ class JsonExcelLayoutTests(unittest.TestCase):
             wb = load_workbook(output)
             _set_section_value(wb["SourceSystem"], "Metadata", "value", "app", match_col="property", match_value="schema_filter")
             _set_section_value(wb["customers"], "Overview", "row_count", 25)
-            _set_section_value(wb["customers"], "FieldClassifications", "classification", "customer_contact", match_col="column_name", match_value="email")
+            _set_section_value(wb["customers"], "Overview", "row_count_projection_1y", 99)
+            _set_section_value(wb["customers"], "Overview", "row_count_projection_2y", 199)
+            _set_section_value(wb["customers"], "Overview", "row_count_projection_5y", 499)
+            _set_section_value(wb["customers"], "Columns", "classification", "customer_contact", match_col="column_name", match_value="email")
+            _set_section_value(wb["customers"], "Columns", "sensitivity_label", "pii_email", match_col="column_name", match_value="email")
             _set_section_value(wb["customers"], "Columns", "description", "Preferred email", match_col="column_name", match_value="email")
             _set_section_value(wb["customers"], "DataQualityFindings", "detail", "Emails still missing", match_col="finding_index", match_value=1)
+            wb["Glossary"]["B2"] = "Changed glossary text should be ignored"
             wb.save(output)
 
             edited_wb = load_workbook(output, data_only=True)
             payload = excel_to_json._read_roundtrip_payload(edited_wb)
+            self.assertNotIn("Glossary", excel_to_json._visible_table_sheets(edited_wb))
             excel_to_json.apply_all_visible_edits(edited_wb, payload)
 
             self.assertEqual(payload["metadata"]["schema_filter"], "app")
+            self.assertNotIn("field_context_manual", payload["source_system_context"])
             customers = next(table for table in payload["tables"] if table["table"] == "customers")
             self.assertEqual(customers["row_count"], 25)
+            self.assertEqual(customers["row_count_projection_1y"], 15)
+            self.assertEqual(customers["row_count_projection_2y"], 20)
+            self.assertEqual(customers["row_count_projection_5y"], 35)
             self.assertEqual(customers["field_classifications"]["email"], "customer_contact")
+            self.assertEqual(customers["sensitive_fields"]["email"], "pii_email")
             email_col = next(col for col in customers["columns"] if col["name"] == "email")
             self.assertEqual(email_col["description"], "Preferred email")
             self.assertEqual(customers["data_quality"]["findings"][0]["detail"], "Emails still missing")

@@ -5,7 +5,41 @@ import types
 import unittest
 from unittest.mock import patch
 
-from fastapi import HTTPException
+try:
+    from fastapi import HTTPException
+except ModuleNotFoundError:
+    fastapi = types.ModuleType("fastapi")
+
+    class HTTPException(Exception):
+        def __init__(self, status_code, detail):
+            super().__init__(detail)
+            self.status_code = status_code
+            self.detail = detail
+
+    class APIRouter:
+        def __init__(self, *args, **kwargs):
+            pass
+
+        def get(self, *args, **kwargs):
+            def decorator(fn):
+                return fn
+            return decorator
+
+    def Depends(value):
+        return value
+
+    def Header(default=None, **kwargs):
+        return default
+
+    def Query(default=None, **kwargs):
+        return default
+
+    fastapi.HTTPException = HTTPException
+    fastapi.APIRouter = APIRouter
+    fastapi.Depends = Depends
+    fastapi.Header = Header
+    fastapi.Query = Query
+    sys.modules["fastapi"] = fastapi
 
 sqlalchemy = types.ModuleType("sqlalchemy")
 sqlalchemy.create_engine = lambda *args, **kwargs: None
@@ -19,9 +53,9 @@ sqlalchemy_engine = types.ModuleType("sqlalchemy.engine")
 sqlalchemy_engine.Engine = object
 sqlalchemy_exc = types.ModuleType("sqlalchemy.exc")
 sqlalchemy_exc.SAWarning = Warning
-sys.modules.setdefault("sqlalchemy", sqlalchemy)
-sys.modules.setdefault("sqlalchemy.engine", sqlalchemy_engine)
-sys.modules.setdefault("sqlalchemy.exc", sqlalchemy_exc)
+sys.modules["sqlalchemy"] = sqlalchemy
+sys.modules["sqlalchemy.engine"] = sqlalchemy_engine
+sys.modules["sqlalchemy.exc"] = sqlalchemy_exc
 
 from api.auth import require_bearer_token
 from api import routes
@@ -54,6 +88,10 @@ class ApiAnalyzeEndpointTests(unittest.TestCase):
                 {
                     "table": "customers",
                     "schema": "public",
+                    "row_count": 10,
+                    "row_count_projection_1y": 15,
+                    "row_count_projection_2y": 20,
+                    "row_count_projection_5y": 35,
                     "classification_summary": {"concept_counts": {}, "low_confidence_columns": []},
                     "data_quality": {"findings": []},
                     "unit_summary": {"columns_with_units": 0, "columns_without_units": 1, "mixed_unit_groups": [], "unknown_unit_columns": []},

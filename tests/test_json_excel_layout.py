@@ -271,6 +271,10 @@ class JsonExcelLayoutTests(unittest.TestCase):
             self.assertIn("classification", customer_sections["Columns"][0])
             self.assertIn("sensitivity_label", customer_sections["Columns"][0])
             self.assertNotIn("is_incremental", customer_sections["Columns"][0])
+            self.assertNotIn("primary_keys", customer_sections["Overview"][0])
+            self.assertNotIn("incremental_columns", customer_sections["Overview"][0])
+            self.assertNotIn("partition_columns", customer_sections["Overview"][0])
+            self.assertNotIn("partition_columns_candidates", customer_sections["Overview"][0])
             self.assertEqual(
                 list(customer_sections["Overview"][0].keys())[-3:],
                 ["row_count_projection_1y", "row_count_projection_2y", "row_count_projection_5y"],

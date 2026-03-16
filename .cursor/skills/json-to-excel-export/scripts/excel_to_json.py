@@ -962,10 +962,14 @@ def _apply_table_sheet_overview(table, row):
     _set_if_changed(table, "has_foreign_keys", row.get("has_foreign_keys"), parser=_parse_bool)
     _set_if_changed(table, "has_sensitive_fields", row.get("has_sensitive_fields"), parser=_parse_bool)
     _set_if_changed(table, "cdc_enabled", row.get("cdc_enabled"), parser=_parse_bool)
-    _set_if_changed(table, "primary_keys", row.get("primary_keys"), parser=_split_csv)
-    _set_if_changed(table, "incremental_columns", row.get("incremental_columns"), parser=_split_csv)
-    _set_if_changed(table, "partition_columns", row.get("partition_columns"), parser=_split_csv)
-    _set_if_changed(table, "partition_columns_candidates", row.get("partition_columns_candidates"), parser=_split_csv)
+    for field in (
+        "primary_keys",
+        "incremental_columns",
+        "partition_columns",
+        "partition_columns_candidates",
+    ):
+        if field in row:
+            _set_if_changed(table, field, row.get(field), parser=_split_csv)
     _set_if_changed(table, "table_description", row.get("table_description"))
 
     for sheet_key, json_key in {

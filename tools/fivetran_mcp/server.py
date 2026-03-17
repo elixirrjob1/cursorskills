@@ -369,6 +369,26 @@ def resume_connector(connector_id: str) -> str:
 
 
 @mcp.tool()
+def trigger_sync(connector_id: str, force: bool = False) -> str:
+    """Trigger a manual sync for a connector. Use force=True to stop any in-progress sync and restart."""
+    response = _request(
+        "POST",
+        f"connections/{connector_id}/sync",
+        payload={"force": force},
+    )
+    data = response.get("data", {}) if response else {}
+    return json.dumps(
+        {
+            "success": True,
+            "connector_id": connector_id,
+            "data": data,
+            "message": "Sync triggered successfully",
+        },
+        indent=2,
+    )
+
+
+@mcp.tool()
 def get_connector_metadata(connector_type: str) -> str:
     """Discover required fields for a connector type."""
     response = _request("GET", f"metadata/connectors/{connector_type}")

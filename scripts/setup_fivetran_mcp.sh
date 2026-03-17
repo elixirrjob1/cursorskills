@@ -11,8 +11,9 @@ LAUNCHER_PATH="$ROOT_DIR/tools/fivetran_mcp/run.sh"
 
 mkdir -p "$(dirname "$MCP_JSON")"
 
+# No env block: credentials are loaded from project .env by run.sh
 SERVER_JSON=$(cat <<EOF
-{"command":"$LAUNCHER_PATH","env":{"FIVETRAN_API_KEY":"YOUR_FIVETRAN_API_KEY","FIVETRAN_API_SECRET":"YOUR_FIVETRAN_API_SECRET"}}
+{"command":"$LAUNCHER_PATH"}
 EOF
 )
 
@@ -23,7 +24,7 @@ if [[ ! -f "$MCP_JSON" ]]; then
   }
 }" > "$MCP_JSON"
   echo "Created $MCP_JSON with fivetran-example."
-  echo "Set real FIVETRAN_API_KEY and FIVETRAN_API_SECRET values before using it."
+  echo "Set FIVETRAN_API_KEY and FIVETRAN_API_SECRET in project .env."
   exit 0
 fi
 
@@ -32,16 +33,14 @@ if command -v jq >/dev/null 2>&1; then
   jq --argjson server "$SERVER_JSON" '.mcpServers = (.mcpServers // {}) | .mcpServers["fivetran-example"] = $server' "$MCP_JSON" > "$tmp"
   mv "$tmp" "$MCP_JSON"
   echo "Updated $MCP_JSON with fivetran-example."
-  echo "Set real FIVETRAN_API_KEY and FIVETRAN_API_SECRET values before using it."
+  echo "Set FIVETRAN_API_KEY and FIVETRAN_API_SECRET in project .env."
   exit 0
 fi
 
 echo "jq not found. Add the following under mcpServers in $MCP_JSON manually:"
 echo ""
 echo '  "fivetran-example": {'
-echo "    \"command\": \"$LAUNCHER_PATH\","
-echo '    "env": {'
-echo '      "FIVETRAN_API_KEY": "YOUR_FIVETRAN_API_KEY",'
-echo '      "FIVETRAN_API_SECRET": "YOUR_FIVETRAN_API_SECRET"'
-echo '    }'
+echo "    \"command\": \"$LAUNCHER_PATH\""
 echo '  }'
+echo ""
+echo "Credentials are loaded from project .env by run.sh."

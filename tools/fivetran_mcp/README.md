@@ -36,6 +36,7 @@ export FIVETRAN_API_SECRET="your_secret"
 - `get_connector_status`
 - `pause_connector`
 - `resume_connector`
+- `trigger_sync`
 - `get_connector_metadata`
 - `get_connection_schema_config`
 - `get_table_columns_config`

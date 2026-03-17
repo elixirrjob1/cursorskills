@@ -37,6 +37,14 @@ export FIVETRAN_API_SECRET="your_secret"
 - `pause_connector`
 - `resume_connector`
 - `trigger_sync`
+- `resync_connector`
+- `get_connection_details`
+- `list_webhooks`
+- `create_group_webhook`
+- `update_webhook`
+- `delete_webhook`
+- `list_users`
+- `get_user_details`
 - `get_connector_metadata`
 - `get_connection_schema_config`
 - `get_table_columns_config`

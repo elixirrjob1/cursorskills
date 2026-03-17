@@ -64,10 +64,16 @@ def _request(
                 response = requests.patch(
                     url, headers=headers, auth=auth, json=payload, timeout=timeout
                 )
+            elif method == "DELETE":
+                response = requests.delete(
+                    url, headers=headers, auth=auth, timeout=timeout
+                )
             else:
                 raise ValueError(f"Unsupported method: {method}")
 
             response.raise_for_status()
+            if response.status_code == 204:
+                return {"code": "Success", "message": "Request completed"}
             return response.json()
         except requests.exceptions.Timeout:
             if attempt == max_retries - 1:
@@ -172,6 +178,31 @@ def get_connector_status(connector_id: str) -> str:
         {
             "success": True,
             "data": response.get("data", {}) if response else {},
+        },
+        indent=2,
+    )
+
+
+@mcp.tool()
+def get_connection_details(connector_id: str) -> str:
+    """Fetch full connection details including sync status (succeeded_at, failed_at, setup_tests, tasks, warnings)."""
+    response = _request("GET", f"connections/{connector_id}")
+    data = response.get("data", {}) if response else {}
+    status = data.get("status", {})
+    return json.dumps(
+        {
+            "success": True,
+            "connector_id": connector_id,
+            "sync_state": status.get("sync_state"),
+            "update_state": status.get("update_state"),
+            "setup_state": status.get("setup_state"),
+            "succeeded_at": data.get("succeeded_at"),
+            "failed_at": data.get("failed_at"),
+            "is_historical_sync": status.get("is_historical_sync"),
+            "tasks": status.get("tasks", []),
+            "warnings": status.get("warnings", []),
+            "setup_tests": data.get("setup_tests", []),
+            "data": data,
         },
         indent=2,
     )
@@ -340,6 +371,133 @@ def run_destination_setup_tests(destination_id: str) -> str:
     )
 
 
+# --- Webhooks ---
+
+
+@mcp.tool()
+def list_webhooks(cursor: str | None = None, limit: int = 100) -> str:
+    """List all webhooks in the account."""
+    params = _clean_dict({"cursor": cursor, "limit": limit})
+    response = _request("GET", "webhooks", params=params)
+    data = response.get("data", {}) if response else {}
+    items = data.get("items", [])
+    return json.dumps(
+        {
+            "success": True,
+            "count": len(items),
+            "webhooks": items,
+            "next_cursor": data.get("next_cursor"),
+        },
+        indent=2,
+    )
+
+
+@mcp.tool()
+def create_group_webhook(
+    group_id: str,
+    url: str,
+    events: list[str],
+    active: bool = True,
+    secret: str | None = None,
+) -> str:
+    """Create a webhook for a group. Events can include sync_start, sync_end, connection_failure, etc."""
+    payload = _clean_dict(
+        {"url": url, "events": events, "active": active, "secret": secret}
+    )
+    response = _request("POST", f"webhooks/group/{group_id}", payload=payload)
+    data = response.get("data", {}) if response else {}
+    return json.dumps(
+        {
+            "success": True,
+            "webhook_id": data.get("id"),
+            "data": data,
+            "message": "Group webhook created",
+        },
+        indent=2,
+    )
+
+
+@mcp.tool()
+def update_webhook(
+    webhook_id: str,
+    url: str | None = None,
+    events: list[str] | None = None,
+    active: bool | None = None,
+    secret: str | None = None,
+) -> str:
+    """Update an existing webhook."""
+    payload = _clean_dict(
+        {"url": url, "events": events, "active": active, "secret": secret}
+    )
+    if not payload:
+        raise RuntimeError("At least one field (url, events, active, secret) must be provided.")
+    response = _request("PATCH", f"webhooks/{webhook_id}", payload=payload)
+    data = response.get("data", {}) if response else {}
+    return json.dumps(
+        {
+            "success": True,
+            "webhook_id": webhook_id,
+            "data": data,
+            "message": "Webhook updated",
+        },
+        indent=2,
+    )
+
+
+@mcp.tool()
+def delete_webhook(webhook_id: str) -> str:
+    """Delete a webhook."""
+    response = _request("DELETE", f"webhooks/{webhook_id}")
+    return json.dumps(
+        {
+            "success": True,
+            "webhook_id": webhook_id,
+            "message": "Webhook deleted",
+        },
+        indent=2,
+    )
+
+
+# --- Users ---
+
+
+@mcp.tool()
+def list_users(
+    cursor: str | None = None,
+    limit: int = 100,
+    active: bool | None = None,
+) -> str:
+    """List all users in the Fivetran account."""
+    params = _clean_dict({"cursor": cursor, "limit": limit, "active": active})
+    response = _request("GET", "users", params=params)
+    data = response.get("data", {}) if response else {}
+    items = data.get("items", [])
+    return json.dumps(
+        {
+            "success": True,
+            "count": len(items),
+            "users": items,
+            "next_cursor": data.get("next_cursor"),
+        },
+        indent=2,
+    )
+
+
+@mcp.tool()
+def get_user_details(user_id: str) -> str:
+    """Fetch details for a specific user."""
+    response = _request("GET", f"users/{user_id}")
+    data = response.get("data", {}) if response else {}
+    return json.dumps(
+        {
+            "success": True,
+            "user_id": user_id,
+            "data": data,
+        },
+        indent=2,
+    )
+
+
 @mcp.tool()
 def pause_connector(connector_id: str) -> str:
     """Pause a connector to stop syncing."""
@@ -383,6 +541,29 @@ def trigger_sync(connector_id: str, force: bool = False) -> str:
             "connector_id": connector_id,
             "data": data,
             "message": "Sync triggered successfully",
+        },
+        indent=2,
+    )
+
+
+@mcp.tool()
+def resync_connector(
+    connector_id: str,
+    scope: dict[str, list[str]] | None = None,
+) -> str:
+    """Trigger a historical re-sync for a connector. Optionally pass scope to re-sync specific tables, e.g. {'dbo': ['customers', 'orders']}. If scope is omitted, all tables are re-synced."""
+    payload = _clean_dict({"scope": scope}) if scope else {}
+    response = _request(
+        "POST",
+        f"connections/{connector_id}/resync",
+        payload=payload if payload else None,
+    )
+    msg = response.get("message", "Re-sync triggered") if response else "Re-sync triggered"
+    return json.dumps(
+        {
+            "success": True,
+            "connector_id": connector_id,
+            "message": msg,
         },
         indent=2,
     )

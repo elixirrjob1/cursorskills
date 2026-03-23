@@ -1,7 +1,7 @@
 {
   "metadata": {
-    "generated_at": "2026-03-12T15:25:12.285698+00:00",
-    "database_url": "pioneertest.database.windows.net:1433/free-sql-db-3300567?driver=ODBC+Driver+18+for+SQL+Server&TrustServerCertificate=yes&timeout=30",
+    "generated_at": "2026-03-23T11:13:47.310583+00:00",
+    "database_url": "pioneertest.database.windows.net:1433/free-sql-db-3300567?driver=ODBC+Driver+18+for+SQL+Server&TrustServerCertificate=yes",
     "schema_filter": "dbo",
     "total_tables": 10,
     "total_rows": 1364,

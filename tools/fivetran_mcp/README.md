@@ -37,6 +37,7 @@ export FIVETRAN_API_SECRET="your_secret"
 - `pause_connector`
 - `resume_connector`
 - `trigger_sync`
+- `run_connection_setup_tests`
 - `resync_connector`
 - `get_connection_details`
 - `list_webhooks`
@@ -54,6 +55,8 @@ export FIVETRAN_API_SECRET="your_secret"
 - `update_column_config`
 - `update_connector`
 - `create_connector`
+- `delete_connection`
+- `delete_destination`
 
 ## Typical refinement flow
 

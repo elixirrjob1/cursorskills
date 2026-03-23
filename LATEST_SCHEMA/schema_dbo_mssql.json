@@ -1,6 +1,6 @@
 {
   "metadata": {
-    "generated_at": "2026-03-16T14:06:08.466941+00:00",
+    "generated_at": "2026-03-23T11:13:47.310583+00:00",
     "database_url": "pioneertest.database.windows.net:1433/free-sql-db-3300567?driver=ODBC+Driver+18+for+SQL+Server&TrustServerCertificate=yes",
     "schema_filter": "dbo",
     "total_tables": 10,
@@ -348,8 +348,8 @@
   },
   "data_quality_summary": {
     "critical": 0,
-    "warning": 18,
-    "info": 46,
+    "warning": 27,
+    "info": 37,
     "by_check": {
       "controlled_value_candidate": 7,
       "nullable_but_never_null": 13,
@@ -623,7 +623,7 @@
         "mixed_unit_groups": [],
         "unknown_unit_columns": []
       },
-      "cdc_enabled": true,
+      "cdc_enabled": false,
       "has_primary_key": true,
       "has_foreign_keys": false,
       "has_sensitive_fields": true,
@@ -673,10 +673,10 @@
           {
             "column": null,
             "check": "delete_management",
-            "severity": "info",
-            "detail": "No soft-delete column found, but CDC is enabled. Hard deletes can be captured via change data capture.",
-            "recommendation": "Use CDC (e.g. Debezium, pgoutput) to capture DELETE events.",
-            "delete_strategy": "hard_delete_with_cdc",
+            "severity": "warning",
+            "detail": "No soft-delete column detected and CDC is not enabled. Table likely uses hard deletes invisible to incremental ingestion.",
+            "recommendation": "Consider: (1) Add soft-delete column, (2) Enable CDC via ALTER TABLE \u2026 REPLICA IDENTITY FULL, or (3) Plan periodic full-load syncs.",
+            "delete_strategy": "hard_delete",
             "soft_delete_column": null,
             "soft_delete_type": null,
             "has_audit_trail": false
@@ -1021,7 +1021,7 @@
         "mixed_unit_groups": [],
         "unknown_unit_columns": []
       },
-      "cdc_enabled": true,
+      "cdc_enabled": false,
       "has_primary_key": true,
       "has_foreign_keys": true,
       "has_sensitive_fields": true,
@@ -1076,10 +1076,10 @@
           {
             "column": null,
             "check": "delete_management",
-            "severity": "info",
-            "detail": "No soft-delete column found, but CDC is enabled. Hard deletes can be captured via change data capture.",
-            "recommendation": "Use CDC (e.g. Debezium, pgoutput) to capture DELETE events.",
-            "delete_strategy": "hard_delete_with_cdc",
+            "severity": "warning",
+            "detail": "No soft-delete column detected and CDC is not enabled. Table likely uses hard deletes invisible to incremental ingestion.",
+            "recommendation": "Consider: (1) Add soft-delete column, (2) Enable CDC via ALTER TABLE \u2026 REPLICA IDENTITY FULL, or (3) Plan periodic full-load syncs.",
+            "delete_strategy": "hard_delete",
             "soft_delete_column": null,
             "soft_delete_type": null,
             "has_audit_trail": false
@@ -1480,7 +1480,7 @@
           "quantity_on_hand"
         ]
       },
-      "cdc_enabled": true,
+      "cdc_enabled": false,
       "has_primary_key": true,
       "has_foreign_keys": true,
       "has_sensitive_fields": false,
@@ -1526,10 +1526,10 @@
           {
             "column": null,
             "check": "delete_management",
-            "severity": "info",
-            "detail": "No soft-delete column found, but CDC is enabled. Hard deletes can be captured via change data capture.",
-            "recommendation": "Use CDC (e.g. Debezium, pgoutput) to capture DELETE events.",
-            "delete_strategy": "hard_delete_with_cdc",
+            "severity": "warning",
+            "detail": "No soft-delete column detected and CDC is not enabled. Table likely uses hard deletes invisible to incremental ingestion.",
+            "recommendation": "Consider: (1) Add soft-delete column, (2) Enable CDC via ALTER TABLE \u2026 REPLICA IDENTITY FULL, or (3) Plan periodic full-load syncs.",
+            "delete_strategy": "hard_delete",
             "soft_delete_column": null,
             "soft_delete_type": null,
             "has_audit_trail": false
@@ -2092,7 +2092,7 @@
           "weight_value"
         ]
       },
-      "cdc_enabled": true,
+      "cdc_enabled": false,
       "has_primary_key": true,
       "has_foreign_keys": true,
       "has_sensitive_fields": false,
@@ -2571,7 +2571,7 @@
           "quantity"
         ]
       },
-      "cdc_enabled": true,
+      "cdc_enabled": false,
       "has_primary_key": true,
       "has_foreign_keys": true,
       "has_sensitive_fields": false,
@@ -2606,10 +2606,10 @@
           {
             "column": null,
             "check": "delete_management",
-            "severity": "info",
-            "detail": "No soft-delete column found, but CDC is enabled. Hard deletes can be captured via change data capture.",
-            "recommendation": "Use CDC (e.g. Debezium, pgoutput) to capture DELETE events.",
-            "delete_strategy": "hard_delete_with_cdc",
+            "severity": "warning",
+            "detail": "No soft-delete column detected and CDC is not enabled. Table likely uses hard deletes invisible to incremental ingestion.",
+            "recommendation": "Consider: (1) Add soft-delete column, (2) Enable CDC via ALTER TABLE \u2026 REPLICA IDENTITY FULL, or (3) Plan periodic full-load syncs.",
+            "delete_strategy": "hard_delete",
             "soft_delete_column": null,
             "soft_delete_type": null,
             "has_audit_trail": false
@@ -2997,7 +2997,7 @@
         "mixed_unit_groups": [],
         "unknown_unit_columns": []
       },
-      "cdc_enabled": true,
+      "cdc_enabled": false,
       "has_primary_key": true,
       "has_foreign_keys": true,
       "has_sensitive_fields": false,
@@ -3054,10 +3054,10 @@
           {
             "column": null,
             "check": "delete_management",
-            "severity": "info",
-            "detail": "No soft-delete column found, but CDC is enabled. Hard deletes can be captured via change data capture.",
-            "recommendation": "Use CDC (e.g. Debezium, pgoutput) to capture DELETE events.",
-            "delete_strategy": "hard_delete_with_cdc",
+            "severity": "warning",
+            "detail": "No soft-delete column detected and CDC is not enabled. Table likely uses hard deletes invisible to incremental ingestion.",
+            "recommendation": "Consider: (1) Add soft-delete column, (2) Enable CDC via ALTER TABLE \u2026 REPLICA IDENTITY FULL, or (3) Plan periodic full-load syncs.",
+            "delete_strategy": "hard_delete",
             "soft_delete_column": null,
             "soft_delete_type": null,
             "has_audit_trail": false
@@ -3461,7 +3461,7 @@
           "sold_qty_value"
         ]
       },
-      "cdc_enabled": true,
+      "cdc_enabled": false,
       "has_primary_key": true,
       "has_foreign_keys": true,
       "has_sensitive_fields": false,
@@ -3496,10 +3496,10 @@
           {
             "column": null,
             "check": "delete_management",
-            "severity": "info",
-            "detail": "No soft-delete column found, but CDC is enabled. Hard deletes can be captured via change data capture.",
-            "recommendation": "Use CDC (e.g. Debezium, pgoutput) to capture DELETE events.",
-            "delete_strategy": "hard_delete_with_cdc",
+            "severity": "warning",
+            "detail": "No soft-delete column detected and CDC is not enabled. Table likely uses hard deletes invisible to incremental ingestion.",
+            "recommendation": "Consider: (1) Add soft-delete column, (2) Enable CDC via ALTER TABLE \u2026 REPLICA IDENTITY FULL, or (3) Plan periodic full-load syncs.",
+            "delete_strategy": "hard_delete",
             "soft_delete_column": null,
             "soft_delete_type": null,
             "has_audit_trail": false
@@ -3928,7 +3928,7 @@
         "mixed_unit_groups": [],
         "unknown_unit_columns": []
       },
-      "cdc_enabled": true,
+      "cdc_enabled": false,
       "has_primary_key": true,
       "has_foreign_keys": true,
       "has_sensitive_fields": false,
@@ -3985,10 +3985,10 @@
           {
             "column": null,
             "check": "delete_management",
-            "severity": "info",
-            "detail": "No soft-delete column found, but CDC is enabled. Hard deletes can be captured via change data capture.",
-            "recommendation": "Use CDC (e.g. Debezium, pgoutput) to capture DELETE events.",
-            "delete_strategy": "hard_delete_with_cdc",
+            "severity": "warning",
+            "detail": "No soft-delete column detected and CDC is not enabled. Table likely uses hard deletes invisible to incremental ingestion.",
+            "recommendation": "Consider: (1) Add soft-delete column, (2) Enable CDC via ALTER TABLE \u2026 REPLICA IDENTITY FULL, or (3) Plan periodic full-load syncs.",
+            "delete_strategy": "hard_delete",
             "soft_delete_column": null,
             "soft_delete_type": null,
             "has_audit_trail": false
@@ -4365,7 +4365,7 @@
         "mixed_unit_groups": [],
         "unknown_unit_columns": []
       },
-      "cdc_enabled": true,
+      "cdc_enabled": false,
       "has_primary_key": true,
       "has_foreign_keys": false,
       "has_sensitive_fields": true,
@@ -4484,10 +4484,10 @@
           {
             "column": null,
             "check": "delete_management",
-            "severity": "info",
-            "detail": "No soft-delete column found, but CDC is enabled. Hard deletes can be captured via change data capture.",
-            "recommendation": "Use CDC (e.g. Debezium, pgoutput) to capture DELETE events.",
-            "delete_strategy": "hard_delete_with_cdc",
+            "severity": "warning",
+            "detail": "No soft-delete column detected and CDC is not enabled. Table likely uses hard deletes invisible to incremental ingestion.",
+            "recommendation": "Consider: (1) Add soft-delete column, (2) Enable CDC via ALTER TABLE \u2026 REPLICA IDENTITY FULL, or (3) Plan periodic full-load syncs.",
+            "delete_strategy": "hard_delete",
             "soft_delete_column": null,
             "soft_delete_type": null,
             "has_audit_trail": false
@@ -4759,7 +4759,7 @@
         "mixed_unit_groups": [],
         "unknown_unit_columns": []
       },
-      "cdc_enabled": true,
+      "cdc_enabled": false,
       "has_primary_key": true,
       "has_foreign_keys": false,
       "has_sensitive_fields": true,
@@ -4812,10 +4812,10 @@
           {
             "column": null,
             "check": "delete_management",
-            "severity": "info",
-            "detail": "No soft-delete column found, but CDC is enabled. Hard deletes can be captured via change data capture.",
-            "recommendation": "Use CDC (e.g. Debezium, pgoutput) to capture DELETE events.",
-            "delete_strategy": "hard_delete_with_cdc",
+            "severity": "warning",
+            "detail": "No soft-delete column detected and CDC is not enabled. Table likely uses hard deletes invisible to incremental ingestion.",
+            "recommendation": "Consider: (1) Add soft-delete column, (2) Enable CDC via ALTER TABLE \u2026 REPLICA IDENTITY FULL, or (3) Plan periodic full-load syncs.",
+            "delete_strategy": "hard_delete",
             "soft_delete_column": null,
             "soft_delete_type": null,
             "has_audit_trail": false

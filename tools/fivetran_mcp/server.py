@@ -458,6 +458,36 @@ def delete_webhook(webhook_id: str) -> str:
     )
 
 
+@mcp.tool()
+def delete_connection(connector_id: str) -> str:
+    """Delete a connection (connector). Delete all connections in the group before deleting the destination."""
+    response = _request("DELETE", f"connections/{connector_id}")
+    return json.dumps(
+        {
+            "success": True,
+            "connector_id": connector_id,
+            "message": "Connection deleted",
+            "data": response if response else {},
+        },
+        indent=2,
+    )
+
+
+@mcp.tool()
+def delete_destination(destination_id: str) -> str:
+    """Delete a destination. Requires no remaining connections on that destination."""
+    response = _request("DELETE", f"destinations/{destination_id}")
+    return json.dumps(
+        {
+            "success": True,
+            "destination_id": destination_id,
+            "message": "Destination deleted",
+            "data": response if response else {},
+        },
+        indent=2,
+    )
+
+
 # --- Users ---
 
 
@@ -541,6 +571,40 @@ def trigger_sync(connector_id: str, force: bool = False) -> str:
             "connector_id": connector_id,
             "data": data,
             "message": "Sync triggered successfully",
+        },
+        indent=2,
+    )
+
+
+@mcp.tool()
+def run_connection_setup_tests(
+    connector_id: str,
+    trust_certificates: bool = True,
+    trust_fingerprints: bool = True,
+) -> str:
+    """Run setup tests for a connection (reconnect / validate without changing config). POST /connections/{id}/test."""
+    payload = _clean_dict(
+        {
+            "trust_certificates": trust_certificates,
+            "trust_fingerprints": trust_fingerprints,
+        }
+    )
+    response = _request(
+        "POST",
+        f"connections/{connector_id}/test",
+        payload=payload if payload else {},
+    )
+    data = response.get("data", {}) if response else {}
+    status = data.get("status", {})
+    return json.dumps(
+        {
+            "success": True,
+            "connector_id": connector_id,
+            "setup_state": status.get("setup_state"),
+            "sync_state": status.get("sync_state"),
+            "setup_tests": data.get("setup_tests", []),
+            "data": data,
+            "message": "Setup tests completed",
         },
         indent=2,
     )

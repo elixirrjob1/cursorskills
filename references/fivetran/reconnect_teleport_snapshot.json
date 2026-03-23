@@ -1,0 +1,47 @@
+{
+  "_description": "Fivetran reconnect template — no secrets. Passwords load at runtime from Key Vault secret names below.",
+  "keyvault_secret_names": {
+    "AZURE_MSSQL_URL": "AZURE-MSSQL-URL",
+    "DATABASE_URL": "DATABASE-URL"
+  },
+  "group_id": "horns_nozzle",
+  "legacy_connection_ids_to_delete": [
+    "insatiable_cyst",
+    "gosling_advertisement"
+  ],
+  "legacy_destination_id": "horns_nozzle",
+  "destination": {
+    "service": "postgres_warehouse",
+    "region": "AWS_US_EAST_1",
+    "time_zone_offset": "-8",
+    "run_setup_tests": true,
+    "networking_method": "Directly",
+    "config": {
+      "host": "aws-1-eu-central-2.pooler.supabase.com",
+      "port": "5432",
+      "database": "postgres",
+      "user": "postgres.vqivfgsieizbsqmukbfx",
+      "auth_method": "PASSWORD",
+      "connection_type": "Directly",
+      "always_encrypted": true,
+      "skip_initial_sync": false
+    }
+  },
+  "sql_server_connector": {
+    "service": "sql_server",
+    "sync_frequency": 1440,
+    "paused": false,
+    "config": {
+      "schema_prefix": "mssql_",
+      "host": "pioneertest.database.windows.net",
+      "port": 1433,
+      "database": "free-sql-db-3300567",
+      "user": "pioneertest",
+      "connection_type": "Directly",
+      "always_encrypted": true,
+      "enable_tde": false,
+      "tde_setting": "OFF",
+      "update_method": "TELEPORT"
+    }
+  }
+}

@@ -521,12 +521,13 @@ def _collect_database_snapshot(conn, dialect: str, run_id: int, snapshot_date) -
 
         elif dialect == "mssql":
             total_size = int(conn.execute(text("SELECT SUM(size) * 8 * 1024 FROM sys.database_files")).scalar() or 0)
+            # value_in_use is sql_variant; pyodbc cannot bind ODBC type -16. Cast in T-SQL.
             cfg = conn.execute(
                 text(
                     """
-                    SELECT name, value_in_use
+                    SELECT name, CONVERT(BIGINT, value_in_use) AS value_in_use
                     FROM sys.configurations
-                    WHERE name IN ('max server memory (MB)', 'user connections')
+                    WHERE name IN (N'max server memory (MB)', N'user connections')
                     """
                 )
             ).fetchall()

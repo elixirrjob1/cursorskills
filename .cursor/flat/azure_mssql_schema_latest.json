@@ -1,0 +1,4854 @@
+{
+  "metadata": {
+    "generated_at": "2026-03-24T10:43:41.148032+00:00",
+    "database_url": "pioneertest.database.windows.net:1433/free-sql-db-3300567?driver=ODBC+Driver+18+for+SQL+Server&TrustServerCertificate=yes",
+    "schema_filter": "dbo",
+    "total_tables": 10,
+    "total_rows": 1364,
+    "total_findings": 64
+  },
+  "connection": {
+    "host": "pioneertest.database.windows.net",
+    "port": "1433",
+    "database": "free-sql-db-3300567",
+    "driver": "mssql",
+    "timezone": "(UTC) Coordinated Universal Time"
+  },
+  "source_system_context": {
+    "contacts": [],
+    "delete_management_instruction": "",
+    "restrictions": "",
+    "late_arriving_data_manual": "",
+    "volume_size_projection_manual": ""
+  },
+  "concept_registry": {
+    "version": 1,
+    "taxonomy": "domain-dot",
+    "generated_from_tables": 10,
+    "concepts": [
+      {
+        "concept_id": "contact.address",
+        "column_count": 2,
+        "table_count": 1,
+        "avg_confidence": 0.55,
+        "alias_groups": [
+          "address",
+          "postal_code"
+        ],
+        "sample_columns": [
+          "stores.address",
+          "stores.postal_code"
+        ],
+        "signals": [
+          "name",
+          "type"
+        ]
+      },
+      {
+        "concept_id": "contact.email",
+        "column_count": 3,
+        "table_count": 3,
+        "avg_confidence": 1.0,
+        "alias_groups": [
+          "email"
+        ],
+        "sample_columns": [
+          "customers.email",
+          "employees.email",
+          "suppliers.email"
+        ],
+        "signals": [
+          "name",
+          "profile",
+          "table_context",
+          "type",
+          "values"
+        ]
+      },
+      {
+        "concept_id": "contact.person_name",
+        "column_count": 8,
+        "table_count": 5,
+        "avg_confidence": 0.56,
+        "alias_groups": [
+          "contact_name",
+          "first_name",
+          "last_name",
+          "name"
+        ],
+        "sample_columns": [
+          "customers.first_name",
+          "customers.last_name",
+          "employees.first_name",
+          "employees.last_name",
+          "products.name"
+        ],
+        "signals": [
+          "name",
+          "table_context",
+          "type"
+        ]
+      },
+      {
+        "concept_id": "contact.phone",
+        "column_count": 3,
+        "table_count": 3,
+        "avg_confidence": 1.0,
+        "alias_groups": [
+          "phone"
+        ],
+        "sample_columns": [
+          "customers.phone",
+          "stores.phone",
+          "suppliers.phone"
+        ],
+        "signals": [
+          "name",
+          "profile",
+          "table_context",
+          "type",
+          "values"
+        ]
+      },
+      {
+        "concept_id": "entity.category",
+        "column_count": 1,
+        "table_count": 1,
+        "avg_confidence": 0.8,
+        "alias_groups": [
+          "category"
+        ],
+        "sample_columns": [
+          "products.category"
+        ],
+        "signals": [
+          "name",
+          "profile",
+          "type"
+        ]
+      },
+      {
+        "concept_id": "entity.status",
+        "column_count": 2,
+        "table_count": 2,
+        "avg_confidence": 1.0,
+        "alias_groups": [
+          "statu"
+        ],
+        "sample_columns": [
+          "purchase_orders.status",
+          "sales_orders.status"
+        ],
+        "signals": [
+          "name",
+          "profile",
+          "type",
+          "values"
+        ]
+      },
+      {
+        "concept_id": "entity.type",
+        "column_count": 1,
+        "table_count": 1,
+        "avg_confidence": 0.65,
+        "alias_groups": [
+          "role"
+        ],
+        "sample_columns": [
+          "employees.role"
+        ],
+        "signals": [
+          "name",
+          "profile",
+          "type"
+        ]
+      },
+      {
+        "concept_id": "finance.currency_amount",
+        "column_count": 5,
+        "table_count": 4,
+        "avg_confidence": 1.0,
+        "alias_groups": [
+          "amount",
+          "price",
+          "unit_cost"
+        ],
+        "sample_columns": [
+          "products.unit_price",
+          "products.cost_price",
+          "purchase_order_items.unit_cost",
+          "sales_order_items.unit_price",
+          "sales_orders.total_amount"
+        ],
+        "signals": [
+          "name",
+          "profile",
+          "table_context",
+          "type",
+          "values"
+        ]
+      },
+      {
+        "concept_id": "identifier.foreign_key",
+        "column_count": 26,
+        "table_count": 10,
+        "avg_confidence": 0.78,
+        "alias_groups": [
+          "id"
+        ],
+        "sample_columns": [
+          "customers.customer_id",
+          "employees.employee_id",
+          "employees.store_id",
+          "inventory.inventory_id",
+          "inventory.store_id"
+        ],
+        "signals": [
+          "cross_table_consensus",
+          "name",
+          "profile",
+          "type"
+        ]
+      },
+      {
+        "concept_id": "identifier.product_code",
+        "column_count": 1,
+        "table_count": 1,
+        "avg_confidence": 0.7,
+        "alias_groups": [
+          "sku"
+        ],
+        "sample_columns": [
+          "products.sku"
+        ],
+        "signals": [
+          "name",
+          "profile",
+          "type"
+        ]
+      },
+      {
+        "concept_id": "measure.quantity",
+        "column_count": 7,
+        "table_count": 3,
+        "avg_confidence": 1.0,
+        "alias_groups": [
+          "ordered_qty",
+          "ordered_qty_unit",
+          "quantity",
+          "quantity_on_hand",
+          "sold_qty",
+          "sold_qty_unit"
+        ],
+        "sample_columns": [
+          "inventory.quantity_on_hand",
+          "purchase_order_items.quantity",
+          "purchase_order_items.ordered_qty_value",
+          "purchase_order_items.ordered_qty_unit",
+          "sales_order_items.quantity"
+        ],
+        "signals": [
+          "name",
+          "profile",
+          "type",
+          "values"
+        ]
+      },
+      {
+        "concept_id": "temporal.created_at",
+        "column_count": 10,
+        "table_count": 10,
+        "avg_confidence": 1.0,
+        "alias_groups": [
+          "created_at"
+        ],
+        "sample_columns": [
+          "customers.created_at",
+          "employees.created_at",
+          "inventory.created_at",
+          "products.created_at",
+          "purchase_order_items.created_at"
+        ],
+        "signals": [
+          "name",
+          "profile",
+          "table_context",
+          "type",
+          "values"
+        ]
+      },
+      {
+        "concept_id": "temporal.date_only",
+        "column_count": 4,
+        "table_count": 3,
+        "avg_confidence": 0.97,
+        "alias_groups": [
+          "expected_date",
+          "hire_date",
+          "order_date"
+        ],
+        "sample_columns": [
+          "employees.hire_date",
+          "purchase_orders.order_date",
+          "purchase_orders.expected_date",
+          "sales_orders.order_date"
+        ],
+        "signals": [
+          "cross_table_consensus",
+          "name",
+          "profile",
+          "table_context",
+          "type",
+          "values"
+        ]
+      },
+      {
+        "concept_id": "temporal.event_time",
+        "column_count": 1,
+        "table_count": 1,
+        "avg_confidence": 1.0,
+        "alias_groups": [
+          "last_restocked_at"
+        ],
+        "sample_columns": [
+          "inventory.last_restocked_at"
+        ],
+        "signals": [
+          "name",
+          "profile",
+          "table_context",
+          "type",
+          "values"
+        ]
+      },
+      {
+        "concept_id": "temporal.updated_at",
+        "column_count": 10,
+        "table_count": 10,
+        "avg_confidence": 1.0,
+        "alias_groups": [
+          "updated_at"
+        ],
+        "sample_columns": [
+          "customers.updated_at",
+          "employees.updated_at",
+          "inventory.updated_at",
+          "products.updated_at",
+          "purchase_order_items.updated_at"
+        ],
+        "signals": [
+          "name",
+          "profile",
+          "table_context",
+          "type",
+          "values"
+        ]
+      }
+    ]
+  },
+  "data_quality_summary": {
+    "critical": 0,
+    "warning": 27,
+    "info": 37,
+    "by_check": {
+      "controlled_value_candidate": 7,
+      "nullable_but_never_null": 13,
+      "missing_primary_key": 0,
+      "missing_foreign_key": 0,
+      "format_inconsistency": 0,
+      "range_violation": 0,
+      "timestamp_ordering": 10,
+      "delete_management": 10,
+      "late_arriving_data": 3,
+      "timezone": 10,
+      "unit_unknown": 11,
+      "unit_noncanonical_but_convertible": 0,
+      "unit_mismatch_within_semantic_group": 0
+    },
+    "constraints_found": {
+      "check_constraints": 0,
+      "enum_columns": 0,
+      "unique_constraints": 10
+    }
+  },
+  "tables": [
+    {
+      "table": "customers",
+      "schema": "dbo",
+      "columns": [
+        {
+          "name": "customer_id",
+          "type": "bigint",
+          "nullable": false,
+          "is_incremental": false,
+          "cardinality": 100,
+          "null_count": 0,
+          "data_range": {
+            "min": "404",
+            "max": "503"
+          },
+          "data_category": "discrete",
+          "semantic_class": "customer_identifier",
+          "unit_context": null,
+          "concept_id": "identifier.foreign_key",
+          "concept_confidence": 0.6,
+          "concept_evidence": [
+            "name token: id",
+            "type hint: bigint",
+            "cross-table consensus: 16 similar columns",
+            "ambiguous runner-up concept"
+          ],
+          "concept_sources": [
+            "cross_table_consensus",
+            "name",
+            "type"
+          ],
+          "concept_alias_group": "id"
+        },
+        {
+          "name": "first_name",
+          "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+          "nullable": false,
+          "is_incremental": false,
+          "cardinality": 100,
+          "null_count": 0,
+          "data_range": {
+            "min": "Customer1",
+            "max": "Customer99"
+          },
+          "data_category": "nominal",
+          "semantic_class": "given_name",
+          "unit_context": null,
+          "concept_id": "contact.person_name",
+          "concept_confidence": 0.6,
+          "concept_evidence": [
+            "name token: first_name",
+            "type hint: nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+            "table context: customers"
+          ],
+          "concept_sources": [
+            "name",
+            "table_context",
+            "type"
+          ],
+          "concept_alias_group": "first_name"
+        },
+        {
+          "name": "last_name",
+          "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+          "nullable": false,
+          "is_incremental": false,
+          "cardinality": 100,
+          "null_count": 0,
+          "data_range": {
+            "min": "LastName1",
+            "max": "LastName99"
+          },
+          "data_category": "nominal",
+          "semantic_class": "family_name",
+          "unit_context": null,
+          "concept_id": "contact.person_name",
+          "concept_confidence": 0.6,
+          "concept_evidence": [
+            "name token: last_name",
+            "type hint: nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+            "table context: customers"
+          ],
+          "concept_sources": [
+            "name",
+            "table_context",
+            "type"
+          ],
+          "concept_alias_group": "last_name"
+        },
+        {
+          "name": "email",
+          "type": "nvarchar(450)",
+          "nullable": true,
+          "is_incremental": false,
+          "cardinality": 100,
+          "null_count": 0,
+          "data_range": {
+            "min": "customer1@example.com",
+            "max": "customer99@example.com"
+          },
+          "data_category": "nominal",
+          "semantic_class": "contact",
+          "unit_context": null,
+          "concept_id": "contact.email",
+          "concept_confidence": 1.0,
+          "concept_evidence": [
+            "name token: email",
+            "type hint: nvarchar(450)",
+            "legacy field classification: contact",
+            "value pattern: email",
+            "table context: customers",
+            "sensitive hint: pii_contact"
+          ],
+          "concept_sources": [
+            "name",
+            "profile",
+            "table_context",
+            "type",
+            "values"
+          ],
+          "concept_alias_group": "email"
+        },
+        {
+          "name": "phone",
+          "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+          "nullable": true,
+          "is_incremental": false,
+          "cardinality": 100,
+          "null_count": 0,
+          "data_range": {
+            "min": "555-1001",
+            "max": "555-1100"
+          },
+          "data_category": "nominal",
+          "semantic_class": "contact",
+          "unit_context": null,
+          "concept_id": "contact.phone",
+          "concept_confidence": 1.0,
+          "concept_evidence": [
+            "name token: phone",
+            "type hint: nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+            "legacy field classification: contact",
+            "value pattern: phone",
+            "table context: customers",
+            "sensitive hint: pii_contact"
+          ],
+          "concept_sources": [
+            "name",
+            "profile",
+            "table_context",
+            "type",
+            "values"
+          ],
+          "concept_alias_group": "phone"
+        },
+        {
+          "name": "created_at",
+          "type": "datetime2",
+          "nullable": false,
+          "is_incremental": false,
+          "column_timezone": "(UTC) Coordinated Universal Time",
+          "cardinality": 95,
+          "null_count": 0,
+          "data_range": {
+            "min": "2021-03-23 15:38:57.201565",
+            "max": "2026-02-26 15:38:57.201565"
+          },
+          "data_category": "continuous",
+          "semantic_class": "timestamp",
+          "unit_context": null,
+          "concept_id": "temporal.created_at",
+          "concept_confidence": 1.0,
+          "concept_evidence": [
+            "name token: created_at",
+            "type hint: datetime2",
+            "legacy field classification: temporal",
+            "value pattern: timestamp",
+            "table context: customers"
+          ],
+          "concept_sources": [
+            "name",
+            "profile",
+            "table_context",
+            "type",
+            "values"
+          ],
+          "concept_alias_group": "created_at"
+        },
+        {
+          "name": "updated_at",
+          "type": "datetime2",
+          "nullable": false,
+          "is_incremental": true,
+          "column_timezone": "(UTC) Coordinated Universal Time",
+          "cardinality": 95,
+          "null_count": 0,
+          "data_range": {
+            "min": "2021-03-23 15:38:57.201565",
+            "max": "2026-02-26 15:38:57.201565"
+          },
+          "data_category": "continuous",
+          "semantic_class": "timestamp",
+          "unit_context": null,
+          "concept_id": "temporal.updated_at",
+          "concept_confidence": 1.0,
+          "concept_evidence": [
+            "name token: updated_at",
+            "type hint: datetime2",
+            "legacy field classification: temporal",
+            "value pattern: timestamp",
+            "table context: customers"
+          ],
+          "concept_sources": [
+            "name",
+            "profile",
+            "table_context",
+            "type",
+            "values"
+          ],
+          "concept_alias_group": "updated_at"
+        }
+      ],
+      "table_description": null,
+      "primary_keys": [
+        "customer_id"
+      ],
+      "foreign_keys": [],
+      "row_count": 100,
+      "field_classifications": {
+        "customer_id": "identifier",
+        "first_name": "person_name",
+        "last_name": "person_name",
+        "email": "contact",
+        "phone": "contact",
+        "created_at": "temporal",
+        "updated_at": "temporal"
+      },
+      "sensitive_fields": {
+        "email": "pii_contact",
+        "phone": "pii_contact"
+      },
+      "incremental_columns": [
+        "updated_at"
+      ],
+      "join_candidates": [],
+      "unit_summary": {
+        "columns_with_units": 0,
+        "columns_without_units": 7,
+        "mixed_unit_groups": [],
+        "unknown_unit_columns": []
+      },
+      "cdc_enabled": false,
+      "has_primary_key": true,
+      "has_foreign_keys": false,
+      "has_sensitive_fields": true,
+      "row_count_projection_1y": 126,
+      "row_count_projection_2y": 152,
+      "row_count_projection_5y": 232,
+      "partition_columns_candidates": [
+        "created_at",
+        "updated_at"
+      ],
+      "classification_summary": {
+        "concept_counts": {
+          "contact.email": 1,
+          "contact.person_name": 2,
+          "contact.phone": 1,
+          "identifier.foreign_key": 1,
+          "temporal.created_at": 1,
+          "temporal.updated_at": 1
+        },
+        "low_confidence_columns": []
+      },
+      "data_quality": {
+        "findings": [
+          {
+            "column": "email",
+            "check": "nullable_but_never_null",
+            "severity": "info",
+            "detail": "Column is nullable but has 0 NULLs across 100 row(s)",
+            "recommendation": "Consider adding a NOT NULL constraint if the column should always have a value"
+          },
+          {
+            "column": "phone",
+            "check": "nullable_but_never_null",
+            "severity": "info",
+            "detail": "Column is nullable but has 0 NULLs across 100 row(s)",
+            "recommendation": "Consider adding a NOT NULL constraint if the column should always have a value"
+          },
+          {
+            "column": null,
+            "check": "timestamp_ordering",
+            "severity": "info",
+            "detail": "Table has both 'created_at' and 'updated_at' but no CHECK constraint guaranteeing created_at <= updated_at.",
+            "recommendation": "Add CHECK (created_at <= updated_at) to enforce temporal consistency.",
+            "created_column": "created_at",
+            "updated_column": "updated_at"
+          },
+          {
+            "column": null,
+            "check": "delete_management",
+            "severity": "warning",
+            "detail": "No soft-delete column detected and CDC is not enabled. Table likely uses hard deletes invisible to incremental ingestion.",
+            "recommendation": "Consider: (1) Add soft-delete column, (2) Enable CDC via ALTER TABLE \u2026 REPLICA IDENTITY FULL, or (3) Plan periodic full-load syncs.",
+            "delete_strategy": "hard_delete",
+            "soft_delete_column": null,
+            "soft_delete_type": null,
+            "has_audit_trail": false
+          },
+          {
+            "column": null,
+            "check": "timezone",
+            "severity": "info",
+            "detail": "All 2 date/time column(s) are TZ-naive \u2014 stored values are implicitly in server timezone '(UTC) Coordinated Universal Time'.",
+            "recommendation": "During ingestion, treat all timestamps as '(UTC) Coordinated Universal Time' and convert to UTC.",
+            "server_timezone": "(UTC) Coordinated Universal Time",
+            "columns": [
+              {
+                "column": "created_at",
+                "type": "datetime2",
+                "effective_timezone": "(UTC) Coordinated Universal Time",
+                "is_tz_aware": false
+              },
+              {
+                "column": "updated_at",
+                "type": "datetime2",
+                "effective_timezone": "(UTC) Coordinated Universal Time",
+                "is_tz_aware": false
+              }
+            ],
+            "distinct_timezones": [
+              "(UTC) Coordinated Universal Time"
+            ],
+            "tz_aware_count": 0,
+            "tz_naive_count": 2
+          }
+        ]
+      }
+    },
+    {
+      "table": "employees",
+      "schema": "dbo",
+      "columns": [
+        {
+          "name": "employee_id",
+          "type": "bigint",
+          "nullable": false,
+          "is_incremental": false,
+          "cardinality": 20,
+          "null_count": 0,
+          "data_range": {
+            "min": "64",
+            "max": "83"
+          },
+          "data_category": "discrete",
+          "semantic_class": null,
+          "unit_context": null,
+          "concept_id": "identifier.foreign_key",
+          "concept_confidence": 0.6,
+          "concept_evidence": [
+            "name token: id",
+            "type hint: bigint",
+            "cross-table consensus: 16 similar columns",
+            "ambiguous runner-up concept"
+          ],
+          "concept_sources": [
+            "cross_table_consensus",
+            "name",
+            "type"
+          ],
+          "concept_alias_group": "id"
+        },
+        {
+          "name": "store_id",
+          "type": "bigint",
+          "nullable": false,
+          "is_incremental": false,
+          "cardinality": 5,
+          "null_count": 0,
+          "data_range": {
+            "min": "19",
+            "max": "23"
+          },
+          "data_category": "discrete",
+          "semantic_class": null,
+          "unit_context": null,
+          "concept_id": "identifier.foreign_key",
+          "concept_confidence": 0.9,
+          "concept_evidence": [
+            "name token: id",
+            "type hint: bigint",
+            "structural hint: join candidate"
+          ],
+          "concept_sources": [
+            "name",
+            "profile",
+            "type"
+          ],
+          "concept_alias_group": "id"
+        },
+        {
+          "name": "first_name",
+          "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+          "nullable": false,
+          "is_incremental": false,
+          "cardinality": 20,
+          "null_count": 0,
+          "data_range": {
+            "min": "Employee1",
+            "max": "Employee9"
+          },
+          "data_category": "nominal",
+          "semantic_class": "given_name",
+          "unit_context": null,
+          "concept_id": "contact.person_name",
+          "concept_confidence": 0.55,
+          "concept_evidence": [
+            "name token: first_name",
+            "type hint: nvarchar collate \"sql_latin1_general_cp1_ci_as\""
+          ],
+          "concept_sources": [
+            "name",
+            "type"
+          ],
+          "concept_alias_group": "first_name"
+        },
+        {
+          "name": "last_name",
+          "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+          "nullable": false,
+          "is_incremental": false,
+          "cardinality": 20,
+          "null_count": 0,
+          "data_range": {
+            "min": "LastName1",
+            "max": "LastName9"
+          },
+          "data_category": "nominal",
+          "semantic_class": "family_name",
+          "unit_context": null,
+          "concept_id": "contact.person_name",
+          "concept_confidence": 0.55,
+          "concept_evidence": [
+            "name token: last_name",
+            "type hint: nvarchar collate \"sql_latin1_general_cp1_ci_as\""
+          ],
+          "concept_sources": [
+            "name",
+            "type"
+          ],
+          "concept_alias_group": "last_name"
+        },
+        {
+          "name": "email",
+          "type": "nvarchar(450)",
+          "nullable": false,
+          "is_incremental": false,
+          "cardinality": 20,
+          "null_count": 0,
+          "data_range": {
+            "min": "emp1@example.com",
+            "max": "emp9@example.com"
+          },
+          "data_category": "nominal",
+          "semantic_class": "contact",
+          "unit_context": null,
+          "concept_id": "contact.email",
+          "concept_confidence": 1.0,
+          "concept_evidence": [
+            "name token: email",
+            "type hint: nvarchar(450)",
+            "legacy field classification: contact",
+            "value pattern: email",
+            "sensitive hint: pii_contact"
+          ],
+          "concept_sources": [
+            "name",
+            "profile",
+            "type",
+            "values"
+          ],
+          "concept_alias_group": "email"
+        },
+        {
+          "name": "role",
+          "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+          "nullable": false,
+          "is_incremental": false,
+          "cardinality": 4,
+          "null_count": 0,
+          "data_range": {
+            "min": "Cashier",
+            "max": "Stock"
+          },
+          "data_category": "nominal",
+          "semantic_class": null,
+          "unit_context": null,
+          "concept_id": "entity.type",
+          "concept_confidence": 0.65,
+          "concept_evidence": [
+            "name token: role",
+            "type hint: nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+            "profile heuristic matched"
+          ],
+          "concept_sources": [
+            "name",
+            "profile",
+            "type"
+          ],
+          "concept_alias_group": "role"
+        },
+        {
+          "name": "hire_date",
+          "type": "date",
+          "nullable": false,
+          "is_incremental": false,
+          "cardinality": 20,
+          "null_count": 0,
+          "data_range": {
+            "min": "2021-05-03",
+            "max": "2025-01-26"
+          },
+          "data_category": "continuous",
+          "semantic_class": "timestamp",
+          "unit_context": null,
+          "concept_id": "temporal.date_only",
+          "concept_confidence": 1.0,
+          "concept_evidence": [
+            "name token: hire_date",
+            "type hint: date",
+            "legacy field classification: temporal",
+            "value pattern: date_only",
+            "table context: employees"
+          ],
+          "concept_sources": [
+            "name",
+            "profile",
+            "table_context",
+            "type",
+            "values"
+          ],
+          "concept_alias_group": "hire_date"
+        },
+        {
+          "name": "created_at",
+          "type": "datetime2",
+          "nullable": false,
+          "is_incremental": false,
+          "column_timezone": "(UTC) Coordinated Universal Time",
+          "cardinality": 20,
+          "null_count": 0,
+          "data_range": {
+            "min": "2021-05-03 15:38:57.201565",
+            "max": "2025-01-26 15:38:57.201565"
+          },
+          "data_category": "continuous",
+          "semantic_class": "timestamp",
+          "unit_context": null,
+          "concept_id": "temporal.created_at",
+          "concept_confidence": 1.0,
+          "concept_evidence": [
+            "name token: created_at",
+            "type hint: datetime2",
+            "legacy field classification: temporal",
+            "value pattern: timestamp",
+            "table context: employees"
+          ],
+          "concept_sources": [
+            "name",
+            "profile",
+            "table_context",
+            "type",
+            "values"
+          ],
+          "concept_alias_group": "created_at"
+        },
+        {
+          "name": "updated_at",
+          "type": "datetime2",
+          "nullable": false,
+          "is_incremental": true,
+          "column_timezone": "(UTC) Coordinated Universal Time",
+          "cardinality": 20,
+          "null_count": 0,
+          "data_range": {
+            "min": "2021-05-03 15:38:57.201565",
+            "max": "2025-01-26 15:38:57.201565"
+          },
+          "data_category": "continuous",
+          "semantic_class": "timestamp",
+          "unit_context": null,
+          "concept_id": "temporal.updated_at",
+          "concept_confidence": 1.0,
+          "concept_evidence": [
+            "name token: updated_at",
+            "type hint: datetime2",
+            "legacy field classification: temporal",
+            "value pattern: timestamp",
+            "table context: employees"
+          ],
+          "concept_sources": [
+            "name",
+            "profile",
+            "table_context",
+            "type",
+            "values"
+          ],
+          "concept_alias_group": "updated_at"
+        }
+      ],
+      "table_description": null,
+      "primary_keys": [
+        "employee_id"
+      ],
+      "foreign_keys": [
+        {
+          "column": "store_id",
+          "references": "stores.store_id"
+        }
+      ],
+      "row_count": 20,
+      "field_classifications": {
+        "first_name": "person_name",
+        "last_name": "person_name",
+        "email": "contact",
+        "hire_date": "temporal",
+        "created_at": "temporal",
+        "updated_at": "temporal"
+      },
+      "sensitive_fields": {
+        "email": "pii_contact"
+      },
+      "incremental_columns": [
+        "updated_at"
+      ],
+      "join_candidates": [
+        {
+          "column": "store_id",
+          "target_table": "stores",
+          "target_column": "store_id",
+          "confidence": "high"
+        }
+      ],
+      "unit_summary": {
+        "columns_with_units": 0,
+        "columns_without_units": 9,
+        "mixed_unit_groups": [],
+        "unknown_unit_columns": []
+      },
+      "cdc_enabled": false,
+      "has_primary_key": true,
+      "has_foreign_keys": true,
+      "has_sensitive_fields": true,
+      "row_count_projection_1y": 35,
+      "row_count_projection_2y": 50,
+      "row_count_projection_5y": 96,
+      "partition_columns_candidates": [
+        "hire_date",
+        "created_at",
+        "updated_at"
+      ],
+      "classification_summary": {
+        "concept_counts": {
+          "contact.email": 1,
+          "contact.person_name": 2,
+          "entity.type": 1,
+          "identifier.foreign_key": 2,
+          "temporal.created_at": 1,
+          "temporal.date_only": 1,
+          "temporal.updated_at": 1
+        },
+        "low_confidence_columns": [
+          "first_name",
+          "last_name"
+        ]
+      },
+      "data_quality": {
+        "findings": [
+          {
+            "column": "role",
+            "check": "controlled_value_candidate",
+            "severity": "warning",
+            "detail": "Text column with 4 distinct value(s) ('Cashier', 'Manager', 'Sales', 'Stock') but no CHECK, ENUM, or FK constraint",
+            "recommendation": "Add a CHECK constraint, convert to an ENUM type, or create a lookup/reference table to prevent invalid values",
+            "distinct_values": [
+              "Cashier",
+              "Manager",
+              "Sales",
+              "Stock"
+            ],
+            "cardinality": 4
+          },
+          {
+            "column": null,
+            "check": "timestamp_ordering",
+            "severity": "info",
+            "detail": "Table has both 'created_at' and 'updated_at' but no CHECK constraint guaranteeing created_at <= updated_at.",
+            "recommendation": "Add CHECK (created_at <= updated_at) to enforce temporal consistency.",
+            "created_column": "created_at",
+            "updated_column": "updated_at"
+          },
+          {
+            "column": null,
+            "check": "delete_management",
+            "severity": "warning",
+            "detail": "No soft-delete column detected and CDC is not enabled. Table likely uses hard deletes invisible to incremental ingestion.",
+            "recommendation": "Consider: (1) Add soft-delete column, (2) Enable CDC via ALTER TABLE \u2026 REPLICA IDENTITY FULL, or (3) Plan periodic full-load syncs.",
+            "delete_strategy": "hard_delete",
+            "soft_delete_column": null,
+            "soft_delete_type": null,
+            "has_audit_trail": false
+          },
+          {
+            "column": "hire_date",
+            "check": "late_arriving_data",
+            "severity": "info",
+            "detail": "Minor arrival delay \u2014 max lag between 'hire_date' and 'created_at' is 15.7h (avg 15.7h, P95 15.7h).",
+            "recommendation": "Use 'created_at' as the watermark (preferred). If using 'hire_date', add a 1\u20132 day lookback buffer.",
+            "business_date_column": "hire_date",
+            "system_ts_column": "created_at",
+            "lag_stats": {
+              "total_rows_compared": 20,
+              "min_lag_hours": 15.65,
+              "avg_lag_hours": 15.65,
+              "p95_lag_hours": 15.65,
+              "max_lag_hours": 15.65,
+              "max_lag_days": 0.7,
+              "rows_late_over_1d": 0,
+              "rows_late_over_7d": 0
+            },
+            "recommended_lookback_days": 2
+          },
+          {
+            "column": null,
+            "check": "timezone",
+            "severity": "info",
+            "detail": "All 2 date/time column(s) are TZ-naive \u2014 stored values are implicitly in server timezone '(UTC) Coordinated Universal Time'.",
+            "recommendation": "During ingestion, treat all timestamps as '(UTC) Coordinated Universal Time' and convert to UTC.",
+            "server_timezone": "(UTC) Coordinated Universal Time",
+            "columns": [
+              {
+                "column": "created_at",
+                "type": "datetime2",
+                "effective_timezone": "(UTC) Coordinated Universal Time",
+                "is_tz_aware": false
+              },
+              {
+                "column": "updated_at",
+                "type": "datetime2",
+                "effective_timezone": "(UTC) Coordinated Universal Time",
+                "is_tz_aware": false
+              }
+            ],
+            "distinct_timezones": [
+              "(UTC) Coordinated Universal Time"
+            ],
+            "tz_aware_count": 0,
+            "tz_naive_count": 2
+          }
+        ]
+      }
+    },
+    {
+      "table": "inventory",
+      "schema": "dbo",
+      "columns": [
+        {
+          "name": "inventory_id",
+          "type": "bigint",
+          "nullable": false,
+          "is_incremental": false,
+          "cardinality": 100,
+          "null_count": 0,
+          "data_range": {
+            "min": "8",
+            "max": "107"
+          },
+          "data_category": "discrete",
+          "semantic_class": null,
+          "unit_context": null,
+          "concept_id": "identifier.foreign_key",
+          "concept_confidence": 0.6,
+          "concept_evidence": [
+            "name token: id",
+            "type hint: bigint",
+            "cross-table consensus: 16 similar columns",
+            "ambiguous runner-up concept"
+          ],
+          "concept_sources": [
+            "cross_table_consensus",
+            "name",
+            "type"
+          ],
+          "concept_alias_group": "id"
+        },
+        {
+          "name": "store_id",
+          "type": "bigint",
+          "nullable": false,
+          "is_incremental": false,
+          "cardinality": 5,
+          "null_count": 0,
+          "data_range": {
+            "min": "19",
+            "max": "23"
+          },
+          "data_category": "discrete",
+          "semantic_class": null,
+          "unit_context": null,
+          "concept_id": "identifier.foreign_key",
+          "concept_confidence": 0.9,
+          "concept_evidence": [
+            "name token: id",
+            "type hint: bigint",
+            "structural hint: join candidate"
+          ],
+          "concept_sources": [
+            "name",
+            "profile",
+            "type"
+          ],
+          "concept_alias_group": "id"
+        },
+        {
+          "name": "product_id",
+          "type": "bigint",
+          "nullable": false,
+          "is_incremental": false,
+          "cardinality": 47,
+          "null_count": 0,
+          "data_range": {
+            "min": "156",
+            "max": "205"
+          },
+          "data_category": "discrete",
+          "semantic_class": "product_identifier",
+          "unit_context": null,
+          "concept_id": "identifier.foreign_key",
+          "concept_confidence": 0.9,
+          "concept_evidence": [
+            "name token: id",
+            "type hint: bigint",
+            "structural hint: join candidate"
+          ],
+          "concept_sources": [
+            "name",
+            "profile",
+            "type"
+          ],
+          "concept_alias_group": "id"
+        },
+        {
+          "name": "quantity_on_hand",
+          "type": "integer",
+          "nullable": false,
+          "is_incremental": false,
+          "cardinality": 68,
+          "null_count": 0,
+          "data_range": {
+            "min": "2",
+            "max": "98"
+          },
+          "data_category": "discrete",
+          "semantic_class": "quantity",
+          "unit_context": {
+            "detected_unit": null,
+            "canonical_unit": null,
+            "unit_system": "unknown",
+            "conversion": null,
+            "detection_confidence": "low",
+            "detection_source": "combined",
+            "notes": "Semantic class suggests units, but no explicit source unit token was detected."
+          },
+          "concept_id": "measure.quantity",
+          "concept_confidence": 1.0,
+          "concept_evidence": [
+            "name token: quantity_on_hand",
+            "type hint: integer",
+            "legacy field classification: quantity",
+            "semantic class hint: quantity",
+            "value pattern: quantity",
+            "profile heuristic matched"
+          ],
+          "concept_sources": [
+            "name",
+            "profile",
+            "type",
+            "values"
+          ],
+          "concept_alias_group": "quantity_on_hand"
+        },
+        {
+          "name": "reorder_level",
+          "type": "integer",
+          "nullable": false,
+          "is_incremental": false,
+          "cardinality": 20,
+          "null_count": 0,
+          "data_range": {
+            "min": "10",
+            "max": "29"
+          },
+          "data_category": "discrete",
+          "semantic_class": null,
+          "unit_context": null,
+          "concept_id": null,
+          "concept_confidence": 0.1,
+          "concept_evidence": [
+            "type hint: integer",
+            "profile heuristic matched",
+            "ambiguous runner-up concept"
+          ],
+          "concept_sources": [
+            "profile",
+            "type"
+          ],
+          "concept_alias_group": null
+        },
+        {
+          "name": "last_restocked_at",
+          "type": "datetime2",
+          "nullable": true,
+          "is_incremental": false,
+          "column_timezone": "(UTC) Coordinated Universal Time",
+          "cardinality": 89,
+          "null_count": 0,
+          "data_range": {
+            "min": "2024-03-14 15:38:57.201565",
+            "max": "2026-03-07 15:38:57.201565"
+          },
+          "data_category": "continuous",
+          "semantic_class": "timestamp",
+          "unit_context": null,
+          "concept_id": "temporal.event_time",
+          "concept_confidence": 1.0,
+          "concept_evidence": [
+            "name token: last_restocked_at",
+            "type hint: datetime2",
+            "legacy field classification: temporal",
+            "value pattern: timestamp",
+            "table context: inventory"
+          ],
+          "concept_sources": [
+            "name",
+            "profile",
+            "table_context",
+            "type",
+            "values"
+          ],
+          "concept_alias_group": "last_restocked_at"
+        },
+        {
+          "name": "created_at",
+          "type": "datetime2",
+          "nullable": false,
+          "is_incremental": false,
+          "column_timezone": "(UTC) Coordinated Universal Time",
+          "cardinality": 91,
+          "null_count": 0,
+          "data_range": {
+            "min": "2024-03-05 15:38:57.201565",
+            "max": "2026-02-23 15:38:57.201565"
+          },
+          "data_category": "continuous",
+          "semantic_class": "timestamp",
+          "unit_context": null,
+          "concept_id": "temporal.created_at",
+          "concept_confidence": 1.0,
+          "concept_evidence": [
+            "name token: created_at",
+            "type hint: datetime2",
+            "legacy field classification: temporal",
+            "value pattern: timestamp",
+            "table context: inventory"
+          ],
+          "concept_sources": [
+            "name",
+            "profile",
+            "table_context",
+            "type",
+            "values"
+          ],
+          "concept_alias_group": "created_at"
+        },
+        {
+          "name": "updated_at",
+          "type": "datetime2",
+          "nullable": false,
+          "is_incremental": true,
+          "column_timezone": "(UTC) Coordinated Universal Time",
+          "cardinality": 89,
+          "null_count": 0,
+          "data_range": {
+            "min": "2024-03-14 15:38:57.201565",
+            "max": "2026-03-07 15:38:57.201565"
+          },
+          "data_category": "continuous",
+          "semantic_class": "timestamp",
+          "unit_context": null,
+          "concept_id": "temporal.updated_at",
+          "concept_confidence": 1.0,
+          "concept_evidence": [
+            "name token: updated_at",
+            "type hint: datetime2",
+            "legacy field classification: temporal",
+            "value pattern: timestamp",
+            "table context: inventory"
+          ],
+          "concept_sources": [
+            "name",
+            "profile",
+            "table_context",
+            "type",
+            "values"
+          ],
+          "concept_alias_group": "updated_at"
+        },
+        {
+          "name": "stock_value",
+          "type": "numeric(10,2)",
+          "nullable": true,
+          "is_incremental": false,
+          "cardinality": 0,
+          "null_count": 100,
+          "data_category": "continuous",
+          "semantic_class": null,
+          "unit_context": null,
+          "concept_id": null,
+          "concept_confidence": 0.0,
+          "concept_evidence": [
+            "type hint: numeric(10,2)",
+            "ambiguous runner-up concept"
+          ],
+          "concept_sources": [
+            "type"
+          ],
+          "concept_alias_group": null
+        },
+        {
+          "name": "stock_unit",
+          "type": "nvarchar(16)",
+          "nullable": true,
+          "is_incremental": false,
+          "column_description": "Current stock unit label.",
+          "cardinality": 0,
+          "null_count": 100,
+          "data_category": "nominal",
+          "semantic_class": null,
+          "unit_context": null,
+          "concept_id": null,
+          "concept_confidence": 0.15,
+          "concept_evidence": [
+            "value pattern: quantity",
+            "ambiguous runner-up concept"
+          ],
+          "concept_sources": [
+            "values"
+          ],
+          "concept_alias_group": null
+        }
+      ],
+      "table_description": "Current stock levels with normalized stock unit representation.",
+      "primary_keys": [
+        "inventory_id"
+      ],
+      "foreign_keys": [
+        {
+          "column": "product_id",
+          "references": "products.product_id"
+        },
+        {
+          "column": "store_id",
+          "references": "stores.store_id"
+        }
+      ],
+      "row_count": 100,
+      "field_classifications": {
+        "quantity_on_hand": "quantity",
+        "last_restocked_at": "temporal",
+        "created_at": "temporal",
+        "updated_at": "temporal"
+      },
+      "sensitive_fields": {},
+      "incremental_columns": [
+        "updated_at"
+      ],
+      "join_candidates": [
+        {
+          "column": "product_id",
+          "target_table": "products",
+          "target_column": "product_id",
+          "confidence": "high"
+        },
+        {
+          "column": "store_id",
+          "target_table": "stores",
+          "target_column": "store_id",
+          "confidence": "high"
+        }
+      ],
+      "unit_summary": {
+        "columns_with_units": 0,
+        "columns_without_units": 10,
+        "mixed_unit_groups": [],
+        "unknown_unit_columns": [
+          "quantity_on_hand"
+        ]
+      },
+      "cdc_enabled": false,
+      "has_primary_key": true,
+      "has_foreign_keys": true,
+      "has_sensitive_fields": false,
+      "row_count_projection_1y": 146,
+      "row_count_projection_2y": 193,
+      "row_count_projection_5y": 334,
+      "partition_columns_candidates": [
+        "last_restocked_at",
+        "created_at",
+        "updated_at"
+      ],
+      "classification_summary": {
+        "concept_counts": {
+          "identifier.foreign_key": 3,
+          "measure.quantity": 1,
+          "temporal.created_at": 1,
+          "temporal.event_time": 1,
+          "temporal.updated_at": 1
+        },
+        "low_confidence_columns": [
+          "reorder_level",
+          "stock_unit"
+        ]
+      },
+      "data_quality": {
+        "findings": [
+          {
+            "column": "last_restocked_at",
+            "check": "nullable_but_never_null",
+            "severity": "info",
+            "detail": "Column is nullable but has 0 NULLs across 100 row(s)",
+            "recommendation": "Consider adding a NOT NULL constraint if the column should always have a value"
+          },
+          {
+            "column": null,
+            "check": "timestamp_ordering",
+            "severity": "info",
+            "detail": "Table has both 'created_at' and 'updated_at' but no CHECK constraint guaranteeing created_at <= updated_at.",
+            "recommendation": "Add CHECK (created_at <= updated_at) to enforce temporal consistency.",
+            "created_column": "created_at",
+            "updated_column": "updated_at"
+          },
+          {
+            "column": null,
+            "check": "delete_management",
+            "severity": "warning",
+            "detail": "No soft-delete column detected and CDC is not enabled. Table likely uses hard deletes invisible to incremental ingestion.",
+            "recommendation": "Consider: (1) Add soft-delete column, (2) Enable CDC via ALTER TABLE \u2026 REPLICA IDENTITY FULL, or (3) Plan periodic full-load syncs.",
+            "delete_strategy": "hard_delete",
+            "soft_delete_column": null,
+            "soft_delete_type": null,
+            "has_audit_trail": false
+          },
+          {
+            "column": null,
+            "check": "timezone",
+            "severity": "info",
+            "detail": "All 3 date/time column(s) are TZ-naive \u2014 stored values are implicitly in server timezone '(UTC) Coordinated Universal Time'.",
+            "recommendation": "During ingestion, treat all timestamps as '(UTC) Coordinated Universal Time' and convert to UTC.",
+            "server_timezone": "(UTC) Coordinated Universal Time",
+            "columns": [
+              {
+                "column": "last_restocked_at",
+                "type": "datetime2",
+                "effective_timezone": "(UTC) Coordinated Universal Time",
+                "is_tz_aware": false
+              },
+              {
+                "column": "created_at",
+                "type": "datetime2",
+                "effective_timezone": "(UTC) Coordinated Universal Time",
+                "is_tz_aware": false
+              },
+              {
+                "column": "updated_at",
+                "type": "datetime2",
+                "effective_timezone": "(UTC) Coordinated Universal Time",
+                "is_tz_aware": false
+              }
+            ],
+            "distinct_timezones": [
+              "(UTC) Coordinated Universal Time"
+            ],
+            "tz_aware_count": 0,
+            "tz_naive_count": 3
+          },
+          {
+            "column": "quantity_on_hand",
+            "check": "unit_unknown",
+            "severity": "warning",
+            "detail": "Column semantic class 'quantity' has unknown source units.",
+            "recommendation": "Add explicit source unit mapping for this field to enable safe aggregation."
+          }
+        ]
+      }
+    },
+    {
+      "table": "products",
+      "schema": "dbo",
+      "columns": [
+        {
+          "name": "product_id",
+          "type": "bigint",
+          "nullable": false,
+          "is_incremental": false,
+          "cardinality": 50,
+          "null_count": 0,
+          "data_range": {
+            "min": "156",
+            "max": "205"
+          },
+          "data_category": "discrete",
+          "semantic_class": "product_identifier",
+          "unit_context": null,
+          "concept_id": "identifier.foreign_key",
+          "concept_confidence": 0.6,
+          "concept_evidence": [
+            "name token: id",
+            "type hint: bigint",
+            "cross-table consensus: 16 similar columns",
+            "ambiguous runner-up concept"
+          ],
+          "concept_sources": [
+            "cross_table_consensus",
+            "name",
+            "type"
+          ],
+          "concept_alias_group": "id"
+        },
+        {
+          "name": "supplier_id",
+          "type": "bigint",
+          "nullable": false,
+          "is_incremental": false,
+          "cardinality": 10,
+          "null_count": 0,
+          "data_range": {
+            "min": "33",
+            "max": "42"
+          },
+          "data_category": "discrete",
+          "semantic_class": null,
+          "unit_context": null,
+          "concept_id": "identifier.foreign_key",
+          "concept_confidence": 0.9,
+          "concept_evidence": [
+            "name token: id",
+            "type hint: bigint",
+            "structural hint: join candidate"
+          ],
+          "concept_sources": [
+            "name",
+            "profile",
+            "type"
+          ],
+          "concept_alias_group": "id"
+        },
+        {
+          "name": "sku",
+          "type": "nvarchar(450)",
+          "nullable": false,
+          "is_incremental": false,
+          "cardinality": 50,
+          "null_count": 0,
+          "data_range": {
+            "min": "SKU-0001",
+            "max": "SKU-0050"
+          },
+          "data_category": "nominal",
+          "semantic_class": "product_identifier",
+          "unit_context": null,
+          "concept_id": "identifier.product_code",
+          "concept_confidence": 0.7,
+          "concept_evidence": [
+            "name token: sku",
+            "type hint: nvarchar(450)",
+            "semantic class hint: product_identifier"
+          ],
+          "concept_sources": [
+            "name",
+            "profile",
+            "type"
+          ],
+          "concept_alias_group": "sku"
+        },
+        {
+          "name": "name",
+          "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+          "nullable": false,
+          "is_incremental": false,
+          "cardinality": 50,
+          "null_count": 0,
+          "data_range": {
+            "min": "Product 1",
+            "max": "Product 9"
+          },
+          "data_category": "nominal",
+          "semantic_class": null,
+          "unit_context": null,
+          "concept_id": "contact.person_name",
+          "concept_confidence": 0.55,
+          "concept_evidence": [
+            "name token: name",
+            "type hint: nvarchar collate \"sql_latin1_general_cp1_ci_as\""
+          ],
+          "concept_sources": [
+            "name",
+            "type"
+          ],
+          "concept_alias_group": "name"
+        },
+        {
+          "name": "category",
+          "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+          "nullable": false,
+          "is_incremental": false,
+          "cardinality": 5,
+          "null_count": 0,
+          "data_range": {
+            "min": "Books",
+            "max": "Sports"
+          },
+          "data_category": "nominal",
+          "semantic_class": "category",
+          "unit_context": null,
+          "concept_id": "entity.category",
+          "concept_confidence": 0.8,
+          "concept_evidence": [
+            "name token: category",
+            "type hint: nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+            "legacy field classification: categorical",
+            "profile heuristic matched"
+          ],
+          "concept_sources": [
+            "name",
+            "profile",
+            "type"
+          ],
+          "concept_alias_group": "category"
+        },
+        {
+          "name": "unit_price",
+          "type": "numeric(10,2)",
+          "nullable": false,
+          "is_incremental": false,
+          "cardinality": 50,
+          "null_count": 0,
+          "data_range": {
+            "min": "11.09",
+            "max": "490.43"
+          },
+          "data_category": "continuous",
+          "semantic_class": "currency_amount",
+          "unit_context": null,
+          "concept_id": "finance.currency_amount",
+          "concept_confidence": 1.0,
+          "concept_evidence": [
+            "name token: price",
+            "type hint: numeric(10,2)",
+            "legacy field classification: pricing",
+            "semantic class hint: currency_amount",
+            "value pattern: currency_amount"
+          ],
+          "concept_sources": [
+            "name",
+            "profile",
+            "type",
+            "values"
+          ],
+          "concept_alias_group": "price"
+        },
+        {
+          "name": "cost_price",
+          "type": "numeric(10,2)",
+          "nullable": false,
+          "is_incremental": false,
+          "cardinality": 50,
+          "null_count": 0,
+          "data_range": {
+            "min": "5.55",
+            "max": "358.59"
+          },
+          "data_category": "continuous",
+          "semantic_class": "currency_amount",
+          "unit_context": null,
+          "concept_id": "finance.currency_amount",
+          "concept_confidence": 1.0,
+          "concept_evidence": [
+            "name token: price",
+            "type hint: numeric(10,2)",
+            "legacy field classification: pricing",
+            "semantic class hint: currency_amount",
+            "value pattern: currency_amount"
+          ],
+          "concept_sources": [
+            "name",
+            "profile",
+            "type",
+            "values"
+          ],
+          "concept_alias_group": "price"
+        },
+        {
+          "name": "active",
+          "type": "bit",
+          "nullable": false,
+          "is_incremental": false,
+          "cardinality": 1,
+          "null_count": 0,
+          "data_category": "discrete",
+          "semantic_class": null,
+          "unit_context": null,
+          "concept_id": null,
+          "concept_confidence": 0.0,
+          "concept_evidence": [
+            "profile heuristic matched",
+            "ambiguous runner-up concept"
+          ],
+          "concept_sources": [
+            "profile"
+          ],
+          "concept_alias_group": null
+        },
+        {
+          "name": "created_at",
+          "type": "datetime2",
+          "nullable": false,
+          "is_incremental": false,
+          "column_timezone": "(UTC) Coordinated Universal Time",
+          "cardinality": 50,
+          "null_count": 0,
+          "data_range": {
+            "min": "2021-03-20 15:38:57.201565",
+            "max": "2024-12-25 15:38:57.201565"
+          },
+          "data_category": "continuous",
+          "semantic_class": "timestamp",
+          "unit_context": null,
+          "concept_id": "temporal.created_at",
+          "concept_confidence": 1.0,
+          "concept_evidence": [
+            "name token: created_at",
+            "type hint: datetime2",
+            "legacy field classification: temporal",
+            "value pattern: timestamp",
+            "table context: products"
+          ],
+          "concept_sources": [
+            "name",
+            "profile",
+            "table_context",
+            "type",
+            "values"
+          ],
+          "concept_alias_group": "created_at"
+        },
+        {
+          "name": "updated_at",
+          "type": "datetime2",
+          "nullable": false,
+          "is_incremental": true,
+          "column_timezone": "(UTC) Coordinated Universal Time",
+          "cardinality": 50,
+          "null_count": 0,
+          "data_range": {
+            "min": "2021-03-20 15:38:57.201565",
+            "max": "2024-12-25 15:38:57.201565"
+          },
+          "data_category": "continuous",
+          "semantic_class": "timestamp",
+          "unit_context": null,
+          "concept_id": "temporal.updated_at",
+          "concept_confidence": 1.0,
+          "concept_evidence": [
+            "name token: updated_at",
+            "type hint: datetime2",
+            "legacy field classification: temporal",
+            "value pattern: timestamp",
+            "table context: products"
+          ],
+          "concept_sources": [
+            "name",
+            "profile",
+            "table_context",
+            "type",
+            "values"
+          ],
+          "concept_alias_group": "updated_at"
+        },
+        {
+          "name": "weight_unit",
+          "type": "nvarchar(16)",
+          "nullable": true,
+          "is_incremental": false,
+          "column_description": "Source weight unit (kg/lb) used for unit inference testing.",
+          "cardinality": 0,
+          "null_count": 50,
+          "data_category": "nominal",
+          "semantic_class": "mass",
+          "unit_context": {
+            "detected_unit": null,
+            "canonical_unit": null,
+            "unit_system": "unknown",
+            "conversion": null,
+            "detection_confidence": "low",
+            "detection_source": "combined",
+            "notes": "Semantic class suggests units, but no explicit source unit token was detected."
+          },
+          "concept_id": null,
+          "concept_confidence": 0.15,
+          "concept_evidence": [
+            "value pattern: quantity",
+            "ambiguous runner-up concept"
+          ],
+          "concept_sources": [
+            "values"
+          ],
+          "concept_alias_group": null
+        },
+        {
+          "name": "weight_value",
+          "type": "numeric(10,2)",
+          "nullable": true,
+          "is_incremental": false,
+          "cardinality": 0,
+          "null_count": 50,
+          "data_category": "continuous",
+          "semantic_class": "mass",
+          "unit_context": {
+            "detected_unit": null,
+            "canonical_unit": null,
+            "unit_system": "unknown",
+            "conversion": null,
+            "detection_confidence": "low",
+            "detection_source": "combined",
+            "notes": "Semantic class suggests units, but no explicit source unit token was detected."
+          },
+          "concept_id": null,
+          "concept_confidence": 0.0,
+          "concept_evidence": [
+            "type hint: numeric(10,2)",
+            "ambiguous runner-up concept"
+          ],
+          "concept_sources": [
+            "type"
+          ],
+          "concept_alias_group": null
+        },
+        {
+          "name": "length_value",
+          "type": "numeric(10,2)",
+          "nullable": true,
+          "is_incremental": false,
+          "cardinality": 0,
+          "null_count": 50,
+          "data_category": "continuous",
+          "semantic_class": "length",
+          "unit_context": {
+            "detected_unit": null,
+            "canonical_unit": null,
+            "unit_system": "unknown",
+            "conversion": null,
+            "detection_confidence": "low",
+            "detection_source": "combined",
+            "notes": "Semantic class suggests units, but no explicit source unit token was detected."
+          },
+          "concept_id": null,
+          "concept_confidence": 0.0,
+          "concept_evidence": [
+            "type hint: numeric(10,2)",
+            "ambiguous runner-up concept"
+          ],
+          "concept_sources": [
+            "type"
+          ],
+          "concept_alias_group": null
+        },
+        {
+          "name": "length_unit",
+          "type": "nvarchar(16)",
+          "nullable": true,
+          "is_incremental": false,
+          "column_description": "Source length unit (cm/in) used for unit inference testing.",
+          "cardinality": 0,
+          "null_count": 50,
+          "data_category": "nominal",
+          "semantic_class": "length",
+          "unit_context": {
+            "detected_unit": null,
+            "canonical_unit": null,
+            "unit_system": "unknown",
+            "conversion": null,
+            "detection_confidence": "low",
+            "detection_source": "combined",
+            "notes": "Semantic class suggests units, but no explicit source unit token was detected."
+          },
+          "concept_id": null,
+          "concept_confidence": 0.15,
+          "concept_evidence": [
+            "value pattern: quantity",
+            "ambiguous runner-up concept"
+          ],
+          "concept_sources": [
+            "values"
+          ],
+          "concept_alias_group": null
+        },
+        {
+          "name": "product_description",
+          "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+          "nullable": true,
+          "is_incremental": false,
+          "cardinality": 0,
+          "null_count": 50,
+          "data_category": "nominal",
+          "semantic_class": null,
+          "unit_context": null,
+          "concept_id": null,
+          "concept_confidence": 0.1,
+          "concept_evidence": [
+            "type hint: nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+            "profile heuristic matched",
+            "ambiguous runner-up concept"
+          ],
+          "concept_sources": [
+            "profile",
+            "type"
+          ],
+          "concept_alias_group": null
+        },
+        {
+          "name": "primary_supplier_id",
+          "type": "bigint",
+          "nullable": true,
+          "is_incremental": false,
+          "column_description": "Primary supplier relationship used for join candidate detection.",
+          "cardinality": 10,
+          "null_count": 0,
+          "data_range": {
+            "min": "33",
+            "max": "42"
+          },
+          "data_category": "discrete",
+          "semantic_class": null,
+          "unit_context": null,
+          "concept_id": "identifier.foreign_key",
+          "concept_confidence": 0.9,
+          "concept_evidence": [
+            "name token: id",
+            "type hint: bigint",
+            "structural hint: join candidate"
+          ],
+          "concept_sources": [
+            "name",
+            "profile",
+            "type"
+          ],
+          "concept_alias_group": "id"
+        }
+      ],
+      "table_description": "Master product catalog including physical units for analyzer unit-context testing.",
+      "primary_keys": [
+        "product_id"
+      ],
+      "foreign_keys": [
+        {
+          "column": "primary_supplier_id",
+          "references": "suppliers.supplier_id"
+        },
+        {
+          "column": "supplier_id",
+          "references": "suppliers.supplier_id"
+        }
+      ],
+      "row_count": 50,
+      "field_classifications": {
+        "category": "categorical",
+        "unit_price": "pricing",
+        "cost_price": "pricing",
+        "created_at": "temporal",
+        "updated_at": "temporal"
+      },
+      "sensitive_fields": {},
+      "incremental_columns": [
+        "updated_at"
+      ],
+      "join_candidates": [
+        {
+          "column": "primary_supplier_id",
+          "target_table": "suppliers",
+          "target_column": "supplier_id",
+          "confidence": "high"
+        },
+        {
+          "column": "supplier_id",
+          "target_table": "suppliers",
+          "target_column": "supplier_id",
+          "confidence": "high"
+        }
+      ],
+      "unit_summary": {
+        "columns_with_units": 0,
+        "columns_without_units": 16,
+        "mixed_unit_groups": [],
+        "unknown_unit_columns": [
+          "length_unit",
+          "length_value",
+          "weight_unit",
+          "weight_value"
+        ]
+      },
+      "cdc_enabled": false,
+      "has_primary_key": true,
+      "has_foreign_keys": true,
+      "has_sensitive_fields": false,
+      "row_count_projection_1y": 68,
+      "row_count_projection_2y": 86,
+      "row_count_projection_5y": 141,
+      "partition_columns_candidates": [
+        "created_at",
+        "updated_at"
+      ],
+      "classification_summary": {
+        "concept_counts": {
+          "contact.person_name": 1,
+          "entity.category": 1,
+          "finance.currency_amount": 2,
+          "identifier.foreign_key": 3,
+          "identifier.product_code": 1,
+          "temporal.created_at": 1,
+          "temporal.updated_at": 1
+        },
+        "low_confidence_columns": [
+          "length_unit",
+          "name",
+          "product_description",
+          "weight_unit"
+        ]
+      },
+      "data_quality": {
+        "findings": [
+          {
+            "column": "category",
+            "check": "controlled_value_candidate",
+            "severity": "warning",
+            "detail": "Text column with 5 distinct value(s) ('Books', 'Clothing', 'Electronics', 'Home', 'Sports') but no CHECK, ENUM, or FK constraint",
+            "recommendation": "Add a CHECK constraint, convert to an ENUM type, or create a lookup/reference table to prevent invalid values",
+            "distinct_values": [
+              "Books",
+              "Clothing",
+              "Electronics",
+              "Home",
+              "Sports"
+            ],
+            "cardinality": 5
+          },
+          {
+            "column": "primary_supplier_id",
+            "check": "nullable_but_never_null",
+            "severity": "info",
+            "detail": "Column is nullable but has 0 NULLs across 50 row(s)",
+            "recommendation": "Consider adding a NOT NULL constraint if the column should always have a value"
+          },
+          {
+            "column": null,
+            "check": "timestamp_ordering",
+            "severity": "info",
+            "detail": "Table has both 'created_at' and 'updated_at' but no CHECK constraint guaranteeing created_at <= updated_at.",
+            "recommendation": "Add CHECK (created_at <= updated_at) to enforce temporal consistency.",
+            "created_column": "created_at",
+            "updated_column": "updated_at"
+          },
+          {
+            "column": "active",
+            "check": "delete_management",
+            "severity": "info",
+            "detail": "Active-flag column 'active' (boolean) detected \u2014 rows with active=false are logically deleted. Current distribution: True=50.",
+            "recommendation": "Filter on \"active\" = true for current records during ingestion.",
+            "delete_strategy": "soft_delete",
+            "soft_delete_column": "active",
+            "soft_delete_type": "active_flag",
+            "has_audit_trail": false
+          },
+          {
+            "column": null,
+            "check": "timezone",
+            "severity": "info",
+            "detail": "All 2 date/time column(s) are TZ-naive \u2014 stored values are implicitly in server timezone '(UTC) Coordinated Universal Time'.",
+            "recommendation": "During ingestion, treat all timestamps as '(UTC) Coordinated Universal Time' and convert to UTC.",
+            "server_timezone": "(UTC) Coordinated Universal Time",
+            "columns": [
+              {
+                "column": "created_at",
+                "type": "datetime2",
+                "effective_timezone": "(UTC) Coordinated Universal Time",
+                "is_tz_aware": false
+              },
+              {
+                "column": "updated_at",
+                "type": "datetime2",
+                "effective_timezone": "(UTC) Coordinated Universal Time",
+                "is_tz_aware": false
+              }
+            ],
+            "distinct_timezones": [
+              "(UTC) Coordinated Universal Time"
+            ],
+            "tz_aware_count": 0,
+            "tz_naive_count": 2
+          },
+          {
+            "column": "weight_unit",
+            "check": "unit_unknown",
+            "severity": "warning",
+            "detail": "Column semantic class 'mass' has unknown source units.",
+            "recommendation": "Add explicit source unit mapping for this field to enable safe aggregation."
+          },
+          {
+            "column": "weight_value",
+            "check": "unit_unknown",
+            "severity": "warning",
+            "detail": "Column semantic class 'mass' has unknown source units.",
+            "recommendation": "Add explicit source unit mapping for this field to enable safe aggregation."
+          },
+          {
+            "column": "length_value",
+            "check": "unit_unknown",
+            "severity": "warning",
+            "detail": "Column semantic class 'length' has unknown source units.",
+            "recommendation": "Add explicit source unit mapping for this field to enable safe aggregation."
+          },
+          {
+            "column": "length_unit",
+            "check": "unit_unknown",
+            "severity": "warning",
+            "detail": "Column semantic class 'length' has unknown source units.",
+            "recommendation": "Add explicit source unit mapping for this field to enable safe aggregation."
+          }
+        ]
+      }
+    },
+    {
+      "table": "purchase_order_items",
+      "schema": "dbo",
+      "columns": [
+        {
+          "name": "po_item_id",
+          "type": "bigint",
+          "nullable": false,
+          "is_incremental": false,
+          "cardinality": 246,
+          "null_count": 0,
+          "data_range": {
+            "min": "268",
+            "max": "513"
+          },
+          "data_category": "discrete",
+          "semantic_class": null,
+          "unit_context": null,
+          "concept_id": "identifier.foreign_key",
+          "concept_confidence": 0.6,
+          "concept_evidence": [
+            "name token: id",
+            "type hint: bigint",
+            "cross-table consensus: 16 similar columns",
+            "ambiguous runner-up concept"
+          ],
+          "concept_sources": [
+            "cross_table_consensus",
+            "name",
+            "type"
+          ],
+          "concept_alias_group": "id"
+        },
+        {
+          "name": "po_id",
+          "type": "bigint",
+          "nullable": false,
+          "is_incremental": false,
+          "cardinality": 125,
+          "null_count": 0,
+          "data_range": {
+            "min": "128",
+            "max": "252"
+          },
+          "data_category": "discrete",
+          "semantic_class": null,
+          "unit_context": null,
+          "concept_id": "identifier.foreign_key",
+          "concept_confidence": 0.9,
+          "concept_evidence": [
+            "name token: id",
+            "type hint: bigint",
+            "structural hint: join candidate"
+          ],
+          "concept_sources": [
+            "name",
+            "profile",
+            "type"
+          ],
+          "concept_alias_group": "id"
+        },
+        {
+          "name": "product_id",
+          "type": "bigint",
+          "nullable": false,
+          "is_incremental": false,
+          "cardinality": 49,
+          "null_count": 0,
+          "data_range": {
+            "min": "156",
+            "max": "205"
+          },
+          "data_category": "discrete",
+          "semantic_class": "product_identifier",
+          "unit_context": null,
+          "concept_id": "identifier.foreign_key",
+          "concept_confidence": 0.9,
+          "concept_evidence": [
+            "name token: id",
+            "type hint: bigint",
+            "structural hint: join candidate"
+          ],
+          "concept_sources": [
+            "name",
+            "profile",
+            "type"
+          ],
+          "concept_alias_group": "id"
+        },
+        {
+          "name": "quantity",
+          "type": "integer",
+          "nullable": false,
+          "is_incremental": false,
+          "cardinality": 41,
+          "null_count": 0,
+          "data_range": {
+            "min": "10",
+            "max": "50"
+          },
+          "data_category": "discrete",
+          "semantic_class": "quantity",
+          "unit_context": {
+            "detected_unit": null,
+            "canonical_unit": null,
+            "unit_system": "unknown",
+            "conversion": null,
+            "detection_confidence": "low",
+            "detection_source": "combined",
+            "notes": "Semantic class suggests units, but no explicit source unit token was detected."
+          },
+          "concept_id": "measure.quantity",
+          "concept_confidence": 1.0,
+          "concept_evidence": [
+            "name token: quantity",
+            "type hint: integer",
+            "legacy field classification: quantity",
+            "semantic class hint: quantity",
+            "value pattern: quantity",
+            "profile heuristic matched"
+          ],
+          "concept_sources": [
+            "name",
+            "profile",
+            "type",
+            "values"
+          ],
+          "concept_alias_group": "quantity"
+        },
+        {
+          "name": "unit_cost",
+          "type": "numeric(10,2)",
+          "nullable": false,
+          "is_incremental": false,
+          "cardinality": 49,
+          "null_count": 0,
+          "data_range": {
+            "min": "5.55",
+            "max": "358.59"
+          },
+          "data_category": "continuous",
+          "semantic_class": "currency_amount",
+          "unit_context": null,
+          "concept_id": "finance.currency_amount",
+          "concept_confidence": 1.0,
+          "concept_evidence": [
+            "name token: unit_cost",
+            "type hint: numeric(10,2)",
+            "legacy field classification: pricing",
+            "semantic class hint: currency_amount",
+            "value pattern: currency_amount",
+            "table context: purchase_order_items"
+          ],
+          "concept_sources": [
+            "name",
+            "profile",
+            "table_context",
+            "type",
+            "values"
+          ],
+          "concept_alias_group": "unit_cost"
+        },
+        {
+          "name": "created_at",
+          "type": "datetime2",
+          "nullable": false,
+          "is_incremental": false,
+          "column_timezone": "(UTC) Coordinated Universal Time",
+          "cardinality": 246,
+          "null_count": 0,
+          "data_range": {
+            "min": "2026-03-12 15:44:18.668789",
+            "max": "2026-03-12 15:45:45.174099"
+          },
+          "data_category": "continuous",
+          "semantic_class": "timestamp",
+          "unit_context": null,
+          "concept_id": "temporal.created_at",
+          "concept_confidence": 1.0,
+          "concept_evidence": [
+            "name token: created_at",
+            "type hint: datetime2",
+            "legacy field classification: temporal",
+            "value pattern: timestamp",
+            "table context: purchase_order_items"
+          ],
+          "concept_sources": [
+            "name",
+            "profile",
+            "table_context",
+            "type",
+            "values"
+          ],
+          "concept_alias_group": "created_at"
+        },
+        {
+          "name": "updated_at",
+          "type": "datetime2",
+          "nullable": false,
+          "is_incremental": true,
+          "column_timezone": "(UTC) Coordinated Universal Time",
+          "cardinality": 246,
+          "null_count": 0,
+          "data_range": {
+            "min": "2026-03-12 15:44:18.668794",
+            "max": "2026-03-12 15:45:45.174104"
+          },
+          "data_category": "continuous",
+          "semantic_class": "timestamp",
+          "unit_context": null,
+          "concept_id": "temporal.updated_at",
+          "concept_confidence": 1.0,
+          "concept_evidence": [
+            "name token: updated_at",
+            "type hint: datetime2",
+            "legacy field classification: temporal",
+            "value pattern: timestamp",
+            "table context: purchase_order_items"
+          ],
+          "concept_sources": [
+            "name",
+            "profile",
+            "table_context",
+            "type",
+            "values"
+          ],
+          "concept_alias_group": "updated_at"
+        },
+        {
+          "name": "ordered_qty_value",
+          "type": "numeric(10,2)",
+          "nullable": true,
+          "is_incremental": false,
+          "cardinality": 0,
+          "null_count": 246,
+          "data_category": "continuous",
+          "semantic_class": "quantity",
+          "unit_context": {
+            "detected_unit": null,
+            "canonical_unit": null,
+            "unit_system": "unknown",
+            "conversion": null,
+            "detection_confidence": "low",
+            "detection_source": "combined",
+            "notes": "Semantic class suggests units, but no explicit source unit token was detected."
+          },
+          "concept_id": "measure.quantity",
+          "concept_confidence": 1.0,
+          "concept_evidence": [
+            "name token: ordered_qty",
+            "type hint: numeric(10,2)",
+            "legacy field classification: quantity",
+            "semantic class hint: quantity",
+            "value pattern: quantity"
+          ],
+          "concept_sources": [
+            "name",
+            "profile",
+            "type",
+            "values"
+          ],
+          "concept_alias_group": "ordered_qty"
+        },
+        {
+          "name": "ordered_qty_unit",
+          "type": "nvarchar(16)",
+          "nullable": true,
+          "is_incremental": false,
+          "column_description": "Ordered quantity unit (ea/box).",
+          "cardinality": 0,
+          "null_count": 246,
+          "data_category": "nominal",
+          "semantic_class": "quantity",
+          "unit_context": {
+            "detected_unit": null,
+            "canonical_unit": null,
+            "unit_system": "unknown",
+            "conversion": null,
+            "detection_confidence": "low",
+            "detection_source": "combined",
+            "notes": "Semantic class suggests units, but no explicit source unit token was detected."
+          },
+          "concept_id": "measure.quantity",
+          "concept_confidence": 1.0,
+          "concept_evidence": [
+            "name token: ordered_qty_unit",
+            "legacy field classification: quantity",
+            "semantic class hint: quantity",
+            "value pattern: quantity"
+          ],
+          "concept_sources": [
+            "name",
+            "profile",
+            "values"
+          ],
+          "concept_alias_group": "ordered_qty_unit"
+        }
+      ],
+      "table_description": "Line items with order quantities and explicit unit labels.",
+      "primary_keys": [
+        "po_item_id"
+      ],
+      "foreign_keys": [
+        {
+          "column": "po_id",
+          "references": "purchase_orders.po_id"
+        },
+        {
+          "column": "product_id",
+          "references": "products.product_id"
+        }
+      ],
+      "row_count": 246,
+      "field_classifications": {
+        "quantity": "quantity",
+        "unit_cost": "pricing",
+        "created_at": "temporal",
+        "updated_at": "temporal",
+        "ordered_qty_value": "quantity",
+        "ordered_qty_unit": "quantity"
+      },
+      "sensitive_fields": {},
+      "incremental_columns": [
+        "updated_at"
+      ],
+      "join_candidates": [
+        {
+          "column": "po_id",
+          "target_table": "purchase_orders",
+          "target_column": "po_id",
+          "confidence": "high"
+        },
+        {
+          "column": "product_id",
+          "target_table": "products",
+          "target_column": "product_id",
+          "confidence": "high"
+        }
+      ],
+      "unit_summary": {
+        "columns_with_units": 0,
+        "columns_without_units": 9,
+        "mixed_unit_groups": [],
+        "unknown_unit_columns": [
+          "ordered_qty_unit",
+          "ordered_qty_value",
+          "quantity"
+        ]
+      },
+      "cdc_enabled": false,
+      "has_primary_key": true,
+      "has_foreign_keys": true,
+      "has_sensitive_fields": false,
+      "row_count_projection_1y": 246,
+      "row_count_projection_2y": 246,
+      "row_count_projection_5y": 246,
+      "partition_columns_candidates": [
+        "created_at",
+        "updated_at"
+      ],
+      "classification_summary": {
+        "concept_counts": {
+          "finance.currency_amount": 1,
+          "identifier.foreign_key": 3,
+          "measure.quantity": 3,
+          "temporal.created_at": 1,
+          "temporal.updated_at": 1
+        },
+        "low_confidence_columns": []
+      },
+      "data_quality": {
+        "findings": [
+          {
+            "column": null,
+            "check": "timestamp_ordering",
+            "severity": "info",
+            "detail": "Table has both 'created_at' and 'updated_at' but no CHECK constraint guaranteeing created_at <= updated_at.",
+            "recommendation": "Add CHECK (created_at <= updated_at) to enforce temporal consistency.",
+            "created_column": "created_at",
+            "updated_column": "updated_at"
+          },
+          {
+            "column": null,
+            "check": "delete_management",
+            "severity": "warning",
+            "detail": "No soft-delete column detected and CDC is not enabled. Table likely uses hard deletes invisible to incremental ingestion.",
+            "recommendation": "Consider: (1) Add soft-delete column, (2) Enable CDC via ALTER TABLE \u2026 REPLICA IDENTITY FULL, or (3) Plan periodic full-load syncs.",
+            "delete_strategy": "hard_delete",
+            "soft_delete_column": null,
+            "soft_delete_type": null,
+            "has_audit_trail": false
+          },
+          {
+            "column": null,
+            "check": "timezone",
+            "severity": "info",
+            "detail": "All 2 date/time column(s) are TZ-naive \u2014 stored values are implicitly in server timezone '(UTC) Coordinated Universal Time'.",
+            "recommendation": "During ingestion, treat all timestamps as '(UTC) Coordinated Universal Time' and convert to UTC.",
+            "server_timezone": "(UTC) Coordinated Universal Time",
+            "columns": [
+              {
+                "column": "created_at",
+                "type": "datetime2",
+                "effective_timezone": "(UTC) Coordinated Universal Time",
+                "is_tz_aware": false
+              },
+              {
+                "column": "updated_at",
+                "type": "datetime2",
+                "effective_timezone": "(UTC) Coordinated Universal Time",
+                "is_tz_aware": false
+              }
+            ],
+            "distinct_timezones": [
+              "(UTC) Coordinated Universal Time"
+            ],
+            "tz_aware_count": 0,
+            "tz_naive_count": 2
+          },
+          {
+            "column": "quantity",
+            "check": "unit_unknown",
+            "severity": "warning",
+            "detail": "Column semantic class 'quantity' has unknown source units.",
+            "recommendation": "Add explicit source unit mapping for this field to enable safe aggregation."
+          },
+          {
+            "column": "ordered_qty_value",
+            "check": "unit_unknown",
+            "severity": "warning",
+            "detail": "Column semantic class 'quantity' has unknown source units.",
+            "recommendation": "Add explicit source unit mapping for this field to enable safe aggregation."
+          },
+          {
+            "column": "ordered_qty_unit",
+            "check": "unit_unknown",
+            "severity": "warning",
+            "detail": "Column semantic class 'quantity' has unknown source units.",
+            "recommendation": "Add explicit source unit mapping for this field to enable safe aggregation."
+          }
+        ]
+      }
+    },
+    {
+      "table": "purchase_orders",
+      "schema": "dbo",
+      "columns": [
+        {
+          "name": "po_id",
+          "type": "bigint",
+          "nullable": false,
+          "is_incremental": false,
+          "cardinality": 125,
+          "null_count": 0,
+          "data_range": {
+            "min": "128",
+            "max": "252"
+          },
+          "data_category": "discrete",
+          "semantic_class": null,
+          "unit_context": null,
+          "concept_id": "identifier.foreign_key",
+          "concept_confidence": 0.6,
+          "concept_evidence": [
+            "name token: id",
+            "type hint: bigint",
+            "cross-table consensus: 16 similar columns",
+            "ambiguous runner-up concept"
+          ],
+          "concept_sources": [
+            "cross_table_consensus",
+            "name",
+            "type"
+          ],
+          "concept_alias_group": "id"
+        },
+        {
+          "name": "supplier_id",
+          "type": "bigint",
+          "nullable": false,
+          "is_incremental": false,
+          "cardinality": 10,
+          "null_count": 0,
+          "data_range": {
+            "min": "33",
+            "max": "42"
+          },
+          "data_category": "discrete",
+          "semantic_class": null,
+          "unit_context": null,
+          "concept_id": "identifier.foreign_key",
+          "concept_confidence": 0.9,
+          "concept_evidence": [
+            "name token: id",
+            "type hint: bigint",
+            "structural hint: join candidate"
+          ],
+          "concept_sources": [
+            "name",
+            "profile",
+            "type"
+          ],
+          "concept_alias_group": "id"
+        },
+        {
+          "name": "store_id",
+          "type": "bigint",
+          "nullable": false,
+          "is_incremental": false,
+          "cardinality": 5,
+          "null_count": 0,
+          "data_range": {
+            "min": "19",
+            "max": "23"
+          },
+          "data_category": "discrete",
+          "semantic_class": null,
+          "unit_context": null,
+          "concept_id": "identifier.foreign_key",
+          "concept_confidence": 0.9,
+          "concept_evidence": [
+            "name token: id",
+            "type hint: bigint",
+            "structural hint: join candidate"
+          ],
+          "concept_sources": [
+            "name",
+            "profile",
+            "type"
+          ],
+          "concept_alias_group": "id"
+        },
+        {
+          "name": "status",
+          "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+          "nullable": false,
+          "is_incremental": false,
+          "cardinality": 3,
+          "null_count": 0,
+          "data_range": {
+            "min": "Ordered",
+            "max": "Received"
+          },
+          "data_category": "nominal",
+          "semantic_class": "category",
+          "unit_context": null,
+          "concept_id": "entity.status",
+          "concept_confidence": 1.0,
+          "concept_evidence": [
+            "name token: statu",
+            "type hint: nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+            "legacy field classification: categorical",
+            "value pattern: status",
+            "profile heuristic matched"
+          ],
+          "concept_sources": [
+            "name",
+            "profile",
+            "type",
+            "values"
+          ],
+          "concept_alias_group": "statu"
+        },
+        {
+          "name": "order_date",
+          "type": "date",
+          "nullable": false,
+          "is_incremental": false,
+          "cardinality": 123,
+          "null_count": 0,
+          "data_range": {
+            "min": "2021-04-09",
+            "max": "2026-03-12"
+          },
+          "data_category": "continuous",
+          "semantic_class": "timestamp",
+          "unit_context": null,
+          "concept_id": "temporal.date_only",
+          "concept_confidence": 1.0,
+          "concept_evidence": [
+            "name token: order_date",
+            "type hint: date",
+            "legacy field classification: temporal",
+            "value pattern: date_only",
+            "table context: purchase_orders"
+          ],
+          "concept_sources": [
+            "name",
+            "profile",
+            "table_context",
+            "type",
+            "values"
+          ],
+          "concept_alias_group": "order_date"
+        },
+        {
+          "name": "expected_date",
+          "type": "date",
+          "nullable": true,
+          "is_incremental": false,
+          "cardinality": 123,
+          "null_count": 0,
+          "data_range": {
+            "min": "2021-04-27",
+            "max": "2026-03-31"
+          },
+          "data_category": "continuous",
+          "semantic_class": "timestamp",
+          "unit_context": null,
+          "concept_id": "temporal.date_only",
+          "concept_confidence": 1.0,
+          "concept_evidence": [
+            "name token: expected_date",
+            "type hint: date",
+            "legacy field classification: temporal",
+            "value pattern: date_only",
+            "table context: purchase_orders"
+          ],
+          "concept_sources": [
+            "name",
+            "profile",
+            "table_context",
+            "type",
+            "values"
+          ],
+          "concept_alias_group": "expected_date"
+        },
+        {
+          "name": "created_at",
+          "type": "datetime2",
+          "nullable": false,
+          "is_incremental": false,
+          "column_timezone": "(UTC) Coordinated Universal Time",
+          "cardinality": 123,
+          "null_count": 0,
+          "data_range": {
+            "min": "2021-04-09 15:38:57.201565",
+            "max": "2026-03-12 15:38:57.201565"
+          },
+          "data_category": "continuous",
+          "semantic_class": "timestamp",
+          "unit_context": null,
+          "concept_id": "temporal.created_at",
+          "concept_confidence": 1.0,
+          "concept_evidence": [
+            "name token: created_at",
+            "type hint: datetime2",
+            "legacy field classification: temporal",
+            "value pattern: timestamp",
+            "table context: purchase_orders"
+          ],
+          "concept_sources": [
+            "name",
+            "profile",
+            "table_context",
+            "type",
+            "values"
+          ],
+          "concept_alias_group": "created_at"
+        },
+        {
+          "name": "updated_at",
+          "type": "datetime2",
+          "nullable": false,
+          "is_incremental": true,
+          "column_timezone": "(UTC) Coordinated Universal Time",
+          "cardinality": 123,
+          "null_count": 0,
+          "data_range": {
+            "min": "2021-04-09 15:38:57.201565",
+            "max": "2026-03-12 15:38:57.201565"
+          },
+          "data_category": "continuous",
+          "semantic_class": "timestamp",
+          "unit_context": null,
+          "concept_id": "temporal.updated_at",
+          "concept_confidence": 1.0,
+          "concept_evidence": [
+            "name token: updated_at",
+            "type hint: datetime2",
+            "legacy field classification: temporal",
+            "value pattern: timestamp",
+            "table context: purchase_orders"
+          ],
+          "concept_sources": [
+            "name",
+            "profile",
+            "table_context",
+            "type",
+            "values"
+          ],
+          "concept_alias_group": "updated_at"
+        },
+        {
+          "name": "approver_employee_id",
+          "type": "bigint",
+          "nullable": true,
+          "is_incremental": false,
+          "column_description": "Approver employee foreign key for procurement workflow.",
+          "cardinality": 0,
+          "null_count": 125,
+          "data_category": "discrete",
+          "semantic_class": null,
+          "unit_context": null,
+          "concept_id": "identifier.foreign_key",
+          "concept_confidence": 0.9,
+          "concept_evidence": [
+            "name token: id",
+            "type hint: bigint",
+            "structural hint: join candidate"
+          ],
+          "concept_sources": [
+            "name",
+            "profile",
+            "type"
+          ],
+          "concept_alias_group": "id"
+        }
+      ],
+      "table_description": "Procurement headers including approver employee relationship.",
+      "primary_keys": [
+        "po_id"
+      ],
+      "foreign_keys": [
+        {
+          "column": "approver_employee_id",
+          "references": "employees.employee_id"
+        },
+        {
+          "column": "store_id",
+          "references": "stores.store_id"
+        },
+        {
+          "column": "supplier_id",
+          "references": "suppliers.supplier_id"
+        }
+      ],
+      "row_count": 125,
+      "field_classifications": {
+        "status": "categorical",
+        "order_date": "temporal",
+        "expected_date": "temporal",
+        "created_at": "temporal",
+        "updated_at": "temporal"
+      },
+      "sensitive_fields": {},
+      "incremental_columns": [
+        "updated_at"
+      ],
+      "join_candidates": [
+        {
+          "column": "approver_employee_id",
+          "target_table": "employees",
+          "target_column": "employee_id",
+          "confidence": "high"
+        },
+        {
+          "column": "store_id",
+          "target_table": "stores",
+          "target_column": "store_id",
+          "confidence": "high"
+        },
+        {
+          "column": "supplier_id",
+          "target_table": "suppliers",
+          "target_column": "supplier_id",
+          "confidence": "high"
+        }
+      ],
+      "unit_summary": {
+        "columns_with_units": 0,
+        "columns_without_units": 9,
+        "mixed_unit_groups": [],
+        "unknown_unit_columns": []
+      },
+      "cdc_enabled": false,
+      "has_primary_key": true,
+      "has_foreign_keys": true,
+      "has_sensitive_fields": false,
+      "row_count_projection_1y": 155,
+      "row_count_projection_2y": 185,
+      "row_count_projection_5y": 276,
+      "partition_columns_candidates": [
+        "order_date",
+        "expected_date",
+        "created_at",
+        "updated_at"
+      ],
+      "classification_summary": {
+        "concept_counts": {
+          "entity.status": 1,
+          "identifier.foreign_key": 4,
+          "temporal.created_at": 1,
+          "temporal.date_only": 2,
+          "temporal.updated_at": 1
+        },
+        "low_confidence_columns": []
+      },
+      "data_quality": {
+        "findings": [
+          {
+            "column": "status",
+            "check": "controlled_value_candidate",
+            "severity": "warning",
+            "detail": "Text column with 3 distinct value(s) ('Ordered', 'Pending', 'Received') but no CHECK, ENUM, or FK constraint",
+            "recommendation": "Add a CHECK constraint, convert to an ENUM type, or create a lookup/reference table to prevent invalid values",
+            "distinct_values": [
+              "Ordered",
+              "Pending",
+              "Received"
+            ],
+            "cardinality": 3
+          },
+          {
+            "column": "expected_date",
+            "check": "nullable_but_never_null",
+            "severity": "info",
+            "detail": "Column is nullable but has 0 NULLs across 125 row(s)",
+            "recommendation": "Consider adding a NOT NULL constraint if the column should always have a value"
+          },
+          {
+            "column": null,
+            "check": "timestamp_ordering",
+            "severity": "info",
+            "detail": "Table has both 'created_at' and 'updated_at' but no CHECK constraint guaranteeing created_at <= updated_at.",
+            "recommendation": "Add CHECK (created_at <= updated_at) to enforce temporal consistency.",
+            "created_column": "created_at",
+            "updated_column": "updated_at"
+          },
+          {
+            "column": null,
+            "check": "delete_management",
+            "severity": "warning",
+            "detail": "No soft-delete column detected and CDC is not enabled. Table likely uses hard deletes invisible to incremental ingestion.",
+            "recommendation": "Consider: (1) Add soft-delete column, (2) Enable CDC via ALTER TABLE \u2026 REPLICA IDENTITY FULL, or (3) Plan periodic full-load syncs.",
+            "delete_strategy": "hard_delete",
+            "soft_delete_column": null,
+            "soft_delete_type": null,
+            "has_audit_trail": false
+          },
+          {
+            "column": "order_date",
+            "check": "late_arriving_data",
+            "severity": "info",
+            "detail": "Minor arrival delay \u2014 max lag between 'order_date' and 'created_at' is 15.7h (avg 15.7h, P95 15.7h).",
+            "recommendation": "Use 'created_at' as the watermark (preferred). If using 'order_date', add a 1\u20132 day lookback buffer.",
+            "business_date_column": "order_date",
+            "system_ts_column": "created_at",
+            "lag_stats": {
+              "total_rows_compared": 125,
+              "min_lag_hours": 15.65,
+              "avg_lag_hours": 15.65,
+              "p95_lag_hours": 15.65,
+              "max_lag_hours": 15.65,
+              "max_lag_days": 0.7,
+              "rows_late_over_1d": 0,
+              "rows_late_over_7d": 0
+            },
+            "recommended_lookback_days": 2
+          },
+          {
+            "column": null,
+            "check": "timezone",
+            "severity": "info",
+            "detail": "All 2 date/time column(s) are TZ-naive \u2014 stored values are implicitly in server timezone '(UTC) Coordinated Universal Time'.",
+            "recommendation": "During ingestion, treat all timestamps as '(UTC) Coordinated Universal Time' and convert to UTC.",
+            "server_timezone": "(UTC) Coordinated Universal Time",
+            "columns": [
+              {
+                "column": "created_at",
+                "type": "datetime2",
+                "effective_timezone": "(UTC) Coordinated Universal Time",
+                "is_tz_aware": false
+              },
+              {
+                "column": "updated_at",
+                "type": "datetime2",
+                "effective_timezone": "(UTC) Coordinated Universal Time",
+                "is_tz_aware": false
+              }
+            ],
+            "distinct_timezones": [
+              "(UTC) Coordinated Universal Time"
+            ],
+            "tz_aware_count": 0,
+            "tz_naive_count": 2
+          }
+        ]
+      }
+    },
+    {
+      "table": "sales_order_items",
+      "schema": "dbo",
+      "columns": [
+        {
+          "name": "sales_order_item_id",
+          "type": "bigint",
+          "nullable": false,
+          "is_incremental": false,
+          "cardinality": 508,
+          "null_count": 0,
+          "data_range": {
+            "min": "497",
+            "max": "1004"
+          },
+          "data_category": "discrete",
+          "semantic_class": null,
+          "unit_context": null,
+          "concept_id": "identifier.foreign_key",
+          "concept_confidence": 0.6,
+          "concept_evidence": [
+            "name token: id",
+            "type hint: bigint",
+            "cross-table consensus: 16 similar columns",
+            "ambiguous runner-up concept"
+          ],
+          "concept_sources": [
+            "cross_table_consensus",
+            "name",
+            "type"
+          ],
+          "concept_alias_group": "id"
+        },
+        {
+          "name": "sales_order_id",
+          "type": "bigint",
+          "nullable": false,
+          "is_incremental": false,
+          "cardinality": 200,
+          "null_count": 0,
+          "data_range": {
+            "min": "375",
+            "max": "574"
+          },
+          "data_category": "discrete",
+          "semantic_class": null,
+          "unit_context": null,
+          "concept_id": "identifier.foreign_key",
+          "concept_confidence": 0.9,
+          "concept_evidence": [
+            "name token: id",
+            "type hint: bigint",
+            "structural hint: join candidate"
+          ],
+          "concept_sources": [
+            "name",
+            "profile",
+            "type"
+          ],
+          "concept_alias_group": "id"
+        },
+        {
+          "name": "product_id",
+          "type": "bigint",
+          "nullable": false,
+          "is_incremental": false,
+          "cardinality": 50,
+          "null_count": 0,
+          "data_range": {
+            "min": "156",
+            "max": "205"
+          },
+          "data_category": "discrete",
+          "semantic_class": "product_identifier",
+          "unit_context": null,
+          "concept_id": "identifier.foreign_key",
+          "concept_confidence": 0.9,
+          "concept_evidence": [
+            "name token: id",
+            "type hint: bigint",
+            "structural hint: join candidate"
+          ],
+          "concept_sources": [
+            "name",
+            "profile",
+            "type"
+          ],
+          "concept_alias_group": "id"
+        },
+        {
+          "name": "quantity",
+          "type": "integer",
+          "nullable": false,
+          "is_incremental": false,
+          "cardinality": 5,
+          "null_count": 0,
+          "data_range": {
+            "min": "1",
+            "max": "5"
+          },
+          "data_category": "discrete",
+          "semantic_class": "quantity",
+          "unit_context": {
+            "detected_unit": null,
+            "canonical_unit": null,
+            "unit_system": "unknown",
+            "conversion": null,
+            "detection_confidence": "low",
+            "detection_source": "combined",
+            "notes": "Semantic class suggests units, but no explicit source unit token was detected."
+          },
+          "concept_id": "measure.quantity",
+          "concept_confidence": 1.0,
+          "concept_evidence": [
+            "name token: quantity",
+            "type hint: integer",
+            "legacy field classification: quantity",
+            "semantic class hint: quantity",
+            "value pattern: quantity",
+            "profile heuristic matched"
+          ],
+          "concept_sources": [
+            "name",
+            "profile",
+            "type",
+            "values"
+          ],
+          "concept_alias_group": "quantity"
+        },
+        {
+          "name": "unit_price",
+          "type": "numeric(10,2)",
+          "nullable": false,
+          "is_incremental": false,
+          "cardinality": 50,
+          "null_count": 0,
+          "data_range": {
+            "min": "11.09",
+            "max": "490.43"
+          },
+          "data_category": "continuous",
+          "semantic_class": "currency_amount",
+          "unit_context": null,
+          "concept_id": "finance.currency_amount",
+          "concept_confidence": 1.0,
+          "concept_evidence": [
+            "name token: price",
+            "type hint: numeric(10,2)",
+            "legacy field classification: pricing",
+            "semantic class hint: currency_amount",
+            "value pattern: currency_amount",
+            "table context: sales_order_items"
+          ],
+          "concept_sources": [
+            "name",
+            "profile",
+            "table_context",
+            "type",
+            "values"
+          ],
+          "concept_alias_group": "price"
+        },
+        {
+          "name": "created_at",
+          "type": "datetime2",
+          "nullable": false,
+          "is_incremental": false,
+          "column_timezone": "(UTC) Coordinated Universal Time",
+          "cardinality": 508,
+          "null_count": 0,
+          "data_range": {
+            "min": "2026-03-12 15:41:01.155388",
+            "max": "2026-03-12 15:43:38.264437"
+          },
+          "data_category": "continuous",
+          "semantic_class": "timestamp",
+          "unit_context": null,
+          "concept_id": "temporal.created_at",
+          "concept_confidence": 1.0,
+          "concept_evidence": [
+            "name token: created_at",
+            "type hint: datetime2",
+            "legacy field classification: temporal",
+            "value pattern: timestamp",
+            "table context: sales_order_items"
+          ],
+          "concept_sources": [
+            "name",
+            "profile",
+            "table_context",
+            "type",
+            "values"
+          ],
+          "concept_alias_group": "created_at"
+        },
+        {
+          "name": "updated_at",
+          "type": "datetime2",
+          "nullable": false,
+          "is_incremental": true,
+          "column_timezone": "(UTC) Coordinated Universal Time",
+          "cardinality": 508,
+          "null_count": 0,
+          "data_range": {
+            "min": "2026-03-12 15:41:01.155390",
+            "max": "2026-03-12 15:43:38.264447"
+          },
+          "data_category": "continuous",
+          "semantic_class": "timestamp",
+          "unit_context": null,
+          "concept_id": "temporal.updated_at",
+          "concept_confidence": 1.0,
+          "concept_evidence": [
+            "name token: updated_at",
+            "type hint: datetime2",
+            "legacy field classification: temporal",
+            "value pattern: timestamp",
+            "table context: sales_order_items"
+          ],
+          "concept_sources": [
+            "name",
+            "profile",
+            "table_context",
+            "type",
+            "values"
+          ],
+          "concept_alias_group": "updated_at"
+        },
+        {
+          "name": "sold_qty_value",
+          "type": "numeric(10,2)",
+          "nullable": true,
+          "is_incremental": false,
+          "cardinality": 0,
+          "null_count": 508,
+          "data_category": "continuous",
+          "semantic_class": "quantity",
+          "unit_context": {
+            "detected_unit": null,
+            "canonical_unit": null,
+            "unit_system": "unknown",
+            "conversion": null,
+            "detection_confidence": "low",
+            "detection_source": "combined",
+            "notes": "Semantic class suggests units, but no explicit source unit token was detected."
+          },
+          "concept_id": "measure.quantity",
+          "concept_confidence": 1.0,
+          "concept_evidence": [
+            "name token: sold_qty",
+            "type hint: numeric(10,2)",
+            "legacy field classification: quantity",
+            "semantic class hint: quantity",
+            "value pattern: quantity"
+          ],
+          "concept_sources": [
+            "name",
+            "profile",
+            "type",
+            "values"
+          ],
+          "concept_alias_group": "sold_qty"
+        },
+        {
+          "name": "sold_qty_unit",
+          "type": "nvarchar(16)",
+          "nullable": true,
+          "is_incremental": false,
+          "column_description": "Sold quantity unit (ea/box).",
+          "cardinality": 0,
+          "null_count": 508,
+          "data_category": "nominal",
+          "semantic_class": "quantity",
+          "unit_context": {
+            "detected_unit": null,
+            "canonical_unit": null,
+            "unit_system": "unknown",
+            "conversion": null,
+            "detection_confidence": "low",
+            "detection_source": "combined",
+            "notes": "Semantic class suggests units, but no explicit source unit token was detected."
+          },
+          "concept_id": "measure.quantity",
+          "concept_confidence": 1.0,
+          "concept_evidence": [
+            "name token: sold_qty_unit",
+            "legacy field classification: quantity",
+            "semantic class hint: quantity",
+            "value pattern: quantity"
+          ],
+          "concept_sources": [
+            "name",
+            "profile",
+            "values"
+          ],
+          "concept_alias_group": "sold_qty_unit"
+        }
+      ],
+      "table_description": "Sales line items with sold quantity and explicit unit labels.",
+      "primary_keys": [
+        "sales_order_item_id"
+      ],
+      "foreign_keys": [
+        {
+          "column": "product_id",
+          "references": "products.product_id"
+        },
+        {
+          "column": "sales_order_id",
+          "references": "sales_orders.sales_order_id"
+        }
+      ],
+      "row_count": 508,
+      "field_classifications": {
+        "quantity": "quantity",
+        "unit_price": "pricing",
+        "created_at": "temporal",
+        "updated_at": "temporal",
+        "sold_qty_value": "quantity",
+        "sold_qty_unit": "quantity"
+      },
+      "sensitive_fields": {},
+      "incremental_columns": [
+        "updated_at"
+      ],
+      "join_candidates": [
+        {
+          "column": "product_id",
+          "target_table": "products",
+          "target_column": "product_id",
+          "confidence": "high"
+        },
+        {
+          "column": "sales_order_id",
+          "target_table": "sales_orders",
+          "target_column": "sales_order_id",
+          "confidence": "high"
+        }
+      ],
+      "unit_summary": {
+        "columns_with_units": 0,
+        "columns_without_units": 9,
+        "mixed_unit_groups": [],
+        "unknown_unit_columns": [
+          "quantity",
+          "sold_qty_unit",
+          "sold_qty_value"
+        ]
+      },
+      "cdc_enabled": false,
+      "has_primary_key": true,
+      "has_foreign_keys": true,
+      "has_sensitive_fields": false,
+      "row_count_projection_1y": 508,
+      "row_count_projection_2y": 508,
+      "row_count_projection_5y": 508,
+      "partition_columns_candidates": [
+        "created_at",
+        "updated_at"
+      ],
+      "classification_summary": {
+        "concept_counts": {
+          "finance.currency_amount": 1,
+          "identifier.foreign_key": 3,
+          "measure.quantity": 3,
+          "temporal.created_at": 1,
+          "temporal.updated_at": 1
+        },
+        "low_confidence_columns": []
+      },
+      "data_quality": {
+        "findings": [
+          {
+            "column": null,
+            "check": "timestamp_ordering",
+            "severity": "info",
+            "detail": "Table has both 'created_at' and 'updated_at' but no CHECK constraint guaranteeing created_at <= updated_at.",
+            "recommendation": "Add CHECK (created_at <= updated_at) to enforce temporal consistency.",
+            "created_column": "created_at",
+            "updated_column": "updated_at"
+          },
+          {
+            "column": null,
+            "check": "delete_management",
+            "severity": "warning",
+            "detail": "No soft-delete column detected and CDC is not enabled. Table likely uses hard deletes invisible to incremental ingestion.",
+            "recommendation": "Consider: (1) Add soft-delete column, (2) Enable CDC via ALTER TABLE \u2026 REPLICA IDENTITY FULL, or (3) Plan periodic full-load syncs.",
+            "delete_strategy": "hard_delete",
+            "soft_delete_column": null,
+            "soft_delete_type": null,
+            "has_audit_trail": false
+          },
+          {
+            "column": null,
+            "check": "timezone",
+            "severity": "info",
+            "detail": "All 2 date/time column(s) are TZ-naive \u2014 stored values are implicitly in server timezone '(UTC) Coordinated Universal Time'.",
+            "recommendation": "During ingestion, treat all timestamps as '(UTC) Coordinated Universal Time' and convert to UTC.",
+            "server_timezone": "(UTC) Coordinated Universal Time",
+            "columns": [
+              {
+                "column": "created_at",
+                "type": "datetime2",
+                "effective_timezone": "(UTC) Coordinated Universal Time",
+                "is_tz_aware": false
+              },
+              {
+                "column": "updated_at",
+                "type": "datetime2",
+                "effective_timezone": "(UTC) Coordinated Universal Time",
+                "is_tz_aware": false
+              }
+            ],
+            "distinct_timezones": [
+              "(UTC) Coordinated Universal Time"
+            ],
+            "tz_aware_count": 0,
+            "tz_naive_count": 2
+          },
+          {
+            "column": "quantity",
+            "check": "unit_unknown",
+            "severity": "warning",
+            "detail": "Column semantic class 'quantity' has unknown source units.",
+            "recommendation": "Add explicit source unit mapping for this field to enable safe aggregation."
+          },
+          {
+            "column": "sold_qty_value",
+            "check": "unit_unknown",
+            "severity": "warning",
+            "detail": "Column semantic class 'quantity' has unknown source units.",
+            "recommendation": "Add explicit source unit mapping for this field to enable safe aggregation."
+          },
+          {
+            "column": "sold_qty_unit",
+            "check": "unit_unknown",
+            "severity": "warning",
+            "detail": "Column semantic class 'quantity' has unknown source units.",
+            "recommendation": "Add explicit source unit mapping for this field to enable safe aggregation."
+          }
+        ]
+      }
+    },
+    {
+      "table": "sales_orders",
+      "schema": "dbo",
+      "columns": [
+        {
+          "name": "sales_order_id",
+          "type": "bigint",
+          "nullable": false,
+          "is_incremental": false,
+          "cardinality": 200,
+          "null_count": 0,
+          "data_range": {
+            "min": "375",
+            "max": "574"
+          },
+          "data_category": "discrete",
+          "semantic_class": null,
+          "unit_context": null,
+          "concept_id": "identifier.foreign_key",
+          "concept_confidence": 0.6,
+          "concept_evidence": [
+            "name token: id",
+            "type hint: bigint",
+            "cross-table consensus: 16 similar columns",
+            "ambiguous runner-up concept"
+          ],
+          "concept_sources": [
+            "cross_table_consensus",
+            "name",
+            "type"
+          ],
+          "concept_alias_group": "id"
+        },
+        {
+          "name": "store_id",
+          "type": "bigint",
+          "nullable": false,
+          "is_incremental": false,
+          "cardinality": 5,
+          "null_count": 0,
+          "data_range": {
+            "min": "19",
+            "max": "23"
+          },
+          "data_category": "discrete",
+          "semantic_class": null,
+          "unit_context": null,
+          "concept_id": "identifier.foreign_key",
+          "concept_confidence": 0.9,
+          "concept_evidence": [
+            "name token: id",
+            "type hint: bigint",
+            "structural hint: join candidate"
+          ],
+          "concept_sources": [
+            "name",
+            "profile",
+            "type"
+          ],
+          "concept_alias_group": "id"
+        },
+        {
+          "name": "customer_id",
+          "type": "bigint",
+          "nullable": true,
+          "is_incremental": false,
+          "cardinality": 76,
+          "null_count": 0,
+          "data_range": {
+            "min": "404",
+            "max": "502"
+          },
+          "data_category": "discrete",
+          "semantic_class": "customer_identifier",
+          "unit_context": null,
+          "concept_id": "identifier.foreign_key",
+          "concept_confidence": 0.9,
+          "concept_evidence": [
+            "name token: id",
+            "type hint: bigint",
+            "structural hint: join candidate"
+          ],
+          "concept_sources": [
+            "name",
+            "profile",
+            "type"
+          ],
+          "concept_alias_group": "id"
+        },
+        {
+          "name": "employee_id",
+          "type": "bigint",
+          "nullable": false,
+          "is_incremental": false,
+          "cardinality": 20,
+          "null_count": 0,
+          "data_range": {
+            "min": "64",
+            "max": "83"
+          },
+          "data_category": "discrete",
+          "semantic_class": null,
+          "unit_context": null,
+          "concept_id": "identifier.foreign_key",
+          "concept_confidence": 0.9,
+          "concept_evidence": [
+            "name token: id",
+            "type hint: bigint",
+            "structural hint: join candidate"
+          ],
+          "concept_sources": [
+            "name",
+            "profile",
+            "type"
+          ],
+          "concept_alias_group": "id"
+        },
+        {
+          "name": "order_date",
+          "type": "datetime2",
+          "nullable": false,
+          "is_incremental": false,
+          "column_timezone": "(UTC) Coordinated Universal Time",
+          "cardinality": 191,
+          "null_count": 0,
+          "data_range": {
+            "min": "2021-03-14 15:38:57.201565",
+            "max": "2026-03-11 15:38:57.201565"
+          },
+          "data_category": "continuous",
+          "semantic_class": "timestamp",
+          "unit_context": null,
+          "concept_id": "temporal.date_only",
+          "concept_confidence": 0.9,
+          "concept_evidence": [
+            "name token: order_date",
+            "type hint: datetime2",
+            "legacy field classification: temporal",
+            "table context: sales_orders",
+            "cross-table consensus: 2 similar columns"
+          ],
+          "concept_sources": [
+            "cross_table_consensus",
+            "name",
+            "profile",
+            "table_context",
+            "type"
+          ],
+          "concept_alias_group": "order_date"
+        },
+        {
+          "name": "status",
+          "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+          "nullable": false,
+          "is_incremental": false,
+          "cardinality": 3,
+          "null_count": 0,
+          "data_range": {
+            "min": "Completed",
+            "max": "Shipped"
+          },
+          "data_category": "nominal",
+          "semantic_class": "category",
+          "unit_context": null,
+          "concept_id": "entity.status",
+          "concept_confidence": 1.0,
+          "concept_evidence": [
+            "name token: statu",
+            "type hint: nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+            "legacy field classification: categorical",
+            "value pattern: status",
+            "profile heuristic matched"
+          ],
+          "concept_sources": [
+            "name",
+            "profile",
+            "type",
+            "values"
+          ],
+          "concept_alias_group": "statu"
+        },
+        {
+          "name": "total_amount",
+          "type": "numeric(12,2)",
+          "nullable": false,
+          "is_incremental": false,
+          "cardinality": 200,
+          "null_count": 0,
+          "data_range": {
+            "min": "66.47",
+            "max": "998.76"
+          },
+          "data_category": "continuous",
+          "semantic_class": "currency_amount",
+          "unit_context": null,
+          "concept_id": "finance.currency_amount",
+          "concept_confidence": 1.0,
+          "concept_evidence": [
+            "name token: amount",
+            "type hint: numeric(12,2)",
+            "legacy field classification: pricing",
+            "semantic class hint: currency_amount",
+            "value pattern: currency_amount",
+            "table context: sales_orders"
+          ],
+          "concept_sources": [
+            "name",
+            "profile",
+            "table_context",
+            "type",
+            "values"
+          ],
+          "concept_alias_group": "amount"
+        },
+        {
+          "name": "created_at",
+          "type": "datetime2",
+          "nullable": false,
+          "is_incremental": false,
+          "column_timezone": "(UTC) Coordinated Universal Time",
+          "cardinality": 191,
+          "null_count": 0,
+          "data_range": {
+            "min": "2021-03-14 15:38:57.201565",
+            "max": "2026-03-11 15:38:57.201565"
+          },
+          "data_category": "continuous",
+          "semantic_class": "timestamp",
+          "unit_context": null,
+          "concept_id": "temporal.created_at",
+          "concept_confidence": 1.0,
+          "concept_evidence": [
+            "name token: created_at",
+            "type hint: datetime2",
+            "legacy field classification: temporal",
+            "value pattern: timestamp",
+            "table context: sales_orders"
+          ],
+          "concept_sources": [
+            "name",
+            "profile",
+            "table_context",
+            "type",
+            "values"
+          ],
+          "concept_alias_group": "created_at"
+        },
+        {
+          "name": "updated_at",
+          "type": "datetime2",
+          "nullable": false,
+          "is_incremental": true,
+          "column_timezone": "(UTC) Coordinated Universal Time",
+          "cardinality": 191,
+          "null_count": 0,
+          "data_range": {
+            "min": "2021-03-14 15:38:57.201565",
+            "max": "2026-03-11 15:38:57.201565"
+          },
+          "data_category": "continuous",
+          "semantic_class": "timestamp",
+          "unit_context": null,
+          "concept_id": "temporal.updated_at",
+          "concept_confidence": 1.0,
+          "concept_evidence": [
+            "name token: updated_at",
+            "type hint: datetime2",
+            "legacy field classification: temporal",
+            "value pattern: timestamp",
+            "table context: sales_orders"
+          ],
+          "concept_sources": [
+            "name",
+            "profile",
+            "table_context",
+            "type",
+            "values"
+          ],
+          "concept_alias_group": "updated_at"
+        },
+        {
+          "name": "sales_rep_employee_id",
+          "type": "bigint",
+          "nullable": true,
+          "is_incremental": false,
+          "column_description": "Sales representative foreign key for order ownership.",
+          "cardinality": 0,
+          "null_count": 200,
+          "data_category": "discrete",
+          "semantic_class": null,
+          "unit_context": null,
+          "concept_id": "identifier.foreign_key",
+          "concept_confidence": 0.9,
+          "concept_evidence": [
+            "name token: id",
+            "type hint: bigint",
+            "structural hint: join candidate"
+          ],
+          "concept_sources": [
+            "name",
+            "profile",
+            "type"
+          ],
+          "concept_alias_group": "id"
+        }
+      ],
+      "table_description": "Sales headers including assigned sales representative relationship.",
+      "primary_keys": [
+        "sales_order_id"
+      ],
+      "foreign_keys": [
+        {
+          "column": "customer_id",
+          "references": "customers.customer_id"
+        },
+        {
+          "column": "employee_id",
+          "references": "employees.employee_id"
+        },
+        {
+          "column": "sales_rep_employee_id",
+          "references": "employees.employee_id"
+        },
+        {
+          "column": "store_id",
+          "references": "stores.store_id"
+        }
+      ],
+      "row_count": 200,
+      "field_classifications": {
+        "customer_id": "identifier",
+        "order_date": "temporal",
+        "status": "categorical",
+        "total_amount": "pricing",
+        "created_at": "temporal",
+        "updated_at": "temporal"
+      },
+      "sensitive_fields": {},
+      "incremental_columns": [
+        "updated_at"
+      ],
+      "join_candidates": [
+        {
+          "column": "customer_id",
+          "target_table": "customers",
+          "target_column": "customer_id",
+          "confidence": "high"
+        },
+        {
+          "column": "employee_id",
+          "target_table": "employees",
+          "target_column": "employee_id",
+          "confidence": "high"
+        },
+        {
+          "column": "sales_rep_employee_id",
+          "target_table": "employees",
+          "target_column": "employee_id",
+          "confidence": "high"
+        },
+        {
+          "column": "store_id",
+          "target_table": "stores",
+          "target_column": "store_id",
+          "confidence": "high"
+        }
+      ],
+      "unit_summary": {
+        "columns_with_units": 0,
+        "columns_without_units": 10,
+        "mixed_unit_groups": [],
+        "unknown_unit_columns": []
+      },
+      "cdc_enabled": false,
+      "has_primary_key": true,
+      "has_foreign_keys": true,
+      "has_sensitive_fields": false,
+      "row_count_projection_1y": 242,
+      "row_count_projection_2y": 284,
+      "row_count_projection_5y": 412,
+      "partition_columns_candidates": [
+        "order_date",
+        "created_at",
+        "updated_at"
+      ],
+      "classification_summary": {
+        "concept_counts": {
+          "entity.status": 1,
+          "finance.currency_amount": 1,
+          "identifier.foreign_key": 5,
+          "temporal.created_at": 1,
+          "temporal.date_only": 1,
+          "temporal.updated_at": 1
+        },
+        "low_confidence_columns": []
+      },
+      "data_quality": {
+        "findings": [
+          {
+            "column": "status",
+            "check": "controlled_value_candidate",
+            "severity": "warning",
+            "detail": "Text column with 3 distinct value(s) ('Completed', 'Pending', 'Shipped') but no CHECK, ENUM, or FK constraint",
+            "recommendation": "Add a CHECK constraint, convert to an ENUM type, or create a lookup/reference table to prevent invalid values",
+            "distinct_values": [
+              "Completed",
+              "Pending",
+              "Shipped"
+            ],
+            "cardinality": 3
+          },
+          {
+            "column": "customer_id",
+            "check": "nullable_but_never_null",
+            "severity": "info",
+            "detail": "Column is nullable but has 0 NULLs across 200 row(s)",
+            "recommendation": "Consider adding a NOT NULL constraint if the column should always have a value"
+          },
+          {
+            "column": null,
+            "check": "timestamp_ordering",
+            "severity": "info",
+            "detail": "Table has both 'created_at' and 'updated_at' but no CHECK constraint guaranteeing created_at <= updated_at.",
+            "recommendation": "Add CHECK (created_at <= updated_at) to enforce temporal consistency.",
+            "created_column": "created_at",
+            "updated_column": "updated_at"
+          },
+          {
+            "column": null,
+            "check": "delete_management",
+            "severity": "warning",
+            "detail": "No soft-delete column detected and CDC is not enabled. Table likely uses hard deletes invisible to incremental ingestion.",
+            "recommendation": "Consider: (1) Add soft-delete column, (2) Enable CDC via ALTER TABLE \u2026 REPLICA IDENTITY FULL, or (3) Plan periodic full-load syncs.",
+            "delete_strategy": "hard_delete",
+            "soft_delete_column": null,
+            "soft_delete_type": null,
+            "has_audit_trail": false
+          },
+          {
+            "column": "order_date",
+            "check": "late_arriving_data",
+            "severity": "info",
+            "detail": "Data arrives promptly \u2014 max lag between 'order_date' and 'created_at' is 0.0h. Standard watermarking on 'created_at' is safe.",
+            "recommendation": "Use 'created_at' as the incremental watermark. No special lookback window needed.",
+            "business_date_column": "order_date",
+            "system_ts_column": "created_at",
+            "lag_stats": {
+              "total_rows_compared": 200,
+              "min_lag_hours": 0.0,
+              "avg_lag_hours": 0.0,
+              "p95_lag_hours": 0.0,
+              "max_lag_hours": 0.0,
+              "max_lag_days": 0.0,
+              "rows_late_over_1d": 0,
+              "rows_late_over_7d": 0
+            },
+            "recommended_lookback_days": 1
+          },
+          {
+            "column": null,
+            "check": "timezone",
+            "severity": "info",
+            "detail": "All 3 date/time column(s) are TZ-naive \u2014 stored values are implicitly in server timezone '(UTC) Coordinated Universal Time'.",
+            "recommendation": "During ingestion, treat all timestamps as '(UTC) Coordinated Universal Time' and convert to UTC.",
+            "server_timezone": "(UTC) Coordinated Universal Time",
+            "columns": [
+              {
+                "column": "order_date",
+                "type": "datetime2",
+                "effective_timezone": "(UTC) Coordinated Universal Time",
+                "is_tz_aware": false
+              },
+              {
+                "column": "created_at",
+                "type": "datetime2",
+                "effective_timezone": "(UTC) Coordinated Universal Time",
+                "is_tz_aware": false
+              },
+              {
+                "column": "updated_at",
+                "type": "datetime2",
+                "effective_timezone": "(UTC) Coordinated Universal Time",
+                "is_tz_aware": false
+              }
+            ],
+            "distinct_timezones": [
+              "(UTC) Coordinated Universal Time"
+            ],
+            "tz_aware_count": 0,
+            "tz_naive_count": 3
+          }
+        ]
+      }
+    },
+    {
+      "table": "stores",
+      "schema": "dbo",
+      "columns": [
+        {
+          "name": "store_id",
+          "type": "bigint",
+          "nullable": false,
+          "is_incremental": false,
+          "cardinality": 5,
+          "null_count": 0,
+          "data_range": {
+            "min": "19",
+            "max": "23"
+          },
+          "data_category": "discrete",
+          "semantic_class": null,
+          "unit_context": null,
+          "concept_id": "identifier.foreign_key",
+          "concept_confidence": 0.6,
+          "concept_evidence": [
+            "name token: id",
+            "type hint: bigint",
+            "cross-table consensus: 16 similar columns",
+            "ambiguous runner-up concept"
+          ],
+          "concept_sources": [
+            "cross_table_consensus",
+            "name",
+            "type"
+          ],
+          "concept_alias_group": "id"
+        },
+        {
+          "name": "name",
+          "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+          "nullable": false,
+          "is_incremental": false,
+          "cardinality": 5,
+          "null_count": 0,
+          "data_range": {
+            "min": "Airport Shop",
+            "max": "Suburb Store"
+          },
+          "data_category": "nominal",
+          "semantic_class": null,
+          "unit_context": null,
+          "concept_id": "contact.person_name",
+          "concept_confidence": 0.55,
+          "concept_evidence": [
+            "name token: name",
+            "type hint: nvarchar collate \"sql_latin1_general_cp1_ci_as\""
+          ],
+          "concept_sources": [
+            "name",
+            "type"
+          ],
+          "concept_alias_group": "name"
+        },
+        {
+          "name": "code",
+          "type": "nvarchar(450)",
+          "nullable": false,
+          "is_incremental": false,
+          "cardinality": 5,
+          "null_count": 0,
+          "data_range": {
+            "min": "AIR",
+            "max": "SUB"
+          },
+          "data_category": "nominal",
+          "semantic_class": null,
+          "unit_context": null,
+          "concept_id": null,
+          "concept_confidence": 0.1,
+          "concept_evidence": [
+            "type hint: nvarchar(450)",
+            "profile heuristic matched",
+            "ambiguous runner-up concept"
+          ],
+          "concept_sources": [
+            "profile",
+            "type"
+          ],
+          "concept_alias_group": null
+        },
+        {
+          "name": "address",
+          "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+          "nullable": true,
+          "is_incremental": false,
+          "cardinality": 5,
+          "null_count": 0,
+          "data_range": {
+            "min": "1 Main St",
+            "max": "5 Main St"
+          },
+          "data_category": "nominal",
+          "semantic_class": null,
+          "unit_context": null,
+          "concept_id": "contact.address",
+          "concept_confidence": 0.55,
+          "concept_evidence": [
+            "name token: address",
+            "type hint: nvarchar collate \"sql_latin1_general_cp1_ci_as\""
+          ],
+          "concept_sources": [
+            "name",
+            "type"
+          ],
+          "concept_alias_group": "address"
+        },
+        {
+          "name": "city",
+          "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+          "nullable": true,
+          "is_incremental": false,
+          "cardinality": 3,
+          "null_count": 0,
+          "data_range": {
+            "min": "Cork",
+            "max": "Limerick"
+          },
+          "data_category": "nominal",
+          "semantic_class": null,
+          "unit_context": null,
+          "concept_id": null,
+          "concept_confidence": 0.1,
+          "concept_evidence": [
+            "type hint: nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+            "profile heuristic matched",
+            "ambiguous runner-up concept"
+          ],
+          "concept_sources": [
+            "profile",
+            "type"
+          ],
+          "concept_alias_group": null
+        },
+        {
+          "name": "state",
+          "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+          "nullable": true,
+          "is_incremental": false,
+          "cardinality": 3,
+          "null_count": 0,
+          "data_range": {
+            "min": "Connacht",
+            "max": "Munster"
+          },
+          "data_category": "nominal",
+          "semantic_class": null,
+          "unit_context": null,
+          "concept_id": null,
+          "concept_confidence": 0.1,
+          "concept_evidence": [
+            "type hint: nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+            "profile heuristic matched",
+            "ambiguous runner-up concept"
+          ],
+          "concept_sources": [
+            "profile",
+            "type"
+          ],
+          "concept_alias_group": null
+        },
+        {
+          "name": "postal_code",
+          "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+          "nullable": true,
+          "is_incremental": false,
+          "cardinality": 5,
+          "null_count": 0,
+          "data_range": {
+            "min": "10000",
+            "max": "10004"
+          },
+          "data_category": "nominal",
+          "semantic_class": null,
+          "unit_context": null,
+          "concept_id": "contact.address",
+          "concept_confidence": 0.55,
+          "concept_evidence": [
+            "name token: postal_code",
+            "type hint: nvarchar collate \"sql_latin1_general_cp1_ci_as\""
+          ],
+          "concept_sources": [
+            "name",
+            "type"
+          ],
+          "concept_alias_group": "postal_code"
+        },
+        {
+          "name": "phone",
+          "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+          "nullable": true,
+          "is_incremental": false,
+          "cardinality": 5,
+          "null_count": 0,
+          "data_range": {
+            "min": "555-3000",
+            "max": "555-3004"
+          },
+          "data_category": "nominal",
+          "semantic_class": "contact",
+          "unit_context": null,
+          "concept_id": "contact.phone",
+          "concept_confidence": 1.0,
+          "concept_evidence": [
+            "name token: phone",
+            "type hint: nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+            "legacy field classification: contact",
+            "value pattern: phone",
+            "sensitive hint: pii_contact"
+          ],
+          "concept_sources": [
+            "name",
+            "profile",
+            "type",
+            "values"
+          ],
+          "concept_alias_group": "phone"
+        },
+        {
+          "name": "created_at",
+          "type": "datetime2",
+          "nullable": false,
+          "is_incremental": false,
+          "column_timezone": "(UTC) Coordinated Universal Time",
+          "cardinality": 5,
+          "null_count": 0,
+          "data_range": {
+            "min": "2021-07-26 15:38:57.201565",
+            "max": "2025-01-31 15:38:57.201565"
+          },
+          "data_category": "continuous",
+          "semantic_class": "timestamp",
+          "unit_context": null,
+          "concept_id": "temporal.created_at",
+          "concept_confidence": 1.0,
+          "concept_evidence": [
+            "name token: created_at",
+            "type hint: datetime2",
+            "legacy field classification: temporal",
+            "value pattern: timestamp",
+            "table context: stores"
+          ],
+          "concept_sources": [
+            "name",
+            "profile",
+            "table_context",
+            "type",
+            "values"
+          ],
+          "concept_alias_group": "created_at"
+        },
+        {
+          "name": "updated_at",
+          "type": "datetime2",
+          "nullable": false,
+          "is_incremental": true,
+          "column_timezone": "(UTC) Coordinated Universal Time",
+          "cardinality": 5,
+          "null_count": 0,
+          "data_range": {
+            "min": "2021-07-26 15:38:57.201565",
+            "max": "2025-01-31 15:38:57.201565"
+          },
+          "data_category": "continuous",
+          "semantic_class": "timestamp",
+          "unit_context": null,
+          "concept_id": "temporal.updated_at",
+          "concept_confidence": 1.0,
+          "concept_evidence": [
+            "name token: updated_at",
+            "type hint: datetime2",
+            "legacy field classification: temporal",
+            "value pattern: timestamp",
+            "table context: stores"
+          ],
+          "concept_sources": [
+            "name",
+            "profile",
+            "table_context",
+            "type",
+            "values"
+          ],
+          "concept_alias_group": "updated_at"
+        }
+      ],
+      "table_description": null,
+      "primary_keys": [
+        "store_id"
+      ],
+      "foreign_keys": [],
+      "row_count": 5,
+      "field_classifications": {
+        "phone": "contact",
+        "created_at": "temporal",
+        "updated_at": "temporal"
+      },
+      "sensitive_fields": {
+        "address": "pii_address",
+        "postal_code": "pii_address",
+        "phone": "pii_contact"
+      },
+      "incremental_columns": [
+        "updated_at"
+      ],
+      "join_candidates": [],
+      "unit_summary": {
+        "columns_with_units": 0,
+        "columns_without_units": 10,
+        "mixed_unit_groups": [],
+        "unknown_unit_columns": []
+      },
+      "cdc_enabled": false,
+      "has_primary_key": true,
+      "has_foreign_keys": false,
+      "has_sensitive_fields": true,
+      "row_count_projection_1y": 17,
+      "row_count_projection_2y": 29,
+      "row_count_projection_5y": 65,
+      "partition_columns_candidates": [
+        "created_at",
+        "updated_at"
+      ],
+      "classification_summary": {
+        "concept_counts": {
+          "contact.address": 2,
+          "contact.person_name": 1,
+          "contact.phone": 1,
+          "identifier.foreign_key": 1,
+          "temporal.created_at": 1,
+          "temporal.updated_at": 1
+        },
+        "low_confidence_columns": [
+          "address",
+          "city",
+          "code",
+          "name",
+          "postal_code",
+          "state"
+        ]
+      },
+      "data_quality": {
+        "findings": [
+          {
+            "column": "city",
+            "check": "controlled_value_candidate",
+            "severity": "warning",
+            "detail": "Text column with 3 distinct value(s) ('Cork', 'Galway', 'Limerick') but no CHECK, ENUM, or FK constraint",
+            "recommendation": "Add a CHECK constraint, convert to an ENUM type, or create a lookup/reference table to prevent invalid values",
+            "distinct_values": [
+              "Cork",
+              "Galway",
+              "Limerick"
+            ],
+            "cardinality": 3
+          },
+          {
+            "column": "state",
+            "check": "controlled_value_candidate",
+            "severity": "warning",
+            "detail": "Text column with 3 distinct value(s) ('Connacht', 'Leinster', 'Munster') but no CHECK, ENUM, or FK constraint",
+            "recommendation": "Add a CHECK constraint, convert to an ENUM type, or create a lookup/reference table to prevent invalid values",
+            "distinct_values": [
+              "Connacht",
+              "Leinster",
+              "Munster"
+            ],
+            "cardinality": 3
+          },
+          {
+            "column": "postal_code",
+            "check": "controlled_value_candidate",
+            "severity": "warning",
+            "detail": "Text column with 5 distinct value(s) ('10000', '10001', '10002', '10003', '10004') but no CHECK, ENUM, or FK constraint",
+            "recommendation": "Add a CHECK constraint, convert to an ENUM type, or create a lookup/reference table to prevent invalid values",
+            "distinct_values": [
+              "10000",
+              "10001",
+              "10002",
+              "10003",
+              "10004"
+            ],
+            "cardinality": 5
+          },
+          {
+            "column": "address",
+            "check": "nullable_but_never_null",
+            "severity": "info",
+            "detail": "Column is nullable but has 0 NULLs across 5 row(s)",
+            "recommendation": "Consider adding a NOT NULL constraint if the column should always have a value"
+          },
+          {
+            "column": "city",
+            "check": "nullable_but_never_null",
+            "severity": "info",
+            "detail": "Column is nullable but has 0 NULLs across 5 row(s)",
+            "recommendation": "Consider adding a NOT NULL constraint if the column should always have a value"
+          },
+          {
+            "column": "state",
+            "check": "nullable_but_never_null",
+            "severity": "info",
+            "detail": "Column is nullable but has 0 NULLs across 5 row(s)",
+            "recommendation": "Consider adding a NOT NULL constraint if the column should always have a value"
+          },
+          {
+            "column": "postal_code",
+            "check": "nullable_but_never_null",
+            "severity": "info",
+            "detail": "Column is nullable but has 0 NULLs across 5 row(s)",
+            "recommendation": "Consider adding a NOT NULL constraint if the column should always have a value"
+          },
+          {
+            "column": "phone",
+            "check": "nullable_but_never_null",
+            "severity": "info",
+            "detail": "Column is nullable but has 0 NULLs across 5 row(s)",
+            "recommendation": "Consider adding a NOT NULL constraint if the column should always have a value"
+          },
+          {
+            "column": null,
+            "check": "timestamp_ordering",
+            "severity": "info",
+            "detail": "Table has both 'created_at' and 'updated_at' but no CHECK constraint guaranteeing created_at <= updated_at.",
+            "recommendation": "Add CHECK (created_at <= updated_at) to enforce temporal consistency.",
+            "created_column": "created_at",
+            "updated_column": "updated_at"
+          },
+          {
+            "column": null,
+            "check": "delete_management",
+            "severity": "warning",
+            "detail": "No soft-delete column detected and CDC is not enabled. Table likely uses hard deletes invisible to incremental ingestion.",
+            "recommendation": "Consider: (1) Add soft-delete column, (2) Enable CDC via ALTER TABLE \u2026 REPLICA IDENTITY FULL, or (3) Plan periodic full-load syncs.",
+            "delete_strategy": "hard_delete",
+            "soft_delete_column": null,
+            "soft_delete_type": null,
+            "has_audit_trail": false
+          },
+          {
+            "column": null,
+            "check": "timezone",
+            "severity": "info",
+            "detail": "All 2 date/time column(s) are TZ-naive \u2014 stored values are implicitly in server timezone '(UTC) Coordinated Universal Time'.",
+            "recommendation": "During ingestion, treat all timestamps as '(UTC) Coordinated Universal Time' and convert to UTC.",
+            "server_timezone": "(UTC) Coordinated Universal Time",
+            "columns": [
+              {
+                "column": "created_at",
+                "type": "datetime2",
+                "effective_timezone": "(UTC) Coordinated Universal Time",
+                "is_tz_aware": false
+              },
+              {
+                "column": "updated_at",
+                "type": "datetime2",
+                "effective_timezone": "(UTC) Coordinated Universal Time",
+                "is_tz_aware": false
+              }
+            ],
+            "distinct_timezones": [
+              "(UTC) Coordinated Universal Time"
+            ],
+            "tz_aware_count": 0,
+            "tz_naive_count": 2
+          }
+        ]
+      }
+    },
+    {
+      "table": "suppliers",
+      "schema": "dbo",
+      "columns": [
+        {
+          "name": "supplier_id",
+          "type": "bigint",
+          "nullable": false,
+          "is_incremental": false,
+          "cardinality": 10,
+          "null_count": 0,
+          "data_range": {
+            "min": "33",
+            "max": "42"
+          },
+          "data_category": "discrete",
+          "semantic_class": null,
+          "unit_context": null,
+          "concept_id": "identifier.foreign_key",
+          "concept_confidence": 0.6,
+          "concept_evidence": [
+            "name token: id",
+            "type hint: bigint",
+            "cross-table consensus: 16 similar columns",
+            "ambiguous runner-up concept"
+          ],
+          "concept_sources": [
+            "cross_table_consensus",
+            "name",
+            "type"
+          ],
+          "concept_alias_group": "id"
+        },
+        {
+          "name": "name",
+          "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+          "nullable": false,
+          "is_incremental": false,
+          "cardinality": 10,
+          "null_count": 0,
+          "data_range": {
+            "min": "Supplier 1",
+            "max": "Supplier 9"
+          },
+          "data_category": "nominal",
+          "semantic_class": null,
+          "unit_context": null,
+          "concept_id": "contact.person_name",
+          "concept_confidence": 0.55,
+          "concept_evidence": [
+            "name token: name",
+            "type hint: nvarchar collate \"sql_latin1_general_cp1_ci_as\""
+          ],
+          "concept_sources": [
+            "name",
+            "type"
+          ],
+          "concept_alias_group": "name"
+        },
+        {
+          "name": "contact_name",
+          "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+          "nullable": true,
+          "is_incremental": false,
+          "cardinality": 0,
+          "null_count": 10,
+          "data_category": "nominal",
+          "semantic_class": "person_name",
+          "unit_context": null,
+          "concept_id": "contact.person_name",
+          "concept_confidence": 0.55,
+          "concept_evidence": [
+            "name token: contact_name",
+            "type hint: nvarchar collate \"sql_latin1_general_cp1_ci_as\""
+          ],
+          "concept_sources": [
+            "name",
+            "type"
+          ],
+          "concept_alias_group": "contact_name"
+        },
+        {
+          "name": "email",
+          "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+          "nullable": true,
+          "is_incremental": false,
+          "cardinality": 10,
+          "null_count": 0,
+          "data_range": {
+            "min": "supplier1@example.com",
+            "max": "supplier9@example.com"
+          },
+          "data_category": "nominal",
+          "semantic_class": "contact",
+          "unit_context": null,
+          "concept_id": "contact.email",
+          "concept_confidence": 1.0,
+          "concept_evidence": [
+            "name token: email",
+            "type hint: nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+            "legacy field classification: contact",
+            "value pattern: email",
+            "sensitive hint: pii_contact"
+          ],
+          "concept_sources": [
+            "name",
+            "profile",
+            "type",
+            "values"
+          ],
+          "concept_alias_group": "email"
+        },
+        {
+          "name": "phone",
+          "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+          "nullable": true,
+          "is_incremental": false,
+          "cardinality": 10,
+          "null_count": 0,
+          "data_range": {
+            "min": "555-2001",
+            "max": "555-2010"
+          },
+          "data_category": "nominal",
+          "semantic_class": "contact",
+          "unit_context": null,
+          "concept_id": "contact.phone",
+          "concept_confidence": 1.0,
+          "concept_evidence": [
+            "name token: phone",
+            "type hint: nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+            "legacy field classification: contact",
+            "value pattern: phone",
+            "sensitive hint: pii_contact"
+          ],
+          "concept_sources": [
+            "name",
+            "profile",
+            "type",
+            "values"
+          ],
+          "concept_alias_group": "phone"
+        },
+        {
+          "name": "created_at",
+          "type": "datetime2",
+          "nullable": false,
+          "is_incremental": false,
+          "column_timezone": "(UTC) Coordinated Universal Time",
+          "cardinality": 10,
+          "null_count": 0,
+          "data_range": {
+            "min": "2021-03-22 15:38:57.201565",
+            "max": "2024-02-25 15:38:57.201565"
+          },
+          "data_category": "continuous",
+          "semantic_class": "timestamp",
+          "unit_context": null,
+          "concept_id": "temporal.created_at",
+          "concept_confidence": 1.0,
+          "concept_evidence": [
+            "name token: created_at",
+            "type hint: datetime2",
+            "legacy field classification: temporal",
+            "value pattern: timestamp",
+            "table context: suppliers"
+          ],
+          "concept_sources": [
+            "name",
+            "profile",
+            "table_context",
+            "type",
+            "values"
+          ],
+          "concept_alias_group": "created_at"
+        },
+        {
+          "name": "updated_at",
+          "type": "datetime2",
+          "nullable": false,
+          "is_incremental": true,
+          "column_timezone": "(UTC) Coordinated Universal Time",
+          "cardinality": 10,
+          "null_count": 0,
+          "data_range": {
+            "min": "2021-03-22 15:38:57.201565",
+            "max": "2024-02-25 15:38:57.201565"
+          },
+          "data_category": "continuous",
+          "semantic_class": "timestamp",
+          "unit_context": null,
+          "concept_id": "temporal.updated_at",
+          "concept_confidence": 1.0,
+          "concept_evidence": [
+            "name token: updated_at",
+            "type hint: datetime2",
+            "legacy field classification: temporal",
+            "value pattern: timestamp",
+            "table context: suppliers"
+          ],
+          "concept_sources": [
+            "name",
+            "profile",
+            "table_context",
+            "type",
+            "values"
+          ],
+          "concept_alias_group": "updated_at"
+        }
+      ],
+      "table_description": null,
+      "primary_keys": [
+        "supplier_id"
+      ],
+      "foreign_keys": [],
+      "row_count": 10,
+      "field_classifications": {
+        "contact_name": "person_name",
+        "email": "contact",
+        "phone": "contact",
+        "created_at": "temporal",
+        "updated_at": "temporal"
+      },
+      "sensitive_fields": {
+        "email": "pii_contact",
+        "phone": "pii_contact"
+      },
+      "incremental_columns": [
+        "updated_at"
+      ],
+      "join_candidates": [],
+      "unit_summary": {
+        "columns_with_units": 0,
+        "columns_without_units": 7,
+        "mixed_unit_groups": [],
+        "unknown_unit_columns": []
+      },
+      "cdc_enabled": false,
+      "has_primary_key": true,
+      "has_foreign_keys": false,
+      "has_sensitive_fields": true,
+      "row_count_projection_1y": 22,
+      "row_count_projection_2y": 35,
+      "row_count_projection_5y": 74,
+      "partition_columns_candidates": [
+        "created_at",
+        "updated_at"
+      ],
+      "classification_summary": {
+        "concept_counts": {
+          "contact.email": 1,
+          "contact.person_name": 2,
+          "contact.phone": 1,
+          "identifier.foreign_key": 1,
+          "temporal.created_at": 1,
+          "temporal.updated_at": 1
+        },
+        "low_confidence_columns": [
+          "contact_name",
+          "name"
+        ]
+      },
+      "data_quality": {
+        "findings": [
+          {
+            "column": "email",
+            "check": "nullable_but_never_null",
+            "severity": "info",
+            "detail": "Column is nullable but has 0 NULLs across 10 row(s)",
+            "recommendation": "Consider adding a NOT NULL constraint if the column should always have a value"
+          },
+          {
+            "column": "phone",
+            "check": "nullable_but_never_null",
+            "severity": "info",
+            "detail": "Column is nullable but has 0 NULLs across 10 row(s)",
+            "recommendation": "Consider adding a NOT NULL constraint if the column should always have a value"
+          },
+          {
+            "column": null,
+            "check": "timestamp_ordering",
+            "severity": "info",
+            "detail": "Table has both 'created_at' and 'updated_at' but no CHECK constraint guaranteeing created_at <= updated_at.",
+            "recommendation": "Add CHECK (created_at <= updated_at) to enforce temporal consistency.",
+            "created_column": "created_at",
+            "updated_column": "updated_at"
+          },
+          {
+            "column": null,
+            "check": "delete_management",
+            "severity": "warning",
+            "detail": "No soft-delete column detected and CDC is not enabled. Table likely uses hard deletes invisible to incremental ingestion.",
+            "recommendation": "Consider: (1) Add soft-delete column, (2) Enable CDC via ALTER TABLE \u2026 REPLICA IDENTITY FULL, or (3) Plan periodic full-load syncs.",
+            "delete_strategy": "hard_delete",
+            "soft_delete_column": null,
+            "soft_delete_type": null,
+            "has_audit_trail": false
+          },
+          {
+            "column": null,
+            "check": "timezone",
+            "severity": "info",
+            "detail": "All 2 date/time column(s) are TZ-naive \u2014 stored values are implicitly in server timezone '(UTC) Coordinated Universal Time'.",
+            "recommendation": "During ingestion, treat all timestamps as '(UTC) Coordinated Universal Time' and convert to UTC.",
+            "server_timezone": "(UTC) Coordinated Universal Time",
+            "columns": [
+              {
+                "column": "created_at",
+                "type": "datetime2",
+                "effective_timezone": "(UTC) Coordinated Universal Time",
+                "is_tz_aware": false
+              },
+              {
+                "column": "updated_at",
+                "type": "datetime2",
+                "effective_timezone": "(UTC) Coordinated Universal Time",
+                "is_tz_aware": false
+              }
+            ],
+            "distinct_timezones": [
+              "(UTC) Coordinated Universal Time"
+            ],
+            "tz_aware_count": 0,
+            "tz_naive_count": 2
+          }
+        ]
+      }
+    }
+  ]
+}

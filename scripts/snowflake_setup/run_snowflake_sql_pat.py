@@ -8,28 +8,26 @@ Security:
   - This script does not log token values.
 
 Required environment:
-  SNOWFLAKE_ACCOUNT  Account identifier for the hostname
-                     (see https://docs.snowflake.com/en/user-guide/admin-account-identifier )
   SNOWFLAKE_PAT      Programmatic access token for the Snowflake user that will run the SQL
 
+  SNOWFLAKE_SQL_API_HOST  Recommended: full SQL API base URL, e.g.
+                    https://<ACCOUNT>.snowflakecomputing.com (match Snowflake’s account identifier casing).
+  SNOWFLAKE_ACCOUNT  Alternative if SNOWFLAKE_SQL_API_HOST is unset: account id only; URL becomes
+                    https://<ACCOUNT>.snowflakecomputing.com (see Snowflake account identifier docs).
+
 Optional:
-  SNOWFLAKE_WAREHOUSE   Default name for the dedicated warehouse created in the SQL file (FIVETRAN_DRIP_WH).
+  SNOWFLAKE_WAREHOUSE   Name of the warehouse created in the SQL file (default FIVETRAN_DRIP_WH).
   SNOWFLAKE_SQL_API_EXECUTION_WAREHOUSE
-                    Warehouse used only for this HTTP request — must already exist in the account
-                    before the script runs (the SQL batch creates FIVETRAN_DRIP_WH; it cannot use it yet).
-                    Defaults to COMPUTE_WH if unset; override if your account uses another default.
-  SNOWFLAKE_SQL_API_HOST  Full API base URL (recommended). urllib3 lowercases hosts and can
-                    break Snowflake TLS; when curl(1) is available, this script POSTs via curl
-                    so the hostname keeps its case (e.g. https://ZNA09333-IOLAP_PARTNER.snowflakecomputing.com).
-                    If unset, host is https://SNOWFLAKE_ACCOUNT.snowflakecomputing.com
+                    Warehouse for this HTTP session only — must already exist (the SQL file creates
+                    FIVETRAN_DRIP_WH; it cannot be used for the same request). Default COMPUTE_WH.
 
 The Snowflake user tied to the PAT must be allowed to execute the statements (e.g. role switches
-to SECURITYADMIN / ACCOUNTADMIN as in scripts/snowflake_fivetran_drip_bronze_erp.sql).
+to SECURITYADMIN / ACCOUNTADMIN as in scripts/snowflake_setup/snowflake_fivetran_drip_bronze_erp.sql).
 
 Usage:
-  python scripts/run_snowflake_sql_pat.py --sql-file scripts/snowflake_fivetran_drip_bronze_erp.sql
-  python scripts/run_snowflake_sql_pat.py --render-from-env --sql-file scripts/snowflake_fivetran_drip_bronze_erp.sql
-  python scripts/run_snowflake_sql_pat.py --dry-run
+  python scripts/snowflake_setup/run_snowflake_sql_pat.py --sql-file scripts/snowflake_setup/snowflake_fivetran_drip_bronze_erp.sql
+  python scripts/snowflake_setup/run_snowflake_sql_pat.py --render-from-env --sql-file scripts/snowflake_setup/snowflake_fivetran_drip_bronze_erp.sql
+  python scripts/snowflake_setup/run_snowflake_sql_pat.py --dry-run
 """
 
 from __future__ import annotations
@@ -44,10 +42,15 @@ from pathlib import Path
 
 import requests
 
-REPO_ROOT = Path(__file__).resolve().parents[1]
+REPO_ROOT = Path(__file__).resolve().parents[2]
+
+_DEFAULT_SQL = REPO_ROOT / "scripts/snowflake_setup/snowflake_fivetran_drip_bronze_erp.sql"
 
 
 def _load_dotenv() -> None:
+    scripts_dir = REPO_ROOT / "scripts"
+    if str(scripts_dir) not in sys.path:
+        sys.path.insert(0, str(scripts_dir))
     try:
         from dotenv import load_dotenv
 
@@ -71,9 +74,7 @@ def _api_base() -> str:
 
 
 def _post_sql_api(url: str, headers: dict[str, str], body: dict) -> tuple[int, dict]:
-    """
-    POST JSON. Prefer curl so the URL host is not lowercased (urllib3 breaks Snowflake TLS).
-    """
+    """POST JSON. Prefer curl so the request URL host keeps Snowflake’s casing; else requests."""
     payload = json.dumps(body).encode("utf-8")
     curl = shutil.which("curl")
     if curl:
@@ -118,7 +119,7 @@ def main() -> int:
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument(
         "--sql-file",
-        default=str(REPO_ROOT / "scripts/snowflake_fivetran_drip_bronze_erp.sql"),
+        default=str(_DEFAULT_SQL),
         help="Path to SQL file to execute as one multi-statement request",
     )
     p.add_argument(
@@ -131,7 +132,7 @@ def main() -> int:
         action="store_true",
         help=(
             "Treat --sql-file as a template with {{VAR}} placeholders; fill from repo .env "
-            "(see scripts/snowflake_fivetran_template.py)"
+            "(see scripts/snowflake_setup/snowflake_fivetran_template.py)"
         ),
     )
     p.add_argument(
@@ -165,7 +166,7 @@ def main() -> int:
         except KeyError:
             base = "(set SNOWFLAKE_SQL_API_HOST or SNOWFLAKE_ACCOUNT)"
         print(f"  API base: {base}")
-        print(f"  HTTP client: {'curl' if shutil.which('curl') else 'requests (hosts may be lowercased)'}")
+        print(f"  HTTP client: {'curl' if shutil.which('curl') else 'requests'}")
         ok = bool(pat) and bool(sql_host or account)
         return 0 if ok else 1
 
@@ -185,6 +186,7 @@ def main() -> int:
         return 1
 
     if args.render_from_env:
+        sys.path.insert(0, str(REPO_ROOT / "scripts/snowflake_setup"))
         sys.path.insert(0, str(REPO_ROOT / "scripts"))
         try:
             from snowflake_fivetran_template import render_template

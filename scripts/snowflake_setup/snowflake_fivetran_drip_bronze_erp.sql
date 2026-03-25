@@ -1,7 +1,7 @@
 -- Fivetran Snowflake user/role + bronze schema (TEMPLATE — do not paste secrets here)
 -- Placeholders {{VAR}} are filled from repo .env by:
---   python scripts/render_snowflake_fivetran_drip_sql.py
---   python scripts/run_snowflake_sql_pat.py --render-from-env --sql-file scripts/snowflake_fivetran_drip_bronze_erp.sql
+--   python scripts/snowflake_setup/render_snowflake_fivetran_drip_sql.py
+--   python scripts/snowflake_setup/run_snowflake_sql_pat.py --render-from-env --sql-file scripts/snowflake_setup/snowflake_fivetran_drip_bronze_erp.sql
 -- Docs: https://fivetran.com/docs/destinations/snowflake/setup-guide
 --
 -- Env (see .env.example): SNOWFLAKE_FIVETRAN_PASSWORD (required to render), plus optional

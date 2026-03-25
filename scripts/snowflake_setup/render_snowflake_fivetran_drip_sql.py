@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Render scripts/snowflake_fivetran_drip_bronze_erp.sql using variables from repo .env."""
+"""Render snowflake_fivetran_drip_bronze_erp.sql using variables from repo .env."""
 
 from __future__ import annotations
 
@@ -7,14 +7,14 @@ import argparse
 import sys
 from pathlib import Path
 
-REPO_ROOT = Path(__file__).resolve().parents[1]
+REPO_ROOT = Path(__file__).resolve().parents[2]
 
 
 def main() -> int:
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument(
         "--template",
-        default=str(REPO_ROOT / "scripts/snowflake_fivetran_drip_bronze_erp.sql"),
+        default=str(REPO_ROOT / "scripts/snowflake_setup/snowflake_fivetran_drip_bronze_erp.sql"),
         help="Path to SQL template with {{VAR}} placeholders",
     )
     p.add_argument(
@@ -29,6 +29,7 @@ def main() -> int:
     )
     args = p.parse_args()
 
+    sys.path.insert(0, str(REPO_ROOT / "scripts/snowflake_setup"))
     sys.path.insert(0, str(REPO_ROOT / "scripts"))
     from snowflake_fivetran_template import render_template
 

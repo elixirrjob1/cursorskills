@@ -4,9 +4,10 @@ from __future__ import annotations
 
 import os
 import re
+import sys
 from pathlib import Path
 
-REPO_ROOT = Path(__file__).resolve().parents[1]
+REPO_ROOT = Path(__file__).resolve().parents[2]
 
 _DEFAULTS: dict[str, str] = {
     "SNOWFLAKE_FIVETRAN_ROLE": "FIVETRAN_DRIP_ROLE",
@@ -17,7 +18,14 @@ _DEFAULTS: dict[str, str] = {
 }
 
 
+def _ensure_scripts_on_path() -> None:
+    scripts_dir = REPO_ROOT / "scripts"
+    if str(scripts_dir) not in sys.path:
+        sys.path.insert(0, str(scripts_dir))
+
+
 def _load_env() -> None:
+    _ensure_scripts_on_path()
     try:
         from dotenv import load_dotenv
 

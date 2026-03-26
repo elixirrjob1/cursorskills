@@ -1,0 +1,4 @@
+interface:
+  display_name: "Snowflake Setup"
+  short_description: "Provision Snowflake for a Fivetran destination"
+  default_prompt: "Use $snowflake-setup to provision the Snowflake user, role, warehouse, database, and schema for Fivetran and return the connector handoff values."

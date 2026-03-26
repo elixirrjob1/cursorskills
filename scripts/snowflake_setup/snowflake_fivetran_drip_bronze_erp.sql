@@ -4,13 +4,13 @@
 --   python scripts/snowflake_setup/run_snowflake_sql_pat.py --render-from-env --sql-file scripts/snowflake_setup/snowflake_fivetran_drip_bronze_erp.sql
 -- Docs: https://fivetran.com/docs/destinations/snowflake/setup-guide
 --
--- Env (see .env.example): SNOWFLAKE_FIVETRAN_PASSWORD (required to render), plus optional
+-- Env (see .env.example): all placeholders below are required to render
 -- SNOWFLAKE_FIVETRAN_ROLE, SNOWFLAKE_FIVETRAN_USER, SNOWFLAKE_FIVETRAN_WAREHOUSE,
 -- SNOWFLAKE_DRIP_DATABASE, SNOWFLAKE_BRONZE_SCHEMA.
 --
 -- After this script:
 -- 1) Fivetran destination: database / user / role / warehouse match these values.
--- 2) Per connector: destination schema = bronze_erp (or your SNOWFLAKE_BRONZE_SCHEMA).
+-- 2) Per connector: destination schema = the explicit SNOWFLAKE_BRONZE_SCHEMA you supplied.
 
 begin;
 

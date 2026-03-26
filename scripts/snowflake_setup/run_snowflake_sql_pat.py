@@ -16,10 +16,9 @@ Required environment:
                     https://<ACCOUNT>.snowflakecomputing.com (see Snowflake account identifier docs).
 
 Optional:
-  SNOWFLAKE_WAREHOUSE   Name of the warehouse created in the SQL file (default FIVETRAN_DRIP_WH).
   SNOWFLAKE_SQL_API_EXECUTION_WAREHOUSE
-                    Warehouse for this HTTP session only — must already exist (the SQL file creates
-                    FIVETRAN_DRIP_WH; it cannot be used for the same request). Default COMPUTE_WH.
+                    Warehouse for this HTTP session only — must already exist and must be provided
+                    explicitly because this setup path does not assume defaults.
 
 The Snowflake user tied to the PAT must be allowed to execute the statements (e.g. role switches
 to SECURITYADMIN / ACCOUNTADMIN as in scripts/snowflake_setup/snowflake_fivetran_drip_bronze_erp.sql).
@@ -61,6 +60,12 @@ def _load_dotenv() -> None:
         from _envfile import load_env_file
 
         load_env_file(REPO_ROOT / ".env")
+    except ImportError:
+        pass
+    try:
+        from keyvault_loader import load_env
+
+        load_env()
     except ImportError:
         pass
 
@@ -146,9 +151,8 @@ def main() -> int:
 
     account = os.environ.get("SNOWFLAKE_ACCOUNT", "").strip()
     pat = os.environ.get("SNOWFLAKE_PAT", "").strip()
-    warehouse = os.environ.get("SNOWFLAKE_WAREHOUSE", "FIVETRAN_DRIP_WH").strip()
     # Must be a warehouse that already exists (the DDL creates FIVETRAN_DRIP_WH; do not use that here).
-    exec_wh = os.environ.get("SNOWFLAKE_SQL_API_EXECUTION_WAREHOUSE", "").strip() or "COMPUTE_WH"
+    exec_wh = os.environ.get("SNOWFLAKE_SQL_API_EXECUTION_WAREHOUSE", "").strip()
 
     sql_host = os.environ.get("SNOWFLAKE_SQL_API_HOST", "").strip()
 
@@ -157,8 +161,10 @@ def main() -> int:
         print(f"  SNOWFLAKE_ACCOUNT: {'set' if account else 'MISSING'}")
         print(f"  SNOWFLAKE_SQL_API_HOST: {'set' if sql_host else 'MISSING'}")
         print(f"  SNOWFLAKE_PAT: {'set' if pat else 'MISSING'}")
-        print(f"  SNOWFLAKE_SQL_API_EXECUTION_WAREHOUSE (API session): {exec_wh!r}")
-        print(f"  SNOWFLAKE_WAREHOUSE (DDL script / new WH name): {warehouse!r}")
+        print(
+            "  SNOWFLAKE_SQL_API_EXECUTION_WAREHOUSE "
+            f"(API session): {exec_wh!r}"
+        )
         print(f"  sql file: {args.sql_file}")
         print(f"  render-from-env: {args.render_from_env}")
         try:
@@ -167,7 +173,7 @@ def main() -> int:
             base = "(set SNOWFLAKE_SQL_API_HOST or SNOWFLAKE_ACCOUNT)"
         print(f"  API base: {base}")
         print(f"  HTTP client: {'curl' if shutil.which('curl') else 'requests'}")
-        ok = bool(pat) and bool(sql_host or account)
+        ok = bool(pat) and bool(sql_host or account) and bool(exec_wh)
         return 0 if ok else 1
 
     if not pat:
@@ -176,6 +182,12 @@ def main() -> int:
     if not sql_host and not account:
         print(
             "Set SNOWFLAKE_SQL_API_HOST or SNOWFLAKE_ACCOUNT (see --dry-run).",
+            file=sys.stderr,
+        )
+        return 1
+    if not exec_wh:
+        print(
+            "Set SNOWFLAKE_SQL_API_EXECUTION_WAREHOUSE in the environment (see --dry-run).",
             file=sys.stderr,
         )
         return 1

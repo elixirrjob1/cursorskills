@@ -9,14 +9,6 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
-_DEFAULTS: dict[str, str] = {
-    "SNOWFLAKE_FIVETRAN_ROLE": "FIVETRAN_DRIP_ROLE",
-    "SNOWFLAKE_FIVETRAN_USER": "FIVETRAN_DRIP_USER",
-    "SNOWFLAKE_FIVETRAN_WAREHOUSE": "FIVETRAN_DRIP_WH",
-    "SNOWFLAKE_DRIP_DATABASE": "DRIP_DATA_INTELLIGENCE",
-    "SNOWFLAKE_BRONZE_SCHEMA": "bronze_erp",
-}
-
 
 def _ensure_scripts_on_path() -> None:
     scripts_dir = REPO_ROOT / "scripts"
@@ -38,10 +30,27 @@ def _load_env() -> None:
         load_env_file(REPO_ROOT / ".env")
     except ImportError:
         pass
+    try:
+        from keyvault_loader import load_env
+
+        load_env()
+    except ImportError:
+        pass
 
 
 def _sql_escape(value: str) -> str:
     return value.replace("'", "''")
+
+
+def _missing_template_vars(text: str, *, require_password: bool) -> list[str]:
+    keys = sorted(set(re.findall(r"\{\{([A-Z][A-Z0-9_]*)\}\}", text)))
+    missing: list[str] = []
+    for key in keys:
+        if key == "SNOWFLAKE_FIVETRAN_PASSWORD" and not require_password:
+            continue
+        if not os.environ.get(key, "").strip():
+            missing.append(key)
+    return missing
 
 
 def render_template(template_path: Path | str, *, require_password: bool = True) -> str:
@@ -52,19 +61,17 @@ def render_template(template_path: Path | str, *, require_password: bool = True)
     p = Path(template_path)
     text = p.read_text(encoding="utf-8")
 
-    if require_password and "{{SNOWFLAKE_FIVETRAN_PASSWORD}}" in text:
-        if not os.environ.get("SNOWFLAKE_FIVETRAN_PASSWORD", "").strip():
-            raise SystemExit(
-                "SNOWFLAKE_FIVETRAN_PASSWORD is required (set in .env) to render this template."
-            )
+    missing = _missing_template_vars(text, require_password=require_password)
+    if missing:
+        vars_text = ", ".join(missing)
+        raise SystemExit(
+            "Missing required Snowflake setup env vars: "
+            f"{vars_text}. Set them in .env or Key Vault-backed env loading before rendering."
+        )
 
     def repl(m: re.Match[str]) -> str:
         key = m.group(1)
-        if key == "SNOWFLAKE_FIVETRAN_PASSWORD":
-            raw = os.environ.get(key, "").strip()
-            return _sql_escape(raw)
-        default = _DEFAULTS.get(key, "")
-        raw = os.environ.get(key, default).strip() or default
+        raw = os.environ.get(key, "").strip()
         return _sql_escape(raw)
 
     return re.sub(r"\{\{([A-Z][A-Z0-9_]*)\}\}", repl, text)

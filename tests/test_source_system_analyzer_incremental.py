@@ -323,6 +323,44 @@ class SourceSystemAnalyzerIncrementalTests(unittest.TestCase):
         self.assertEqual(table["table_description"], "Source table comment")
         self.assertEqual(table["columns"][0]["column_description"], "Source column comment")
 
+    def test_build_source_system_document_can_leave_missing_descriptions_blank(self):
+        fake_engine = types.SimpleNamespace(dialect=types.SimpleNamespace(name="postgresql"))
+
+        with patch.object(MODULE, "get_engine", return_value=fake_engine), \
+             patch.object(MODULE, "get_adapter", return_value=None), \
+             patch.object(
+                 MODULE,
+                 "fetch_schema_metadata",
+                 return_value={
+                     "tables": ["customers"],
+                     "columns": {"customers": [{"name": "email", "type": "text", "nullable": True, "is_incremental": False}]},
+                     "primary_keys": {"customers": []},
+                     "foreign_keys": {"customers": []},
+                 },
+             ), \
+             patch.object(MODULE, "parse_connection_info", return_value={"driver": "postgresql"}), \
+             patch.object(MODULE, "fetch_database_timezone", return_value="UTC"), \
+             patch.object(MODULE, "fetch_row_counts", return_value={"customers": 10}), \
+             patch.object(MODULE, "_collect_projection_inputs"), \
+             patch.object(MODULE, "_projection_lookup", return_value={}), \
+             patch.object(MODULE, "_direct_history_projection_lookup", return_value={}), \
+             patch.object(MODULE, "fetch_sample_rows", return_value=(["email"], [])), \
+             patch.object(MODULE, "detect_partition_columns", return_value=([], "exact")), \
+             patch.object(MODULE, "detect_incremental_columns", return_value=[]), \
+             patch.object(MODULE, "fetch_column_statistics", return_value={}), \
+             patch.object(MODULE, "detect_join_candidates", return_value=[]), \
+             patch.object(MODULE, "_apply_concept_classification", return_value={"concepts": []}):
+            result = MODULE.build_source_system_document(
+                "postgresql://user:pass@localhost:5432/demo",
+                schema="public",
+                config={"exclude_schemas": [], "exclude_tables": [], "max_row_limit": None},
+                generate_missing_descriptions=False,
+            )
+
+        table = result["tables"][0]
+        self.assertEqual(table["table_description"], "")
+        self.assertEqual(table["columns"][0]["column_description"], "")
+
     def test_build_source_system_document_uses_direct_history_projection_fallback(self):
         fake_engine = types.SimpleNamespace(dialect=types.SimpleNamespace(name="postgresql"))
 

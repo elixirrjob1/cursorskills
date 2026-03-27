@@ -2530,6 +2530,7 @@ def build_source_system_document(
     include_sample_data: bool = False,
     dialect_override: Optional[str] = None,
     config: Optional[Dict[str, Any]] = None,
+    generate_missing_descriptions: bool = True,
 ) -> Dict[str, Any]:
     """Analyze source database schema and data quality and return the schema document."""
     config = config or load_config(tool_name="source_system_analyzer")
@@ -2651,13 +2652,14 @@ def build_source_system_document(
                     if sample_values:
                         col_dict["_sample_values"] = list(sample_values)
                     col_dict["unit_context"] = _build_unit_context(col["name"], semantic_class, sample_values=sample_values)
-                    col_dict["column_description"] = _generate_column_description(
-                        table_name,
-                        col_dict,
-                        pk_columns,
-                        fk_columns,
-                        raw_column_description,
-                    )
+                    if generate_missing_descriptions:
+                        col_dict["column_description"] = _generate_column_description(
+                            table_name,
+                            col_dict,
+                            pk_columns,
+                            fk_columns,
+                            raw_column_description,
+                        )
                     enriched_columns.append(col_dict)
 
                 incremental_lower = {c.lower() for c in incremental_columns}
@@ -2669,12 +2671,16 @@ def build_source_system_document(
 
                 table_entry = {
                     "table": table_name, "schema": table_schema, "columns": enriched_columns,
-                    "table_description": _generate_table_description(
-                        table_name,
-                        enriched_columns,
-                        pk_columns,
-                        fk_columns,
-                        raw_table_description,
+                    "table_description": (
+                        _generate_table_description(
+                            table_name,
+                            enriched_columns,
+                            pk_columns,
+                            fk_columns,
+                            raw_table_description,
+                        )
+                        if generate_missing_descriptions
+                        else raw_table_description
                     ),
                     "primary_keys": pk_columns,
                     "foreign_keys": [{"column": fk["column"], "references": fk["references"]} for fk in fk_columns],
@@ -2826,6 +2832,7 @@ def analyze_source_system(
     include_sample_data: bool = False,
     dialect_override: Optional[str] = None,
     config: Optional[Dict[str, Any]] = None,
+    generate_missing_descriptions: bool = True,
 ) -> Dict[str, Any]:
     """Analyze source database schema and data quality, save combined output to schema.json."""
     schema_document = build_source_system_document(
@@ -2834,6 +2841,7 @@ def analyze_source_system(
         include_sample_data=include_sample_data,
         dialect_override=dialect_override,
         config=config,
+        generate_missing_descriptions=generate_missing_descriptions,
     )
 
     if schema_document.get("error") == "db_analysis_config_required":

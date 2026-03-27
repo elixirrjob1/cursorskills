@@ -51,6 +51,34 @@ Before starting database analysis:
 
 This preflight applies only to database sources. API and flat-file workflows should not ask these questions.
 
+## Description Enrichment Continuation
+
+After database analysis writes `schema.json`, check whether any table has an empty `table_description` or any column has an empty `column_description`.
+
+If any descriptions are missing:
+
+1. Build a checklist file:
+
+```bash
+python3 scripts/build_description_enrichment_checklist.py schema.json
+```
+
+2. Use the checklist as the ordered worklist for missing descriptions.
+3. Work table by table in checklist order.
+4. For each table:
+   - complete missing `column_description` items first
+   - query up to 3 sample rows per unresolved column when needed
+   - write generated column descriptions into each checklist item's `proposed_description`
+   - only after that table's column descriptions are complete, generate the table's `table_description` from the completed column descriptions for that table
+5. Do not do a separate table-query step unless the column-level context is still insufficient.
+6. Merge the checklist back into the main analyzer JSON:
+
+```bash
+python3 scripts/apply_description_enrichment.py schema.json schema_description_checklist.json
+```
+
+Do not treat the analysis as complete while the final analyzer JSON still has blank table or column descriptions.
+
 ## Backward Compatibility
 
 Keep existing database analyzer entrypoint unchanged:
@@ -67,6 +95,7 @@ The merged API and tabular flows are now available directly inside this skill:
 - Tabular schema script: `scripts/flat/tabular_schema_json.py`
 - Volume projection collector: `scripts/volume_projection/collector.py`
 - Volume projection predictor: `scripts/volume_projection/predictor.py`
+- Preferred database wrapper for analysis + checklist creation: `scripts/run_source_analysis_with_description_checklist.py`
 
 ## Fallback Rules
 

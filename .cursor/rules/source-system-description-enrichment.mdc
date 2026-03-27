@@ -1,0 +1,27 @@
+---
+description: Source-system analyzer continuation — when descriptions are missing, build checklist, query context, and merge descriptions before completion
+alwaysApply: true
+---
+
+# Source-System Description Enrichment Rule
+
+When working with database output from `source-system-analyser`:
+
+1. If any table has an empty `table_description`, or any column has an empty `column_description`, do **not** stop at raw analyzer output.
+2. Prefer running database analysis through:
+   - `python3 scripts/run_source_analysis_with_description_checklist.py <database_url> <output_json> [schema]`
+3. If raw analyzer output already exists, build a checklist file with:
+   - `python3 scripts/build_description_enrichment_checklist.py <schema.json>`
+4. Use that checklist as the worklist for description enrichment.
+5. Process the checklist table by table in file order.
+6. For each table:
+   - resolve every pending `column_description` item first
+   - query up to 3 sample rows per unresolved column when needed
+   - write each generated column description into that checklist item’s `proposed_description`
+   - only after the table’s column items are complete, generate the table’s `table_description` using the completed column descriptions for that same table
+7. Do not query separately for a table description unless the column-level context is still insufficient.
+8. Merge the completed checklist back into the main analyzer JSON with:
+   - `python3 scripts/apply_description_enrichment.py <schema.json> <checklist.json>`
+9. Only treat the analysis task as complete after the final analyzer JSON has no blank table or column descriptions.
+
+Preserve source-provided descriptions when they already exist. Only fill missing descriptions.

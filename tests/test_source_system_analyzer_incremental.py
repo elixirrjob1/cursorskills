@@ -219,7 +219,7 @@ class SourceSystemAnalyzerIncrementalTests(unittest.TestCase):
             },
         )
 
-    def test_build_source_system_document_always_includes_table_and_column_descriptions(self):
+    def test_build_source_system_document_generates_missing_table_and_column_descriptions(self):
         fake_engine = types.SimpleNamespace(dialect=types.SimpleNamespace(name="postgresql"))
 
         with patch.object(MODULE, "get_engine", return_value=fake_engine), \
@@ -258,9 +258,70 @@ class SourceSystemAnalyzerIncrementalTests(unittest.TestCase):
             )
 
         table = result["tables"][0]
-        self.assertEqual(table["table_description"], "")
-        self.assertEqual(table["columns"][0]["column_description"], "")
-        self.assertEqual(table["columns"][1]["column_description"], "")
+        self.assertEqual(table["table_description"], "Stores customer records including email.")
+        self.assertEqual(table["columns"][0]["column_description"], "Primary key for the customer record.")
+        self.assertEqual(table["columns"][1]["column_description"], "Contact value for the customer record.")
+
+    def test_build_source_system_document_preserves_existing_source_descriptions(self):
+        fake_engine = types.SimpleNamespace(dialect=types.SimpleNamespace(name="postgresql"))
+        fake_adapter = types.SimpleNamespace(
+            resolve_default_schema=lambda engine: "public",
+            fetch_table_descriptions=lambda engine, schema: {"customers": "Source table comment"},
+            fetch_column_descriptions=lambda engine, schema: {"customers": {"email": "Source column comment"}},
+            fetch_check_constraints=lambda engine, schema: {},
+            fetch_enum_columns=lambda engine, schema: {},
+            fetch_unique_constraints=lambda engine, schema: {},
+            detect_cdc_enabled=lambda engine, table_name, schema: False,
+            fetch_database_timezone=lambda engine: "UTC",
+        )
+
+        with ExitStack() as stack:
+            stack.enter_context(patch.object(MODULE, "get_engine", return_value=fake_engine))
+            stack.enter_context(patch.object(MODULE, "get_adapter", return_value=fake_adapter))
+            stack.enter_context(
+                patch.object(
+                    MODULE,
+                    "fetch_schema_metadata",
+                    return_value={
+                        "tables": ["customers"],
+                        "columns": {"customers": [{"name": "email", "type": "text", "nullable": True, "is_incremental": False}]},
+                        "primary_keys": {"customers": []},
+                        "foreign_keys": {"customers": []},
+                    },
+                )
+            )
+            stack.enter_context(patch.object(MODULE, "parse_connection_info", return_value={"driver": "postgresql"}))
+            stack.enter_context(patch.object(MODULE, "fetch_database_timezone", return_value="UTC"))
+            stack.enter_context(patch.object(MODULE, "fetch_row_counts", return_value={"customers": 10}))
+            stack.enter_context(patch.object(MODULE, "_collect_projection_inputs"))
+            stack.enter_context(patch.object(MODULE, "_projection_lookup", return_value={}))
+            stack.enter_context(patch.object(MODULE, "_direct_history_projection_lookup", return_value={}))
+            stack.enter_context(patch.object(MODULE, "fetch_sample_rows", return_value=(["email"], [])))
+            stack.enter_context(patch.object(MODULE, "detect_partition_columns", return_value=([], "exact")))
+            stack.enter_context(patch.object(MODULE, "detect_incremental_columns", return_value=[]))
+            stack.enter_context(patch.object(MODULE, "fetch_column_statistics", return_value={}))
+            stack.enter_context(patch.object(MODULE, "detect_join_candidates", return_value=[]))
+            stack.enter_context(patch.object(MODULE, "_apply_concept_classification", return_value={"concepts": []}))
+            stack.enter_context(patch.object(MODULE, "check_controlled_value_candidates", return_value=[]))
+            stack.enter_context(patch.object(MODULE, "check_nullable_but_never_null", return_value=[]))
+            stack.enter_context(patch.object(MODULE, "check_missing_primary_keys", return_value=[]))
+            stack.enter_context(patch.object(MODULE, "check_missing_foreign_keys", return_value=[]))
+            stack.enter_context(patch.object(MODULE, "check_format_inconsistency", return_value=[]))
+            stack.enter_context(patch.object(MODULE, "check_range_violations", return_value=[]))
+            stack.enter_context(patch.object(MODULE, "check_timestamp_ordering", return_value=[]))
+            stack.enter_context(patch.object(MODULE, "check_delete_management", return_value=[]))
+            stack.enter_context(patch.object(MODULE, "check_late_arriving_data", return_value=[]))
+            stack.enter_context(patch.object(MODULE, "check_timezone", return_value=[]))
+            stack.enter_context(patch.object(MODULE, "check_unit_consistency", return_value=[]))
+            result = MODULE.build_source_system_document(
+                "postgresql://user:pass@localhost:5432/demo",
+                schema="public",
+                config={"exclude_schemas": [], "exclude_tables": [], "max_row_limit": None},
+            )
+
+        table = result["tables"][0]
+        self.assertEqual(table["table_description"], "Source table comment")
+        self.assertEqual(table["columns"][0]["column_description"], "Source column comment")
 
     def test_build_source_system_document_uses_direct_history_projection_fallback(self):
         fake_engine = types.SimpleNamespace(dialect=types.SimpleNamespace(name="postgresql"))

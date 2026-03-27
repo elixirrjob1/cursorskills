@@ -578,7 +578,10 @@ def _apply_columns_row(col, row):
     _set_if_changed(col, "null_count", row.get("null_count"), parser=lambda v: _coerce_like(col.get("null_count"), v))
     _set_if_changed(col, "data_category", row.get("data_category"))
     _set_if_changed(col, "semantic_class", row.get("semantic_class"))
-    _set_if_changed(col, "description", row.get("description"))
+    description_value = row.get("column_description")
+    if _is_blank(description_value):
+        description_value = row.get("description")
+    _set_if_changed(col, "column_description", description_value)
 
     existing_uc = col.get("unit_context") if isinstance(col.get("unit_context"), dict) else {}
     display_unit = col.get("unit")
@@ -721,7 +724,7 @@ def _apply_units_sheet(wb, payload, tindex):
                 "null_count": col.get("null_count", ""),
                 "data_category": col.get("data_category", ""),
                 "semantic_class": col.get("semantic_class", ""),
-                "description": col.get("description", ""),
+                "column_description": col.get("column_description", col.get("description", "")),
                 "range_min": (col.get("data_range") or {}).get("min", ""),
                 "range_max": (col.get("data_range") or {}).get("max", ""),
             },

@@ -1,6 +1,6 @@
 {
   "metadata": {
-    "generated_at": "2026-03-27T09:48:10.142923+00:00",
+    "generated_at": "2026-03-27T10:53:39.953991+00:00",
     "database_url": "pioneertest.database.windows.net:1433/free-sql-db-3300567?driver=ODBC+Driver+18+for+SQL+Server&TrustServerCertificate=yes",
     "schema_filter": "dbo",
     "total_tables": 10,
@@ -138,7 +138,7 @@
         "concept_id": "entity.status",
         "column_count": 2,
         "table_count": 2,
-        "avg_confidence": 1.0,
+        "avg_confidence": 0.97,
         "alias_groups": [
           "statu"
         ],
@@ -147,6 +147,7 @@
           "sales_orders.status"
         ],
         "signals": [
+          "cross_table_consensus",
           "name",
           "profile",
           "type",
@@ -265,7 +266,7 @@
         "concept_id": "temporal.created_at",
         "column_count": 10,
         "table_count": 10,
-        "avg_confidence": 1.0,
+        "avg_confidence": 0.99,
         "alias_groups": [
           "created_at"
         ],
@@ -277,6 +278,7 @@
           "purchase_order_items.created_at"
         ],
         "signals": [
+          "cross_table_consensus",
           "name",
           "profile",
           "table_context",
@@ -288,7 +290,7 @@
         "concept_id": "temporal.date_only",
         "column_count": 4,
         "table_count": 3,
-        "avg_confidence": 0.97,
+        "avg_confidence": 0.89,
         "alias_groups": [
           "expected_date",
           "hire_date",
@@ -332,7 +334,7 @@
         "concept_id": "temporal.updated_at",
         "column_count": 10,
         "table_count": 10,
-        "avg_confidence": 1.0,
+        "avg_confidence": 0.99,
         "alias_groups": [
           "updated_at"
         ],
@@ -344,6 +346,7 @@
           "purchase_order_items.updated_at"
         ],
         "signals": [
+          "cross_table_consensus",
           "name",
           "profile",
           "table_context",
@@ -388,6 +391,7 @@
           "type": "bigint",
           "nullable": false,
           "is_incremental": false,
+          "column_description": "Primary key for the customer record.",
           "cardinality": 100,
           "null_count": 0,
           "data_range": {
@@ -417,6 +421,7 @@
           "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
           "nullable": false,
           "is_incremental": false,
+          "column_description": "Given name value for the customer record.",
           "cardinality": 100,
           "null_count": 0,
           "data_range": {
@@ -445,6 +450,7 @@
           "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
           "nullable": false,
           "is_incremental": false,
+          "column_description": "Family name value for the customer record.",
           "cardinality": 100,
           "null_count": 0,
           "data_range": {
@@ -473,6 +479,7 @@
           "type": "nvarchar(450)",
           "nullable": true,
           "is_incremental": false,
+          "column_description": "Contact value for the customer record.",
           "cardinality": 100,
           "null_count": 0,
           "data_range": {
@@ -506,6 +513,7 @@
           "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
           "nullable": true,
           "is_incremental": false,
+          "column_description": "Contact value for the customer record.",
           "cardinality": 100,
           "null_count": 0,
           "data_range": {
@@ -539,6 +547,7 @@
           "type": "datetime2",
           "nullable": false,
           "is_incremental": false,
+          "column_description": "Timestamp when the customer record was created.",
           "column_timezone": "(UTC) Coordinated Universal Time",
           "cardinality": 95,
           "null_count": 0,
@@ -572,6 +581,7 @@
           "type": "datetime2",
           "nullable": false,
           "is_incremental": true,
+          "column_description": "Timestamp when the customer record was last updated.",
           "column_timezone": "(UTC) Coordinated Universal Time",
           "cardinality": 95,
           "null_count": 0,
@@ -601,7 +611,7 @@
           "concept_alias_group": "updated_at"
         }
       ],
-      "table_description": null,
+      "table_description": "Stores customer records including first name, last name, and email.",
       "primary_keys": [
         "customer_id"
       ],
@@ -727,6 +737,7 @@
           "type": "bigint",
           "nullable": false,
           "is_incremental": false,
+          "column_description": "Primary key for the employee record.",
           "cardinality": 20,
           "null_count": 0,
           "data_range": {
@@ -756,6 +767,7 @@
           "type": "bigint",
           "nullable": false,
           "is_incremental": false,
+          "column_description": "Foreign key referencing stores.store_id for the employee record.",
           "cardinality": 5,
           "null_count": 0,
           "data_range": {
@@ -784,6 +796,7 @@
           "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
           "nullable": false,
           "is_incremental": false,
+          "column_description": "Given name value for the employee record.",
           "cardinality": 20,
           "null_count": 0,
           "data_range": {
@@ -810,6 +823,7 @@
           "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
           "nullable": false,
           "is_incremental": false,
+          "column_description": "Family name value for the employee record.",
           "cardinality": 20,
           "null_count": 0,
           "data_range": {
@@ -836,6 +850,7 @@
           "type": "nvarchar(450)",
           "nullable": false,
           "is_incremental": false,
+          "column_description": "Contact value for the employee record.",
           "cardinality": 20,
           "null_count": 0,
           "data_range": {
@@ -867,6 +882,7 @@
           "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
           "nullable": false,
           "is_incremental": false,
+          "column_description": "Role stored for the employee record as nvarchar collate \"sql_latin1_general_cp1_ci_as\".",
           "cardinality": 4,
           "null_count": 0,
           "data_range": {
@@ -895,6 +911,7 @@
           "type": "date",
           "nullable": false,
           "is_incremental": false,
+          "column_description": "Timestamp value for the employee record.",
           "cardinality": 20,
           "null_count": 0,
           "data_range": {
@@ -927,6 +944,7 @@
           "type": "datetime2",
           "nullable": false,
           "is_incremental": false,
+          "column_description": "Timestamp when the employee record was created.",
           "column_timezone": "(UTC) Coordinated Universal Time",
           "cardinality": 20,
           "null_count": 0,
@@ -960,6 +978,7 @@
           "type": "datetime2",
           "nullable": false,
           "is_incremental": true,
+          "column_description": "Timestamp when the employee record was last updated.",
           "column_timezone": "(UTC) Coordinated Universal Time",
           "cardinality": 20,
           "null_count": 0,
@@ -989,7 +1008,7 @@
           "concept_alias_group": "updated_at"
         }
       ],
-      "table_description": null,
+      "table_description": "Stores employee records including first name, last name, and email.",
       "primary_keys": [
         "employee_id"
       ],
@@ -1150,6 +1169,7 @@
           "type": "bigint",
           "nullable": false,
           "is_incremental": false,
+          "column_description": "Primary key for the inventory record.",
           "cardinality": 100,
           "null_count": 0,
           "data_range": {
@@ -1179,6 +1199,7 @@
           "type": "bigint",
           "nullable": false,
           "is_incremental": false,
+          "column_description": "Foreign key referencing stores.store_id for the inventory record.",
           "cardinality": 5,
           "null_count": 0,
           "data_range": {
@@ -1207,6 +1228,7 @@
           "type": "bigint",
           "nullable": false,
           "is_incremental": false,
+          "column_description": "Foreign key referencing products.product_id for the inventory record.",
           "cardinality": 47,
           "null_count": 0,
           "data_range": {
@@ -1235,6 +1257,7 @@
           "type": "integer",
           "nullable": false,
           "is_incremental": false,
+          "column_description": "Quantity value for the inventory record.",
           "cardinality": 68,
           "null_count": 0,
           "data_range": {
@@ -1275,6 +1298,7 @@
           "type": "integer",
           "nullable": false,
           "is_incremental": false,
+          "column_description": "Reorder level stored for the inventory record as integer.",
           "cardinality": 20,
           "null_count": 0,
           "data_range": {
@@ -1302,6 +1326,7 @@
           "type": "datetime2",
           "nullable": true,
           "is_incremental": false,
+          "column_description": "Timestamp value for the inventory record.",
           "column_timezone": "(UTC) Coordinated Universal Time",
           "cardinality": 89,
           "null_count": 0,
@@ -1335,6 +1360,7 @@
           "type": "datetime2",
           "nullable": false,
           "is_incremental": false,
+          "column_description": "Timestamp when the inventory record was created.",
           "column_timezone": "(UTC) Coordinated Universal Time",
           "cardinality": 91,
           "null_count": 0,
@@ -1368,6 +1394,7 @@
           "type": "datetime2",
           "nullable": false,
           "is_incremental": true,
+          "column_description": "Timestamp when the inventory record was last updated.",
           "column_timezone": "(UTC) Coordinated Universal Time",
           "cardinality": 89,
           "null_count": 0,
@@ -1401,6 +1428,7 @@
           "type": "numeric(10,2)",
           "nullable": true,
           "is_incremental": false,
+          "column_description": "Stock value stored for the inventory record as numeric(10,2).",
           "cardinality": 0,
           "null_count": 100,
           "data_category": "continuous",
@@ -1593,6 +1621,7 @@
           "type": "bigint",
           "nullable": false,
           "is_incremental": false,
+          "column_description": "Primary key for the product record.",
           "cardinality": 50,
           "null_count": 0,
           "data_range": {
@@ -1622,6 +1651,7 @@
           "type": "bigint",
           "nullable": false,
           "is_incremental": false,
+          "column_description": "Foreign key referencing suppliers.supplier_id for the product record.",
           "cardinality": 10,
           "null_count": 0,
           "data_range": {
@@ -1650,6 +1680,7 @@
           "type": "nvarchar(450)",
           "nullable": false,
           "is_incremental": false,
+          "column_description": "Product identifier value for the product record.",
           "cardinality": 50,
           "null_count": 0,
           "data_range": {
@@ -1678,6 +1709,7 @@
           "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
           "nullable": false,
           "is_incremental": false,
+          "column_description": "Name stored for the product record as nvarchar collate \"sql_latin1_general_cp1_ci_as\".",
           "cardinality": 50,
           "null_count": 0,
           "data_range": {
@@ -1704,6 +1736,7 @@
           "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
           "nullable": false,
           "is_incremental": false,
+          "column_description": "Category value for the product record.",
           "cardinality": 5,
           "null_count": 0,
           "data_range": {
@@ -1733,6 +1766,7 @@
           "type": "numeric(10,2)",
           "nullable": false,
           "is_incremental": false,
+          "column_description": "Currency amount value for the product record.",
           "cardinality": 50,
           "null_count": 0,
           "data_range": {
@@ -1764,6 +1798,7 @@
           "type": "numeric(10,2)",
           "nullable": false,
           "is_incremental": false,
+          "column_description": "Currency amount value for the product record.",
           "cardinality": 50,
           "null_count": 0,
           "data_range": {
@@ -1795,6 +1830,7 @@
           "type": "bit",
           "nullable": false,
           "is_incremental": false,
+          "column_description": "Status flag indicating whether the product record is active or deleted.",
           "cardinality": 1,
           "null_count": 0,
           "data_category": "discrete",
@@ -1816,6 +1852,7 @@
           "type": "datetime2",
           "nullable": false,
           "is_incremental": false,
+          "column_description": "Timestamp when the product record was created.",
           "column_timezone": "(UTC) Coordinated Universal Time",
           "cardinality": 50,
           "null_count": 0,
@@ -1849,6 +1886,7 @@
           "type": "datetime2",
           "nullable": false,
           "is_incremental": true,
+          "column_description": "Timestamp when the product record was last updated.",
           "column_timezone": "(UTC) Coordinated Universal Time",
           "cardinality": 50,
           "null_count": 0,
@@ -1912,6 +1950,7 @@
           "type": "numeric(10,2)",
           "nullable": true,
           "is_incremental": false,
+          "column_description": "Mass value for the product record.",
           "cardinality": 0,
           "null_count": 50,
           "data_category": "continuous",
@@ -1941,6 +1980,7 @@
           "type": "numeric(10,2)",
           "nullable": true,
           "is_incremental": false,
+          "column_description": "Length value for the product record.",
           "cardinality": 0,
           "null_count": 50,
           "data_category": "continuous",
@@ -2000,6 +2040,7 @@
           "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
           "nullable": true,
           "is_incremental": false,
+          "column_description": "Product description stored for the product record as nvarchar collate \"sql_latin1_general_cp1_ci_as\".",
           "cardinality": 0,
           "null_count": 50,
           "data_category": "nominal",
@@ -2238,6 +2279,7 @@
           "type": "bigint",
           "nullable": false,
           "is_incremental": false,
+          "column_description": "Primary key for the purchase order item record.",
           "cardinality": 246,
           "null_count": 0,
           "data_range": {
@@ -2267,6 +2309,7 @@
           "type": "bigint",
           "nullable": false,
           "is_incremental": false,
+          "column_description": "Foreign key referencing purchase_orders.po_id for the purchase order item record.",
           "cardinality": 125,
           "null_count": 0,
           "data_range": {
@@ -2295,6 +2338,7 @@
           "type": "bigint",
           "nullable": false,
           "is_incremental": false,
+          "column_description": "Foreign key referencing products.product_id for the purchase order item record.",
           "cardinality": 49,
           "null_count": 0,
           "data_range": {
@@ -2323,6 +2367,7 @@
           "type": "integer",
           "nullable": false,
           "is_incremental": false,
+          "column_description": "Quantity value for the purchase order item record.",
           "cardinality": 41,
           "null_count": 0,
           "data_range": {
@@ -2363,6 +2408,7 @@
           "type": "numeric(10,2)",
           "nullable": false,
           "is_incremental": false,
+          "column_description": "Currency amount value for the purchase order item record.",
           "cardinality": 49,
           "null_count": 0,
           "data_range": {
@@ -2396,6 +2442,7 @@
           "type": "datetime2",
           "nullable": false,
           "is_incremental": false,
+          "column_description": "Timestamp when the purchase order item record was created.",
           "column_timezone": "(UTC) Coordinated Universal Time",
           "cardinality": 246,
           "null_count": 0,
@@ -2429,6 +2476,7 @@
           "type": "datetime2",
           "nullable": false,
           "is_incremental": true,
+          "column_description": "Timestamp when the purchase order item record was last updated.",
           "column_timezone": "(UTC) Coordinated Universal Time",
           "cardinality": 246,
           "null_count": 0,
@@ -2462,6 +2510,7 @@
           "type": "numeric(10,2)",
           "nullable": true,
           "is_incremental": false,
+          "column_description": "Quantity value for the purchase order item record.",
           "cardinality": 0,
           "null_count": 246,
           "data_category": "continuous",
@@ -2681,6 +2730,7 @@
           "type": "bigint",
           "nullable": false,
           "is_incremental": false,
+          "column_description": "Primary key for the purchase order record.",
           "cardinality": 125,
           "null_count": 0,
           "data_range": {
@@ -2710,6 +2760,7 @@
           "type": "bigint",
           "nullable": false,
           "is_incremental": false,
+          "column_description": "Foreign key referencing suppliers.supplier_id for the purchase order record.",
           "cardinality": 10,
           "null_count": 0,
           "data_range": {
@@ -2738,6 +2789,7 @@
           "type": "bigint",
           "nullable": false,
           "is_incremental": false,
+          "column_description": "Foreign key referencing stores.store_id for the purchase order record.",
           "cardinality": 5,
           "null_count": 0,
           "data_range": {
@@ -2766,6 +2818,7 @@
           "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
           "nullable": false,
           "is_incremental": false,
+          "column_description": "Category value for the purchase order record.",
           "cardinality": 3,
           "null_count": 0,
           "data_range": {
@@ -2776,19 +2829,19 @@
           "semantic_class": "category",
           "unit_context": null,
           "concept_id": "entity.status",
-          "concept_confidence": 1.0,
+          "concept_confidence": 0.95,
           "concept_evidence": [
             "name token: statu",
             "type hint: nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
             "legacy field classification: categorical",
-            "value pattern: status",
-            "profile heuristic matched"
+            "profile heuristic matched",
+            "cross-table consensus: 2 similar columns"
           ],
           "concept_sources": [
+            "cross_table_consensus",
             "name",
             "profile",
-            "type",
-            "values"
+            "type"
           ],
           "concept_alias_group": "statu"
         },
@@ -2797,6 +2850,7 @@
           "type": "date",
           "nullable": false,
           "is_incremental": false,
+          "column_description": "Timestamp value for the purchase order record.",
           "cardinality": 123,
           "null_count": 0,
           "data_range": {
@@ -2807,20 +2861,20 @@
           "semantic_class": "timestamp",
           "unit_context": null,
           "concept_id": "temporal.date_only",
-          "concept_confidence": 1.0,
+          "concept_confidence": 0.9,
           "concept_evidence": [
             "name token: order_date",
             "type hint: date",
             "legacy field classification: temporal",
-            "value pattern: date_only",
-            "table context: purchase_orders"
+            "table context: purchase_orders",
+            "cross-table consensus: 2 similar columns"
           ],
           "concept_sources": [
+            "cross_table_consensus",
             "name",
             "profile",
             "table_context",
-            "type",
-            "values"
+            "type"
           ],
           "concept_alias_group": "order_date"
         },
@@ -2829,6 +2883,7 @@
           "type": "date",
           "nullable": true,
           "is_incremental": false,
+          "column_description": "Timestamp value for the purchase order record.",
           "cardinality": 123,
           "null_count": 0,
           "data_range": {
@@ -2839,20 +2894,18 @@
           "semantic_class": "timestamp",
           "unit_context": null,
           "concept_id": "temporal.date_only",
-          "concept_confidence": 1.0,
+          "concept_confidence": 0.75,
           "concept_evidence": [
             "name token: expected_date",
             "type hint: date",
             "legacy field classification: temporal",
-            "value pattern: date_only",
             "table context: purchase_orders"
           ],
           "concept_sources": [
             "name",
             "profile",
             "table_context",
-            "type",
-            "values"
+            "type"
           ],
           "concept_alias_group": "expected_date"
         },
@@ -2861,6 +2914,7 @@
           "type": "datetime2",
           "nullable": false,
           "is_incremental": false,
+          "column_description": "Timestamp when the purchase order record was created.",
           "column_timezone": "(UTC) Coordinated Universal Time",
           "cardinality": 123,
           "null_count": 0,
@@ -2872,20 +2926,20 @@
           "semantic_class": "timestamp",
           "unit_context": null,
           "concept_id": "temporal.created_at",
-          "concept_confidence": 1.0,
+          "concept_confidence": 0.9,
           "concept_evidence": [
             "name token: created_at",
             "type hint: datetime2",
             "legacy field classification: temporal",
-            "value pattern: timestamp",
-            "table context: purchase_orders"
+            "table context: purchase_orders",
+            "cross-table consensus: 10 similar columns"
           ],
           "concept_sources": [
+            "cross_table_consensus",
             "name",
             "profile",
             "table_context",
-            "type",
-            "values"
+            "type"
           ],
           "concept_alias_group": "created_at"
         },
@@ -2894,6 +2948,7 @@
           "type": "datetime2",
           "nullable": false,
           "is_incremental": true,
+          "column_description": "Timestamp when the purchase order record was last updated.",
           "column_timezone": "(UTC) Coordinated Universal Time",
           "cardinality": 123,
           "null_count": 0,
@@ -2905,20 +2960,20 @@
           "semantic_class": "timestamp",
           "unit_context": null,
           "concept_id": "temporal.updated_at",
-          "concept_confidence": 1.0,
+          "concept_confidence": 0.9,
           "concept_evidence": [
             "name token: updated_at",
             "type hint: datetime2",
             "legacy field classification: temporal",
-            "value pattern: timestamp",
-            "table context: purchase_orders"
+            "table context: purchase_orders",
+            "cross-table consensus: 10 similar columns"
           ],
           "concept_sources": [
+            "cross_table_consensus",
             "name",
             "profile",
             "table_context",
-            "type",
-            "values"
+            "type"
           ],
           "concept_alias_group": "updated_at"
         },
@@ -3128,6 +3183,7 @@
           "type": "bigint",
           "nullable": false,
           "is_incremental": false,
+          "column_description": "Primary key for the sales order item record.",
           "cardinality": 508,
           "null_count": 0,
           "data_range": {
@@ -3157,6 +3213,7 @@
           "type": "bigint",
           "nullable": false,
           "is_incremental": false,
+          "column_description": "Foreign key referencing sales_orders.sales_order_id for the sales order item record.",
           "cardinality": 200,
           "null_count": 0,
           "data_range": {
@@ -3185,6 +3242,7 @@
           "type": "bigint",
           "nullable": false,
           "is_incremental": false,
+          "column_description": "Foreign key referencing products.product_id for the sales order item record.",
           "cardinality": 50,
           "null_count": 0,
           "data_range": {
@@ -3213,6 +3271,7 @@
           "type": "integer",
           "nullable": false,
           "is_incremental": false,
+          "column_description": "Quantity value for the sales order item record.",
           "cardinality": 5,
           "null_count": 0,
           "data_range": {
@@ -3253,6 +3312,7 @@
           "type": "numeric(15,2)",
           "nullable": false,
           "is_incremental": false,
+          "column_description": "Currency amount value for the sales order item record.",
           "cardinality": 50,
           "null_count": 0,
           "data_range": {
@@ -3286,6 +3346,7 @@
           "type": "datetime2",
           "nullable": false,
           "is_incremental": false,
+          "column_description": "Timestamp when the sales order item record was created.",
           "column_timezone": "(UTC) Coordinated Universal Time",
           "cardinality": 508,
           "null_count": 0,
@@ -3319,6 +3380,7 @@
           "type": "datetime2",
           "nullable": false,
           "is_incremental": true,
+          "column_description": "Timestamp when the sales order item record was last updated.",
           "column_timezone": "(UTC) Coordinated Universal Time",
           "cardinality": 508,
           "null_count": 0,
@@ -3352,6 +3414,7 @@
           "type": "numeric(10,2)",
           "nullable": true,
           "is_incremental": false,
+          "column_description": "Quantity value for the sales order item record.",
           "cardinality": 0,
           "null_count": 508,
           "data_category": "continuous",
@@ -3571,6 +3634,7 @@
           "type": "bigint",
           "nullable": false,
           "is_incremental": false,
+          "column_description": "Primary key for the sales order record.",
           "cardinality": 200,
           "null_count": 0,
           "data_range": {
@@ -3600,6 +3664,7 @@
           "type": "bigint",
           "nullable": false,
           "is_incremental": false,
+          "column_description": "Foreign key referencing stores.store_id for the sales order record.",
           "cardinality": 5,
           "null_count": 0,
           "data_range": {
@@ -3628,6 +3693,7 @@
           "type": "bigint",
           "nullable": true,
           "is_incremental": false,
+          "column_description": "Foreign key referencing customers.customer_id for the sales order record.",
           "cardinality": 76,
           "null_count": 0,
           "data_range": {
@@ -3656,6 +3722,7 @@
           "type": "bigint",
           "nullable": false,
           "is_incremental": false,
+          "column_description": "Foreign key referencing employees.employee_id for the sales order record.",
           "cardinality": 20,
           "null_count": 0,
           "data_range": {
@@ -3684,6 +3751,7 @@
           "type": "datetime2",
           "nullable": false,
           "is_incremental": false,
+          "column_description": "Timestamp value for the sales order record.",
           "column_timezone": "(UTC) Coordinated Universal Time",
           "cardinality": 191,
           "null_count": 0,
@@ -3717,6 +3785,7 @@
           "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
           "nullable": false,
           "is_incremental": false,
+          "column_description": "Category value for the sales order record.",
           "cardinality": 3,
           "null_count": 0,
           "data_range": {
@@ -3748,6 +3817,7 @@
           "type": "numeric(12,2)",
           "nullable": false,
           "is_incremental": false,
+          "column_description": "Currency amount value for the sales order record.",
           "cardinality": 200,
           "null_count": 0,
           "data_range": {
@@ -3781,6 +3851,7 @@
           "type": "datetime2",
           "nullable": false,
           "is_incremental": false,
+          "column_description": "Timestamp when the sales order record was created.",
           "column_timezone": "(UTC) Coordinated Universal Time",
           "cardinality": 191,
           "null_count": 0,
@@ -3814,6 +3885,7 @@
           "type": "datetime2",
           "nullable": false,
           "is_incremental": true,
+          "column_description": "Timestamp when the sales order record was last updated.",
           "column_timezone": "(UTC) Coordinated Universal Time",
           "cardinality": 191,
           "null_count": 0,
@@ -4065,6 +4137,7 @@
           "type": "bigint",
           "nullable": false,
           "is_incremental": false,
+          "column_description": "Primary key for the store record.",
           "cardinality": 5,
           "null_count": 0,
           "data_range": {
@@ -4094,6 +4167,7 @@
           "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
           "nullable": false,
           "is_incremental": false,
+          "column_description": "Name stored for the store record as nvarchar collate \"sql_latin1_general_cp1_ci_as\".",
           "cardinality": 5,
           "null_count": 0,
           "data_range": {
@@ -4120,6 +4194,7 @@
           "type": "nvarchar(450)",
           "nullable": false,
           "is_incremental": false,
+          "column_description": "Code stored for the store record as nvarchar(450).",
           "cardinality": 5,
           "null_count": 0,
           "data_range": {
@@ -4147,6 +4222,7 @@
           "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
           "nullable": true,
           "is_incremental": false,
+          "column_description": "Address stored for the store record as nvarchar collate \"sql_latin1_general_cp1_ci_as\".",
           "cardinality": 5,
           "null_count": 0,
           "data_range": {
@@ -4173,6 +4249,7 @@
           "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
           "nullable": true,
           "is_incremental": false,
+          "column_description": "City stored for the store record as nvarchar collate \"sql_latin1_general_cp1_ci_as\".",
           "cardinality": 3,
           "null_count": 0,
           "data_range": {
@@ -4200,6 +4277,7 @@
           "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
           "nullable": true,
           "is_incremental": false,
+          "column_description": "State stored for the store record as nvarchar collate \"sql_latin1_general_cp1_ci_as\".",
           "cardinality": 3,
           "null_count": 0,
           "data_range": {
@@ -4227,6 +4305,7 @@
           "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
           "nullable": true,
           "is_incremental": false,
+          "column_description": "Postal code stored for the store record as nvarchar collate \"sql_latin1_general_cp1_ci_as\".",
           "cardinality": 5,
           "null_count": 0,
           "data_range": {
@@ -4253,6 +4332,7 @@
           "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
           "nullable": true,
           "is_incremental": false,
+          "column_description": "Contact value for the store record.",
           "cardinality": 5,
           "null_count": 0,
           "data_range": {
@@ -4284,6 +4364,7 @@
           "type": "datetime2",
           "nullable": false,
           "is_incremental": false,
+          "column_description": "Timestamp when the store record was created.",
           "column_timezone": "(UTC) Coordinated Universal Time",
           "cardinality": 5,
           "null_count": 0,
@@ -4317,6 +4398,7 @@
           "type": "datetime2",
           "nullable": false,
           "is_incremental": true,
+          "column_description": "Timestamp when the store record was last updated.",
           "column_timezone": "(UTC) Coordinated Universal Time",
           "cardinality": 5,
           "null_count": 0,
@@ -4346,7 +4428,7 @@
           "concept_alias_group": "updated_at"
         }
       ],
-      "table_description": null,
+      "table_description": "Stores store records including name, code, and address.",
       "primary_keys": [
         "store_id"
       ],
@@ -4538,6 +4620,7 @@
           "type": "bigint",
           "nullable": false,
           "is_incremental": false,
+          "column_description": "Primary key for the supplier record.",
           "cardinality": 10,
           "null_count": 0,
           "data_range": {
@@ -4567,6 +4650,7 @@
           "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
           "nullable": false,
           "is_incremental": false,
+          "column_description": "Name stored for the supplier record as nvarchar collate \"sql_latin1_general_cp1_ci_as\".",
           "cardinality": 10,
           "null_count": 0,
           "data_range": {
@@ -4593,6 +4677,7 @@
           "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
           "nullable": true,
           "is_incremental": false,
+          "column_description": "Person name value for the supplier record.",
           "cardinality": 0,
           "null_count": 10,
           "data_category": "nominal",
@@ -4615,6 +4700,7 @@
           "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
           "nullable": true,
           "is_incremental": false,
+          "column_description": "Contact value for the supplier record.",
           "cardinality": 10,
           "null_count": 0,
           "data_range": {
@@ -4646,6 +4732,7 @@
           "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
           "nullable": true,
           "is_incremental": false,
+          "column_description": "Contact value for the supplier record.",
           "cardinality": 10,
           "null_count": 0,
           "data_range": {
@@ -4677,6 +4764,7 @@
           "type": "datetime2",
           "nullable": false,
           "is_incremental": false,
+          "column_description": "Timestamp when the supplier record was created.",
           "column_timezone": "(UTC) Coordinated Universal Time",
           "cardinality": 10,
           "null_count": 0,
@@ -4710,6 +4798,7 @@
           "type": "datetime2",
           "nullable": false,
           "is_incremental": true,
+          "column_description": "Timestamp when the supplier record was last updated.",
           "column_timezone": "(UTC) Coordinated Universal Time",
           "cardinality": 10,
           "null_count": 0,
@@ -4739,7 +4828,7 @@
           "concept_alias_group": "updated_at"
         }
       ],
-      "table_description": null,
+      "table_description": "Stores supplier records including name, contact name, and email.",
       "primary_keys": [
         "supplier_id"
       ],

@@ -24,14 +24,14 @@ Each item in `tables` should include:
 Optional enrichments:
 
 - `unit_summary` (`columns_with_units`, `columns_without_units`, `mixed_unit_groups`, `unknown_unit_columns`)
-- `table_description` (source table comment/description when available)
+- `table_description` (always present; use source comment/description when available, otherwise generate during analysis)
 - `classification_summary` (`concept_counts`, `low_confidence_columns`)
 
 Column-level optional enrichments:
 
 - `semantic_class`
 - `unit_context` (`detected_unit`, `canonical_unit`, `unit_system`, `conversion`, `detection_confidence`, `detection_source`, `notes`)
-- `column_description` (source column comment/description when available)
+- `column_description` (always present; use source column comment/description when available, otherwise generate during analysis)
 - `concept_id` (canonical domain-dot concept label such as `contact.email`)
 - `concept_confidence` (0.0-1.0 score after evidence scoring and cross-table reconciliation)
 - `concept_evidence` (ordered evidence strings)

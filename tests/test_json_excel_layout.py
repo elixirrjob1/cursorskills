@@ -141,7 +141,7 @@ class JsonExcelLayoutTests(unittest.TestCase):
                             "data_range": {"min": 1, "max": 10},
                             "data_category": "identifier",
                             "semantic_class": "customer_id",
-                            "description": "Primary key",
+                            "column_description": "Primary key",
                             "concept_id": "identifier.customer",
                             "concept_confidence": 0.98,
                             "concept_evidence": {"rule": "name"},
@@ -159,7 +159,7 @@ class JsonExcelLayoutTests(unittest.TestCase):
                             "data_range": {},
                             "data_category": "contact",
                             "semantic_class": "email",
-                            "description": "Email address",
+                            "column_description": "Email address",
                             "concept_id": "contact.email",
                             "concept_confidence": 0.91,
                             "concept_evidence": {"rule": "regex"},
@@ -211,7 +211,7 @@ class JsonExcelLayoutTests(unittest.TestCase):
                             "data_range": {"min": 1, "max": 5},
                             "data_category": "identifier",
                             "semantic_class": "employee_id",
-                            "description": "Employee key",
+                            "column_description": "Employee key",
                             "unit_context": {},
                         }
                     ],
@@ -309,7 +309,7 @@ class JsonExcelLayoutTests(unittest.TestCase):
             _set_section_value(wb["customers"], "Overview", "row_count_projection_5y", 499)
             _set_section_value(wb["customers"], "Columns", "classification", "customer_contact", match_col="column_name", match_value="email")
             _set_section_value(wb["customers"], "Columns", "sensitivity_label", "pii_email", match_col="column_name", match_value="email")
-            _set_section_value(wb["customers"], "Columns", "description", "Preferred email", match_col="column_name", match_value="email")
+            _set_section_value(wb["customers"], "Columns", "column_description", "Preferred email", match_col="column_name", match_value="email")
             _set_section_value(wb["customers"], "DataQualityFindings", "detail", "Emails still missing", match_col="finding_index", match_value=1)
             wb["Glossary"]["B2"] = "Changed glossary text should be ignored"
             wb.save(output)
@@ -337,7 +337,7 @@ class JsonExcelLayoutTests(unittest.TestCase):
             self.assertEqual(customers["field_classifications"]["email"], "customer_contact")
             self.assertEqual(customers["sensitive_fields"]["email"], "pii_email")
             email_col = next(col for col in customers["columns"] if col["name"] == "email")
-            self.assertEqual(email_col["description"], "Preferred email")
+            self.assertEqual(email_col["column_description"], "Preferred email")
             self.assertEqual(customers["data_quality"]["findings"][0]["detail"], "Emails still missing")
 
 

@@ -146,6 +146,115 @@ logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 _RULES_CACHE: Optional[Dict[str, Any]] = None
 
 
+def _humanize_identifier(value: str) -> str:
+    text = re.sub(r"[_\s]+", " ", str(value or "").strip())
+    return re.sub(r"\s+", " ", text).strip()
+
+
+def _singularize_label(value: str) -> str:
+    text = _humanize_identifier(value).lower()
+    if text.endswith("ies") and len(text) > 3:
+        return text[:-3] + "y"
+    if text.endswith("ses") and len(text) > 3:
+        return text[:-2]
+    if text.endswith("s") and not text.endswith("ss") and len(text) > 1:
+        return text[:-1]
+    return text
+
+
+def _join_phrases(values: List[str]) -> str:
+    items = [str(v).strip() for v in values if str(v).strip()]
+    if not items:
+        return ""
+    if len(items) == 1:
+        return items[0]
+    if len(items) == 2:
+        return f"{items[0]} and {items[1]}"
+    return f"{', '.join(items[:-1])}, and {items[-1]}"
+
+
+def _column_focus_label(column_name: str) -> str:
+    lowered = str(column_name or "").lower()
+    if lowered.endswith("_id") or lowered == "id":
+        return ""
+    if lowered in {"created_at", "updated_at", "deleted_at", "last_modified", "modified_at"}:
+        return ""
+    return _humanize_identifier(column_name).lower()
+
+
+def _generate_table_description(
+    table_name: str,
+    columns: List[Dict[str, Any]],
+    pk_columns: List[str],
+    fk_columns: List[Dict[str, Any]],
+    existing_description: str,
+) -> str:
+    if str(existing_description or "").strip():
+        return str(existing_description).strip()
+
+    entity_label = _singularize_label(table_name)
+    focus_fields: List[str] = []
+    for col in columns:
+        focus = _column_focus_label(col.get("name", ""))
+        if focus and focus not in focus_fields:
+            focus_fields.append(focus)
+        if len(focus_fields) >= 3:
+            break
+
+    if focus_fields:
+        return f"Stores {entity_label} records including {_join_phrases(focus_fields)}."
+    if pk_columns:
+        return f"Stores {entity_label} records identified by {_join_phrases([_humanize_identifier(c).lower() for c in pk_columns])}."
+    if fk_columns:
+        return f"Stores {entity_label} records linked to related entities for ingestion analysis."
+    return f"Stores {entity_label} records for source-system analysis."
+
+
+def _generate_column_description(
+    table_name: str,
+    column: Dict[str, Any],
+    pk_columns: List[str],
+    fk_columns: List[Dict[str, Any]],
+    existing_description: str,
+) -> str:
+    if str(existing_description or "").strip():
+        return str(existing_description).strip()
+
+    column_name = str(column.get("name") or "").strip()
+    column_type = str(column.get("type") or "").strip()
+    entity_label = _singularize_label(table_name)
+    fk_lookup = {str(fk.get("column") or ""): str(fk.get("references") or "").strip() for fk in fk_columns}
+    lowered = column_name.lower()
+
+    if column_name in pk_columns:
+        return f"Primary key for the {entity_label} record."
+    if column_name in fk_lookup and fk_lookup[column_name]:
+        return f"Foreign key referencing {fk_lookup[column_name]} for the {entity_label} record."
+    if lowered == "created_at":
+        return f"Timestamp when the {entity_label} record was created."
+    if lowered == "updated_at":
+        return f"Timestamp when the {entity_label} record was last updated."
+    if lowered in {"deleted_at", "removed_at"}:
+        return f"Timestamp when the {entity_label} record was marked as deleted."
+    if lowered in {"is_deleted", "deleted", "active", "is_active"}:
+        return f"Status flag indicating whether the {entity_label} record is active or deleted."
+
+    concept_id = str(column.get("concept_id") or "").strip()
+    if concept_id:
+        concept_label = _humanize_identifier(concept_id.split(".")[-1]).lower()
+        return f"{concept_label.capitalize()} for the {entity_label} record."
+
+    semantic_class = str(column.get("semantic_class") or "").strip()
+    if semantic_class:
+        semantic_label = _humanize_identifier(semantic_class).lower()
+        return f"{semantic_label.capitalize()} value for the {entity_label} record."
+
+    column_label = _humanize_identifier(column_name).lower()
+    if column_type:
+        return f"{column_label.capitalize()} stored for the {entity_label} record as {column_type}."
+    return f"{column_label.capitalize()} value for the {entity_label} record."
+
+
 def _default_row_count_projections(row_count: int) -> Dict[str, int]:
     safe_row_count = int(row_count or 0)
     return {
@@ -2513,13 +2622,15 @@ def build_source_system_document(
                 join_candidates = detect_join_candidates(table_name, table_columns, pk_columns, fk_columns, all_pks)
 
                 enriched_columns = []
+                raw_table_description = str(table_descriptions.get(table_name) or "")
                 for col in table_columns:
+                    raw_column_description = str((column_descriptions.get(table_name, {}) or {}).get(col["name"]) or "")
                     col_dict = {
                         "name": col["name"],
                         "type": col["type"],
                         "nullable": col.get("nullable", True),
                         "is_incremental": col.get("is_incremental", False),
-                        "column_description": str((column_descriptions.get(table_name, {}) or {}).get(col["name"]) or ""),
+                        "column_description": raw_column_description,
                     }
                     col_tz = get_column_timezone(col["type"], dialect, db_timezone)
                     if col_tz is not None:
@@ -2540,6 +2651,13 @@ def build_source_system_document(
                     if sample_values:
                         col_dict["_sample_values"] = list(sample_values)
                     col_dict["unit_context"] = _build_unit_context(col["name"], semantic_class, sample_values=sample_values)
+                    col_dict["column_description"] = _generate_column_description(
+                        table_name,
+                        col_dict,
+                        pk_columns,
+                        fk_columns,
+                        raw_column_description,
+                    )
                     enriched_columns.append(col_dict)
 
                 incremental_lower = {c.lower() for c in incremental_columns}
@@ -2551,7 +2669,13 @@ def build_source_system_document(
 
                 table_entry = {
                     "table": table_name, "schema": table_schema, "columns": enriched_columns,
-                    "table_description": str(table_descriptions.get(table_name) or ""),
+                    "table_description": _generate_table_description(
+                        table_name,
+                        enriched_columns,
+                        pk_columns,
+                        fk_columns,
+                        raw_table_description,
+                    ),
                     "primary_keys": pk_columns,
                     "foreign_keys": [{"column": fk["column"], "references": fk["references"]} for fk in fk_columns],
                     "row_count": row_count,

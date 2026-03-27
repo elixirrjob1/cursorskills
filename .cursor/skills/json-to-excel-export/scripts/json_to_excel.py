@@ -532,7 +532,7 @@ def _column_rows(table):
                 "null_count": column.get("null_count", ""),
                 "data_category": column.get("data_category", ""),
                 "semantic_class": column.get("semantic_class", ""),
-                "description": column.get("description", ""),
+                "column_description": column.get("column_description", column.get("description", "")),
                 "concept_id": column.get("concept_id", ""),
                 "concept_confidence": column.get("concept_confidence", ""),
                 "concept_alias_group": column.get("concept_alias_group", ""),

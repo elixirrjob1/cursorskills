@@ -9,9 +9,17 @@ import logging
 import os
 from datetime import datetime, timezone
 from pathlib import Path
+import sys
 
 from sqlalchemy import create_engine, text
 from sqlalchemy.engine import Engine
+
+_SCRIPT_DIR = Path(__file__).resolve().parent
+_PARENT_DIR = _SCRIPT_DIR.parent
+if str(_PARENT_DIR) not in sys.path:
+    sys.path.insert(0, str(_PARENT_DIR))
+
+from db_analysis_config import load_config, should_exclude_schema, should_exclude_table
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
@@ -100,7 +108,11 @@ def _estimate_projection_rows(row_count: int, monthly_growth_rate: float, use_sl
     )
 
 
-def build_projection_report(engine: Engine) -> dict:
+def build_projection_report(engine: Engine, config: dict | None = None, require_config: bool = True) -> dict:
+    config = config or load_config(tool_name="volume_projection_predictor", required=require_config)
+    if config.get("error") == "db_analysis_config_required":
+        return config
+
     d = engine.dialect.name
     cr = _pred_table(d, "collection_runs")
     ts = _pred_table(d, "table_size_snapshots")
@@ -173,6 +185,8 @@ def build_projection_report(engine: Engine) -> dict:
         for row in snapshots:
             table_name = row[0]
             schema_name = row[1]
+            if should_exclude_schema(schema_name, config) or should_exclude_table(schema_name, table_name, config):
+                continue
             row_count = int(row[2] or 0)
             avg_row_size = float(row[3]) if row[3] is not None else None
             total_size = int(row[4] or 0)
@@ -299,12 +313,15 @@ def build_projection_report(engine: Engine) -> dict:
     return report
 
 
-def run_predict(engine: Engine, output_path: str) -> None:
+def run_predict(engine: Engine, output_path: str) -> dict:
     report = build_projection_report(engine)
+    if report.get("error") == "db_analysis_config_required":
+        return report
     with open(output_path, "w", encoding="utf-8") as f:
         json.dump(report, f, indent=2, default=str)
 
     logger.info("Wrote capacity report: %s", output_path)
+    return report
 
 
 def main() -> None:
@@ -317,7 +334,10 @@ def main() -> None:
     if not args.database_url:
         parser.error("database_url required (argument or DATABASE_URL env)")
 
-    run_predict(get_engine(args.database_url), args.output)
+    report = run_predict(get_engine(args.database_url), args.output)
+    if report.get("error") == "db_analysis_config_required":
+        print(json.dumps(report, indent=2))
+        raise SystemExit(1)
 
 
 if __name__ == "__main__":

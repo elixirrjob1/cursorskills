@@ -1,6 +1,6 @@
 {
   "metadata": {
-    "generated_at": "2026-03-23T11:13:47.310583+00:00",
+    "generated_at": "2026-03-27T09:48:10.142923+00:00",
     "database_url": "pioneertest.database.windows.net:1433/free-sql-db-3300567?driver=ODBC+Driver+18+for+SQL+Server&TrustServerCertificate=yes",
     "schema_filter": "dbo",
     "total_tables": 10,
@@ -19,7 +19,14 @@
     "delete_management_instruction": "",
     "restrictions": "",
     "late_arriving_data_manual": "",
-    "volume_size_projection_manual": ""
+    "volume_size_projection_manual": "",
+    "db_analysis_config": {
+      "exclude_schemas": [
+        "prediction"
+      ],
+      "exclude_tables": [],
+      "max_row_limit": 100
+    }
   },
   "concept_registry": {
     "version": 1,
@@ -441,7 +448,7 @@
           "cardinality": 100,
           "null_count": 0,
           "data_range": {
-            "min": "LastName1",
+            "min": "LastName1 (updated)",
             "max": "LastName99"
           },
           "data_category": "nominal",
@@ -570,7 +577,7 @@
           "null_count": 0,
           "data_range": {
             "min": "2021-03-23 15:38:57.201565",
-            "max": "2026-02-26 15:38:57.201565"
+            "max": "2026-03-26 08:52:49.252228"
           },
           "data_category": "continuous",
           "semantic_class": "timestamp",
@@ -3243,7 +3250,7 @@
         },
         {
           "name": "unit_price",
-          "type": "numeric(10,2)",
+          "type": "numeric(15,2)",
           "nullable": false,
           "is_incremental": false,
           "cardinality": 50,
@@ -3259,7 +3266,7 @@
           "concept_confidence": 1.0,
           "concept_evidence": [
             "name token: price",
-            "type hint: numeric(10,2)",
+            "type hint: numeric(15,2)",
             "legacy field classification: pricing",
             "semantic class hint: currency_amount",
             "value pattern: currency_amount",

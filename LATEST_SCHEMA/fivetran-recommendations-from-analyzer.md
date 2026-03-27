@@ -1,7 +1,9 @@
 # Fivetran recommendations (from analyzer)
 
 **Source file:** `LATEST_SCHEMA/schema_dbo_mssql_dbo_mssql.json`  
-**Analyzer contract:** `metadata`, `connection`, `source_system_context`, `concept_registry`, `data_quality_summary`, `tables` — all present.
+**Generated (analyzer):** `2026-03-27T09:48:10.142923+00:00` (`metadata.generated_at`)  
+**Analyzer contract:** `metadata`, `connection`, `source_system_context`, `concept_registry`, `data_quality_summary`, `tables` — all present.  
+**Scope:** `metadata.total_tables` = 10, `metadata.total_rows` = 1364, `metadata.total_findings` = 64.
 
 ---
 
@@ -39,6 +41,16 @@
 - **Paused on create:** **true** until schema/table/column review completes (heuristic).
 - **Sync frequency:** **1440** minutes (daily) or lower if ops need fresher data; small row counts allow more frequent syncs if desired (heuristic + `metadata.total_rows`).
 - **Incremental columns:** Analyzer lists `incremental_columns`: **`updated_at`** on all tables — align cursor/replication keys with Fivetran SQL Server connector requirements (confirm exact `config` keys in connector metadata).
+
+---
+
+## Explicit exclusions from analyzer
+
+Carry these forward into Fivetran scope (do **not** add these objects to the connector unless you intentionally remove the exclusion). Order preserved from `source_system_context.db_analysis_config`.
+
+- **Excluded schemas (ordered):** `prediction`
+- **Excluded tables (ordered):** *(none)*
+- **Sampling cap:** `max_row_limit` = **100** (`source_system_context.db_analysis_config`). Profiling and row counts in the JSON are **bounded by this cap** for sampled reads — not a Fivetran row filter unless you configure one separately.
 
 ---
 

@@ -4,13 +4,22 @@
 from __future__ import annotations
 
 import argparse
+import json
 import logging
 import os
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
+import sys
 
 from sqlalchemy import create_engine, text
 from sqlalchemy.engine import Engine
+
+_SCRIPT_DIR = Path(__file__).resolve().parent
+_PARENT_DIR = _SCRIPT_DIR.parent
+if str(_PARENT_DIR) not in sys.path:
+    sys.path.insert(0, str(_PARENT_DIR))
+
+from db_analysis_config import load_config, should_exclude_schema, should_exclude_table
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
@@ -171,7 +180,11 @@ def run_setup(engine: Engine) -> None:
     logger.info("Volume projection setup complete for dialect=%s", d)
 
 
-def _list_tables(conn, dialect: str, schema: str) -> list[str]:
+def _list_tables(conn, dialect: str, schema: str, config: dict | None = None) -> list[str]:
+    config = config or {}
+    if should_exclude_schema(schema, config):
+        return []
+
     if dialect == "oracle":
         rows = conn.execute(
             text(
@@ -184,7 +197,7 @@ def _list_tables(conn, dialect: str, schema: str) -> list[str]:
             ),
             {"schema": schema},
         ).fetchall()
-        return [r[0] for r in rows]
+        return [r[0] for r in rows if not should_exclude_table(schema, r[0], config)]
 
     rows = conn.execute(
         text(
@@ -198,7 +211,7 @@ def _list_tables(conn, dialect: str, schema: str) -> list[str]:
         ),
         {"schema": schema},
     ).fetchall()
-    return [r[0] for r in rows]
+    return [r[0] for r in rows if not should_exclude_table(schema, r[0], config)]
 
 
 def _insert_run(conn, dialect: str, started_at: datetime) -> int:
@@ -569,7 +582,11 @@ def _collect_database_snapshot(conn, dialect: str, run_id: int, snapshot_date) -
         conn.rollback()
 
 
-def run_collect(engine: Engine, schema: str) -> None:
+def run_collect(engine: Engine, schema: str, config: dict | None = None) -> dict | None:
+    config = config or load_config(tool_name="volume_projection_collector")
+    if config.get("error") == "db_analysis_config_required":
+        return config
+
     dialect = engine.dialect.name
     started_at = datetime.now(timezone.utc)
     snapshot_date = started_at.date()
@@ -581,7 +598,7 @@ def run_collect(engine: Engine, schema: str) -> None:
         logger.info("Started volume collection run_id=%s dialect=%s", run_id, dialect)
 
         try:
-            tables = _list_tables(conn, dialect, schema)
+            tables = _list_tables(conn, dialect, schema, config=config)
             for t in tables:
                 _collect_table_snapshot(conn, dialect, run_id, schema, t, snapshot_date)
 
@@ -610,6 +627,7 @@ def run_collect(engine: Engine, schema: str) -> None:
             )
             conn.commit()
             logger.info("Collection complete. tables_analyzed=%s", len(tables))
+            return None
 
         except Exception:
             cr = _pred_table(dialect, "collection_runs")
@@ -639,7 +657,10 @@ def main() -> None:
     if args.setup:
         run_setup(engine)
     if args.collect:
-        run_collect(engine, schema=args.schema)
+        result = run_collect(engine, schema=args.schema)
+        if isinstance(result, dict) and result.get("error") == "db_analysis_config_required":
+            print(json.dumps(result, indent=2))
+            raise SystemExit(1)
 
 
 if __name__ == "__main__":

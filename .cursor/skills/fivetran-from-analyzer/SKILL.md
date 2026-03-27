@@ -22,6 +22,15 @@ If the file path is omitted, check `.cursor/flat/` for recent `schema*.json` and
 
 Confirm top-level keys align with the shared contract: at least `metadata`, `connection`, `tables`. Note gaps (e.g. missing `source_system_context`) in the report.
 
+If `source_system_context.db_analysis_config` is present, read:
+
+- `exclude_schemas`
+- `exclude_tables`
+- `max_row_limit`
+
+Treat `exclude_schemas` and `exclude_tables` as authoritative source-side exclusions. Carry them into Fivetran recommendations so those schemas/tables are not proposed for sync, onboarding, or rollout.
+Preserve the exclusion order exactly as it appears in the JSON. Do not sort or regroup it unless the user explicitly asks.
+
 ### 2. Map source → Fivetran connector type
 
 Use `connection.driver` / implied dialect:
@@ -61,6 +70,10 @@ For each option: **when to prefer**, **when to avoid**, **signal from analyzer J
 
 For each table intended for sync:
 
+- First remove any table excluded by `source_system_context.db_analysis_config.exclude_schemas` or `exclude_tables`.
+- Do not include excluded tables in the table plan, sync-mode recommendations, rollout sizing, or open-action lists except to note that they are intentionally excluded.
+- Add a dedicated exclusion subsection that explicitly lists excluded schemas first, then excluded tables, in the same order they appear in the analyzer JSON.
+
 - Recommend **`SOFT_DELETE`** vs **`HISTORY`** (and **`LIVE`** only if connector docs say it is supported—often it is not on databases).
 - **Do not** recommend **`HARD_DELETE`** as a REST `sync_mode` unless the connector/API explicitly supports it; many database connectors only expose **`SOFT_DELETE`** and **`HISTORY`**.
 
@@ -77,6 +90,8 @@ For each table’s `columns`:
 ### 6. Volumes and scheduling
 
 Use **`row_count`**, **`metadata.total_rows`**, and **`data_quality_summary`** to suggest **initial sync** expectations, **sync frequency**, and phased rollout for large tables.
+
+If `max_row_limit` is present in `source_system_context.db_analysis_config`, mention that analyzer sampling was capped at that value and mark any sampling-derived conclusions as bounded by that cap. Do not treat `max_row_limit` as a Fivetran row filter unless the user explicitly asks for that behavior.
 
 ### 7. Full parameter checklist (required)
 
@@ -104,6 +119,10 @@ Produce a **single markdown report** with this structure:
 ## Recommended connection parameters
 - Schema handling: ...
 - Other connector-specific settings: ...
+
+## Explicit exclusions from analyzer
+- Excluded schemas (ordered): ...
+- Excluded tables (ordered): ...
 
 ## Update method options (SQL Server / database)
 - List **Change Tracking**, **CDC**, **Teleport**, and any other documented methods for this connector.
@@ -134,6 +153,7 @@ Produce a **single markdown report** with this structure:
 - **Secrets**: never output secret values. Use placeholders and env/Key Vault **reference names** only.
 - **Accuracy**: final settings depend on **Fivetran connector version**, **destination**, and **account limits**—verify in Fivetran docs or UI.
 - **Analyzer limits**: if `concept_id` is null or confidence is low, mark hashing/PII recommendations as **provisional** and suggest classification review per `references/shared/classification-review-workflow.md` in source-system-analyser.
+- **Analyzer exclusions**: if `source_system_context.db_analysis_config` lists excluded schemas or tables, preserve those exclusions in every Fivetran recommendation. Do not reintroduce excluded objects into connector scope, table plans, or rollout suggestions.
 
 ## Further reading
 

@@ -8,8 +8,9 @@ description: Analyze source systems for ingestion readiness and data quality acr
 ## Quick Routing
 
 1. Determine source type (database, API, or flat file).
-2. Route to the matching module.
-3. Produce normalized output.
+2. For database sources, run the database preflight before analysis.
+3. Route to the matching module.
+4. Produce normalized output.
 
 Source routes:
 - Database sources: `references/databases/postgresql/README.md`, `references/databases/mssql/README.md`, `references/databases/oracle/README.md`
@@ -25,6 +26,30 @@ Load these before executing any source workflow:
 - Output contract: `references/shared/output-schema.md`
 - Classification review workflow: `references/shared/classification-review-workflow.md`
 - Troubleshooting: `references/shared/troubleshooting.md`
+
+## Database Preflight
+
+Before starting database analysis:
+
+1. Check whether `db-analysis-config.json` already exists in the working directory.
+2. If it exists, reuse it and do not ask database exclusion or row-limit questions again.
+3. If it does not exist, ask the user:
+   - whether they want to exclude any schemas
+   - whether they want to exclude any tables
+   - whether they want to set a maximum row limit
+4. If the user answers yes to any of those, create `db-analysis-config.json` with this shape:
+
+```json
+{
+  "exclude_schemas": [],
+  "exclude_tables": [],
+  "max_row_limit": null
+}
+```
+
+5. If the user answers no to all three questions, do not create the JSON file.
+
+This preflight applies only to database sources. API and flat-file workflows should not ask these questions.
 
 ## Backward Compatibility
 

@@ -350,6 +350,26 @@ def _volume_projection_manual_rows(source_system_context):
     return rows
 
 
+def _db_analysis_config_rows(source_system_context):
+    cfg = source_system_context.get("db_analysis_config", {}) or {}
+    rows = [
+        {
+            "exclude_schemas": _join_list(cfg.get("exclude_schemas", [])),
+            "exclude_tables": _join_list(cfg.get("exclude_tables", [])),
+            "max_row_limit": _cell_value(cfg.get("max_row_limit", "")),
+        }
+    ]
+    while len(rows) < 3:
+        rows.append(
+            {
+                "exclude_schemas": "",
+                "exclude_tables": "",
+                "max_row_limit": "",
+            }
+        )
+    return rows
+
+
 def _row_from_finding(schema_name, table_name, idx, finding):
     if not isinstance(finding, dict):
         return {
@@ -608,6 +628,7 @@ def _source_system_sections(metadata, connection, source_system_context):
             ("RestrictionsManual", _restrictions_rows(source_system_context)),
             ("LateArrivingDataManual", _late_arriving_manual_rows(source_system_context)),
             ("VolumeSizeProjectionManual", _volume_projection_manual_rows(source_system_context)),
+            ("DbAnalysisConfig", _db_analysis_config_rows(source_system_context)),
         ]
     )
     return sections

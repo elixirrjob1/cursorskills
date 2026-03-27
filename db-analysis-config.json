@@ -1,0 +1,5 @@
+{
+  "exclude_schemas": ["prediction"],
+  "exclude_tables": [],
+  "max_row_limit": 100
+}

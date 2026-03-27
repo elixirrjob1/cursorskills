@@ -101,6 +101,11 @@ class JsonExcelLayoutTests(unittest.TestCase):
                 "contacts": [{"name": "Alex", "role": "Owner", "email": "alex@example.com"}],
                 "delete_management_instruction": "Use soft deletes",
                 "restrictions": [{"table_name": "customers", "type": "privacy", "scope": "internal", "details": "Mask exports", "owner": "security"}],
+                "db_analysis_config": {
+                    "exclude_schemas": ["audit"],
+                    "exclude_tables": ["event_log", "audit.entries"],
+                    "max_row_limit": 25,
+                },
             },
             "tables": [
                 {
@@ -244,6 +249,7 @@ class JsonExcelLayoutTests(unittest.TestCase):
             self.assertIn("Columns", customer_sections)
             self.assertIn("DataQualityFindings", customer_sections)
             self.assertNotIn("FieldContextManual", source_sections)
+            self.assertIn("DbAnalysisConfig", source_sections)
             self.assertNotIn("FieldClassifications", customer_sections)
             self.assertNotIn("SensitiveFields", customer_sections)
             self.assertEqual(glossary_rows[0], ("Field", "Description"))
@@ -268,6 +274,9 @@ class JsonExcelLayoutTests(unittest.TestCase):
                 }.issubset(glossary_fields)
             )
             self.assertEqual(list(source_sections["RestrictionsManual"][0].keys())[0], "table_name")
+            self.assertEqual(source_sections["DbAnalysisConfig"][0]["exclude_schemas"], "audit")
+            self.assertEqual(source_sections["DbAnalysisConfig"][0]["exclude_tables"], "event_log, audit.entries")
+            self.assertEqual(source_sections["DbAnalysisConfig"][0]["max_row_limit"], 25)
             self.assertIn("classification", customer_sections["Columns"][0])
             self.assertIn("sensitivity_label", customer_sections["Columns"][0])
             self.assertNotIn("is_incremental", customer_sections["Columns"][0])
@@ -291,6 +300,9 @@ class JsonExcelLayoutTests(unittest.TestCase):
 
             wb = load_workbook(output)
             _set_section_value(wb["SourceSystem"], "Metadata", "value", "app", match_col="property", match_value="schema_filter")
+            _set_section_value(wb["SourceSystem"], "DbAnalysisConfig", "exclude_schemas", "audit, staging")
+            _set_section_value(wb["SourceSystem"], "DbAnalysisConfig", "exclude_tables", "event_log, temp_orders")
+            _set_section_value(wb["SourceSystem"], "DbAnalysisConfig", "max_row_limit", 75)
             _set_section_value(wb["customers"], "Overview", "row_count", 25)
             _set_section_value(wb["customers"], "Overview", "row_count_projection_1y", 99)
             _set_section_value(wb["customers"], "Overview", "row_count_projection_2y", 199)
@@ -309,6 +321,14 @@ class JsonExcelLayoutTests(unittest.TestCase):
 
             self.assertEqual(payload["metadata"]["schema_filter"], "app")
             self.assertNotIn("field_context_manual", payload["source_system_context"])
+            self.assertEqual(
+                payload["source_system_context"]["db_analysis_config"],
+                {
+                    "exclude_schemas": ["audit", "staging"],
+                    "exclude_tables": ["event_log", "temp_orders"],
+                    "max_row_limit": 75,
+                },
+            )
             customers = next(table for table in payload["tables"] if table["table"] == "customers")
             self.assertEqual(customers["row_count"], 25)
             self.assertEqual(customers["row_count_projection_1y"], 15)

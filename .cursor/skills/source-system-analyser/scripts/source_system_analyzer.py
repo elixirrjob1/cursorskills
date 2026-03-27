@@ -38,6 +38,12 @@ _script_dir = Path(__file__).resolve().parent
 if str(_script_dir) not in sys.path:
     sys.path.insert(0, str(_script_dir))
 from databases import get_adapter, get_adapter_for_engine
+from db_analysis_config import (
+    apply_sample_row_limit,
+    load_config,
+    should_exclude_schema,
+    should_exclude_table,
+)
 from volume_projection import collector, predictor
 
 
@@ -149,9 +155,9 @@ def _default_row_count_projections(row_count: int) -> Dict[str, int]:
     }
 
 
-def _projection_lookup(engine: Engine) -> Dict[tuple[str, str], Dict[str, int]]:
+def _projection_lookup(engine: Engine, config: dict[str, Any]) -> Dict[tuple[str, str], Dict[str, int]]:
     try:
-        report = predictor.build_projection_report(engine)
+        report = predictor.build_projection_report(engine, config=config, require_config=False)
     except Exception as exc:
         logger.warning("Volume projections unavailable: %s", exc)
         return {}
@@ -175,10 +181,10 @@ def _projection_lookup(engine: Engine) -> Dict[tuple[str, str], Dict[str, int]]:
     return lookup
 
 
-def _collect_projection_inputs(engine: Engine, schema: str) -> None:
+def _collect_projection_inputs(engine: Engine, schema: str, config: dict[str, Any]) -> None:
     try:
         collector.run_setup(engine)
-        collector.run_collect(engine, schema=schema)
+        collector.run_collect(engine, schema=schema, config=config)
     except Exception as exc:
         logger.warning("Volume projection collection unavailable: %s", exc)
 
@@ -409,19 +415,24 @@ def get_column_timezone(col_type_str: str, dialect: str, server_timezone: str) -
     return server_timezone
 
 
-def fetch_schema_metadata(engine: Engine, schema: Optional[str] = None) -> Dict[str, Any]:
+def fetch_schema_metadata(engine: Engine, schema: Optional[str] = None, config: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     """Fetch tables, columns, primary keys, and foreign keys in a single inspector pass.
 
     Returns a dict with keys: 'tables', 'columns', 'primary_keys', 'foreign_keys'.
     """
     inspector = inspect(engine)
+    config = config or {}
     schemas_to_check = [schema] if schema else inspector.get_schema_names()
 
     target_tables: Dict[str, str] = {}
     for sch in schemas_to_check:
         if schema and sch != schema:
             continue
+        if should_exclude_schema(sch, config):
+            continue
         for table_name in inspector.get_table_names(schema=sch):
+            if should_exclude_table(sch, table_name, config):
+                continue
             target_tables[table_name] = sch
 
     table_names = sorted(target_tables.keys())
@@ -2409,8 +2420,13 @@ def build_source_system_document(
     schema: Optional[str] = None,
     include_sample_data: bool = False,
     dialect_override: Optional[str] = None,
+    config: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
     """Analyze source database schema and data quality and return the schema document."""
+    config = config or load_config(tool_name="source_system_analyzer")
+    if config.get("error") == "db_analysis_config_required":
+        return config
+
     engine = get_engine(database_url)
     dialect = dialect_override or engine.dialect.name
     adapter = get_adapter(dialect)
@@ -2419,10 +2435,13 @@ def build_source_system_document(
         logger.warning(f"Specified dialect '{dialect_override}' does not match URL dialect '{engine.dialect.name}'")
 
     schema = schema or (adapter.resolve_default_schema(engine) if adapter else "public")
+    if should_exclude_schema(schema, config):
+        logger.warning("Schema '%s' is excluded by db-analysis-config.json", schema)
+        return {"error": "No tables found"}
     logger.info(f"Starting source system analysis for schema: {schema}")
 
     try:
-        schema_meta = fetch_schema_metadata(engine, schema=schema)
+        schema_meta = fetch_schema_metadata(engine, schema=schema, config=config)
         tables = schema_meta["tables"]
         all_columns = schema_meta["columns"]
         all_pks = schema_meta["primary_keys"]
@@ -2437,9 +2456,9 @@ def build_source_system_document(
         connection_info = parse_connection_info(engine)
         db_timezone = fetch_database_timezone(engine, adapter=adapter)
         row_counts = fetch_row_counts(engine, tables, schema=schema, adapter=adapter)
-        _collect_projection_inputs(engine, schema)
+        _collect_projection_inputs(engine, schema, config)
         projection_lookup = _direct_history_projection_lookup(engine, schema, tables, row_counts)
-        stored_projection_lookup = _projection_lookup(engine)
+        stored_projection_lookup = _projection_lookup(engine, config)
         for key, value in stored_projection_lookup.items():
             projection_lookup.setdefault(key, value)
         table_descriptions = adapter.fetch_table_descriptions(engine, schema) if adapter else {}
@@ -2463,7 +2482,13 @@ def build_source_system_document(
                 sample_values_by_col = None
                 sample_data_output = None
                 try:
-                    colnames, rows = fetch_sample_rows(engine, table_name, limit=10, schema=table_schema, adapter=adapter)
+                    colnames, rows = fetch_sample_rows(
+                        engine,
+                        table_name,
+                        limit=apply_sample_row_limit(10, config),
+                        schema=table_schema,
+                        adapter=adapter,
+                    )
                     raw_sample = {str(col): [row[i] for row in rows] for i, col in enumerate(colnames)}
                     # SQL dialects/drivers may return column names in different casing.
                     # Keep a normalized lowercase map for resilient lookups.
@@ -2489,10 +2514,13 @@ def build_source_system_document(
 
                 enriched_columns = []
                 for col in table_columns:
-                    col_dict = {"name": col["name"], "type": col["type"], "nullable": col.get("nullable", True), "is_incremental": col.get("is_incremental", False)}
-                    col_desc = (column_descriptions.get(table_name, {}) or {}).get(col["name"])
-                    if col_desc:
-                        col_dict["column_description"] = col_desc
+                    col_dict = {
+                        "name": col["name"],
+                        "type": col["type"],
+                        "nullable": col.get("nullable", True),
+                        "is_incremental": col.get("is_incremental", False),
+                        "column_description": str((column_descriptions.get(table_name, {}) or {}).get(col["name"]) or ""),
+                    }
                     col_tz = get_column_timezone(col["type"], dialect, db_timezone)
                     if col_tz is not None:
                         col_dict["column_timezone"] = col_tz
@@ -2523,7 +2551,7 @@ def build_source_system_document(
 
                 table_entry = {
                     "table": table_name, "schema": table_schema, "columns": enriched_columns,
-                    "table_description": table_descriptions.get(table_name),
+                    "table_description": str(table_descriptions.get(table_name) or ""),
                     "primary_keys": pk_columns,
                     "foreign_keys": [{"column": fk["column"], "references": fk["references"]} for fk in fk_columns],
                     "row_count": row_count,
@@ -2568,7 +2596,15 @@ def build_source_system_document(
             all_findings.extend(check_nullable_but_never_null(enriched_tables))
             all_findings.extend(check_missing_primary_keys(enriched_tables))
             all_findings.extend(check_missing_foreign_keys(engine, enriched_tables, all_pks_dict, schema, adapter=adapter))
-            all_findings.extend(check_format_inconsistency(engine, enriched_tables, schema, adapter=adapter))
+            all_findings.extend(
+                check_format_inconsistency(
+                    engine,
+                    enriched_tables,
+                    schema,
+                    sample_size=apply_sample_row_limit(200, config),
+                    adapter=adapter,
+                )
+            )
             all_findings.extend(check_range_violations(engine, enriched_tables, schema, adapter=adapter))
             all_findings.extend(check_timestamp_ordering(enriched_tables, check_constraints))
             all_findings.extend(check_delete_management(engine, enriched_tables, schema, adapter=adapter))
@@ -2641,6 +2677,11 @@ def build_source_system_document(
                 "restrictions": "",
                 "late_arriving_data_manual": "",
                 "volume_size_projection_manual": "",
+                "db_analysis_config": {
+                    "exclude_schemas": list(config.get("exclude_schemas", [])),
+                    "exclude_tables": list(config.get("exclude_tables", [])),
+                    "max_row_limit": config.get("max_row_limit"),
+                },
             },
             "concept_registry": concept_registry,
             "data_quality_summary": data_quality_summary,
@@ -2660,6 +2701,7 @@ def analyze_source_system(
     schema: Optional[str] = None,
     include_sample_data: bool = False,
     dialect_override: Optional[str] = None,
+    config: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
     """Analyze source database schema and data quality, save combined output to schema.json."""
     schema_document = build_source_system_document(
@@ -2667,7 +2709,11 @@ def analyze_source_system(
         schema=schema,
         include_sample_data=include_sample_data,
         dialect_override=dialect_override,
+        config=config,
     )
+
+    if schema_document.get("error") == "db_analysis_config_required":
+        return schema_document
 
     schema_name = str(schema_document.get("metadata", {}).get("schema_filter") or schema or "public")
     dialect = str(schema_document.get("connection", {}).get("driver") or dialect_override or "unknown")
@@ -2721,9 +2767,12 @@ if __name__ == "__main__":
         keyvault_name=args.keyvault_name,
     )
     schema = args.schema or os.environ.get("DATABASE_SCHEMA") or os.environ.get("SCHEMA")
-    analyze_source_system(
+    result = analyze_source_system(
         database_url,
         args.output_json_path,
         schema=schema,
         dialect_override=args.dialect,
     )
+    if result.get("error") == "db_analysis_config_required":
+        print(json.dumps(result, indent=2))
+        raise SystemExit(1)

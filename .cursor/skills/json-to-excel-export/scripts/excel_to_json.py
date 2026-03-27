@@ -467,6 +467,27 @@ def _apply_source_context_sheet(wb, payload):
         sctx["volume_size_projection_manual"] = vol_rows[0].get("notes", "")
         sctx["volume_size_projection_manual_rows"] = vol_rows
 
+    db_config_rows = []
+    for row in sections.get("DbAnalysisConfig", []):
+        if _row_has_any(row, ["exclude_schemas", "exclude_tables", "max_row_limit"]):
+            db_config_rows.append(
+                {
+                    "exclude_schemas": _split_csv(row.get("exclude_schemas")),
+                    "exclude_tables": _split_csv(row.get("exclude_tables")),
+                    "max_row_limit": _parse_number(row.get("max_row_limit")),
+                }
+            )
+    if db_config_rows:
+        first = db_config_rows[0]
+        max_row_limit = first.get("max_row_limit")
+        if max_row_limit == "":
+            max_row_limit = None
+        sctx["db_analysis_config"] = {
+            "exclude_schemas": first.get("exclude_schemas", []),
+            "exclude_tables": first.get("exclude_tables", []),
+            "max_row_limit": max_row_limit,
+        }
+
 def _apply_source_system_sheet(wb, payload):
     if "SourceSystem" not in wb.sheetnames:
         return
@@ -493,6 +514,7 @@ def _apply_source_system_sheet(wb, payload):
         "RestrictionsManual": sections.get("RestrictionsManual", []),
         "LateArrivingDataManual": sections.get("LateArrivingDataManual", []),
         "VolumeSizeProjectionManual": sections.get("VolumeSizeProjectionManual", []),
+        "DbAnalysisConfig": sections.get("DbAnalysisConfig", []),
     }
     if any(source_context_sections.values()):
         # Reuse the legacy manual-section mapping by projecting the new tab shape.

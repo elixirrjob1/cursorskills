@@ -3,6 +3,7 @@ import sys
 import types
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 sqlalchemy = types.ModuleType("sqlalchemy")
 sqlalchemy.create_engine = lambda *args, **kwargs: None
@@ -68,6 +69,16 @@ class _FakeEngine:
 
 
 class VolumeProjectionPredictorTests(unittest.TestCase):
+    def test_build_projection_report_requires_db_analysis_config(self):
+        with patch.object(
+            MODULE,
+            "load_config",
+            return_value={"error": "db_analysis_config_required", "instruction": "Ask the user"},
+        ):
+            report = MODULE.build_projection_report(object())
+
+        self.assertEqual(report["error"], "db_analysis_config_required")
+
     def test_build_projection_report_uses_1y_2y_5y_horizons(self):
         engine = _FakeEngine(
             [
@@ -76,7 +87,10 @@ class VolumeProjectionPredictorTests(unittest.TestCase):
             ]
         )
 
-        report = MODULE.build_projection_report(engine)
+        report = MODULE.build_projection_report(
+            engine,
+            config={"exclude_schemas": [], "exclude_tables": [], "max_row_limit": None},
+        )
         projections = report["tables"][0]["projections"]
 
         self.assertEqual(projections["1_year"]["estimated_rows"], 46)
@@ -89,12 +103,31 @@ class VolumeProjectionPredictorTests(unittest.TestCase):
     def test_build_projection_report_falls_back_to_current_row_count_without_history(self):
         engine = _FakeEngine([])
 
-        report = MODULE.build_projection_report(engine)
+        report = MODULE.build_projection_report(
+            engine,
+            config={"exclude_schemas": [], "exclude_tables": [], "max_row_limit": None},
+        )
         projections = report["tables"][0]["projections"]
 
         self.assertEqual(projections["1_year"]["estimated_rows"], 10)
         self.assertEqual(projections["2_year"]["estimated_rows"], 10)
         self.assertEqual(projections["5_year"]["estimated_rows"], 10)
+
+    def test_build_projection_report_filters_excluded_tables(self):
+        engine = _FakeEngine(
+            [
+                ("2025-01-01", 2, 10),
+                ("2025-02-01", 4, 14),
+            ]
+        )
+
+        report = MODULE.build_projection_report(
+            engine,
+            config={"exclude_schemas": [], "exclude_tables": ["customers"], "max_row_limit": None},
+        )
+
+        self.assertEqual(report["tables"], [])
+        self.assertEqual(report["summary"]["tables_analyzed"], 0)
 
 
 if __name__ == "__main__":

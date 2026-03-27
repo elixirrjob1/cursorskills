@@ -2,6 +2,7 @@ import importlib.util
 import sys
 import types
 import unittest
+from contextlib import ExitStack
 from pathlib import Path
 from unittest.mock import patch
 
@@ -28,6 +29,15 @@ SPEC.loader.exec_module(MODULE)
 
 
 class SourceSystemAnalyzerIncrementalTests(unittest.TestCase):
+    def test_build_source_system_document_requires_db_analysis_config(self):
+        result = MODULE.build_source_system_document(
+            "postgresql://user:pass@localhost:5432/demo",
+            schema="public",
+            config={"error": "db_analysis_config_required", "instruction": "Ask the user"},
+        )
+
+        self.assertEqual(result["error"], "db_analysis_config_required")
+
     def test_projection_lookup_maps_new_horizons(self):
         report = {
             "tables": [
@@ -44,7 +54,7 @@ class SourceSystemAnalyzerIncrementalTests(unittest.TestCase):
         }
 
         with patch.object(MODULE.predictor, "build_projection_report", return_value=report):
-            result = MODULE._projection_lookup(object())
+            result = MODULE._projection_lookup(object(), {"exclude_schemas": [], "exclude_tables": [], "max_row_limit": None})
 
         self.assertEqual(
             result[("public", "customers")],
@@ -57,19 +67,200 @@ class SourceSystemAnalyzerIncrementalTests(unittest.TestCase):
 
     def test_projection_lookup_returns_empty_when_report_unavailable(self):
         with patch.object(MODULE.predictor, "build_projection_report", return_value={"error": "No successful collection run found. Run collector first."}):
-            result = MODULE._projection_lookup(object())
+            result = MODULE._projection_lookup(object(), {"exclude_schemas": [], "exclude_tables": [], "max_row_limit": None})
 
         self.assertEqual(result, {})
 
     def test_collect_projection_inputs_runs_setup_and_collect(self):
         fake_engine = object()
+        config = {"exclude_schemas": [], "exclude_tables": [], "max_row_limit": None}
 
         with patch.object(MODULE.collector, "run_setup") as run_setup, \
              patch.object(MODULE.collector, "run_collect") as run_collect:
-            MODULE._collect_projection_inputs(fake_engine, "dbo")
+            MODULE._collect_projection_inputs(fake_engine, "dbo", config)
 
         run_setup.assert_called_once_with(fake_engine)
-        run_collect.assert_called_once_with(fake_engine, schema="dbo")
+        run_collect.assert_called_once_with(fake_engine, schema="dbo", config=config)
+
+    def test_fetch_schema_metadata_skips_excluded_tables(self):
+        class _FakeInspector:
+            def get_schema_names(self):
+                return ["public"]
+
+            def get_table_names(self, schema=None):
+                return ["customers", "orders"]
+
+            def get_columns(self, table_name, schema=None):
+                return [{"name": "id", "type": "integer", "nullable": False}]
+
+            def get_pk_constraint(self, table_name, schema=None):
+                return {"constrained_columns": ["id"]}
+
+            def get_foreign_keys(self, table_name, schema=None):
+                return []
+
+        with patch.object(MODULE, "inspect", return_value=_FakeInspector()):
+            result = MODULE.fetch_schema_metadata(
+                object(),
+                schema="public",
+                config={"exclude_schemas": [], "exclude_tables": ["orders"], "max_row_limit": None},
+            )
+
+        self.assertEqual(result["tables"], ["customers"])
+
+    def test_build_source_system_document_caps_sample_row_limits(self):
+        fake_engine = types.SimpleNamespace(dialect=types.SimpleNamespace(name="postgresql"))
+        fake_adapter = types.SimpleNamespace(
+            resolve_default_schema=lambda engine: "public",
+            fetch_table_descriptions=lambda engine, schema: {},
+            fetch_column_descriptions=lambda engine, schema: {},
+            fetch_check_constraints=lambda engine, schema: {},
+            fetch_enum_columns=lambda engine, schema: {},
+            fetch_unique_constraints=lambda engine, schema: {},
+            detect_cdc_enabled=lambda engine, table_name, schema: False,
+        )
+        sample_limits = []
+        format_limits = []
+
+        def fake_fetch_sample_rows(engine, table, limit, schema=None, adapter=None):
+            sample_limits.append(limit)
+            return (["customer_id"], [])
+
+        def fake_check_format_inconsistency(engine, tables, schema, sample_size=200, adapter=None):
+            format_limits.append(sample_size)
+            return []
+
+        with ExitStack() as stack:
+            stack.enter_context(patch.object(MODULE, "get_engine", return_value=fake_engine))
+            stack.enter_context(patch.object(MODULE, "get_adapter", return_value=fake_adapter))
+            stack.enter_context(
+                patch.object(
+                    MODULE,
+                    "fetch_schema_metadata",
+                    return_value={
+                        "tables": ["customers"],
+                        "columns": {"customers": [{"name": "customer_id", "type": "integer", "nullable": False, "is_incremental": False}]},
+                        "primary_keys": {"customers": ["customer_id"]},
+                        "foreign_keys": {"customers": []},
+                    },
+                )
+            )
+            stack.enter_context(patch.object(MODULE, "parse_connection_info", return_value={"driver": "postgresql"}))
+            stack.enter_context(patch.object(MODULE, "fetch_database_timezone", return_value="UTC"))
+            stack.enter_context(patch.object(MODULE, "fetch_row_counts", return_value={"customers": 10}))
+            stack.enter_context(patch.object(MODULE, "_collect_projection_inputs"))
+            stack.enter_context(patch.object(MODULE, "_projection_lookup", return_value={}))
+            stack.enter_context(patch.object(MODULE, "_direct_history_projection_lookup", return_value={}))
+            stack.enter_context(patch.object(MODULE, "fetch_sample_rows", side_effect=fake_fetch_sample_rows))
+            stack.enter_context(patch.object(MODULE, "detect_partition_columns", return_value=([], "exact")))
+            stack.enter_context(patch.object(MODULE, "detect_incremental_columns", return_value=[]))
+            stack.enter_context(patch.object(MODULE, "fetch_column_statistics", return_value={}))
+            stack.enter_context(patch.object(MODULE, "detect_join_candidates", return_value=[]))
+            stack.enter_context(patch.object(MODULE, "_apply_concept_classification", return_value={"concepts": []}))
+            stack.enter_context(patch.object(MODULE, "check_controlled_value_candidates", return_value=[]))
+            stack.enter_context(patch.object(MODULE, "check_nullable_but_never_null", return_value=[]))
+            stack.enter_context(patch.object(MODULE, "check_missing_primary_keys", return_value=[]))
+            stack.enter_context(patch.object(MODULE, "check_missing_foreign_keys", return_value=[]))
+            stack.enter_context(patch.object(MODULE, "check_format_inconsistency", side_effect=fake_check_format_inconsistency))
+            stack.enter_context(patch.object(MODULE, "check_range_violations", return_value=[]))
+            stack.enter_context(patch.object(MODULE, "check_timestamp_ordering", return_value=[]))
+            stack.enter_context(patch.object(MODULE, "check_delete_management", return_value=[]))
+            stack.enter_context(patch.object(MODULE, "check_late_arriving_data", return_value=[]))
+            stack.enter_context(patch.object(MODULE, "check_timezone", return_value=[]))
+            stack.enter_context(patch.object(MODULE, "check_unit_consistency", return_value=[]))
+            MODULE.build_source_system_document(
+                "postgresql://user:pass@localhost:5432/demo",
+                schema="public",
+                config={"exclude_schemas": [], "exclude_tables": [], "max_row_limit": 3},
+            )
+
+        self.assertEqual(sample_limits, [3])
+        self.assertEqual(format_limits, [3])
+
+    def test_build_source_system_document_includes_applied_db_analysis_config(self):
+        fake_engine = types.SimpleNamespace(dialect=types.SimpleNamespace(name="postgresql"))
+
+        with patch.object(MODULE, "get_engine", return_value=fake_engine), \
+             patch.object(MODULE, "get_adapter", return_value=None), \
+             patch.object(
+                 MODULE,
+                 "fetch_schema_metadata",
+                 return_value={
+                     "tables": ["customers"],
+                     "columns": {"customers": [{"name": "customer_id", "type": "integer", "nullable": False, "is_incremental": False}]},
+                     "primary_keys": {"customers": ["customer_id"]},
+                     "foreign_keys": {"customers": []},
+                 },
+             ), \
+             patch.object(MODULE, "parse_connection_info", return_value={"driver": "postgresql"}), \
+             patch.object(MODULE, "fetch_database_timezone", return_value="UTC"), \
+             patch.object(MODULE, "fetch_row_counts", return_value={"customers": 10}), \
+             patch.object(MODULE, "_collect_projection_inputs"), \
+             patch.object(MODULE, "_projection_lookup", return_value={}), \
+             patch.object(MODULE, "_direct_history_projection_lookup", return_value={}), \
+             patch.object(MODULE, "fetch_sample_rows", return_value=(["customer_id"], [])), \
+             patch.object(MODULE, "detect_partition_columns", return_value=([], "exact")), \
+             patch.object(MODULE, "detect_incremental_columns", return_value=[]), \
+             patch.object(MODULE, "fetch_column_statistics", return_value={}), \
+             patch.object(MODULE, "detect_join_candidates", return_value=[]), \
+             patch.object(MODULE, "_apply_concept_classification", return_value={"concepts": []}):
+            result = MODULE.build_source_system_document(
+                "postgresql://user:pass@localhost:5432/demo",
+                schema="public",
+                config={"exclude_schemas": ["audit"], "exclude_tables": ["logs"], "max_row_limit": 25},
+            )
+
+        self.assertEqual(
+            result["source_system_context"]["db_analysis_config"],
+            {
+                "exclude_schemas": ["audit"],
+                "exclude_tables": ["logs"],
+                "max_row_limit": 25,
+            },
+        )
+
+    def test_build_source_system_document_always_includes_table_and_column_descriptions(self):
+        fake_engine = types.SimpleNamespace(dialect=types.SimpleNamespace(name="postgresql"))
+
+        with patch.object(MODULE, "get_engine", return_value=fake_engine), \
+             patch.object(MODULE, "get_adapter", return_value=None), \
+             patch.object(
+                 MODULE,
+                 "fetch_schema_metadata",
+                 return_value={
+                     "tables": ["customers"],
+                     "columns": {
+                         "customers": [
+                             {"name": "customer_id", "type": "integer", "nullable": False, "is_incremental": False},
+                             {"name": "email", "type": "text", "nullable": True, "is_incremental": False},
+                         ]
+                     },
+                     "primary_keys": {"customers": ["customer_id"]},
+                     "foreign_keys": {"customers": []},
+                 },
+             ), \
+             patch.object(MODULE, "parse_connection_info", return_value={"driver": "postgresql"}), \
+             patch.object(MODULE, "fetch_database_timezone", return_value="UTC"), \
+             patch.object(MODULE, "fetch_row_counts", return_value={"customers": 10}), \
+             patch.object(MODULE, "_collect_projection_inputs"), \
+             patch.object(MODULE, "_projection_lookup", return_value={}), \
+             patch.object(MODULE, "_direct_history_projection_lookup", return_value={}), \
+             patch.object(MODULE, "fetch_sample_rows", return_value=(["customer_id", "email"], [])), \
+             patch.object(MODULE, "detect_partition_columns", return_value=([], "exact")), \
+             patch.object(MODULE, "detect_incremental_columns", return_value=[]), \
+             patch.object(MODULE, "fetch_column_statistics", return_value={}), \
+             patch.object(MODULE, "detect_join_candidates", return_value=[]), \
+             patch.object(MODULE, "_apply_concept_classification", return_value={"concepts": []}):
+            result = MODULE.build_source_system_document(
+                "postgresql://user:pass@localhost:5432/demo",
+                schema="public",
+                config={"exclude_schemas": [], "exclude_tables": [], "max_row_limit": None},
+            )
+
+        table = result["tables"][0]
+        self.assertEqual(table["table_description"], "")
+        self.assertEqual(table["columns"][0]["column_description"], "")
+        self.assertEqual(table["columns"][1]["column_description"], "")
 
     def test_build_source_system_document_uses_direct_history_projection_fallback(self):
         fake_engine = types.SimpleNamespace(dialect=types.SimpleNamespace(name="postgresql"))
@@ -98,7 +289,11 @@ class SourceSystemAnalyzerIncrementalTests(unittest.TestCase):
              patch.object(MODULE, "fetch_column_statistics", return_value={}), \
              patch.object(MODULE, "detect_join_candidates", return_value=[]), \
              patch.object(MODULE, "_apply_concept_classification", return_value={"concepts": []}):
-            result = MODULE.build_source_system_document("postgresql://user:pass@localhost:5432/demo", schema="public")
+            result = MODULE.build_source_system_document(
+                "postgresql://user:pass@localhost:5432/demo",
+                schema="public",
+                config={"exclude_schemas": [], "exclude_tables": [], "max_row_limit": None},
+            )
 
         self.assertEqual(result["tables"][0]["row_count_projection_1y"], 18)
         self.assertEqual(result["tables"][0]["row_count_projection_2y"], 26)
@@ -131,7 +326,11 @@ class SourceSystemAnalyzerIncrementalTests(unittest.TestCase):
              patch.object(MODULE, "fetch_column_statistics", return_value={}), \
              patch.object(MODULE, "detect_join_candidates", return_value=[]), \
              patch.object(MODULE, "_apply_concept_classification", return_value={"concepts": []}):
-            result = MODULE.build_source_system_document("postgresql://user:pass@localhost:5432/demo", schema="public")
+            result = MODULE.build_source_system_document(
+                "postgresql://user:pass@localhost:5432/demo",
+                schema="public",
+                config={"exclude_schemas": [], "exclude_tables": [], "max_row_limit": None},
+            )
 
         self.assertEqual(len(result["tables"]), 1)
         self.assertEqual(result["tables"][0]["row_count"], 10)

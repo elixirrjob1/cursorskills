@@ -15,3 +15,5 @@ Use this module for Microsoft SQL Server and Azure SQL sources (`mssql+pyodbc://
 ```
 
 `schema` can be omitted to use `DATABASE_SCHEMA`/`SCHEMA` or default `dbo`.
+
+Before running the command, check for `db-analysis-config.json`. If it is missing, ask the user whether to exclude schemas, exclude tables, or set `max_row_limit`; create the JSON only when at least one of those values is requested.

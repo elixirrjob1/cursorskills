@@ -1,0 +1,18 @@
+---
+description: Database analysis hard-stop — if db-analysis-config.json is missing, stop and ask before analyzer or volume runs
+alwaysApply: true
+---
+
+# Database Analysis Config Stop-And-Ask Rule
+
+When using `source-system-analyser` for database analysis or volume projection:
+
+1. If `db-analysis-config.json` does not exist, **stop immediately**.
+2. Do **not** run the database analyzer, volume collector, or volume predictor until the user has been asked about:
+   - schemas to exclude
+   - tables to exclude
+   - `max_row_limit`
+3. You **must ask** the user for those settings. Do **not** assume there are no exclusions.
+4. After the user answers, create `db-analysis-config.json`, state that it will be used, then continue.
+
+This is a mandatory hard-stop behavior.

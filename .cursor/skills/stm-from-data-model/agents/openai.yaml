@@ -1,0 +1,3 @@
+interface:
+  display_name: "STM From Model"
+  short_description: "Generate one STM markdown per target table from a model file"

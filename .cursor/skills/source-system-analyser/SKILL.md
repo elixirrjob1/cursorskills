@@ -95,7 +95,6 @@ The merged API and tabular flows are now available directly inside this skill:
 - Tabular schema script: `scripts/flat/tabular_schema_json.py`
 - Volume projection collector: `scripts/volume_projection/collector.py`
 - Volume projection predictor: `scripts/volume_projection/predictor.py`
-- Preferred database wrapper for analysis + checklist creation: `scripts/run_source_analysis_with_description_checklist.py`
 
 ## Fallback Rules
 

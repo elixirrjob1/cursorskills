@@ -144,6 +144,8 @@ logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 
 _RULES_CACHE: Optional[Dict[str, Any]] = None
+_DESCRIPTION_CONFIG_FILENAME = "source-system-description.json"
+_DEFAULT_AZURE_OPENAI_API_VERSION = "2024-12-01-preview"
 
 
 def _humanize_identifier(value: str) -> str:
@@ -253,6 +255,221 @@ def _generate_column_description(
     if column_type:
         return f"{column_label.capitalize()} stored for the {entity_label} record as {column_type}."
     return f"{column_label.capitalize()} value for the {entity_label} record."
+
+
+def _resolve_system_description_config_path(config_path: Optional[str] = None) -> Path:
+    raw_path = str(
+        config_path
+        or os.environ.get("SOURCE_SYSTEM_DESCRIPTION_CONFIG")
+        or _DESCRIPTION_CONFIG_FILENAME
+    ).strip()
+    return Path(raw_path).expanduser()
+
+
+def _load_system_description_config(config_path: Optional[str] = None) -> Dict[str, Any]:
+    path = _resolve_system_description_config_path(config_path)
+    if not path.exists():
+        return {"system_description": "", "config_path": str(path)}
+
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        raise ValueError(f"Invalid system description config JSON at {path}: {exc}") from exc
+
+    if not isinstance(payload, dict):
+        raise ValueError(f"System description config at {path} must contain a JSON object")
+
+    return {
+        "system_description": str(payload.get("system_description") or "").strip(),
+        "config_path": str(path),
+    }
+
+
+def _save_system_description_config(
+    system_description: str,
+    config_path: Optional[str] = None,
+) -> Path:
+    path = _resolve_system_description_config_path(config_path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    payload = {"system_description": str(system_description or "").strip()}
+    path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+    return path
+
+
+def _prepare_sample_rows_for_prompts(
+    column_names: List[str],
+    rows: List[Any],
+    limit: int = 3,
+) -> List[Dict[str, Any]]:
+    prompt_rows: List[Dict[str, Any]] = []
+    safe_columns = [str(name) for name in column_names]
+    for row in rows[:limit]:
+        values = list(row) if isinstance(row, (list, tuple)) else [row]
+        prompt_rows.append(
+            {
+                safe_columns[idx]: (
+                    None if idx >= len(values) else str(values[idx]) if values[idx] is not None else None
+                )
+                for idx in range(len(safe_columns))
+            }
+        )
+    return prompt_rows
+
+
+def _normalize_generated_description(text: str) -> str:
+    cleaned = re.sub(r"\s+", " ", str(text or "").strip()).strip().strip('"').strip("'").strip()
+    if not cleaned:
+        return ""
+    return cleaned if cleaned.endswith((".", "!", "?")) else f"{cleaned}."
+
+
+class AzureDescriptionGenerator:
+    def __init__(self) -> None:
+        self.api_key = str(os.environ.get("AZURE_OPENAI_API_KEY") or "").strip()
+        self.endpoint = str(os.environ.get("AZURE_OPENAI_ENDPOINT") or "").strip()
+        self.deployment = str(
+            os.environ.get("AZURE_OPENAI_DEPLOYMENT")
+            or os.environ.get("AZURE_OPENAI_MODEL")
+            or ""
+        ).strip()
+        self.api_version = str(
+            os.environ.get("AZURE_OPENAI_API_VERSION") or _DEFAULT_AZURE_OPENAI_API_VERSION
+        ).strip()
+        self._client: Any = None
+        self._availability_checked = False
+        self._available = False
+        self._unavailable_reason = ""
+
+    def is_available(self) -> bool:
+        if self._availability_checked:
+            return self._available
+
+        self._availability_checked = True
+        missing: List[str] = []
+        if not self.api_key:
+            missing.append("AZURE_OPENAI_API_KEY")
+        if not self.endpoint:
+            missing.append("AZURE_OPENAI_ENDPOINT")
+        if not self.deployment:
+            missing.append("AZURE_OPENAI_DEPLOYMENT")
+        if missing:
+            self._unavailable_reason = f"missing env vars: {', '.join(missing)}"
+            logger.info("Azure description generation disabled (%s)", self._unavailable_reason)
+            self._available = False
+            return False
+
+        try:
+            from openai import AzureOpenAI  # type: ignore
+        except Exception as exc:
+            self._unavailable_reason = f"openai package unavailable: {exc}"
+            logger.warning("Azure description generation disabled (%s)", self._unavailable_reason)
+            self._available = False
+            return False
+
+        self._client = AzureOpenAI(
+            api_version=self.api_version,
+            azure_endpoint=self.endpoint,
+            api_key=self.api_key,
+        )
+        self._available = True
+        return True
+
+    def _create_completion(self, messages: List[Dict[str, str]]) -> str:
+        if not self.is_available():
+            raise RuntimeError(self._unavailable_reason or "Azure OpenAI is unavailable")
+        response = self._client.chat.completions.create(
+            model=self.deployment,
+            messages=messages,
+            temperature=0.0,
+            top_p=1.0,
+        )
+        choices = getattr(response, "choices", []) or []
+        if not choices:
+            raise RuntimeError("Azure OpenAI returned no choices")
+        message = getattr(choices[0], "message", None)
+        content = getattr(message, "content", "") if message else ""
+        normalized = _normalize_generated_description(content)
+        if not normalized:
+            raise RuntimeError("Azure OpenAI returned an empty description")
+        return normalized
+
+    def generate_column_description(
+        self,
+        *,
+        system_description: str,
+        schema_name: str,
+        table_name: str,
+        column: Dict[str, Any],
+        pk_columns: List[str],
+        fk_columns: List[Dict[str, Any]],
+        prompt_sample_rows: List[Dict[str, Any]],
+    ) -> str:
+        column_name = str(column.get("name") or "").strip()
+        fk_lookup = {str(fk.get("column") or ""): str(fk.get("references") or "").strip() for fk in fk_columns}
+        user_prompt = "\n".join(
+            [
+                "Write one concise plain-text sentence describing this database column for schema documentation.",
+                f"System description: {system_description or '(none provided)'}",
+                f"Schema: {schema_name}",
+                f"Table: {table_name}",
+                f"Column: {column_name}",
+                f"Data type: {column.get('type') or ''}",
+                f"Nullable: {bool(column.get('nullable', True))}",
+                f"Primary key: {column_name in pk_columns}",
+                f"Foreign key target: {fk_lookup.get(column_name) or '(none)'}",
+                f"Semantic class: {column.get('semantic_class') or '(unknown)'}",
+                f"Sample rows (max 3): {json.dumps(prompt_sample_rows, default=str)}",
+                "Return only the description sentence.",
+            ]
+        )
+        return self._create_completion(
+            [
+                {
+                    "role": "system",
+                    "content": "You generate accurate database metadata descriptions from schema context and sample data. Keep descriptions concise, factual, and implementation-neutral.",
+                },
+                {"role": "user", "content": user_prompt},
+            ]
+        )
+
+    def generate_table_description(
+        self,
+        *,
+        system_description: str,
+        schema_name: str,
+        table_name: str,
+        columns: List[Dict[str, Any]],
+    ) -> str:
+        column_summaries = [
+            {
+                "name": str(column.get("name") or ""),
+                "description": str(column.get("column_description") or ""),
+            }
+            for column in columns
+        ]
+        user_prompt = "\n".join(
+            [
+                "Write one concise plain-text sentence describing this database table for schema documentation.",
+                f"System description: {system_description or '(none provided)'}",
+                f"Schema: {schema_name}",
+                f"Table: {table_name}",
+                f"Columns and descriptions: {json.dumps(column_summaries, default=str)}",
+                "Return only the description sentence.",
+            ]
+        )
+        return self._create_completion(
+            [
+                {
+                    "role": "system",
+                    "content": "You generate accurate database table descriptions from existing column documentation. Keep descriptions concise, factual, and implementation-neutral.",
+                },
+                {"role": "user", "content": user_prompt},
+            ]
+        )
+
+
+def _build_description_generator() -> AzureDescriptionGenerator:
+    return AzureDescriptionGenerator()
 
 
 def _default_row_count_projections(row_count: int) -> Dict[str, int]:
@@ -2531,11 +2748,19 @@ def build_source_system_document(
     dialect_override: Optional[str] = None,
     config: Optional[Dict[str, Any]] = None,
     generate_missing_descriptions: bool = True,
+    system_description: Optional[str] = None,
+    system_description_config_path: Optional[str] = None,
 ) -> Dict[str, Any]:
     """Analyze source database schema and data quality and return the schema document."""
     config = config or load_config(tool_name="source_system_analyzer")
     if config.get("error") == "db_analysis_config_required":
         return config
+    system_description_config = _load_system_description_config(system_description_config_path)
+    resolved_system_description = str(
+        system_description
+        if system_description is not None
+        else system_description_config.get("system_description") or ""
+    ).strip()
 
     engine = get_engine(database_url)
     dialect = dialect_override or engine.dialect.name
@@ -2566,6 +2791,7 @@ def build_source_system_document(
         connection_info = parse_connection_info(engine)
         db_timezone = fetch_database_timezone(engine, adapter=adapter)
         row_counts = fetch_row_counts(engine, tables, schema=schema, adapter=adapter)
+        description_generator = _build_description_generator() if generate_missing_descriptions else None
         _collect_projection_inputs(engine, schema, config)
         projection_lookup = _direct_history_projection_lookup(engine, schema, tables, row_counts)
         stored_projection_lookup = _projection_lookup(engine, config)
@@ -2591,6 +2817,7 @@ def build_source_system_document(
                 # sample_data is only included in output when include_sample_data=True.
                 sample_values_by_col = None
                 sample_data_output = None
+                prompt_sample_rows: List[Dict[str, Any]] = []
                 try:
                     colnames, rows = fetch_sample_rows(
                         engine,
@@ -2603,6 +2830,7 @@ def build_source_system_document(
                     # SQL dialects/drivers may return column names in different casing.
                     # Keep a normalized lowercase map for resilient lookups.
                     sample_values_by_col = {k.lower(): v for k, v in raw_sample.items()}
+                    prompt_sample_rows = _prepare_sample_rows_for_prompts(colnames, rows, limit=3)
                     if include_sample_data:
                         sample_data_output = raw_sample
                 except Exception:
@@ -2653,13 +2881,40 @@ def build_source_system_document(
                         col_dict["_sample_values"] = list(sample_values)
                     col_dict["unit_context"] = _build_unit_context(col["name"], semantic_class, sample_values=sample_values)
                     if generate_missing_descriptions:
-                        col_dict["column_description"] = _generate_column_description(
-                            table_name,
-                            col_dict,
-                            pk_columns,
-                            fk_columns,
-                            raw_column_description,
-                        )
+                        if raw_column_description:
+                            col_dict["column_description"] = raw_column_description
+                            logger.info("Using source column description for %s.%s.%s", table_schema, table_name, col["name"])
+                        else:
+                            prompt_rows = prompt_sample_rows[:3]
+                            try:
+                                if description_generator and description_generator.is_available():
+                                    col_dict["column_description"] = description_generator.generate_column_description(
+                                        system_description=resolved_system_description,
+                                        schema_name=table_schema,
+                                        table_name=table_name,
+                                        column=col_dict,
+                                        pk_columns=pk_columns,
+                                        fk_columns=fk_columns,
+                                        prompt_sample_rows=prompt_rows,
+                                    )
+                                    logger.info("Generated Azure column description for %s.%s.%s", table_schema, table_name, col["name"])
+                                else:
+                                    raise RuntimeError("Azure description generator unavailable")
+                            except Exception as exc:
+                                logger.warning(
+                                    "Falling back to heuristic column description for %s.%s.%s: %s",
+                                    table_schema,
+                                    table_name,
+                                    col["name"],
+                                    exc,
+                                )
+                                col_dict["column_description"] = _generate_column_description(
+                                    table_name,
+                                    col_dict,
+                                    pk_columns,
+                                    fk_columns,
+                                    raw_column_description,
+                                )
                     enriched_columns.append(col_dict)
 
                 incremental_lower = {c.lower() for c in incremental_columns}
@@ -2671,17 +2926,7 @@ def build_source_system_document(
 
                 table_entry = {
                     "table": table_name, "schema": table_schema, "columns": enriched_columns,
-                    "table_description": (
-                        _generate_table_description(
-                            table_name,
-                            enriched_columns,
-                            pk_columns,
-                            fk_columns,
-                            raw_table_description,
-                        )
-                        if generate_missing_descriptions
-                        else raw_table_description
-                    ),
+                    "table_description": raw_table_description,
                     "primary_keys": pk_columns,
                     "foreign_keys": [{"column": fk["column"], "references": fk["references"]} for fk in fk_columns],
                     "row_count": row_count,
@@ -2705,6 +2950,36 @@ def build_source_system_document(
                     table_entry["partition_columns"] = []
                 if sample_data_output:
                     table_entry["sample_data"] = sample_data_output
+                if generate_missing_descriptions:
+                    if raw_table_description:
+                        table_entry["table_description"] = raw_table_description
+                        logger.info("Using source table description for %s.%s", table_schema, table_name)
+                    else:
+                        try:
+                            if description_generator and description_generator.is_available():
+                                table_entry["table_description"] = description_generator.generate_table_description(
+                                    system_description=resolved_system_description,
+                                    schema_name=table_schema,
+                                    table_name=table_name,
+                                    columns=enriched_columns,
+                                )
+                                logger.info("Generated Azure table description for %s.%s", table_schema, table_name)
+                            else:
+                                raise RuntimeError("Azure description generator unavailable")
+                        except Exception as exc:
+                            logger.warning(
+                                "Falling back to heuristic table description for %s.%s: %s",
+                                table_schema,
+                                table_name,
+                                exc,
+                            )
+                            table_entry["table_description"] = _generate_table_description(
+                                table_name,
+                                enriched_columns,
+                                pk_columns,
+                                fk_columns,
+                                raw_table_description,
+                            )
                 enriched_tables.append(table_entry)
             except Exception as e:
                 logger.warning(f"Skipped table '{table_name}': {e}")
@@ -2807,6 +3082,7 @@ def build_source_system_document(
                 "restrictions": "",
                 "late_arriving_data_manual": "",
                 "volume_size_projection_manual": "",
+                "system_description": resolved_system_description,
                 "db_analysis_config": {
                     "exclude_schemas": list(config.get("exclude_schemas", [])),
                     "exclude_tables": list(config.get("exclude_tables", [])),
@@ -2833,6 +3109,8 @@ def analyze_source_system(
     dialect_override: Optional[str] = None,
     config: Optional[Dict[str, Any]] = None,
     generate_missing_descriptions: bool = True,
+    system_description: Optional[str] = None,
+    system_description_config_path: Optional[str] = None,
 ) -> Dict[str, Any]:
     """Analyze source database schema and data quality, save combined output to schema.json."""
     schema_document = build_source_system_document(
@@ -2842,6 +3120,8 @@ def analyze_source_system(
         dialect_override=dialect_override,
         config=config,
         generate_missing_descriptions=generate_missing_descriptions,
+        system_description=system_description,
+        system_description_config_path=system_description_config_path,
     )
 
     if schema_document.get("error") == "db_analysis_config_required":
@@ -2892,7 +3172,23 @@ if __name__ == "__main__":
         default=None,
         help="Azure Key Vault name override (defaults to KEYVAULT_NAME env var)",
     )
+    parser.add_argument(
+        "--system-description",
+        default=None,
+        help="Persist this system description to the analyzer description config and use it for AI-generated descriptions.",
+    )
+    parser.add_argument(
+        "--system-description-config",
+        default=None,
+        help="Path to the JSON file that stores the persisted system description (default: source-system-description.json).",
+    )
     args = parser.parse_args()
+    if args.system_description is not None:
+        config_path = _save_system_description_config(
+            args.system_description,
+            config_path=args.system_description_config,
+        )
+        logger.info("Saved system description config to %s", config_path)
     database_url = _resolve_database_url(
         args.database_url,
         database_url_secret=args.database_url_secret,
@@ -2904,6 +3200,8 @@ if __name__ == "__main__":
         args.output_json_path,
         schema=schema,
         dialect_override=args.dialect,
+        system_description=args.system_description,
+        system_description_config_path=args.system_description_config,
     )
     if result.get("error") == "db_analysis_config_required":
         print(json.dumps(result, indent=2))

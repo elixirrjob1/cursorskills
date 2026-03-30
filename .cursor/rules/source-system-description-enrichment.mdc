@@ -8,9 +8,9 @@ alwaysApply: true
 When working with database output from `source-system-analyser`:
 
 1. If any table has an empty `table_description`, or any column has an empty `column_description`, do **not** stop at raw analyzer output.
-2. Prefer running database analysis through:
-   - `python3 scripts/run_source_analysis_with_description_checklist.py <database_url> <output_json> [schema]`
-3. If raw analyzer output already exists, build a checklist file with:
+2. Run database analysis directly through:
+   - `python3 scripts/source_system_analyzer.py <database_url> <output_json> [schema]`
+3. If raw analyzer output already exists and still has missing descriptions, build a checklist file with:
    - `python3 scripts/build_description_enrichment_checklist.py <schema.json>`
 4. Use that checklist as the worklist for description enrichment.
 5. Process the checklist table by table in file order.

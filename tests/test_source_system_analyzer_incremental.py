@@ -1,4 +1,5 @@
 import importlib.util
+import tempfile
 import sys
 import types
 import unittest
@@ -29,6 +30,22 @@ SPEC.loader.exec_module(MODULE)
 
 
 class SourceSystemAnalyzerIncrementalTests(unittest.TestCase):
+    def test_system_description_config_round_trip(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            config_path = Path(tmpdir) / "source-system-description.json"
+
+            MODULE._save_system_description_config(
+                "Retail ERP and order management platform.",
+                config_path=str(config_path),
+            )
+            loaded = MODULE._load_system_description_config(str(config_path))
+
+        self.assertEqual(
+            loaded["system_description"],
+            "Retail ERP and order management platform.",
+        )
+        self.assertEqual(loaded["config_path"], str(config_path))
+
     def test_build_source_system_document_requires_db_analysis_config(self):
         result = MODULE.build_source_system_document(
             "postgresql://user:pass@localhost:5432/demo",
@@ -322,6 +339,143 @@ class SourceSystemAnalyzerIncrementalTests(unittest.TestCase):
         table = result["tables"][0]
         self.assertEqual(table["table_description"], "Source table comment")
         self.assertEqual(table["columns"][0]["column_description"], "Source column comment")
+
+    def test_build_source_system_document_uses_azure_for_missing_descriptions(self):
+        fake_engine = types.SimpleNamespace(dialect=types.SimpleNamespace(name="postgresql"))
+
+        class _FakeGenerator:
+            def __init__(self):
+                self.column_sample_rows = None
+
+            def is_available(self):
+                return True
+
+            def generate_column_description(self, **kwargs):
+                self.column_sample_rows = kwargs["prompt_sample_rows"]
+                return "Customer email address used for notifications."
+
+            def generate_table_description(self, **kwargs):
+                return "Customer master records including contact details."
+
+        fake_generator = _FakeGenerator()
+
+        with patch.object(MODULE, "get_engine", return_value=fake_engine), \
+             patch.object(MODULE, "get_adapter", return_value=None), \
+             patch.object(
+                 MODULE,
+                 "fetch_schema_metadata",
+                 return_value={
+                     "tables": ["customers"],
+                     "columns": {
+                         "customers": [
+                             {"name": "email", "type": "text", "nullable": True, "is_incremental": False},
+                         ]
+                     },
+                     "primary_keys": {"customers": []},
+                     "foreign_keys": {"customers": []},
+                 },
+             ), \
+             patch.object(MODULE, "parse_connection_info", return_value={"driver": "postgresql"}), \
+             patch.object(MODULE, "fetch_database_timezone", return_value="UTC"), \
+             patch.object(MODULE, "fetch_row_counts", return_value={"customers": 10}), \
+             patch.object(MODULE, "_collect_projection_inputs"), \
+             patch.object(MODULE, "_projection_lookup", return_value={}), \
+             patch.object(MODULE, "_direct_history_projection_lookup", return_value={}), \
+             patch.object(
+                 MODULE,
+                 "fetch_sample_rows",
+                 return_value=(
+                     ["email", "status"],
+                     [
+                         ("alex@example.com", "active"),
+                         ("sam@example.com", "inactive"),
+                         ("pat@example.com", "active"),
+                         ("lee@example.com", "active"),
+                     ],
+                 ),
+             ), \
+             patch.object(MODULE, "detect_partition_columns", return_value=([], "exact")), \
+             patch.object(MODULE, "detect_incremental_columns", return_value=[]), \
+             patch.object(MODULE, "fetch_column_statistics", return_value={}), \
+             patch.object(MODULE, "detect_join_candidates", return_value=[]), \
+             patch.object(MODULE, "_apply_concept_classification", return_value={"concepts": []}), \
+             patch.object(MODULE, "_build_description_generator", return_value=fake_generator), \
+             patch.object(
+                 MODULE,
+                 "_load_system_description_config",
+                 return_value={"system_description": "Retail CRM", "config_path": "unused.json"},
+             ):
+            result = MODULE.build_source_system_document(
+                "postgresql://user:pass@localhost:5432/demo",
+                schema="public",
+                config={"exclude_schemas": [], "exclude_tables": [], "max_row_limit": None},
+            )
+
+        table = result["tables"][0]
+        self.assertEqual(table["columns"][0]["column_description"], "Customer email address used for notifications.")
+        self.assertEqual(table["table_description"], "Customer master records including contact details.")
+        self.assertEqual(result["source_system_context"]["system_description"], "Retail CRM")
+        self.assertEqual(len(fake_generator.column_sample_rows), 3)
+        self.assertEqual(fake_generator.column_sample_rows[0]["email"], "alex@example.com")
+
+    def test_build_source_system_document_falls_back_when_azure_generation_fails(self):
+        fake_engine = types.SimpleNamespace(dialect=types.SimpleNamespace(name="postgresql"))
+
+        class _FailingGenerator:
+            def is_available(self):
+                return True
+
+            def generate_column_description(self, **kwargs):
+                raise RuntimeError("Azure unavailable")
+
+            def generate_table_description(self, **kwargs):
+                raise RuntimeError("Azure unavailable")
+
+        with patch.object(MODULE, "get_engine", return_value=fake_engine), \
+             patch.object(MODULE, "get_adapter", return_value=None), \
+             patch.object(
+                 MODULE,
+                 "fetch_schema_metadata",
+                 return_value={
+                     "tables": ["customers"],
+                     "columns": {
+                         "customers": [
+                             {"name": "customer_id", "type": "integer", "nullable": False, "is_incremental": False},
+                             {"name": "email", "type": "text", "nullable": True, "is_incremental": False},
+                         ]
+                     },
+                     "primary_keys": {"customers": ["customer_id"]},
+                     "foreign_keys": {"customers": []},
+                 },
+             ), \
+             patch.object(MODULE, "parse_connection_info", return_value={"driver": "postgresql"}), \
+             patch.object(MODULE, "fetch_database_timezone", return_value="UTC"), \
+             patch.object(MODULE, "fetch_row_counts", return_value={"customers": 10}), \
+             patch.object(MODULE, "_collect_projection_inputs"), \
+             patch.object(MODULE, "_projection_lookup", return_value={}), \
+             patch.object(MODULE, "_direct_history_projection_lookup", return_value={}), \
+             patch.object(MODULE, "fetch_sample_rows", return_value=(["customer_id", "email"], [])), \
+             patch.object(MODULE, "detect_partition_columns", return_value=([], "exact")), \
+             patch.object(MODULE, "detect_incremental_columns", return_value=[]), \
+             patch.object(MODULE, "fetch_column_statistics", return_value={}), \
+             patch.object(MODULE, "detect_join_candidates", return_value=[]), \
+             patch.object(MODULE, "_apply_concept_classification", return_value={"concepts": []}), \
+             patch.object(MODULE, "_build_description_generator", return_value=_FailingGenerator()), \
+             patch.object(
+                 MODULE,
+                 "_load_system_description_config",
+                 return_value={"system_description": "Retail CRM", "config_path": "unused.json"},
+             ):
+            result = MODULE.build_source_system_document(
+                "postgresql://user:pass@localhost:5432/demo",
+                schema="public",
+                config={"exclude_schemas": [], "exclude_tables": [], "max_row_limit": None},
+            )
+
+        table = result["tables"][0]
+        self.assertEqual(table["table_description"], "Stores customer records including email.")
+        self.assertEqual(table["columns"][0]["column_description"], "Primary key for the customer record.")
+        self.assertEqual(table["columns"][1]["column_description"], "Contact value for the customer record.")
 
     def test_build_source_system_document_can_leave_missing_descriptions_blank(self):
         fake_engine = types.SimpleNamespace(dialect=types.SimpleNamespace(name="postgresql"))

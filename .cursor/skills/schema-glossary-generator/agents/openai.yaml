@@ -1,0 +1,3 @@
+interface:
+  display_name: "Schema Glossary"
+  short_description: "Generate glossary JSON and Excel from analyzer schema JSON"

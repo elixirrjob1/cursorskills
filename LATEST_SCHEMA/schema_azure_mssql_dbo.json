@@ -1,6 +1,6 @@
 {
   "metadata": {
-    "generated_at": "2026-03-30T08:36:23.118377+00:00",
+    "generated_at": "2026-04-01T10:39:15.579372+00:00",
     "database_url": "pioneertest.database.windows.net:1433/free-sql-db-3300567?driver=ODBC+Driver+18+for+SQL+Server&TrustServerCertificate=yes",
     "schema_filter": "dbo",
     "total_tables": 10,
@@ -20,7 +20,7 @@
     "restrictions": "",
     "late_arriving_data_manual": "",
     "volume_size_projection_manual": "",
-    "system_description": "",
+    "system_description": "Retail operations source system covering customers, stores, employees, suppliers, products, inventory, purchase orders, and sales orders used for day-to-day store, procurement, and sales transaction management.",
     "db_analysis_config": {
       "exclude_schemas": [
         "prediction"
@@ -389,7 +389,7 @@
           "type": "bigint",
           "nullable": false,
           "is_incremental": false,
-          "column_description": "Unique identifier for each customer, serving as the primary key for the customers table.",
+          "column_description": "The `customer_id` column is a non-nullable bigint serving as the primary key and unique identifier for each customer in the `customers` table.",
           "cardinality": 100,
           "null_count": 0,
           "data_range": {
@@ -419,7 +419,7 @@
           "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
           "nullable": false,
           "is_incremental": false,
-          "column_description": "The \"first_name\" column in the \"customers\" table stores non-nullable given names of customers as nvarchar strings using the \"SQL_Latin1_General_CP1_CI_AS\" collation.",
+          "column_description": "The \"first_name\" column in the \"customers\" table stores non-nullable given names as nvarchar strings using the \"sql_latin1_general_cp1_ci_as\" collation.",
           "cardinality": 100,
           "null_count": 0,
           "data_range": {
@@ -477,7 +477,7 @@
           "type": "nvarchar(450)",
           "nullable": true,
           "is_incremental": false,
-          "column_description": "Stores the customer's email address, allowing up to 450 Unicode characters, and can be null.",
+          "column_description": "Stores the customer's email address, allowing null values, with a maximum length of 450 characters.",
           "cardinality": 100,
           "null_count": 0,
           "data_range": {
@@ -511,7 +511,7 @@
           "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
           "nullable": true,
           "is_incremental": false,
-          "column_description": "Stores the customer's phone number as a nullable Unicode string.",
+          "column_description": "Stores the customer's phone number as a nullable text field with case-insensitive collation.",
           "cardinality": 100,
           "null_count": 0,
           "data_range": {
@@ -545,7 +545,7 @@
           "type": "datetime2",
           "nullable": false,
           "is_incremental": false,
-          "column_description": "The \"created_at\" column stores the non-nullable timestamp indicating when a customer record was created.",
+          "column_description": "The `created_at` column stores the non-nullable timestamp indicating when a customer record was initially created.",
           "column_timezone": "(UTC) Coordinated Universal Time",
           "cardinality": 95,
           "null_count": 0,
@@ -579,7 +579,7 @@
           "type": "datetime2",
           "nullable": false,
           "is_incremental": true,
-          "column_description": "The \"updated_at\" column stores the timestamp of the most recent update to a customer record and is required (non-null).",
+          "column_description": "The `updated_at` column stores the non-nullable timestamp of the most recent update to a customer's record.",
           "column_timezone": "(UTC) Coordinated Universal Time",
           "cardinality": 95,
           "null_count": 0,
@@ -609,7 +609,7 @@
           "concept_alias_group": "updated_at"
         }
       ],
-      "table_description": "The \"customers\" table stores information about customers, including their unique ID, name, contact details, and timestamps for record creation and updates.",
+      "table_description": "The `customers` table stores information about customers, including their unique identifier, name, contact details, and timestamps for record creation and updates.",
       "primary_keys": [
         "customer_id"
       ],
@@ -735,7 +735,7 @@
           "type": "bigint",
           "nullable": false,
           "is_incremental": false,
-          "column_description": "The \"employee_id\" column is a non-nullable bigint serving as the primary key for uniquely identifying employees in the \"employees\" table.",
+          "column_description": "The `employee_id` column is a non-nullable bigint serving as the primary key for uniquely identifying employees in the `employees` table.",
           "cardinality": 20,
           "null_count": 0,
           "data_range": {
@@ -765,7 +765,7 @@
           "type": "bigint",
           "nullable": false,
           "is_incremental": false,
-          "column_description": "Represents the identifier of the store associated with an employee, referencing the `store_id` column in the `stores` table.",
+          "column_description": "The `store_id` column in the `employees` table is a non-nullable bigint that serves as a foreign key referencing the `store_id` column in the `stores` table.",
           "cardinality": 5,
           "null_count": 0,
           "data_range": {
@@ -848,7 +848,7 @@
           "type": "nvarchar(450)",
           "nullable": false,
           "is_incremental": false,
-          "column_description": "Stores the unique email address of an employee as a non-null nvarchar value up to 450 characters.",
+          "column_description": "The \"email\" column stores the unique email address of each employee as a non-null nvarchar string with a maximum length of 450 characters.",
           "cardinality": 20,
           "null_count": 0,
           "data_range": {
@@ -880,7 +880,7 @@
           "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
           "nullable": false,
           "is_incremental": false,
-          "column_description": "Stores the job role of an employee as a non-null, case-insensitive string.",
+          "column_description": "The \"role\" column in the \"employees\" table stores the job title or position of an employee as a non-null nvarchar string.",
           "cardinality": 4,
           "null_count": 0,
           "data_range": {
@@ -909,7 +909,7 @@
           "type": "date",
           "nullable": false,
           "is_incremental": false,
-          "column_description": "The \"hire_date\" column in the \"employees\" table stores the non-nullable date an employee was hired.",
+          "column_description": "The `hire_date` column stores the non-null date an employee was hired.",
           "cardinality": 20,
           "null_count": 0,
           "data_range": {
@@ -942,7 +942,7 @@
           "type": "datetime2",
           "nullable": false,
           "is_incremental": false,
-          "column_description": "The \"created_at\" column stores the non-nullable timestamp indicating when the employee record was created.",
+          "column_description": "The \"created_at\" column stores the non-nullable timestamp indicating when the employee record was initially created.",
           "column_timezone": "(UTC) Coordinated Universal Time",
           "cardinality": 20,
           "null_count": 0,
@@ -976,7 +976,7 @@
           "type": "datetime2",
           "nullable": false,
           "is_incremental": true,
-          "column_description": "The \"updated_at\" column stores the non-nullable timestamp of the most recent update to an employee record.",
+          "column_description": "The `updated_at` column stores the non-nullable timestamp indicating the last update time for an employee record.",
           "column_timezone": "(UTC) Coordinated Universal Time",
           "cardinality": 20,
           "null_count": 0,
@@ -1006,7 +1006,7 @@
           "concept_alias_group": "updated_at"
         }
       ],
-      "table_description": "The \"employees\" table stores information about employees, including their unique identifier, associated store, personal details, job role, hire date, and record timestamps.",
+      "table_description": "The `employees` table stores information about employees, including their unique ID, associated store, personal details, role, hire date, and record timestamps.",
       "primary_keys": [
         "employee_id"
       ],
@@ -1197,7 +1197,7 @@
           "type": "bigint",
           "nullable": false,
           "is_incremental": false,
-          "column_description": "Represents the unique identifier of a store, referencing the `store_id` column in the `stores` table.",
+          "column_description": "The `store_id` column in the `inventory` table is a non-nullable bigint that references the `store_id` column in the `stores` table, establishing a foreign key relationship.",
           "cardinality": 5,
           "null_count": 0,
           "data_range": {
@@ -1226,7 +1226,7 @@
           "type": "bigint",
           "nullable": false,
           "is_incremental": false,
-          "column_description": "References the unique identifier of a product in the products table, establishing a foreign key relationship.",
+          "column_description": "References the unique identifier of a product from the products table, establishing a foreign key relationship.",
           "cardinality": 47,
           "null_count": 0,
           "data_range": {
@@ -1255,7 +1255,7 @@
           "type": "integer",
           "nullable": false,
           "is_incremental": false,
-          "column_description": "Represents the current quantity of a product in stock, stored as a non-null integer.",
+          "column_description": "Tracks the current stock quantity of an item in inventory, stored as a non-null integer.",
           "cardinality": 68,
           "null_count": 0,
           "data_range": {
@@ -1296,7 +1296,7 @@
           "type": "integer",
           "nullable": false,
           "is_incremental": false,
-          "column_description": "Indicates the minimum stock quantity at which inventory should be reordered, stored as a non-null integer.",
+          "column_description": "The `reorder_level` column in the `inventory` table stores a non-null integer indicating the threshold quantity at which stock should be reordered.",
           "cardinality": 20,
           "null_count": 0,
           "data_range": {
@@ -1324,7 +1324,7 @@
           "type": "datetime2",
           "nullable": true,
           "is_incremental": false,
-          "column_description": "The \"last_restocked_at\" column records the timestamp of the most recent restocking event for an inventory item and allows null values.",
+          "column_description": "The `last_restocked_at` column records the timestamp of the most recent inventory restocking event and allows null values.",
           "column_timezone": "(UTC) Coordinated Universal Time",
           "cardinality": 89,
           "null_count": 0,
@@ -1358,7 +1358,7 @@
           "type": "datetime2",
           "nullable": false,
           "is_incremental": false,
-          "column_description": "The `created_at` column in the `inventory` table stores the non-nullable timestamp indicating when a record was initially created.",
+          "column_description": "The \"created_at\" column stores the non-nullable timestamp indicating when the inventory record was initially created.",
           "column_timezone": "(UTC) Coordinated Universal Time",
           "cardinality": 91,
           "null_count": 0,
@@ -1392,7 +1392,7 @@
           "type": "datetime2",
           "nullable": false,
           "is_incremental": true,
-          "column_description": "The `updated_at` column in the `inventory` table stores the non-nullable timestamp indicating the last update to a record.",
+          "column_description": "The `updated_at` column in the `inventory` table stores the non-null timestamp of the most recent update to a record, using the `datetime2` data type.",
           "column_timezone": "(UTC) Coordinated Universal Time",
           "cardinality": 89,
           "null_count": 0,
@@ -1619,7 +1619,7 @@
           "type": "bigint",
           "nullable": false,
           "is_incremental": false,
-          "column_description": "The `product_id` column is a non-nullable bigint serving as the primary key for uniquely identifying products in the `products` table.",
+          "column_description": "Unique identifier for each product in the products table.",
           "cardinality": 50,
           "null_count": 0,
           "data_range": {
@@ -1649,7 +1649,7 @@
           "type": "bigint",
           "nullable": false,
           "is_incremental": false,
-          "column_description": "Represents the unique identifier of the supplier associated with a product, referencing the `supplier_id` column in the `suppliers` table.",
+          "column_description": "The `supplier_id` column in the `products` table is a non-nullable bigint that serves as a foreign key referencing the `supplier_id` column in the `suppliers` table.",
           "cardinality": 10,
           "null_count": 0,
           "data_range": {
@@ -1678,7 +1678,7 @@
           "type": "nvarchar(450)",
           "nullable": false,
           "is_incremental": false,
-          "column_description": "The \"sku\" column stores a unique alphanumeric identifier for products, with a maximum length of 450 characters, and cannot be null.",
+          "column_description": "The \"sku\" column stores a unique alphanumeric identifier for each product, with a maximum length of 450 characters, and cannot be null.",
           "cardinality": 50,
           "null_count": 0,
           "data_range": {
@@ -1707,7 +1707,7 @@
           "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
           "nullable": false,
           "is_incremental": false,
-          "column_description": "Stores the name of the product as a non-null Unicode string.",
+          "column_description": "The \"name\" column in the \"products\" table stores the non-nullable name of the product as a Unicode string.",
           "cardinality": 50,
           "null_count": 0,
           "data_range": {
@@ -1734,7 +1734,7 @@
           "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
           "nullable": false,
           "is_incremental": false,
-          "column_description": "Indicates the category of the product, stored as a non-null case-insensitive Unicode string.",
+          "column_description": "The \"category\" column stores the product category as a non-null, case-insensitive string (e.g., \"Books\", \"Clothing\", \"Electronics\").",
           "cardinality": 5,
           "null_count": 0,
           "data_range": {
@@ -1764,7 +1764,7 @@
           "type": "numeric(10,2)",
           "nullable": false,
           "is_incremental": false,
-          "column_description": "Stores the price per unit of a product as a non-null numeric value with up to 10 digits and 2 decimal places.",
+          "column_description": "The `unit_price` column stores the non-null numeric value (up to 10 digits with 2 decimal places) representing the selling price of a product in currency.",
           "cardinality": 50,
           "null_count": 0,
           "data_range": {
@@ -1796,7 +1796,7 @@
           "type": "numeric(10,2)",
           "nullable": false,
           "is_incremental": false,
-          "column_description": "Represents the non-null numeric cost price of a product, stored with up to 10 digits and 2 decimal places.",
+          "column_description": "The `cost_price` column stores the non-null numeric cost value of a product with up to 10 digits, including 2 decimal places, representing its monetary amount.",
           "cardinality": 50,
           "null_count": 0,
           "data_range": {
@@ -1828,7 +1828,7 @@
           "type": "bit",
           "nullable": false,
           "is_incremental": false,
-          "column_description": "Indicates whether the product is active (True) or inactive (False).",
+          "column_description": "Indicates whether the product is active (True) or inactive (False); cannot be null.",
           "cardinality": 1,
           "null_count": 0,
           "data_category": "discrete",
@@ -1850,7 +1850,7 @@
           "type": "datetime2",
           "nullable": false,
           "is_incremental": false,
-          "column_description": "Indicates the timestamp when the product record was created, stored as a non-nullable datetime2 value.",
+          "column_description": "The `created_at` column stores the non-nullable timestamp indicating when a product record was initially created.",
           "column_timezone": "(UTC) Coordinated Universal Time",
           "cardinality": 50,
           "null_count": 0,
@@ -1884,7 +1884,7 @@
           "type": "datetime2",
           "nullable": false,
           "is_incremental": true,
-          "column_description": "The \"updated_at\" column stores the non-nullable timestamp of the last update made to a product record.",
+          "column_description": "The `updated_at` column stores the non-nullable timestamp indicating the last update time of a product record.",
           "column_timezone": "(UTC) Coordinated Universal Time",
           "cardinality": 50,
           "null_count": 0,
@@ -1948,7 +1948,7 @@
           "type": "numeric(10,2)",
           "nullable": true,
           "is_incremental": false,
-          "column_description": "Stores the weight of the product as a numeric value with up to 10 digits and 2 decimal places, nullable.",
+          "column_description": "The `weight_value` column stores the weight of a product as a numeric value with up to 10 digits and 2 decimal places, and it is nullable.",
           "cardinality": 0,
           "null_count": 50,
           "data_category": "continuous",
@@ -1978,7 +1978,7 @@
           "type": "numeric(10,2)",
           "nullable": true,
           "is_incremental": false,
-          "column_description": "Stores the length measurement of a product as a numeric value with up to 10 digits and 2 decimal places, which can be null.",
+          "column_description": "The `length_value` column stores the numeric length measurement of a product, allowing up to two decimal places, and can be null.",
           "cardinality": 0,
           "null_count": 50,
           "data_category": "continuous",
@@ -2277,7 +2277,7 @@
           "type": "bigint",
           "nullable": false,
           "is_incremental": false,
-          "column_description": "Unique identifier for each purchase order item, serving as the primary key for the table.",
+          "column_description": "The `po_item_id` column is a non-nullable bigint serving as the primary key for uniquely identifying each record in the `purchase_order_items` table.",
           "cardinality": 246,
           "null_count": 0,
           "data_range": {
@@ -2336,7 +2336,7 @@
           "type": "bigint",
           "nullable": false,
           "is_incremental": false,
-          "column_description": "Identifies the associated product in the purchase order item, referencing the `products.product_id` column.",
+          "column_description": "Represents the unique identifier of a product associated with a purchase order item, referencing the `product_id` column in the `products` table.",
           "cardinality": 49,
           "null_count": 0,
           "data_range": {
@@ -2365,7 +2365,7 @@
           "type": "integer",
           "nullable": false,
           "is_incremental": false,
-          "column_description": "The \"quantity\" column in the \"purchase_order_items\" table stores a non-null integer representing the number of items in a purchase order.",
+          "column_description": "The \"quantity\" column in the \"purchase_order_items\" table is a non-null integer representing the number of items in a purchase order.",
           "cardinality": 41,
           "null_count": 0,
           "data_range": {
@@ -2406,7 +2406,7 @@
           "type": "numeric(10,2)",
           "nullable": false,
           "is_incremental": false,
-          "column_description": "Represents the per-unit cost of a purchase order item, stored as a non-null numeric value with up to 10 digits and 2 decimal places.",
+          "column_description": "Represents the non-null unit cost of a purchase order item, stored as a numeric value with up to 10 digits and 2 decimal places.",
           "cardinality": 49,
           "null_count": 0,
           "data_range": {
@@ -2440,7 +2440,7 @@
           "type": "datetime2",
           "nullable": false,
           "is_incremental": false,
-          "column_description": "The \"created_at\" column stores the non-nullable timestamp indicating when the purchase order item record was created.",
+          "column_description": "The `created_at` column stores the non-nullable timestamp indicating when the purchase order item record was created.",
           "column_timezone": "(UTC) Coordinated Universal Time",
           "cardinality": 246,
           "null_count": 0,
@@ -2474,7 +2474,7 @@
           "type": "datetime2",
           "nullable": false,
           "is_incremental": true,
-          "column_description": "Records the timestamp of the most recent update to the purchase_order_items entry, stored as a non-nullable datetime2 value.",
+          "column_description": "The `updated_at` column in the `purchase_order_items` table stores the non-nullable timestamp indicating the last update to a record.",
           "column_timezone": "(UTC) Coordinated Universal Time",
           "cardinality": 246,
           "null_count": 0,
@@ -2508,7 +2508,7 @@
           "type": "numeric(10,2)",
           "nullable": true,
           "is_incremental": false,
-          "column_description": "Represents the numeric value of the ordered quantity for a purchase order item, allowing up to 10 digits with 2 decimal places, and can be null.",
+          "column_description": "Represents the numeric value of the quantity ordered for a purchase order item, allowing up to 10 digits with 2 decimal places, and can be null.",
           "cardinality": 0,
           "null_count": 246,
           "data_category": "continuous",
@@ -2728,7 +2728,7 @@
           "type": "bigint",
           "nullable": false,
           "is_incremental": false,
-          "column_description": "The `po_id` column is a non-nullable bigint serving as the primary key for uniquely identifying purchase orders in the `purchase_orders` table.",
+          "column_description": "The `po_id` column is a non-nullable bigint serving as the primary key for uniquely identifying purchase orders in the `dbo.purchase_orders` table.",
           "cardinality": 125,
           "null_count": 0,
           "data_range": {
@@ -2758,7 +2758,7 @@
           "type": "bigint",
           "nullable": false,
           "is_incremental": false,
-          "column_description": "References the unique identifier of the supplier associated with the purchase order, linking to the `suppliers.supplier_id` column.",
+          "column_description": "The `supplier_id` column in the `purchase_orders` table is a non-nullable bigint that references the `supplier_id` column in the `suppliers` table, identifying the supplier associated with each purchase order.",
           "cardinality": 10,
           "null_count": 0,
           "data_range": {
@@ -2787,7 +2787,7 @@
           "type": "bigint",
           "nullable": false,
           "is_incremental": false,
-          "column_description": "Represents the identifier of the store associated with the purchase order, referencing the `store_id` column in the `stores` table.",
+          "column_description": "References the unique identifier of the store associated with the purchase order, linking to the `stores.store_id` column.",
           "cardinality": 5,
           "null_count": 0,
           "data_range": {
@@ -2816,7 +2816,7 @@
           "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
           "nullable": false,
           "is_incremental": false,
-          "column_description": "Indicates the current state of the purchase order, such as 'Ordered' or 'Received', stored as a non-nullable nvarchar value.",
+          "column_description": "Indicates the current state of a purchase order, such as 'Ordered' or 'Received'.",
           "cardinality": 3,
           "null_count": 0,
           "data_range": {
@@ -2848,7 +2848,7 @@
           "type": "date",
           "nullable": false,
           "is_incremental": false,
-          "column_description": "The \"order_date\" column in the \"purchase_orders\" table stores the non-nullable date when the purchase order was placed.",
+          "column_description": "The `order_date` column stores the non-null date when a purchase order was placed.",
           "cardinality": 123,
           "null_count": 0,
           "data_range": {
@@ -2881,7 +2881,7 @@
           "type": "date",
           "nullable": true,
           "is_incremental": false,
-          "column_description": "The \"expected_date\" column in the \"purchase_orders\" table stores the anticipated delivery date of a purchase order and allows null values.",
+          "column_description": "The \"expected_date\" column in the \"purchase_orders\" table stores the anticipated delivery date of a purchase order, allowing null values.",
           "cardinality": 123,
           "null_count": 0,
           "data_range": {
@@ -2914,7 +2914,7 @@
           "type": "datetime2",
           "nullable": false,
           "is_incremental": false,
-          "column_description": "The \"created_at\" column stores the non-nullable timestamp indicating when the purchase order record was created.",
+          "column_description": "The `created_at` column stores the non-nullable timestamp indicating when the purchase order record was initially created.",
           "column_timezone": "(UTC) Coordinated Universal Time",
           "cardinality": 123,
           "null_count": 0,
@@ -2948,7 +2948,7 @@
           "type": "datetime2",
           "nullable": false,
           "is_incremental": true,
-          "column_description": "Tracks the timestamp of the most recent update to a purchase order record, stored as a non-nullable datetime value.",
+          "column_description": "The `updated_at` column stores the non-null timestamp indicating the last modification date and time of a purchase order record.",
           "column_timezone": "(UTC) Coordinated Universal Time",
           "cardinality": 123,
           "null_count": 0,
@@ -3183,7 +3183,7 @@
           "type": "bigint",
           "nullable": false,
           "is_incremental": false,
-          "column_description": "Unique identifier for each sales order item, serving as the primary key in the sales_order_items table.",
+          "column_description": "The `sales_order_item_id` column is a non-nullable bigint serving as the primary key for uniquely identifying records in the `sales_order_items` table.",
           "cardinality": 508,
           "null_count": 0,
           "data_range": {
@@ -3213,7 +3213,7 @@
           "type": "bigint",
           "nullable": false,
           "is_incremental": false,
-          "column_description": "References the unique identifier of the associated sales order in the sales_orders table.",
+          "column_description": "Links each sales order item to its corresponding sales order in the `sales_orders` table via a non-null foreign key.",
           "cardinality": 200,
           "null_count": 0,
           "data_range": {
@@ -3242,7 +3242,7 @@
           "type": "bigint",
           "nullable": false,
           "is_incremental": false,
-          "column_description": "Represents the unique identifier of a product associated with a sales order item, referencing the `product_id` column in the `products` table.",
+          "column_description": "References the unique identifier of a product from the products table, establishing a mandatory relationship between sales order items and products.",
           "cardinality": 50,
           "null_count": 0,
           "data_range": {
@@ -3271,7 +3271,7 @@
           "type": "integer",
           "nullable": false,
           "is_incremental": false,
-          "column_description": "The \"quantity\" column in the \"sales_order_items\" table stores a non-null integer representing the number of items in a sales order.",
+          "column_description": "Represents the non-null integer quantity of a product in a sales order item.",
           "cardinality": 5,
           "null_count": 0,
           "data_range": {
@@ -3312,7 +3312,7 @@
           "type": "numeric(15,2)",
           "nullable": false,
           "is_incremental": false,
-          "column_description": "The \"unit_price\" column stores the non-null numeric price per unit of a sales order item, with up to 15 digits and 2 decimal places, in a currency amount format.",
+          "column_description": "Represents the non-null unit price of a sales order item, stored as a numeric value with up to 15 digits and 2 decimal places.",
           "cardinality": 50,
           "null_count": 0,
           "data_range": {
@@ -3346,7 +3346,7 @@
           "type": "datetime2",
           "nullable": false,
           "is_incremental": false,
-          "column_description": "Records the timestamp when the sales order item was created, stored as a non-nullable datetime value.",
+          "column_description": "The `created_at` column records the non-nullable timestamp indicating when the sales order item was created.",
           "column_timezone": "(UTC) Coordinated Universal Time",
           "cardinality": 508,
           "null_count": 0,
@@ -3380,7 +3380,7 @@
           "type": "datetime2",
           "nullable": false,
           "is_incremental": true,
-          "column_description": "The \"updated_at\" column stores the non-nullable timestamp of the last update made to a sales order item record.",
+          "column_description": "The `updated_at` column in the `sales_order_items` table stores the non-nullable timestamp indicating the last update to a sales order item record.",
           "column_timezone": "(UTC) Coordinated Universal Time",
           "cardinality": 508,
           "null_count": 0,
@@ -3414,7 +3414,7 @@
           "type": "numeric(10,2)",
           "nullable": true,
           "is_incremental": false,
-          "column_description": "Represents the numeric value of the sold quantity for a sales order item, allowing nulls.",
+          "column_description": "Represents the numeric value of the sold quantity for a sales order item, allowing up to two decimal places and nullable.",
           "cardinality": 0,
           "null_count": 508,
           "data_category": "continuous",
@@ -3634,7 +3634,7 @@
           "type": "bigint",
           "nullable": false,
           "is_incremental": false,
-          "column_description": "Unique identifier for each sales order in the table.",
+          "column_description": "The `sales_order_id` column is a non-nullable bigint serving as the primary key for uniquely identifying sales orders in the `sales_orders` table.",
           "cardinality": 200,
           "null_count": 0,
           "data_range": {
@@ -3693,7 +3693,7 @@
           "type": "bigint",
           "nullable": true,
           "is_incremental": false,
-          "column_description": "The \"customer_id\" column in the \"sales_orders\" table is a nullable bigint that references the \"customer_id\" column in the \"customers\" table, identifying the customer associated with a sales order.",
+          "column_description": "Represents the identifier of the customer associated with the sales order, referencing the `customer_id` column in the `customers` table; nullable.",
           "cardinality": 76,
           "null_count": 0,
           "data_range": {
@@ -3722,7 +3722,7 @@
           "type": "bigint",
           "nullable": false,
           "is_incremental": false,
-          "column_description": "Represents the unique identifier of the employee associated with the sales order, referencing the employees table.",
+          "column_description": "Represents the unique identifier of the employee associated with the sales order, referencing the `employees.employee_id` column.",
           "cardinality": 20,
           "null_count": 0,
           "data_range": {
@@ -3751,7 +3751,7 @@
           "type": "datetime2",
           "nullable": false,
           "is_incremental": false,
-          "column_description": "The \"order_date\" column stores the date and time when a sales order was placed, using the datetime2 data type, and cannot be null.",
+          "column_description": "The `order_date` column in the `sales_orders` table stores the non-nullable timestamp indicating when the sales order was placed.",
           "column_timezone": "(UTC) Coordinated Universal Time",
           "cardinality": 191,
           "null_count": 0,
@@ -3785,7 +3785,7 @@
           "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
           "nullable": false,
           "is_incremental": false,
-          "column_description": "Indicates the current state of a sales order, such as 'Pending' or 'Completed'.",
+          "column_description": "Indicates the current state of a sales order, such as 'Pending' or 'Completed', stored as a non-nullable text category.",
           "cardinality": 3,
           "null_count": 0,
           "data_range": {
@@ -3817,7 +3817,7 @@
           "type": "numeric(12,2)",
           "nullable": false,
           "is_incremental": false,
-          "column_description": "Represents the total monetary amount for a sales order, stored as a non-null numeric value with up to 12 digits and 2 decimal places.",
+          "column_description": "The `total_amount` column stores the total monetary value of a sales order as a non-null numeric value with up to 12 digits, including 2 decimal places.",
           "cardinality": 200,
           "null_count": 0,
           "data_range": {
@@ -3851,7 +3851,7 @@
           "type": "datetime2",
           "nullable": false,
           "is_incremental": false,
-          "column_description": "Records the timestamp when the sales order entry was created, stored as a non-nullable datetime value.",
+          "column_description": "The \"created_at\" column in the \"sales_orders\" table stores the non-nullable timestamp indicating when the sales order record was created.",
           "column_timezone": "(UTC) Coordinated Universal Time",
           "cardinality": 191,
           "null_count": 0,
@@ -4137,7 +4137,7 @@
           "type": "bigint",
           "nullable": false,
           "is_incremental": false,
-          "column_description": "The \"store_id\" column is a non-nullable bigint serving as the primary key for uniquely identifying each store in the \"stores\" table.",
+          "column_description": "The `store_id` column is a non-nullable bigint serving as the primary key for uniquely identifying each store in the `stores` table.",
           "cardinality": 5,
           "null_count": 0,
           "data_range": {
@@ -4167,7 +4167,7 @@
           "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
           "nullable": false,
           "is_incremental": false,
-          "column_description": "The \"name\" column in the \"stores\" table is a non-nullable nvarchar field intended to store the name of a store.",
+          "column_description": "The \"name\" column in the \"stores\" table is a non-nullable nvarchar field intended to store the name of a store, though sample data is unavailable.",
           "cardinality": 5,
           "null_count": 0,
           "data_range": {
@@ -4194,7 +4194,7 @@
           "type": "nvarchar(450)",
           "nullable": false,
           "is_incremental": false,
-          "column_description": "A non-nullable nvarchar(450) column storing unique alphanumeric identifiers for stores.",
+          "column_description": "The \"code\" column in the \"stores\" table is a non-nullable nvarchar(450) field intended to store unique identifiers or short codes for each store.",
           "cardinality": 5,
           "null_count": 0,
           "data_range": {
@@ -4222,7 +4222,7 @@
           "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
           "nullable": true,
           "is_incremental": false,
-          "column_description": "The \"address\" column in the \"stores\" table stores the address of a store as a nullable nvarchar string.",
+          "column_description": "Stores.address is an optional nvarchar column storing the physical address of a store, with case-insensitive collation.",
           "cardinality": 5,
           "null_count": 0,
           "data_range": {
@@ -4249,7 +4249,7 @@
           "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
           "nullable": true,
           "is_incremental": false,
-          "column_description": "Stores.city is a nullable nvarchar column storing the name of the city where a store is located.",
+          "column_description": "The \"city\" column in the \"stores\" table stores the name of the city where the store is located, allowing null values.",
           "cardinality": 3,
           "null_count": 0,
           "data_range": {
@@ -4277,7 +4277,7 @@
           "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
           "nullable": true,
           "is_incremental": false,
-          "column_description": "This column stores the state or province associated with a store, allowing null values.",
+          "column_description": "This nullable nvarchar column stores the state or province associated with a store's address.",
           "cardinality": 3,
           "null_count": 0,
           "data_range": {
@@ -4305,7 +4305,7 @@
           "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
           "nullable": true,
           "is_incremental": false,
-          "column_description": "The \"postal_code\" column in the \"stores\" table stores optional alphanumeric postal codes for store locations.",
+          "column_description": "The \"postal_code\" column in the \"stores\" table stores the postal or ZIP code of a store as a nullable nvarchar string.",
           "cardinality": 5,
           "null_count": 0,
           "data_range": {
@@ -4332,7 +4332,7 @@
           "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
           "nullable": true,
           "is_incremental": false,
-          "column_description": "Stores.phone is an optional nvarchar column storing contact phone numbers for stores.",
+          "column_description": "Stores.phone is an optional nvarchar column storing contact phone numbers for stores, formatted as text.",
           "cardinality": 5,
           "null_count": 0,
           "data_range": {
@@ -4364,7 +4364,7 @@
           "type": "datetime2",
           "nullable": false,
           "is_incremental": false,
-          "column_description": "The \"created_at\" column stores the non-nullable timestamp indicating when a store record was initially created.",
+          "column_description": "The `created_at` column stores the non-nullable timestamp indicating when a store record was created.",
           "column_timezone": "(UTC) Coordinated Universal Time",
           "cardinality": 5,
           "null_count": 0,
@@ -4398,7 +4398,7 @@
           "type": "datetime2",
           "nullable": false,
           "is_incremental": true,
-          "column_description": "The \"updated_at\" column stores the non-nullable timestamp indicating the last update time of a store record.",
+          "column_description": "The `updated_at` column in the `stores` table records the non-nullable timestamp of the most recent update to a store's record.",
           "column_timezone": "(UTC) Coordinated Universal Time",
           "cardinality": 5,
           "null_count": 0,
@@ -4428,7 +4428,7 @@
           "concept_alias_group": "updated_at"
         }
       ],
-      "table_description": "The \"stores\" table contains information about individual store locations, including identifiers, contact details, and timestamps for record creation and updates.",
+      "table_description": "The `stores` table stores information about retail locations, including unique identifiers, names, contact details, addresses, and timestamps for record creation and updates.",
       "primary_keys": [
         "store_id"
       ],
@@ -4620,7 +4620,7 @@
           "type": "bigint",
           "nullable": false,
           "is_incremental": false,
-          "column_description": "Unique identifier for each supplier, serving as the non-nullable primary key of the table.",
+          "column_description": "Unique identifier for each supplier, serving as the primary key for the suppliers table.",
           "cardinality": 10,
           "null_count": 0,
           "data_range": {
@@ -4650,7 +4650,7 @@
           "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
           "nullable": false,
           "is_incremental": false,
-          "column_description": "Stores the name of the supplier as a non-null Unicode string.",
+          "column_description": "The \"name\" column in the \"suppliers\" table is a non-nullable nvarchar field intended to store supplier names, though sample data indicates it is currently unused.",
           "cardinality": 10,
           "null_count": 0,
           "data_range": {
@@ -4677,7 +4677,7 @@
           "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
           "nullable": true,
           "is_incremental": false,
-          "column_description": "Stores the name of the contact person for a supplier, allowing null values.",
+          "column_description": "The \"contact_name\" column in the \"suppliers\" table stores the name of a contact person for the supplier, allowing null values.",
           "cardinality": 0,
           "null_count": 10,
           "data_category": "nominal",
@@ -4700,7 +4700,7 @@
           "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
           "nullable": true,
           "is_incremental": false,
-          "column_description": "The \"email\" column in the \"suppliers\" table stores the supplier's email address as a nullable nvarchar value with case-insensitive collation.",
+          "column_description": "The \"email\" column in the \"suppliers\" table stores the email address of a supplier as a nullable nvarchar value, used for contact purposes.",
           "cardinality": 10,
           "null_count": 0,
           "data_range": {
@@ -4732,7 +4732,7 @@
           "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
           "nullable": true,
           "is_incremental": false,
-          "column_description": "Stores the supplier's phone number as a nullable text field.",
+          "column_description": "Stores the supplier's phone number as a nullable string, primarily for contact purposes.",
           "cardinality": 10,
           "null_count": 0,
           "data_range": {
@@ -4764,7 +4764,7 @@
           "type": "datetime2",
           "nullable": false,
           "is_incremental": false,
-          "column_description": "The \"created_at\" column stores the non-nullable timestamp indicating when a supplier record was created.",
+          "column_description": "The `created_at` column stores the non-nullable timestamp indicating when a supplier record was created.",
           "column_timezone": "(UTC) Coordinated Universal Time",
           "cardinality": 10,
           "null_count": 0,
@@ -4798,7 +4798,7 @@
           "type": "datetime2",
           "nullable": false,
           "is_incremental": true,
-          "column_description": "The \"updated_at\" column stores the non-nullable timestamp of the last update to a supplier record.",
+          "column_description": "The `updated_at` column stores the non-nullable timestamp of the most recent update to a supplier record in the `suppliers` table.",
           "column_timezone": "(UTC) Coordinated Universal Time",
           "cardinality": 10,
           "null_count": 0,

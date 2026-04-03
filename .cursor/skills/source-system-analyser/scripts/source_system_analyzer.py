@@ -22,6 +22,9 @@ from pathlib import Path
 from typing import Dict, List, Optional, Any, Set
 from datetime import datetime, timezone
 from collections import Counter
+from urllib.parse import quote
+
+import requests
 
 try:
     import yaml  # type: ignore
@@ -140,12 +143,288 @@ def _resolve_database_url(
     )
 
 
+def _normalize_openmetadata_base_url(value: str) -> str:
+    base = str(value or "").strip().rstrip("/")
+    if not base:
+        raise RuntimeError("Missing OpenMetadata base URL.")
+    if base.endswith("/api"):
+        return base
+    return f"{base}/api"
+
+
+def _openmetadata_api_root() -> str:
+    return _normalize_openmetadata_base_url(os.getenv("OPENMETADATA_BASE_URL", ""))
+
+
+def _openmetadata_api_url(path: str) -> str:
+    cleaned = path.lstrip("/")
+    if not cleaned.startswith(f"{_OPENMETADATA_API_VERSION_PREFIX}/"):
+        cleaned = f"{_OPENMETADATA_API_VERSION_PREFIX}/{cleaned}"
+    return f"{_openmetadata_api_root()}/{cleaned}"
+
+
+def _openmetadata_login_payloads() -> List[Dict[str, str]]:
+    email = os.getenv("OPENMETADATA_EMAIL", "").strip()
+    password = os.getenv("OPENMETADATA_PASSWORD", "")
+    if not email or not password:
+        raise RuntimeError("Missing OpenMetadata credentials.")
+
+    encoded_password = json.dumps(password).strip('"').encode("utf-8")
+    import base64
+
+    return [
+        {"email": email, "password": base64.b64encode(encoded_password).decode("ascii")},
+        {"email": email, "password": password},
+    ]
+
+
+def _extract_openmetadata_token(payload: Any) -> str | None:
+    if isinstance(payload, str) and payload.strip():
+        return payload.strip()
+    if isinstance(payload, dict):
+        for key in ("accessToken", "jwtToken", "token", "id_token"):
+            value = payload.get(key)
+            if isinstance(value, str) and value.strip():
+                return value.strip()
+        for nested_key in ("data", "response"):
+            token = _extract_openmetadata_token(payload.get(nested_key))
+            if token:
+                return token
+    return None
+
+
+def _openmetadata_login() -> str:
+    jwt_token = os.getenv("OPENMETADATA_JWT_TOKEN", "").strip()
+    if jwt_token:
+        return jwt_token
+
+    cached = _OPENMETADATA_TOKEN_CACHE.get("token")
+    if isinstance(cached, str) and cached.strip():
+        return cached.strip()
+
+    last_error: Exception | None = None
+    for payload in _openmetadata_login_payloads():
+        try:
+            response = requests.post(
+                _openmetadata_api_url(_OPENMETADATA_LOGIN_ENDPOINT),
+                headers={
+                    "Accept": "application/json",
+                    "Content-Type": "application/json",
+                    "User-Agent": "source-system-analyzer-openmetadata",
+                },
+                json=payload,
+                timeout=_OPENMETADATA_TIMEOUT,
+            )
+            response.raise_for_status()
+            data = response.json() if response.content else {}
+            token = _extract_openmetadata_token(data)
+            if token:
+                _OPENMETADATA_TOKEN_CACHE["token"] = token
+                return token
+            last_error = RuntimeError("OpenMetadata login succeeded but no token was returned.")
+        except requests.RequestException as exc:
+            last_error = exc
+
+    raise RuntimeError(f"OpenMetadata login failed: {last_error}") from last_error
+
+
+def _openmetadata_headers() -> Dict[str, str]:
+    return {
+        "Accept": "application/json",
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {_openmetadata_login()}",
+        "User-Agent": "source-system-analyzer-openmetadata",
+    }
+
+
+def _openmetadata_request(method: str, endpoint: str, params: Optional[Dict[str, Any]] = None) -> Any:
+    response = requests.request(
+        method=method,
+        url=_openmetadata_api_url(endpoint),
+        headers=_openmetadata_headers(),
+        params=params,
+        timeout=_OPENMETADATA_TIMEOUT,
+    )
+    if response.status_code == 401 and not os.getenv("OPENMETADATA_JWT_TOKEN"):
+        _OPENMETADATA_TOKEN_CACHE["token"] = None
+        response = requests.request(
+            method=method,
+            url=_openmetadata_api_url(endpoint),
+            headers=_openmetadata_headers(),
+            params=params,
+            timeout=_OPENMETADATA_TIMEOUT,
+        )
+    response.raise_for_status()
+    if response.status_code == 204 or not response.content:
+        return {}
+    return response.json()
+
+
+def _glossary_terms_from_openmetadata_tags(tags: Any) -> List[str]:
+    glossary_terms: List[str] = []
+    for tag in tags or []:
+        if not isinstance(tag, dict):
+            continue
+        if str(tag.get("source") or "").strip() != "Glossary":
+            continue
+        tag_fqn = str(tag.get("tagFQN") or "").strip()
+        if tag_fqn and tag_fqn not in glossary_terms:
+            glossary_terms.append(tag_fqn)
+    return glossary_terms
+
+
+def _default_openmetadata_enrichment_status() -> Dict[str, Any]:
+    return {
+        "enabled": False,
+        "configured": False,
+        "database_service_name": str(os.getenv("OPENMETADATA_DATABASE_SERVICE_NAME") or "").strip(),
+        "schema": "",
+        "match_strategy": "",
+        "matched_tables": 0,
+        "unmatched_tables": 0,
+        "error": "",
+    }
+
+
+def _openmetadata_ref_name(value: Any) -> str:
+    if isinstance(value, dict):
+        for key in ("name", "fullyQualifiedName"):
+            candidate = str(value.get(key) or "").strip()
+            if candidate:
+                return candidate
+    return str(value or "").strip()
+
+
+def _openmetadata_table_matches(
+    payload: Dict[str, Any],
+    *,
+    target_table_name: str,
+    target_schema_name: str,
+    target_database_name: str,
+    service_name: str,
+) -> bool:
+    table_name = str(payload.get("name") or "").strip().lower()
+    if table_name != target_table_name.lower():
+        return False
+
+    schema_ref = _openmetadata_ref_name(payload.get("databaseSchema")).lower()
+    database_ref = _openmetadata_ref_name(payload.get("database")).lower()
+    service_ref = _openmetadata_ref_name(payload.get("service")).lower()
+    fqn = str(payload.get("fullyQualifiedName") or "").strip().lower()
+
+    if service_name and fqn == f"{service_name}.{target_database_name}.{target_schema_name}.{target_table_name}".lower():
+        return True
+
+    if schema_ref:
+        if schema_ref == target_schema_name.lower() or schema_ref.endswith(f".{target_schema_name.lower()}"):
+            return True
+    if database_ref:
+        if database_ref == target_database_name.lower() or database_ref.endswith(f".{target_database_name.lower()}"):
+            return True
+    if service_ref and service_name and service_ref == service_name.lower():
+        return True
+    return not schema_ref and not database_ref and not service_ref
+
+
+def _fetch_openmetadata_glossary_assignments(
+    *,
+    database_name: str,
+    schema_name: str,
+    table_names: List[str],
+) -> tuple[Dict[str, Dict[str, Any]], Dict[str, Any]]:
+    status = _default_openmetadata_enrichment_status()
+    status["schema"] = schema_name
+    service_name = status["database_service_name"]
+    if not schema_name or not table_names:
+        return {}, status
+
+    status["enabled"] = True
+    status["configured"] = True
+    assignments: Dict[str, Dict[str, Any]] = {}
+
+    try:
+        candidate_tables: List[Dict[str, Any]] = []
+        if service_name and database_name:
+            status["match_strategy"] = "exact_fqn_then_name"
+            for table_name in table_names:
+                table_fqn = f"{service_name}.{database_name}.{schema_name}.{table_name}"
+                endpoint = f"tables/name/{quote(table_fqn, safe='')}"
+                try:
+                    payload = _openmetadata_request("GET", endpoint, params={"fields": _OPENMETADATA_TABLE_FIELDS})
+                except requests.HTTPError as exc:
+                    response = exc.response
+                    if response is not None and response.status_code == 404:
+                        continue
+                    raise
+                if isinstance(payload, dict):
+                    candidate_tables.append(payload)
+        else:
+            status["match_strategy"] = "table_name"
+
+        if not candidate_tables:
+            response = _openmetadata_request(
+                "GET",
+                "tables",
+                params={"limit": max(100, len(table_names) * 20), "fields": _OPENMETADATA_TABLE_FIELDS},
+            )
+            candidate_tables = list((response.get("data") or [])) if isinstance(response, dict) else []
+
+        for table_name in table_names:
+            payload = next(
+                (
+                    item
+                    for item in candidate_tables
+                    if isinstance(item, dict)
+                    and _openmetadata_table_matches(
+                        item,
+                        target_table_name=table_name,
+                        target_schema_name=schema_name,
+                        target_database_name=database_name,
+                        service_name=service_name,
+                    )
+                ),
+                None,
+            )
+            if not payload:
+                status["unmatched_tables"] += 1
+                continue
+            table_terms = _glossary_terms_from_openmetadata_tags(payload.get("tags"))
+            columns = payload.get("columns") or []
+            column_terms: Dict[str, List[str]] = {}
+            for column in columns:
+                if not isinstance(column, dict):
+                    continue
+                column_name = str(column.get("name") or "").strip()
+                if not column_name:
+                    continue
+                column_terms[column_name] = _glossary_terms_from_openmetadata_tags(column.get("tags"))
+
+            assignments[table_name] = {
+                "glossary_terms": table_terms,
+                "column_glossary_terms": column_terms,
+            }
+            status["matched_tables"] += 1
+    except Exception as exc:
+        status["error"] = str(exc)
+        status["unmatched_tables"] = len(table_names) - status["matched_tables"]
+        logger.warning("OpenMetadata enrichment failed: %s", exc)
+        return {}, status
+
+    status["unmatched_tables"] = len(table_names) - status["matched_tables"]
+    return assignments, status
+
+
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 
 _RULES_CACHE: Optional[Dict[str, Any]] = None
 _DESCRIPTION_CONFIG_FILENAME = "source-system-description.json"
 _DEFAULT_AZURE_OPENAI_API_VERSION = "2024-12-01-preview"
+_OPENMETADATA_LOGIN_ENDPOINT = "users/login"
+_OPENMETADATA_API_VERSION_PREFIX = "v1"
+_OPENMETADATA_TABLE_FIELDS = "columns,tags"
+_OPENMETADATA_TIMEOUT = (10, 30)
+_OPENMETADATA_TOKEN_CACHE: Dict[str, Optional[str]] = {"token": None}
 
 
 def _humanize_identifier(value: str) -> str:
@@ -2791,6 +3070,11 @@ def build_source_system_document(
         connection_info = parse_connection_info(engine)
         db_timezone = fetch_database_timezone(engine, adapter=adapter)
         row_counts = fetch_row_counts(engine, tables, schema=schema, adapter=adapter)
+        openmetadata_glossary_assignments, openmetadata_enrichment = _fetch_openmetadata_glossary_assignments(
+            database_name=str(connection_info.get("database") or ""),
+            schema_name=str(schema or ""),
+            table_names=tables,
+        )
         description_generator = _build_description_generator() if generate_missing_descriptions else None
         _collect_projection_inputs(engine, schema, config)
         projection_lookup = _direct_history_projection_lookup(engine, schema, tables, row_counts)
@@ -2852,6 +3136,12 @@ def build_source_system_document(
 
                 enriched_columns = []
                 raw_table_description = str(table_descriptions.get(table_name) or "")
+                table_glossary_terms = list(
+                    (openmetadata_glossary_assignments.get(table_name) or {}).get("glossary_terms") or []
+                )
+                table_column_glossary_terms = dict(
+                    (openmetadata_glossary_assignments.get(table_name) or {}).get("column_glossary_terms") or {}
+                )
                 for col in table_columns:
                     raw_column_description = str((column_descriptions.get(table_name, {}) or {}).get(col["name"]) or "")
                     col_dict = {
@@ -2860,6 +3150,7 @@ def build_source_system_document(
                         "nullable": col.get("nullable", True),
                         "is_incremental": col.get("is_incremental", False),
                         "column_description": raw_column_description,
+                        "glossary_terms": list(table_column_glossary_terms.get(col["name"]) or []),
                     }
                     col_tz = get_column_timezone(col["type"], dialect, db_timezone)
                     if col_tz is not None:
@@ -2927,6 +3218,7 @@ def build_source_system_document(
                 table_entry = {
                     "table": table_name, "schema": table_schema, "columns": enriched_columns,
                     "table_description": raw_table_description,
+                    "glossary_terms": table_glossary_terms,
                     "primary_keys": pk_columns,
                     "foreign_keys": [{"column": fk["column"], "references": fk["references"]} for fk in fk_columns],
                     "row_count": row_count,
@@ -3083,6 +3375,7 @@ def build_source_system_document(
                 "late_arriving_data_manual": "",
                 "volume_size_projection_manual": "",
                 "system_description": resolved_system_description,
+                "openmetadata_enrichment": openmetadata_enrichment,
                 "db_analysis_config": {
                     "exclude_schemas": list(config.get("exclude_schemas", [])),
                     "exclude_tables": list(config.get("exclude_tables", [])),

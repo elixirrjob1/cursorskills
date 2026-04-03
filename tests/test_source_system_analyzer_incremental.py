@@ -278,6 +278,129 @@ class SourceSystemAnalyzerIncrementalTests(unittest.TestCase):
         self.assertEqual(table["table_description"], "Stores customer records including email.")
         self.assertEqual(table["columns"][0]["column_description"], "Primary key for the customer record.")
         self.assertEqual(table["columns"][1]["column_description"], "Contact value for the customer record.")
+        self.assertEqual(table["glossary_terms"], [])
+        self.assertEqual(table["columns"][0]["glossary_terms"], [])
+        self.assertEqual(table["columns"][1]["glossary_terms"], [])
+
+    def test_build_source_system_document_includes_openmetadata_glossary_terms(self):
+        fake_engine = types.SimpleNamespace(
+            dialect=types.SimpleNamespace(name="postgresql"),
+            url=types.SimpleNamespace(host="localhost", port=5432, database="demo"),
+        )
+
+        with patch.object(MODULE, "get_engine", return_value=fake_engine), \
+             patch.object(MODULE, "get_adapter", return_value=None), \
+             patch.object(
+                 MODULE,
+                 "fetch_schema_metadata",
+                 return_value={
+                     "tables": ["customers"],
+                     "columns": {
+                         "customers": [
+                             {"name": "customer_id", "type": "integer", "nullable": False, "is_incremental": False},
+                             {"name": "email", "type": "text", "nullable": True, "is_incremental": False},
+                         ]
+                     },
+                     "primary_keys": {"customers": ["customer_id"]},
+                     "foreign_keys": {"customers": []},
+                 },
+             ), \
+             patch.object(MODULE, "parse_connection_info", return_value={"driver": "postgresql", "database": "demo"}), \
+             patch.object(MODULE, "fetch_database_timezone", return_value="UTC"), \
+             patch.object(MODULE, "fetch_row_counts", return_value={"customers": 10}), \
+             patch.object(
+                 MODULE,
+                 "_fetch_openmetadata_glossary_assignments",
+                 return_value=(
+                     {
+                         "customers": {
+                             "glossary_terms": ["Retail.Customer"],
+                             "column_glossary_terms": {
+                                 "customer_id": ["Retail.Customer.Identifier"],
+                                 "email": ["Retail.Customer.Email"],
+                             },
+                         }
+                     },
+                     {
+                         "enabled": True,
+                         "configured": True,
+                         "database_service_name": "svc",
+                         "schema": "public",
+                         "match_strategy": "",
+                         "matched_tables": 1,
+                         "unmatched_tables": 0,
+                         "error": "",
+                     },
+                 ),
+             ), \
+             patch.object(MODULE, "_collect_projection_inputs"), \
+             patch.object(MODULE, "_projection_lookup", return_value={}), \
+             patch.object(MODULE, "_direct_history_projection_lookup", return_value={}), \
+             patch.object(MODULE, "fetch_sample_rows", return_value=(["customer_id", "email"], [])), \
+             patch.object(MODULE, "detect_partition_columns", return_value=([], "exact")), \
+             patch.object(MODULE, "detect_incremental_columns", return_value=[]), \
+             patch.object(MODULE, "fetch_column_statistics", return_value={}), \
+             patch.object(MODULE, "detect_join_candidates", return_value=[]), \
+             patch.object(MODULE, "_apply_concept_classification", return_value={"concepts": []}):
+            result = MODULE.build_source_system_document(
+                "postgresql://user:pass@localhost:5432/demo",
+                schema="public",
+                config={"exclude_schemas": [], "exclude_tables": [], "max_row_limit": None},
+            )
+
+        table = result["tables"][0]
+        self.assertEqual(table["glossary_terms"], ["Retail.Customer"])
+        self.assertEqual(table["columns"][0]["glossary_terms"], ["Retail.Customer.Identifier"])
+        self.assertEqual(table["columns"][1]["glossary_terms"], ["Retail.Customer.Email"])
+        self.assertEqual(
+            result["source_system_context"]["openmetadata_enrichment"],
+            {
+                "enabled": True,
+                "configured": True,
+                "database_service_name": "svc",
+                "schema": "public",
+                "match_strategy": "",
+                "matched_tables": 1,
+                "unmatched_tables": 0,
+                "error": "",
+            },
+        )
+
+    @patch.dict("os.environ", {"OPENMETADATA_BASE_URL": "http://example:8585", "OPENMETADATA_EMAIL": "admin@example.com", "OPENMETADATA_PASSWORD": "secret"}, clear=False)
+    @patch.object(MODULE, "_openmetadata_request")
+    def test_fetch_openmetadata_glossary_assignments_matches_by_table_and_column_name(self, mock_request):
+        mock_request.return_value = {
+            "data": [
+                {
+                    "name": "customers",
+                    "fullyQualifiedName": "snowflake_fivetran.demo.dbo.customers",
+                    "databaseSchema": {"fullyQualifiedName": "snowflake_fivetran.demo.dbo"},
+                    "tags": [{"tagFQN": "Retail.Customer", "source": "Glossary"}],
+                    "columns": [
+                        {"name": "customer_id", "tags": [{"tagFQN": "Retail.Customer.Identifier", "source": "Glossary"}]},
+                        {"name": "email", "tags": [{"tagFQN": "Retail.Customer.Email", "source": "Glossary"}]},
+                    ],
+                }
+            ]
+        }
+
+        assignments, status = MODULE._fetch_openmetadata_glossary_assignments(
+            database_name="demo",
+            schema_name="dbo",
+            table_names=["customers"],
+        )
+
+        self.assertEqual(assignments["customers"]["glossary_terms"], ["Retail.Customer"])
+        self.assertEqual(
+            assignments["customers"]["column_glossary_terms"],
+            {
+                "customer_id": ["Retail.Customer.Identifier"],
+                "email": ["Retail.Customer.Email"],
+            },
+        )
+        self.assertEqual(status["match_strategy"], "table_name")
+        self.assertEqual(status["matched_tables"], 1)
+        self.assertEqual(status["unmatched_tables"], 0)
 
     def test_build_source_system_document_preserves_existing_source_descriptions(self):
         fake_engine = types.SimpleNamespace(dialect=types.SimpleNamespace(name="postgresql"))

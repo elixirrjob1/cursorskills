@@ -1,0 +1,3 @@
+Retail domain brief
+
+A retail business operates physical stores and manages day-to-day commercial and operational activities. It tracks inventory by product and location, purchases goods from suppliers, sells goods to customers, manages deliveries and returns, and monitors financial activity related to orders and payments.

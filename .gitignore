@@ -206,3 +206,6 @@ __marimo__/
 
 # Generated reports (run skills to recreate)
 capacity_report.json
+
+# Local env exports from scripts/export_env_to_txt.py (may contain secrets)
+env_export_*.txt

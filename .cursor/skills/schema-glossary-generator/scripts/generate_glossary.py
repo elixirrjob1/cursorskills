@@ -1,199 +1,164 @@
 #!/usr/bin/env python3
 import argparse
 import json
-from collections import defaultdict
-from copy import deepcopy
 from datetime import datetime, timezone
 from pathlib import Path
 
 from openpyxl import Workbook
+from openpyxl.worksheet.datavalidation import DataValidation
 from openpyxl.styles import Alignment, Font, PatternFill
 
 
-ROOT_DIR = Path(__file__).resolve().parents[4]
-LATEST_SCHEMA_DIR = ROOT_DIR / "LATEST_SCHEMA"
-
 HEADER_FILL = PatternFill(fill_type="solid", start_color="1F4E78", end_color="1F4E78")
 HEADER_FONT = Font(color="FFFFFF", bold=True)
+STATUS_VALUES = ["draft", "approved", "rejected"]
+
+KEYWORD_LIBRARY = [
+    {
+        "term": "Customer",
+        "term_type": "business_entity",
+        "keywords": ["customer", "consumer", "buyer", "client"],
+        "definition": "A person or organization that purchases goods or services from the business.",
+        "business_usage": "Used across sales, service, fulfillment, and reporting processes.",
+        "synonyms": ["Client", "Buyer"],
+    },
+    {
+        "term": "Supplier",
+        "term_type": "business_entity",
+        "keywords": ["supplier", "vendor"],
+        "definition": "A party that provides goods or services to the business.",
+        "business_usage": "Used in procurement, replenishment, and payables processes.",
+        "synonyms": ["Vendor"],
+    },
+    {
+        "term": "Product",
+        "term_type": "business_entity",
+        "keywords": ["product", "item", "sku", "goods", "merchandise"],
+        "definition": "A sellable or purchasable good managed by the business.",
+        "business_usage": "Used in catalog, pricing, inventory, order, and reporting workflows.",
+        "synonyms": ["Item", "SKU"],
+    },
+    {
+        "term": "Inventory",
+        "term_type": "business_entity",
+        "keywords": ["inventory", "stock", "warehouse"],
+        "definition": "The quantity of products available for sale, use, or replenishment.",
+        "business_usage": "Used to track stock availability, replenishment needs, and fulfillment readiness.",
+        "synonyms": ["Stock"],
+    },
+    {
+        "term": "Sales Order",
+        "term_type": "business_process",
+        "keywords": ["sales order", "order", "order-to-cash", "sale"],
+        "definition": "A commercial transaction that records a customer's requested purchase.",
+        "business_usage": "Used to manage order capture, pricing, fulfillment, billing, and revenue reporting.",
+        "synonyms": ["Order"],
+    },
+    {
+        "term": "Purchase Order",
+        "term_type": "business_process",
+        "keywords": ["purchase order", "procurement", "purchasing", "replenishment"],
+        "definition": "A transaction that records goods or services ordered from a supplier.",
+        "business_usage": "Used to manage supplier commitments, inbound deliveries, and spend tracking.",
+        "synonyms": ["PO"],
+    },
+    {
+        "term": "Invoice",
+        "term_type": "business_process",
+        "keywords": ["invoice", "billing", "bill"],
+        "definition": "A financial document requesting payment for delivered goods or services.",
+        "business_usage": "Used in billing, receivables, collections, and revenue reconciliation.",
+        "synonyms": ["Bill"],
+    },
+    {
+        "term": "Payment",
+        "term_type": "business_process",
+        "keywords": ["payment", "pay", "collection", "settlement"],
+        "definition": "The transfer of funds to settle a financial obligation.",
+        "business_usage": "Used in cash application, collections, refunds, and treasury reporting.",
+        "synonyms": ["Settlement"],
+    },
+    {
+        "term": "Delivery",
+        "term_type": "business_process",
+        "keywords": ["delivery", "shipping", "shipment", "dispatch", "fulfillment"],
+        "definition": "The movement of ordered goods to the customer or destination.",
+        "business_usage": "Used in fulfillment planning, logistics execution, and service-level reporting.",
+        "synonyms": ["Shipment", "Fulfillment"],
+    },
+    {
+        "term": "Return",
+        "term_type": "business_process",
+        "keywords": ["return", "refund", "reverse logistics"],
+        "definition": "A process that handles goods sent back after a sale or delivery.",
+        "business_usage": "Used in customer service, inventory adjustment, and financial reconciliation.",
+        "synonyms": ["Refund"],
+    },
+    {
+        "term": "Order Status",
+        "term_type": "status",
+        "keywords": ["status", "order status", "lifecycle"],
+        "definition": "The current stage of an order or transaction in its lifecycle.",
+        "business_usage": "Used to monitor process progression, exceptions, and operational reporting.",
+        "synonyms": ["Lifecycle Status"],
+    },
+    {
+        "term": "Unit Price",
+        "term_type": "business_measure",
+        "keywords": ["price", "unit price", "pricing"],
+        "definition": "The amount charged for a single unit of a product or service.",
+        "business_usage": "Used in quoting, ordering, billing, and margin analysis.",
+        "synonyms": ["Price"],
+    },
+    {
+        "term": "Quantity",
+        "term_type": "business_measure",
+        "keywords": ["quantity", "volume", "units"],
+        "definition": "The count or amount of a product or service involved in a transaction.",
+        "business_usage": "Used in ordering, inventory, fulfillment, and productivity reporting.",
+        "synonyms": ["Units"],
+    },
+    {
+        "term": "Total Amount",
+        "term_type": "business_measure",
+        "keywords": ["amount", "total", "revenue", "sales"],
+        "definition": "The full monetary value associated with a transaction or business event.",
+        "business_usage": "Used in financial reporting, billing, and performance analysis.",
+        "synonyms": ["Transaction Amount"],
+    },
+]
 
 
-def _slug_to_label(value):
-    text = str(value or "").strip().replace(".", " ").replace("_", " ")
-    words = [word for word in text.split() if word]
-    if not words:
-        return ""
-    if len(words) == 1:
-        return words[0].title()
-    return " ".join(word.capitalize() if word.lower() not in {"and", "or", "of"} else word.lower() for word in words)
-
-
-def _plural_to_singular(label):
-    text = (label or "").strip()
-    if not text:
-        return text
-    lower = text.lower()
-    if lower.endswith("ies") and len(text) > 3:
-        return text[:-3] + "y"
-    if lower.endswith("ses") and len(text) > 3:
-        return text[:-2]
-    if lower.endswith("s") and not lower.endswith("ss") and len(text) > 1:
-        return text[:-1]
-    return text
+def _normalize_text(value):
+    return " ".join(str(value or "").strip().lower().split())
 
 
 def _canonical_term(value):
-    return " ".join(str(value or "").strip().lower().replace("_", " ").replace(".", " ").split())
-
-
-def _term_type_from_concept(concept_id):
-    concept_id = str(concept_id or "").lower()
-    if concept_id.startswith("finance."):
-        return "business_measure"
-    if concept_id.startswith("identifier."):
-        return "identifier"
-    if concept_id.startswith("entity.status"):
-        return "status"
-    if concept_id.startswith("contact.") or concept_id.startswith("temporal.") or concept_id.startswith("entity."):
-        return "business_attribute"
-    return "inferred_concept"
-
-
-def _confidence_tier(score):
-    if score >= 0.85:
-        return "high"
-    if score >= 0.6:
-        return "medium"
-    return "low"
-
-
-def _table_term_type(table_name):
-    name = str(table_name or "").lower()
-    if name.endswith("_orders") or name.endswith("_order_items") or name == "inventory":
-        return "business_process"
-    return "business_entity"
-
-
-def _column_term_type(column):
-    concept_id = column.get("concept_id")
-    if concept_id:
-        return _term_type_from_concept(concept_id)
-
-    semantic_class = str(column.get("semantic_class") or "").lower()
-    name = str(column.get("name") or "").lower()
-    if "amount" in semantic_class or "price" in name or "amount" in name or "cost" in name:
-        return "business_measure"
-    if "status" in name:
-        return "status"
-    if name.endswith("_id") or semantic_class.endswith("_identifier"):
-        return "identifier"
-    return "business_attribute"
-
-
-def _term_from_table(table_name):
-    return _plural_to_singular(_slug_to_label(table_name))
-
-
-def _term_from_column(column_name):
-    return _slug_to_label(column_name)
-
-
-def _term_from_concept(concept):
-    concept_id = str(concept.get("concept_id") or "")
-    alias_groups = [str(item).strip() for item in concept.get("alias_groups") or [] if str(item).strip()]
-    if concept_id:
-        last_token = concept_id.split(".")[-1]
-        if last_token == "person_name":
-            return "Person Name"
-        if last_token == "currency_amount":
-            return "Currency Amount"
-        if last_token == "foreign_key":
-            return "Foreign Key Identifier"
-        return _slug_to_label(last_token)
-    if alias_groups:
-        return _slug_to_label(alias_groups[0])
-    return ""
-
-
-def _status_from_confidence(score):
-    return "confirmed_from_schema" if score >= 0.85 else "inferred_from_schema"
-
-
-def _append_unique(target_list, values):
-    seen = set(target_list)
-    for value in values:
-        if not value:
-            continue
-        if value not in seen:
-            target_list.append(value)
-            seen.add(value)
-
-
-def _infer_table_usage(table):
-    table_name = str(table.get("table") or "")
-    description = str(table.get("table_description") or "").strip()
-    foreign_keys = table.get("foreign_keys") or []
-    columns = table.get("columns") or []
-    related_tables = []
-    for fk in foreign_keys:
-        ref = str(fk.get("references") or "")
-        if "." in ref:
-            related_tables.append(ref.split(".", 1)[0])
-
-    if table_name == "sales_orders":
-        return "Used to track customer sales transactions, order ownership, order timing, and order totals."
-    if table_name == "purchase_orders":
-        return "Used in procurement workflow to track orders placed with suppliers, expected delivery dates, and approval relationships."
-    if table_name == "inventory":
-        return "Used to monitor stock on hand, reorder thresholds, and product availability by store."
-    if table_name.endswith("_order_items"):
-        return "Used to store line-level details for transaction items, including product, quantity, and pricing."
-    if related_tables:
-        labels = ", ".join(_slug_to_label(item) for item in sorted(set(related_tables)))
-        return f"Used with related records such as {labels} to support operational reporting and joins."
-    if description:
-        return description
-    if columns:
-        sample_columns = ", ".join(_slug_to_label(col.get("name")) for col in columns[:3])
-        return f"Used to manage { _slug_to_label(table_name).lower() } records and fields such as {sample_columns.lower()}."
-    return f"Used to manage { _slug_to_label(table_name).lower() } records."
-
-
-def _infer_column_usage(table, column):
-    table_label = _slug_to_label(table.get("table"))
-    column_name = str(column.get("name") or "")
-    name = column_name.lower()
-    if name == "status":
-        return f"Used to indicate the current lifecycle state of the {table_label.lower()} record."
-    if name in {"created_at", "updated_at", "order_date", "expected_date", "hire_date", "last_restocked_at"}:
-        return f"Used in reporting and operational tracking for {table_label.lower()} timing."
-    if "amount" in name or "price" in name or "cost" in name:
-        return f"Used in financial reporting and valuation for {table_label.lower()} activity."
-    if name.endswith("_id"):
-        return f"Used to identify or join the related {table_label.lower()} record."
-    return f"Used as a business attribute on {table_label.lower()} records."
+    return _normalize_text(value).replace("_", " ")
 
 
 def _compact_list(values):
     return [value for value in values if value]
 
 
-def _build_entry(term, term_type, definition, business_usage, confidence, inference_basis, status, source_table=None, source_column=None, synonyms=None, notes=None):
-    entry = {
+def _append_unique(target_list, values):
+    seen = set(target_list)
+    for value in values:
+        if value and value not in seen:
+            target_list.append(value)
+            seen.add(value)
+
+
+def _build_entry(term, term_type, definition, business_usage, status, synonyms=None, notes=None):
+    return {
         "term": term,
         "term_type": term_type,
         "definition": definition.strip(),
         "business_usage": business_usage.strip(),
         "synonyms": _compact_list(synonyms or []),
-        "source_tables": _compact_list([source_table] if source_table else []),
-        "source_columns": _compact_list([source_column] if source_column else []),
-        "confidence": round(float(confidence), 2),
-        "confidence_tier": _confidence_tier(float(confidence)),
-        "inference_basis": inference_basis.strip(),
-        "source_refs": _compact_list([f"{source_table}.{source_column}" if source_table and source_column else source_table]),
         "notes": notes or "",
         "status": status,
     }
-    return entry
 
 
 def _register_entry(bucket, entry):
@@ -201,156 +166,124 @@ def _register_entry(bucket, entry):
     if not key:
         return
     if key not in bucket:
-        bucket[key] = deepcopy(entry)
+        bucket[key] = dict(entry)
         return
 
     existing = bucket[key]
-    if entry["confidence"] > existing["confidence"]:
-        preferred = deepcopy(entry)
-        preferred["source_tables"] = existing["source_tables"]
-        preferred["source_columns"] = existing["source_columns"]
-        preferred["source_refs"] = existing["source_refs"]
-        preferred["synonyms"] = existing["synonyms"]
-        bucket[key] = preferred
-        existing = bucket[key]
-
-    _append_unique(existing["source_tables"], entry["source_tables"])
-    _append_unique(existing["source_columns"], entry["source_columns"])
-    _append_unique(existing["source_refs"], entry["source_refs"])
+    if existing.get("status") == "draft" and entry.get("status") in {"approved", "rejected"}:
+        for field in ["definition", "business_usage", "notes", "status"]:
+            existing[field] = entry[field]
     _append_unique(existing["synonyms"], entry["synonyms"])
 
-    if entry["confidence"] > existing["confidence"]:
-        existing["confidence"] = entry["confidence"]
-    existing["confidence_tier"] = _confidence_tier(existing["confidence"])
-    if existing["status"] != "confirmed_from_schema":
-        existing["status"] = entry["status"]
-    if not existing["notes"] and entry["notes"]:
-        existing["notes"] = entry["notes"]
+
+def load_brief(input_path):
+    input_path = Path(input_path)
+    raw = input_path.read_text(encoding="utf-8").strip()
+    if input_path.suffix.lower() == ".json":
+        payload = json.loads(raw)
+        if not isinstance(payload, dict):
+            raise ValueError("Business brief JSON must be an object.")
+        if "tables" in payload or "concept_registry" in payload:
+            raise ValueError("Schema-shaped JSON is no longer supported. Provide a business domain description instead.")
+        return {
+            "domain": str(payload.get("domain") or "").strip(),
+            "description": str(payload.get("description") or "").strip(),
+            "core_processes": [str(item).strip() for item in payload.get("core_processes") or [] if str(item).strip()],
+            "entities": [str(item).strip() for item in payload.get("entities") or [] if str(item).strip()],
+            "notes": str(payload.get("notes") or "").strip(),
+        }
+    return {
+        "domain": "",
+        "description": raw,
+        "core_processes": [],
+        "entities": [],
+        "notes": "",
+    }
 
 
-def _concept_entries(payload):
-    entries = []
-    registry = payload.get("concept_registry") or {}
-    for concept in registry.get("concepts") or []:
-        term = _term_from_concept(concept)
-        if not term:
-            continue
-        sample_columns = [str(item) for item in concept.get("sample_columns") or [] if item]
-        sample_tables = sorted({item.split(".", 1)[0] for item in sample_columns if "." in item})
-        definition = (
-            f"Schema-derived concept representing {term.lower()} fields that appear consistently across related tables."
+def _combined_text(brief):
+    return _normalize_text(
+        " ".join(
+            [
+                brief.get("domain", ""),
+                brief.get("description", ""),
+                " ".join(brief.get("core_processes") or []),
+                " ".join(brief.get("entities") or []),
+                brief.get("notes", ""),
+            ]
         )
-        usage = "Used to standardize comparable fields across the source model for joins, search, and reporting."
-        alias_groups = [_slug_to_label(item) for item in concept.get("alias_groups") or []]
+    )
+
+
+def _process_entries(brief):
+    entries = []
+    for process in brief.get("core_processes") or []:
+        title = " ".join(word.capitalize() for word in process.replace("-", " ").split())
         entries.append(
             _build_entry(
-                term=term,
-                term_type=_term_type_from_concept(concept.get("concept_id")),
-                definition=definition,
-                business_usage=usage,
-                confidence=concept.get("avg_confidence") or 0.5,
-                inference_basis=f"Derived from concept_registry concept_id={concept.get('concept_id')} across {concept.get('table_count', 0)} tables.",
-                status=_status_from_confidence(concept.get("avg_confidence") or 0.5),
-                synonyms=alias_groups,
-                notes=f"Signals: {', '.join(str(item) for item in concept.get('signals') or [])}",
+                term=title,
+                term_type="business_process",
+                definition=f"A core business process within the {brief.get('domain') or 'described'} operating model.",
+                business_usage="Used to organize the operating lifecycle and the main flow of work described in the brief.",
+                status="draft",
+                synonyms=[process],
             )
         )
-        entries[-1]["source_tables"] = sample_tables
-        entries[-1]["source_columns"] = sample_columns
-        entries[-1]["source_refs"] = sample_columns
     return entries
 
 
-def _table_entries(payload):
+def _entity_entries(brief):
     entries = []
-    for table in payload.get("tables") or []:
-        table_name = str(table.get("table") or "")
-        if not table_name:
-            continue
-        description = str(table.get("table_description") or "").strip()
-        term = _term_from_table(table_name)
-        confidence = 0.88 if description else 0.72
-        definition = description or f"Business records for {term.lower()}."
+    for entity in brief.get("entities") or []:
+        title = " ".join(word.capitalize() for word in entity.replace("-", " ").split())
         entries.append(
             _build_entry(
-                term=term,
-                term_type=_table_term_type(table_name),
-                definition=definition,
-                business_usage=_infer_table_usage(table),
-                confidence=confidence,
-                inference_basis=f"Derived from table={table_name}, table_description, foreign keys, and column set.",
-                status=_status_from_confidence(confidence),
-                source_table=table_name,
-                synonyms=[_slug_to_label(table_name)],
+                term=title,
+                term_type="business_entity",
+                definition=f"A core business entity within the {brief.get('domain') or 'described'} operating model.",
+                business_usage="Used as a primary business concept in the domain brief and related operating workflows.",
+                status="draft",
+                synonyms=[entity],
             )
         )
     return entries
 
 
-def _should_emit_column_entry(column):
-    name = str(column.get("name") or "").lower()
-    concept_id = str(column.get("concept_id") or "").lower()
-    semantic_class = str(column.get("semantic_class") or "").lower()
-    if name in {"created_at", "updated_at"}:
-        return True
-    if name == "status" or name.endswith("_date"):
-        return True
-    if name.endswith("_id"):
-        return True
-    if "amount" in name or "price" in name or "cost" in name or "quantity" in name:
-        return True
-    if concept_id or semantic_class in {"contact", "timestamp", "currency_amount"}:
-        return True
-    return False
-
-
-def _column_entries(payload):
+def _keyword_entries(brief):
+    text = _combined_text(brief)
     entries = []
-    for table in payload.get("tables") or []:
-        table_name = str(table.get("table") or "")
-        for column in table.get("columns") or []:
-            if not _should_emit_column_entry(column):
-                continue
-            column_name = str(column.get("name") or "")
-            term = _term_from_column(column_name)
-            definition = str(column.get("column_description") or "").strip()
-            if not definition:
-                definition = f"Business field representing {term.lower()} on {_slug_to_label(table_name).lower()} records."
-            confidence = float(column.get("concept_confidence") or 0.68)
-            entries.append(
-                _build_entry(
-                    term=term,
-                    term_type=_column_term_type(column),
-                    definition=definition,
-                    business_usage=_infer_column_usage(table, column),
-                    confidence=confidence,
-                    inference_basis=f"Derived from {table_name}.{column_name} using column_description, concept metadata, and field naming.",
-                    status=_status_from_confidence(confidence),
-                    source_table=table_name,
-                    source_column=column_name,
-                    synonyms=[_slug_to_label(column.get("concept_alias_group") or ""), _slug_to_label(column_name)],
-                    notes=f"semantic_class={column.get('semantic_class') or ''}; concept_id={column.get('concept_id') or ''}",
-                )
+    for term_config in KEYWORD_LIBRARY:
+        if not any(keyword in text for keyword in term_config["keywords"]):
+            continue
+        entries.append(
+            _build_entry(
+                term=term_config["term"],
+                term_type=term_config["term_type"],
+                definition=term_config["definition"],
+                business_usage=term_config["business_usage"],
+                status="draft",
+                synonyms=term_config["synonyms"],
             )
+        )
     return entries
 
 
-def build_glossary(payload, source_path):
+def build_glossary(brief, source_path):
     bucket = {}
-    for entry in _concept_entries(payload):
+    for entry in _process_entries(brief):
         _register_entry(bucket, entry)
-    for entry in _table_entries(payload):
+    for entry in _entity_entries(brief):
         _register_entry(bucket, entry)
-    for entry in _column_entries(payload):
+    for entry in _keyword_entries(brief):
         _register_entry(bucket, entry)
 
     entries = sorted(bucket.values(), key=lambda item: (item["term"].lower(), item["term_type"]))
     metadata = {
         "generated_at": datetime.now(timezone.utc).isoformat(),
-        "source_schema_json": str(Path(source_path)),
+        "source_description_path": str(Path(source_path)),
         "glossary_entry_count": len(entries),
-        "generation_mode": "schema_only",
-        "inference_mode": "aggressive",
+        "generation_mode": "domain_brief",
+        "inference_mode": "domain_guided",
     }
     return {"metadata": metadata, "entries": entries}
 
@@ -365,30 +298,36 @@ def _autofit(ws):
         ws.column_dimensions[column_letter].width = min(max(max_length + 2, 12), 60)
 
 
+def _apply_status_dropdown(ws, headers):
+    status_col_idx = headers.index("status") + 1
+    status_col_letter = ws.cell(row=1, column=status_col_idx).column_letter
+    validation = DataValidation(
+        type="list",
+        formula1='"' + ",".join(STATUS_VALUES) + '"',
+        allow_blank=True,
+    )
+    validation.prompt = "Select glossary review status"
+    validation.error = "Choose one of: draft, approved, rejected."
+    ws.add_data_validation(validation)
+    validation.add(f"{status_col_letter}2:{status_col_letter}1048576")
+
+
 def write_glossary_excel(glossary, output_path):
     wb = Workbook()
     ws = wb.active
     ws.title = "Glossary"
 
-    rows = glossary.get("entries") or []
     headers = [
         "term",
         "term_type",
         "definition",
         "business_usage",
         "synonyms",
-        "source_tables",
-        "source_columns",
-        "confidence",
-        "confidence_tier",
-        "inference_basis",
-        "source_refs",
         "notes",
         "status",
     ]
-
     ws.append(headers)
-    for row in rows:
+    for row in glossary.get("entries") or []:
         ws.append(
             [
                 row.get("term", ""),
@@ -396,12 +335,6 @@ def write_glossary_excel(glossary, output_path):
                 row.get("definition", ""),
                 row.get("business_usage", ""),
                 ", ".join(row.get("synonyms") or []),
-                ", ".join(row.get("source_tables") or []),
-                ", ".join(row.get("source_columns") or []),
-                row.get("confidence", ""),
-                row.get("confidence_tier", ""),
-                row.get("inference_basis", ""),
-                ", ".join(row.get("source_refs") or []),
                 row.get("notes", ""),
                 row.get("status", ""),
             ]
@@ -418,6 +351,7 @@ def write_glossary_excel(glossary, output_path):
 
     ws.freeze_panes = "A2"
     ws.auto_filter.ref = ws.dimensions
+    _apply_status_dropdown(ws, headers)
     _autofit(ws)
 
     meta_ws = wb.create_sheet("RunMetadata")
@@ -434,13 +368,6 @@ def write_glossary_excel(glossary, output_path):
     wb.save(output_path)
 
 
-def default_input_path():
-    candidates = sorted(LATEST_SCHEMA_DIR.glob("schema*.json"), key=lambda path: path.stat().st_mtime, reverse=True)
-    if not candidates:
-        raise FileNotFoundError(f"No schema JSON files found in {LATEST_SCHEMA_DIR}")
-    return candidates[0]
-
-
 def output_paths(input_path):
     input_path = Path(input_path)
     stem = input_path.stem
@@ -451,9 +378,9 @@ def output_paths(input_path):
 
 
 def run(input_path):
-    source_path = Path(input_path) if input_path else default_input_path()
-    payload = json.loads(source_path.read_text(encoding="utf-8"))
-    glossary = build_glossary(payload, source_path)
+    source_path = Path(input_path)
+    brief = load_brief(source_path)
+    glossary = build_glossary(brief, source_path)
     json_output, excel_output = output_paths(source_path)
     json_output.write_text(json.dumps(glossary, indent=2, ensure_ascii=True) + "\n", encoding="utf-8")
     write_glossary_excel(glossary, excel_output)
@@ -461,10 +388,10 @@ def run(input_path):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Generate glossary JSON and Excel from analyzer schema JSON.")
-    parser.add_argument("input_json", nargs="?", help="Path to analyzer schema JSON. Defaults to newest schema*.json in LATEST_SCHEMA.")
+    parser = argparse.ArgumentParser(description="Generate glossary JSON and Excel from a business domain description.")
+    parser.add_argument("input_brief", help="Path to a text, markdown, or JSON business brief.")
     args = parser.parse_args()
-    json_output, excel_output, glossary = run(args.input_json)
+    json_output, excel_output, glossary = run(args.input_brief)
     print(
         json.dumps(
             {

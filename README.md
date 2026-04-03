@@ -172,6 +172,14 @@ This creates `~/.cursor/mcp.json` if missing, or adds the Azure MCP Server entry
 
 Restart Cursor or reload MCP after changing the file.
 
+To use local OpenMetadata glossary governance tools from Cursor, add the **OpenMetadata MCP Server** to your Cursor MCP config:
+
+```bash
+./scripts/setup_openmetadata_mcp.sh
+```
+
+This adds an `openmetadata` entry to `~/.cursor/mcp.json` without replacing other MCP servers. It loads `OPENMETADATA_BASE_URL`, `OPENMETADATA_EMAIL`, and `OPENMETADATA_PASSWORD` from the project `.env`.
+
 ### Per-Project (Not Recommended)
 
 Per-project install (`.cursor/skills/` in your project) puts skills inside the agent’s workspace; the agent may try to edit them. Use global install instead. If you must use per-project, this repo includes rules and `.cursorignore` to reduce that risk when the repo itself is the opened project.

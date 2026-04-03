@@ -1,0 +1,865 @@
+{
+  "metadata": {
+    "generated_at": "2026-04-02T00:00:00Z",
+    "source_description_path": ".cursor/flat/retail_domain_brief.txt",
+    "generation_mode": "agent_authored",
+    "inference_mode": "domain_guided"
+  },
+  "entries": [
+    {
+      "term": "Retail business",
+      "term_type": "business_entity",
+      "definition": "An organization that sells goods to end customers through physical stores, supported by procurement, logistics, and financial operations.",
+      "business_usage": "Top-level entity for strategy, org design, and consolidated reporting.",
+      "synonyms": ["Retailer", "Retail operator"],
+      "notes": "",
+      "status": "draft"
+    },
+    {
+      "term": "Physical store",
+      "term_type": "business_entity",
+      "definition": "A brick-and-mortar location where customers browse and purchase goods and where local inventory and staff are managed.",
+      "business_usage": "Store network planning, staffing, compliance, and location-level P&L.",
+      "synonyms": ["Store", "Shop", "Retail outlet", "Branch"],
+      "notes": "",
+      "status": "draft"
+    },
+    {
+      "term": "Store location",
+      "term_type": "business_entity",
+      "definition": "A distinct site used to scope inventory, sales, and operational activity within the retail network.",
+      "business_usage": "Inventory allocation, replenishment triggers, and cross-location performance comparison.",
+      "synonyms": ["Location", "Site"],
+      "notes": "",
+      "status": "draft"
+    },
+    {
+      "term": "Store format",
+      "term_type": "business_attribute",
+      "definition": "The classification of a store by size, layout, or trade area focus, such as superstore, convenience, or neighbourhood format.",
+      "business_usage": "Network planning, range allocation, and labour modelling.",
+      "synonyms": ["Format"],
+      "notes": "Inferred; common retail segmentation dimension.",
+      "status": "draft"
+    },
+    {
+      "term": "Stockroom",
+      "term_type": "business_entity",
+      "definition": "The non-customer-facing storage area within a store where reserve inventory is held before replenishment to the shop floor.",
+      "business_usage": "In-store replenishment scheduling and shrink control.",
+      "synonyms": ["Back room", "Storage area"],
+      "notes": "Inferred from physical-store operating model.",
+      "status": "draft"
+    },
+    {
+      "term": "Product",
+      "term_type": "business_entity",
+      "definition": "A sellable item or SKU identified for catalog, pricing, and inventory purposes.",
+      "business_usage": "Merchandising, assortment planning, pricing, and inventory management.",
+      "synonyms": ["SKU", "Item", "Article"],
+      "notes": "",
+      "status": "draft"
+    },
+    {
+      "term": "Product category",
+      "term_type": "business_entity",
+      "definition": "A grouping of related products used to organise the range for merchandising, reporting, and buying.",
+      "business_usage": "Category management, planogram assignment, and buyer responsibility mapping.",
+      "synonyms": ["Category", "Department"],
+      "notes": "Inferred; standard way retailers organise products.",
+      "status": "draft"
+    },
+    {
+      "term": "Product hierarchy",
+      "term_type": "business_attribute",
+      "definition": "The multi-level classification tree (e.g. division > department > category > sub-category > SKU) that structures the product range.",
+      "business_usage": "Drill-down reporting, assortment rules, and margin analysis at every level.",
+      "synonyms": ["Merchandise hierarchy"],
+      "notes": "Inferred; underpins most retail analytics.",
+      "status": "draft"
+    },
+    {
+      "term": "Brand",
+      "term_type": "business_attribute",
+      "definition": "The manufacturer or label identity associated with a product, influencing customer perception and vendor negotiations.",
+      "business_usage": "Brand-level sales reporting, shelf-space negotiation, and marketing.",
+      "synonyms": ["Label", "Manufacturer brand"],
+      "notes": "Inferred; relevant to product and supplier management.",
+      "status": "draft"
+    },
+    {
+      "term": "Unit of measure",
+      "term_type": "business_attribute",
+      "definition": "The standard quantity designation for a product (e.g. each, pack, kilogram, litre) used in ordering, selling, and inventory.",
+      "business_usage": "Purchase-order quantities, POS scanning, and stock counting.",
+      "synonyms": ["UoM"],
+      "notes": "Inferred; essential for inventory and purchasing accuracy.",
+      "status": "draft"
+    },
+    {
+      "term": "Barcode",
+      "term_type": "identifier",
+      "definition": "A machine-readable code (e.g. EAN, UPC) printed on a product or shelf label that uniquely identifies a SKU at point of sale and in logistics.",
+      "business_usage": "POS scanning, goods receipt, and stock-take accuracy.",
+      "synonyms": ["EAN", "UPC", "GTIN"],
+      "notes": "Inferred; standard retail product identifier.",
+      "status": "draft"
+    },
+    {
+      "term": "Assortment",
+      "term_type": "business_entity",
+      "definition": "The set of products carried at a location or across the chain, shaped by category strategy and supplier availability.",
+      "business_usage": "Range reviews, planograms, and new-product introductions.",
+      "synonyms": ["Product range", "Range"],
+      "notes": "Inferred from managing products across locations.",
+      "status": "draft"
+    },
+    {
+      "term": "Planogram",
+      "term_type": "business_entity",
+      "definition": "A visual schematic prescribing the placement of products on shelves and fixtures within a store.",
+      "business_usage": "Space planning, visual merchandising compliance, and shelf-productivity analysis.",
+      "synonyms": ["POG"],
+      "notes": "Inferred; common physical-store merchandising tool.",
+      "status": "draft"
+    },
+    {
+      "term": "Supplier",
+      "term_type": "business_entity",
+      "definition": "An external party that provides goods to the retailer, typically under negotiated commercial terms.",
+      "business_usage": "Procurement, vendor scorecards, cost negotiation, and accounts payable.",
+      "synonyms": ["Vendor"],
+      "notes": "",
+      "status": "draft"
+    },
+    {
+      "term": "Supplier agreement",
+      "term_type": "business_entity",
+      "definition": "A contract or set of terms governing price, delivery lead time, volume commitments, and returns policy between the retailer and a supplier.",
+      "business_usage": "Procurement planning, cost benchmarking, and dispute resolution.",
+      "synonyms": ["Vendor agreement", "Trading terms"],
+      "notes": "Inferred; standard accompaniment to purchasing from suppliers.",
+      "status": "draft"
+    },
+    {
+      "term": "Minimum order quantity",
+      "term_type": "business_attribute",
+      "definition": "The smallest purchase volume a supplier will accept per order or per SKU.",
+      "business_usage": "Replenishment planning, cost modelling, and supplier negotiation.",
+      "synonyms": ["MOQ"],
+      "notes": "Inferred; common purchasing constraint.",
+      "status": "draft"
+    },
+    {
+      "term": "Supplier lead time",
+      "term_type": "business_attribute",
+      "definition": "The elapsed time between placing a purchase order and receiving the goods at the designated location.",
+      "business_usage": "Reorder-point calculation, safety-stock setting, and delivery promise.",
+      "synonyms": ["Lead time", "Replenishment lead time"],
+      "notes": "Inferred; critical to inventory planning.",
+      "status": "draft"
+    },
+    {
+      "term": "Customer",
+      "term_type": "business_entity",
+      "definition": "The buyer of goods in a retail context, whether identified through a loyalty programme or anonymous at the point of sale.",
+      "business_usage": "Sales analysis, customer service, returns eligibility, and marketing segmentation.",
+      "synonyms": ["Shopper", "Buyer", "Consumer"],
+      "notes": "",
+      "status": "draft"
+    },
+    {
+      "term": "Loyalty programme",
+      "term_type": "business_entity",
+      "definition": "A scheme that rewards repeat customers with points, discounts, or benefits in exchange for identified purchasing behaviour.",
+      "business_usage": "Customer retention, personalised marketing, and basket-level analytics.",
+      "synonyms": ["Loyalty scheme", "Rewards programme"],
+      "notes": "Inferred; common retail customer engagement mechanism.",
+      "status": "draft"
+    },
+    {
+      "term": "Customer segment",
+      "term_type": "business_attribute",
+      "definition": "A grouping of customers by shared characteristics such as spending level, frequency, geography, or demographics.",
+      "business_usage": "Targeted promotions, range tailoring, and lifetime-value analysis.",
+      "synonyms": ["Segment"],
+      "notes": "Inferred; standard retail marketing practice.",
+      "status": "draft"
+    },
+    {
+      "term": "Order",
+      "term_type": "business_entity",
+      "definition": "A structured record of goods requested or committed, whether a customer sales order or a supplier purchase order.",
+      "business_usage": "Fulfilment tracking, customer service, and financial monitoring.",
+      "synonyms": [],
+      "notes": "",
+      "status": "draft"
+    },
+    {
+      "term": "Sales order",
+      "term_type": "business_entity",
+      "definition": "A customer-facing order recording one or more items requested for purchase, along with delivery and payment expectations.",
+      "business_usage": "Fulfilment, delivery scheduling, and revenue recognition.",
+      "synonyms": ["Customer order"],
+      "notes": "Inferred as the customer-side specialisation of Order.",
+      "status": "draft"
+    },
+    {
+      "term": "Order line",
+      "term_type": "business_entity",
+      "definition": "A single product entry on an order specifying the item, quantity, price, and any applicable discount.",
+      "business_usage": "Picking, invoicing, and line-level margin analysis.",
+      "synonyms": ["Line item", "Order item"],
+      "notes": "Inferred; orders are composed of lines.",
+      "status": "draft"
+    },
+    {
+      "term": "Backorder",
+      "term_type": "business_entity",
+      "definition": "An order or order line that cannot be fulfilled immediately due to insufficient stock and is queued for future delivery.",
+      "business_usage": "Customer communication, replenishment priority, and lost-sale analysis.",
+      "synonyms": ["Back order"],
+      "notes": "Inferred; common when inventory may not cover demand.",
+      "status": "draft"
+    },
+    {
+      "term": "Payment",
+      "term_type": "business_entity",
+      "definition": "Funds transferred to settle an obligation—customer paying for a sale or the retailer paying a supplier.",
+      "business_usage": "Reconciliation, treasury, payment-method reporting, and cash management.",
+      "synonyms": ["Remittance", "Settlement"],
+      "notes": "",
+      "status": "draft"
+    },
+    {
+      "term": "Payment method",
+      "term_type": "business_attribute",
+      "definition": "The instrument used to effect payment, such as cash, credit card, debit card, mobile wallet, or gift card.",
+      "business_usage": "Tender-mix analysis, processing-fee management, and POS configuration.",
+      "synonyms": ["Tender type"],
+      "notes": "Inferred; essential for payment processing.",
+      "status": "draft"
+    },
+    {
+      "term": "Invoice",
+      "term_type": "business_entity",
+      "definition": "A document from a supplier requesting payment for goods delivered, matched against purchase orders and goods receipts.",
+      "business_usage": "Three-way match, accounts payable, and cost recognition.",
+      "synonyms": ["Supplier invoice", "Vendor invoice"],
+      "notes": "Inferred; standard document in procurement and payables.",
+      "status": "draft"
+    },
+    {
+      "term": "Credit note",
+      "term_type": "business_entity",
+      "definition": "A document reducing an amount owed, issued to a customer after a return or to the retailer by a supplier for defective or surplus goods.",
+      "business_usage": "Returns settlement, accounts adjustments, and net-cost calculations.",
+      "synonyms": ["Credit memo"],
+      "notes": "Inferred; counterpart to returns and refunds.",
+      "status": "draft"
+    },
+    {
+      "term": "Point of sale",
+      "term_type": "business_entity",
+      "definition": "The system and moment where a sale is captured in a physical store, generating a transaction record and payment instruction.",
+      "business_usage": "Checkout operations, tender tracking, and sales auditing.",
+      "synonyms": ["POS", "Till", "Register", "Checkout"],
+      "notes": "Inferred from physical-store selling model.",
+      "status": "draft"
+    },
+    {
+      "term": "Basket",
+      "term_type": "business_entity",
+      "definition": "The collection of items purchased by a customer in a single transaction.",
+      "business_usage": "Basket analysis, cross-sell measurement, and average-transaction-value reporting.",
+      "synonyms": ["Shopping basket", "Cart"],
+      "notes": "Inferred; core retail analytics concept.",
+      "status": "draft"
+    },
+    {
+      "term": "Inventory",
+      "term_type": "business_measure",
+      "definition": "The quantity and value of products held at locations or in transit, maintained to meet customer demand while controlling carrying cost.",
+      "business_usage": "Stock reporting, replenishment planning, and balance-sheet valuation.",
+      "synonyms": ["Stock", "On-hand inventory"],
+      "notes": "",
+      "status": "draft"
+    },
+    {
+      "term": "Location-level inventory",
+      "term_type": "business_measure",
+      "definition": "Stock quantities and values attributed to a specific site, enabling store-specific availability and replenishment decisions.",
+      "business_usage": "Store replenishment, availability displays, and location profitability.",
+      "synonyms": [],
+      "notes": "",
+      "status": "draft"
+    },
+    {
+      "term": "Safety stock",
+      "term_type": "business_measure",
+      "definition": "Buffer inventory held above expected demand to absorb variability in supply lead time or sales velocity.",
+      "business_usage": "Reorder-point formulas, service-level targets, and working-capital trade-offs.",
+      "synonyms": ["Buffer stock"],
+      "notes": "Inferred; standard inventory planning concept.",
+      "status": "draft"
+    },
+    {
+      "term": "Reorder point",
+      "term_type": "business_measure",
+      "definition": "The inventory level at which a replenishment order is triggered, calculated from demand rate, lead time, and safety stock.",
+      "business_usage": "Automatic replenishment systems and stock-out prevention.",
+      "synonyms": ["ROP"],
+      "notes": "Inferred; complements safety stock in inventory management.",
+      "status": "draft"
+    },
+    {
+      "term": "On-shelf availability",
+      "term_type": "business_measure",
+      "definition": "The percentage of time a product is present and purchasable on the shop floor during trading hours.",
+      "business_usage": "Service-level tracking, in-store replenishment triggers, and lost-sale estimation.",
+      "synonyms": ["OSA", "Shelf availability"],
+      "notes": "Inferred; key KPI for physical-store retail.",
+      "status": "draft"
+    },
+    {
+      "term": "Stock turn",
+      "term_type": "business_measure",
+      "definition": "The number of times inventory is sold and replaced over a period, indicating how efficiently stock is converted to revenue.",
+      "business_usage": "Buying efficiency reviews, working-capital management, and category benchmarking.",
+      "synonyms": ["Inventory turnover", "Stock turnover"],
+      "notes": "Inferred; core retail inventory KPI.",
+      "status": "draft"
+    },
+    {
+      "term": "Days of supply",
+      "term_type": "business_measure",
+      "definition": "The estimated number of days current inventory will last at the prevailing rate of sale.",
+      "business_usage": "Replenishment urgency, overstock detection, and network balancing.",
+      "synonyms": ["DOS", "Days cover", "Weeks of cover"],
+      "notes": "Inferred; complements stock-turn analysis.",
+      "status": "draft"
+    },
+    {
+      "term": "Sell-through",
+      "term_type": "business_measure",
+      "definition": "The rate at which inventory is sold relative to the quantity received or available, used to judge assortment and pricing effectiveness.",
+      "business_usage": "Merchandising reviews, clearance decisions, and category performance.",
+      "synonyms": ["Sell-through rate"],
+      "notes": "Inferred from selling goods and tracking inventory.",
+      "status": "draft"
+    },
+    {
+      "term": "Shrink",
+      "term_type": "business_measure",
+      "definition": "Inventory loss from theft, damage, administrative error, or supplier variance, net of recoveries.",
+      "business_usage": "Loss prevention, store profitability, and inventory accuracy.",
+      "synonyms": ["Inventory shrinkage", "Shrinkage"],
+      "notes": "Inferred; common retail concern not mentioned in the brief.",
+      "status": "draft"
+    },
+    {
+      "term": "Dead stock",
+      "term_type": "business_measure",
+      "definition": "Inventory that has not sold within an expected timeframe and is unlikely to sell at full price without intervention.",
+      "business_usage": "Markdown planning, write-off decisions, and supplier return negotiations.",
+      "synonyms": ["Obsolete stock"],
+      "notes": "Inferred; natural outcome of tracking inventory and sales.",
+      "status": "draft"
+    },
+    {
+      "term": "Gross margin",
+      "term_type": "business_measure",
+      "definition": "Revenue from sales minus cost of goods sold, expressed as a value or percentage.",
+      "business_usage": "Category profitability, pricing decisions, and vendor negotiation.",
+      "synonyms": ["Margin", "Gross profit"],
+      "notes": "Inferred; primary financial measure for retail trading.",
+      "status": "draft"
+    },
+    {
+      "term": "Net sales",
+      "term_type": "business_measure",
+      "definition": "Total sales revenue after deducting returns, refunds, and allowances.",
+      "business_usage": "Performance reporting, budgeting, and like-for-like comparison.",
+      "synonyms": [],
+      "notes": "Inferred; foundational revenue measure for any retailer.",
+      "status": "draft"
+    },
+    {
+      "term": "Cost of goods sold",
+      "term_type": "business_measure",
+      "definition": "The direct cost attributed to producing or purchasing the goods that were sold during a period.",
+      "business_usage": "Margin calculation, inventory valuation, and P&L reporting.",
+      "synonyms": ["COGS", "Cost of sales"],
+      "notes": "Inferred; underpins gross margin and financial monitoring.",
+      "status": "draft"
+    },
+    {
+      "term": "Average transaction value",
+      "term_type": "business_measure",
+      "definition": "The mean monetary value of a sales transaction over a given period.",
+      "business_usage": "Store performance benchmarking, promotional effectiveness, and upsell measurement.",
+      "synonyms": ["ATV", "Average basket value"],
+      "notes": "Inferred; standard retail sales KPI.",
+      "status": "draft"
+    },
+    {
+      "term": "Footfall",
+      "term_type": "business_measure",
+      "definition": "The count of customer visits or entries to a physical store within a period.",
+      "business_usage": "Conversion-rate calculation, marketing attribution, and labour scheduling.",
+      "synonyms": ["Traffic", "Store traffic"],
+      "notes": "Inferred; important for physical-store performance.",
+      "status": "draft"
+    },
+    {
+      "term": "Conversion rate",
+      "term_type": "business_measure",
+      "definition": "The proportion of store visitors who complete a purchase, indicating sales effectiveness.",
+      "business_usage": "Store management KPIs, staffing models, and layout optimisation.",
+      "synonyms": [],
+      "notes": "Inferred; ties footfall to sales.",
+      "status": "draft"
+    },
+    {
+      "term": "GMROI",
+      "term_type": "business_measure",
+      "definition": "Gross Margin Return on Inventory Investment—the ratio of gross margin earned to the average cost of inventory held.",
+      "business_usage": "Buying efficiency, category investment prioritisation, and range rationalisation.",
+      "synonyms": ["Gross margin return on investment"],
+      "notes": "Inferred; advanced retail performance metric.",
+      "status": "draft"
+    },
+    {
+      "term": "Purchase",
+      "term_type": "business_process",
+      "definition": "The acquisition of goods from suppliers to replenish inventory or fulfil resale demand.",
+      "business_usage": "Procurement workflows, inbound logistics, and cost-of-goods recognition.",
+      "synonyms": ["Procurement", "Buying"],
+      "notes": "",
+      "status": "draft"
+    },
+    {
+      "term": "Sale",
+      "term_type": "business_process",
+      "definition": "The transfer of goods to a customer in exchange for payment, typically recorded at the line-item level.",
+      "business_usage": "Revenue recognition, basket analysis, and store performance.",
+      "synonyms": ["Retail sale", "Transaction"],
+      "notes": "",
+      "status": "draft"
+    },
+    {
+      "term": "Delivery",
+      "term_type": "business_process",
+      "definition": "The movement of goods to a destination such as a store, customer address, or pickup point.",
+      "business_usage": "Logistics planning, promise-date tracking, and delivery performance metrics.",
+      "synonyms": ["Shipment", "Dispatch"],
+      "notes": "",
+      "status": "draft"
+    },
+    {
+      "term": "Return",
+      "term_type": "business_process",
+      "definition": "The process of accepting goods back from a customer or returning goods to a supplier, often tied to refunds, exchanges, or credit notes.",
+      "business_usage": "Reverse logistics, customer policy compliance, and net-sales adjustments.",
+      "synonyms": ["Product return", "RMA"],
+      "notes": "",
+      "status": "draft"
+    },
+    {
+      "term": "Commercial activity",
+      "term_type": "business_process",
+      "definition": "Revenue-oriented work such as merchandising, pricing, promotions, and customer-facing sales that drive demand and margin.",
+      "business_usage": "Planning cycles, category management, and commercial KPI reviews.",
+      "synonyms": ["Commercial operations"],
+      "notes": "",
+      "status": "draft"
+    },
+    {
+      "term": "Operational activity",
+      "term_type": "business_process",
+      "definition": "Day-to-day execution work such as receiving, stocking, fulfilment, and store operations that maintain service levels.",
+      "business_usage": "Operations scorecards, labour planning, and process improvement.",
+      "synonyms": ["Operations", "Store operations"],
+      "notes": "",
+      "status": "draft"
+    },
+    {
+      "term": "Financial activity",
+      "term_type": "business_process",
+      "definition": "Monetary flows and accounting events tied to retail operations—receivables, payables, and cash settlement around orders and payments.",
+      "business_usage": "Cash management, margin reporting, and audit trails.",
+      "synonyms": ["Retail finance activity"],
+      "notes": "",
+      "status": "draft"
+    },
+    {
+      "term": "Inventory tracking",
+      "term_type": "business_process",
+      "definition": "The ongoing recording and reconciliation of stock quantities and movements across locations and products.",
+      "business_usage": "Perpetual inventory, cycle counts, and stock accuracy programmes.",
+      "synonyms": ["Stock management", "Inventory management"],
+      "notes": "",
+      "status": "draft"
+    },
+    {
+      "term": "Replenishment",
+      "term_type": "business_process",
+      "definition": "The process of restocking a location by triggering purchase orders to suppliers or transfers from other sites when inventory falls below threshold.",
+      "business_usage": "Automated ordering, shelf-fill rates, and supply-chain planning.",
+      "synonyms": ["Auto-replenishment", "Stock replenishment"],
+      "notes": "Inferred; connects purchasing, inventory, and availability.",
+      "status": "draft"
+    },
+    {
+      "term": "Goods receipt",
+      "term_type": "business_process",
+      "definition": "The event of accepting inbound goods against a purchase order or transfer, updating inventory and triggering payables workflows.",
+      "business_usage": "Receiving operations, inventory accuracy, and three-way match.",
+      "synonyms": ["Receiving", "GRN", "Goods receipt note"],
+      "notes": "Inferred from purchasing and inventory tracking.",
+      "status": "draft"
+    },
+    {
+      "term": "Stock transfer",
+      "term_type": "business_process",
+      "definition": "Movement of inventory between locations within the retail network to balance supply and demand.",
+      "business_usage": "Inter-store transfers and network-level stock optimisation.",
+      "synonyms": ["Inter-store transfer", "IST"],
+      "notes": "Inferred from multi-location inventory management.",
+      "status": "draft"
+    },
+    {
+      "term": "Stock-take",
+      "term_type": "business_process",
+      "definition": "A periodic physical count of inventory at a location to verify system records and identify discrepancies.",
+      "business_usage": "Inventory accuracy, shrink detection, and financial audit compliance.",
+      "synonyms": ["Physical inventory", "Cycle count", "Inventory count"],
+      "notes": "Inferred; essential for stores carrying physical inventory.",
+      "status": "draft"
+    },
+    {
+      "term": "Markdown",
+      "term_type": "business_process",
+      "definition": "A deliberate reduction in selling price to accelerate the sale of slow-moving, seasonal, or excess inventory.",
+      "business_usage": "Clearance planning, margin-impact analysis, and promotional calendars.",
+      "synonyms": ["Price reduction", "Clearance"],
+      "notes": "Inferred; standard tool to manage sell-through.",
+      "status": "draft"
+    },
+    {
+      "term": "Promotion",
+      "term_type": "business_process",
+      "definition": "A time-bound commercial offer—such as a discount, multi-buy, or loyalty bonus—designed to stimulate demand for specific products.",
+      "business_usage": "Promotional calendars, uplift analysis, and supplier-funded deal tracking.",
+      "synonyms": ["Promo", "Offer"],
+      "notes": "Inferred; core commercial-activity mechanism.",
+      "status": "draft"
+    },
+    {
+      "term": "Pricing",
+      "term_type": "business_process",
+      "definition": "Setting and maintaining the selling price of products based on cost, competition, strategy, and margin targets.",
+      "business_usage": "Price management systems, competitor benchmarking, and margin control.",
+      "synonyms": ["Price management"],
+      "notes": "Inferred; part of commercial activity.",
+      "status": "draft"
+    },
+    {
+      "term": "Refund",
+      "term_type": "business_process",
+      "definition": "Repayment to a customer following a return or adjustment, reversing all or part of a prior sale.",
+      "business_usage": "Cashier procedures, customer service, and net-sales reporting.",
+      "synonyms": ["Credit"],
+      "notes": "Inferred as financial counterpart to returns.",
+      "status": "draft"
+    },
+    {
+      "term": "Exchange",
+      "term_type": "business_process",
+      "definition": "Replacing a returned item with a different product or variant rather than issuing a refund.",
+      "business_usage": "Customer service policies and returns-reason analysis.",
+      "synonyms": ["Product exchange"],
+      "notes": "Inferred; alternative outcome of a return.",
+      "status": "draft"
+    },
+    {
+      "term": "Reconciliation",
+      "term_type": "business_process",
+      "definition": "The process of matching and verifying financial records—such as payments to orders, or invoices to goods receipts—to ensure accuracy.",
+      "business_usage": "Financial close, exception handling, and audit readiness.",
+      "synonyms": ["Recon"],
+      "notes": "Inferred from monitoring financial activity.",
+      "status": "draft"
+    },
+    {
+      "term": "Three-way match",
+      "term_type": "business_process",
+      "definition": "Verification that the purchase order, goods receipt, and supplier invoice agree on quantities and values before approving payment.",
+      "business_usage": "Accounts payable controls, dispute management, and fraud prevention.",
+      "synonyms": [],
+      "notes": "Inferred; standard procurement control.",
+      "status": "draft"
+    },
+    {
+      "term": "Order-to-cash",
+      "term_type": "business_process",
+      "definition": "End-to-end flow from customer order through fulfilment to payment collection and exception handling.",
+      "business_usage": "Process metrics, DSO-like retail KPIs, and exception queues.",
+      "synonyms": ["O2C"],
+      "notes": "Inferred from monitoring financial activity related to orders and payments.",
+      "status": "draft"
+    },
+    {
+      "term": "Procure-to-pay",
+      "term_type": "business_process",
+      "definition": "End-to-end flow from supplier purchase through goods receipt to supplier payment and reconciliation.",
+      "business_usage": "Procurement efficiency, working-capital management, and supplier relationship reporting.",
+      "synonyms": ["P2P"],
+      "notes": "Inferred from purchasing from suppliers and monitoring payments.",
+      "status": "draft"
+    },
+    {
+      "term": "Plan-to-stock",
+      "term_type": "business_process",
+      "definition": "The demand-planning and inventory-positioning cycle that determines how much to buy, when, and where to place it.",
+      "business_usage": "Demand forecasting, allocation, and pre-season buying.",
+      "synonyms": [],
+      "notes": "Inferred; upstream process feeding replenishment.",
+      "status": "draft"
+    },
+    {
+      "term": "Last-mile delivery",
+      "term_type": "business_process",
+      "definition": "The final leg of goods movement from a store, warehouse, or hub to the customer's chosen delivery point.",
+      "business_usage": "Delivery cost modelling, carrier selection, and customer experience.",
+      "synonyms": ["Last mile"],
+      "notes": "Inferred from managing deliveries to customers.",
+      "status": "draft"
+    },
+    {
+      "term": "Carrier",
+      "term_type": "business_entity",
+      "definition": "A logistics company that transports goods on behalf of the retailer for inbound supply or outbound customer delivery.",
+      "business_usage": "Freight-cost management, SLA tracking, and delivery-slot scheduling.",
+      "synonyms": ["Logistics provider", "Haulier"],
+      "notes": "Inferred from managing deliveries.",
+      "status": "draft"
+    },
+    {
+      "term": "Delivery note",
+      "term_type": "business_entity",
+      "definition": "A document accompanying a shipment that lists the contents, quantities, and order reference for the recipient to verify.",
+      "business_usage": "Goods receipt verification and discrepancy management.",
+      "synonyms": ["Packing slip", "Dispatch note"],
+      "notes": "Inferred; standard logistics artifact.",
+      "status": "draft"
+    },
+    {
+      "term": "Inventory by product and location",
+      "term_type": "business_attribute",
+      "definition": "The decomposition of stock levels along product and location dimensions so the business knows what is available where.",
+      "business_usage": "Store-level availability, allocation rules, and network-wide supply views.",
+      "synonyms": [],
+      "notes": "",
+      "status": "draft"
+    },
+    {
+      "term": "Sales channel",
+      "term_type": "business_attribute",
+      "definition": "The path through which a sale occurs; in this brief physical stores are primary, with deliveries implying possible ship-to-customer or pickup variants.",
+      "business_usage": "Channel reporting and inventory segmentation.",
+      "synonyms": [],
+      "notes": "Inferred; brief emphasises physical stores.",
+      "status": "draft"
+    },
+    {
+      "term": "Cost price",
+      "term_type": "business_attribute",
+      "definition": "The amount the retailer pays the supplier per unit, before any rebates, allowances, or landed-cost adjustments.",
+      "business_usage": "Margin calculation, price setting, and supplier negotiation.",
+      "synonyms": ["Buy price", "Purchase price"],
+      "notes": "Inferred; necessary for financial monitoring.",
+      "status": "draft"
+    },
+    {
+      "term": "Selling price",
+      "term_type": "business_attribute",
+      "definition": "The amount charged to the customer for a product at the point of sale, before or after promotional adjustments.",
+      "business_usage": "POS configuration, margin analysis, and competitive pricing.",
+      "synonyms": ["Retail price"],
+      "notes": "Inferred; counterpart to cost price.",
+      "status": "draft"
+    },
+    {
+      "term": "Landed cost",
+      "term_type": "business_attribute",
+      "definition": "The total cost of a product delivered to its destination, including purchase price, freight, duties, and handling.",
+      "business_usage": "True-cost margin analysis and import-goods management.",
+      "synonyms": [],
+      "notes": "Inferred; relevant where delivery logistics affect product cost.",
+      "status": "draft"
+    },
+    {
+      "term": "Return reason",
+      "term_type": "business_attribute",
+      "definition": "A classification code explaining why a customer or supplier return was initiated, such as defective, wrong item, or change of mind.",
+      "business_usage": "Root-cause analysis, quality management, and policy refinement.",
+      "synonyms": [],
+      "notes": "Inferred; standard data point captured during returns.",
+      "status": "draft"
+    },
+    {
+      "term": "Purchase order",
+      "term_type": "identifier",
+      "definition": "A commitment document from the retailer to a supplier specifying products, quantities, prices, and delivery expectations.",
+      "business_usage": "Order tracking, receiving, and three-way match with invoices.",
+      "synonyms": ["PO"],
+      "notes": "Inferred; standard procurement artifact.",
+      "status": "draft"
+    },
+    {
+      "term": "Transaction identifier",
+      "term_type": "identifier",
+      "definition": "A unique key for a retail sale or related financial event, tying line items, payments, and returns together.",
+      "business_usage": "Reconciliation, auditing, and customer lookup.",
+      "synonyms": ["Receipt number", "Transaction ID"],
+      "notes": "Inferred from monitoring orders and payments.",
+      "status": "draft"
+    },
+    {
+      "term": "Store code",
+      "term_type": "identifier",
+      "definition": "A unique short identifier assigned to each store location for use in systems, reporting, and logistics addressing.",
+      "business_usage": "Location-level filtering, delivery routing, and store-comparison reports.",
+      "synonyms": ["Site code", "Branch code"],
+      "notes": "Inferred from multi-location operations.",
+      "status": "draft"
+    },
+    {
+      "term": "Supplier code",
+      "term_type": "identifier",
+      "definition": "A unique identifier assigned to each supplier in the retailer's master data.",
+      "business_usage": "Purchase-order referencing, payables, and vendor reporting.",
+      "synonyms": ["Vendor code"],
+      "notes": "Inferred from supplier management.",
+      "status": "draft"
+    },
+    {
+      "term": "Customer identifier",
+      "term_type": "identifier",
+      "definition": "A unique key assigned to a known customer, often linked to a loyalty card or account registration.",
+      "business_usage": "Transaction linking, customer service, and CRM.",
+      "synonyms": ["Customer ID", "Loyalty number"],
+      "notes": "Inferred from selling to customers.",
+      "status": "draft"
+    },
+    {
+      "term": "Order status",
+      "term_type": "status",
+      "definition": "The current state of an order in its lifecycle—placed, confirmed, picking, shipped, delivered, returned, or cancelled.",
+      "business_usage": "Customer service, fulfilment dashboards, and SLA tracking.",
+      "synonyms": [],
+      "notes": "Inferred from managing deliveries, returns, and financial monitoring of orders.",
+      "status": "draft"
+    },
+    {
+      "term": "Payment status",
+      "term_type": "status",
+      "definition": "The settlement state of a payment—pending, authorised, captured, refunded, or failed.",
+      "business_usage": "Financial reconciliation, exception handling, and cash-position reporting.",
+      "synonyms": [],
+      "notes": "Inferred from monitoring financial activity related to payments.",
+      "status": "draft"
+    },
+    {
+      "term": "Delivery status",
+      "term_type": "status",
+      "definition": "The tracking state of a shipment—dispatched, in transit, out for delivery, delivered, or failed.",
+      "business_usage": "Customer communication, carrier SLA monitoring, and exception management.",
+      "synonyms": ["Shipment status"],
+      "notes": "Inferred from managing deliveries.",
+      "status": "draft"
+    },
+    {
+      "term": "Return status",
+      "term_type": "status",
+      "definition": "The processing state of a return—initiated, received, inspected, restocked, or refunded.",
+      "business_usage": "Reverse-logistics tracking and customer-service SLAs.",
+      "synonyms": [],
+      "notes": "Inferred from managing returns.",
+      "status": "draft"
+    },
+    {
+      "term": "Inventory status",
+      "term_type": "status",
+      "definition": "A qualifier on stock indicating its availability—available, reserved, in transit, damaged, or quarantined.",
+      "business_usage": "Available-to-promise calculations and warehouse operations.",
+      "synonyms": ["Stock status"],
+      "notes": "Inferred from tracking inventory by product and location.",
+      "status": "draft"
+    },
+    {
+      "term": "Order-payment relationship",
+      "term_type": "relationship",
+      "definition": "The linkage between an order and one or more payments that settle it, supporting reconciliation and revenue recognition.",
+      "business_usage": "Cash application, payment matching, and financial close.",
+      "synonyms": [],
+      "notes": "",
+      "status": "draft"
+    },
+    {
+      "term": "Supplier-purchase relationship",
+      "term_type": "relationship",
+      "definition": "The linkage between suppliers and the purchases placed with them, including delivery and payment obligations.",
+      "business_usage": "Vendor management, payables scheduling, and supply-chain reporting.",
+      "synonyms": [],
+      "notes": "",
+      "status": "draft"
+    },
+    {
+      "term": "Product-inventory relationship",
+      "term_type": "relationship",
+      "definition": "The association between a product and its stock positions across locations, enabling availability and replenishment logic.",
+      "business_usage": "Stock queries, allocation, and availability-to-promise.",
+      "synonyms": [],
+      "notes": "",
+      "status": "draft"
+    },
+    {
+      "term": "Customer-order relationship",
+      "term_type": "relationship",
+      "definition": "The association between a customer and their orders, enabling purchase history, loyalty accrual, and service enquiries.",
+      "business_usage": "CRM, customer lifetime value, and returns eligibility.",
+      "synonyms": [],
+      "notes": "Inferred from selling goods to customers.",
+      "status": "draft"
+    },
+    {
+      "term": "Order-delivery relationship",
+      "term_type": "relationship",
+      "definition": "The association between an order (or order lines) and the delivery or shipments that fulfil it, enabling tracking and split-shipment handling.",
+      "business_usage": "Fulfilment monitoring, customer notifications, and SLA compliance.",
+      "synonyms": [],
+      "notes": "Inferred from managing deliveries against orders.",
+      "status": "draft"
+    },
+    {
+      "term": "Return-order relationship",
+      "term_type": "relationship",
+      "definition": "The link between a return and its originating order, enabling refund calculation, restocking decisions, and root-cause attribution.",
+      "business_usage": "Returns processing, customer service, and product-quality feedback loops.",
+      "synonyms": [],
+      "notes": "Inferred from managing returns tied to prior sales.",
+      "status": "draft"
+    },
+    {
+      "term": "Invoice-purchase order relationship",
+      "term_type": "relationship",
+      "definition": "The match between a supplier invoice and its corresponding purchase order and goods receipt, validating amounts before payment.",
+      "business_usage": "Three-way match, accounts payable, and dispute resolution.",
+      "synonyms": [],
+      "notes": "Inferred from procurement and financial monitoring.",
+      "status": "draft"
+    }
+  ]
+}

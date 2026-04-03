@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 
 from openpyxl import Workbook
+from openpyxl.worksheet.datavalidation import DataValidation
 from openpyxl.styles import Alignment, Font, PatternFill
 
 
@@ -13,18 +14,13 @@ EXPECTED_HEADERS = [
     "definition",
     "business_usage",
     "synonyms",
-    "source_tables",
-    "source_columns",
-    "confidence",
-    "confidence_tier",
-    "inference_basis",
-    "source_refs",
     "notes",
     "status",
 ]
 
 HEADER_FILL = PatternFill(fill_type="solid", start_color="1F4E78", end_color="1F4E78")
 HEADER_FONT = Font(color="FFFFFF", bold=True)
+STATUS_VALUES = ["draft", "approved", "rejected"]
 
 
 def _list_to_text(value):
@@ -50,7 +46,7 @@ def normalize_payload(payload):
     for index, entry in enumerate(entries, start=1):
         if not isinstance(entry, dict):
             raise ValueError(f"Glossary entry {index} must be an object.")
-        normalized = {header: entry.get(header, "" if header not in {"synonyms", "source_tables", "source_columns", "source_refs"} else []) for header in EXPECTED_HEADERS}
+        normalized = {header: entry.get(header, "" if header != "synonyms" else []) for header in EXPECTED_HEADERS}
         normalized_entries.append(normalized)
     return {"metadata": metadata, "entries": normalized_entries}
 
@@ -63,6 +59,20 @@ def _autofit(ws):
             value = "" if cell.value is None else str(cell.value)
             max_length = max(max_length, len(value))
         ws.column_dimensions[letter].width = min(max(max_length + 2, 12), 60)
+
+
+def _apply_status_dropdown(ws):
+    status_col_idx = EXPECTED_HEADERS.index("status") + 1
+    status_col_letter = ws.cell(row=1, column=status_col_idx).column_letter
+    validation = DataValidation(
+        type="list",
+        formula1='"' + ",".join(STATUS_VALUES) + '"',
+        allow_blank=True,
+    )
+    validation.prompt = "Select glossary review status"
+    validation.error = "Choose one of: draft, approved, rejected."
+    ws.add_data_validation(validation)
+    validation.add(f"{status_col_letter}2:{status_col_letter}1048576")
 
 
 def write_workbook(payload, output_path):
@@ -79,12 +89,6 @@ def write_workbook(payload, output_path):
                 entry["definition"],
                 entry["business_usage"],
                 _list_to_text(entry["synonyms"]),
-                _list_to_text(entry["source_tables"]),
-                _list_to_text(entry["source_columns"]),
-                entry["confidence"],
-                entry["confidence_tier"],
-                entry["inference_basis"],
-                _list_to_text(entry["source_refs"]),
                 entry["notes"],
                 entry["status"],
             ]
@@ -101,6 +105,7 @@ def write_workbook(payload, output_path):
 
     ws.freeze_panes = "A2"
     ws.auto_filter.ref = ws.dimensions
+    _apply_status_dropdown(ws)
     _autofit(ws)
 
     meta_ws = wb.create_sheet("RunMetadata")

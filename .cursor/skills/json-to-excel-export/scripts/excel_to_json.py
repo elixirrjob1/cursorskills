@@ -578,6 +578,7 @@ def _apply_columns_row(col, row):
     _set_if_changed(col, "null_count", row.get("null_count"), parser=lambda v: _coerce_like(col.get("null_count"), v))
     _set_if_changed(col, "data_category", row.get("data_category"))
     _set_if_changed(col, "semantic_class", row.get("semantic_class"))
+    _set_if_changed(col, "glossary_terms", row.get("glossary_terms"), parser=_split_csv)
     description_value = row.get("column_description")
     if _is_blank(description_value):
         description_value = row.get("description")
@@ -995,6 +996,8 @@ def _apply_table_sheet_overview(table, row):
     ):
         if field in row:
             _set_if_changed(table, field, row.get(field), parser=_split_csv)
+    if "glossary_terms" in row:
+        _set_if_changed(table, "glossary_terms", row.get("glossary_terms"), parser=_split_csv)
     _set_if_changed(table, "table_description", row.get("table_description"))
 
     for sheet_key, json_key in {

@@ -1,0 +1,3 @@
+interface:
+  display_name: "OpenMetadata Sync"
+  short_description: "Configure database sync and apply glossary or classification metadata in OpenMetadata"

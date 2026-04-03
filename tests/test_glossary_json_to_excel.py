@@ -24,14 +24,13 @@ export_module = _load_module("glossary_json_to_excel", SCRIPT_PATH)
 class GlossaryJsonToExcelTests(unittest.TestCase):
     def test_normalize_payload_fills_expected_columns(self):
         payload = {
-            "metadata": {"source_schema_json": "schema.json"},
+            "metadata": {"source_description_path": "domain.txt"},
             "entries": [
                 {
                     "term": "Customer",
                     "term_type": "business_entity",
                     "definition": "Customer master record.",
                     "business_usage": "Used in sales reporting.",
-                    "source_refs": ["customers.customer_id"],
                 }
             ],
         }
@@ -45,7 +44,7 @@ class GlossaryJsonToExcelTests(unittest.TestCase):
     def test_run_writes_expected_workbook(self):
         payload = {
             "metadata": {
-                "source_schema_json": "schema.json",
+                "source_description_path": "domain.txt",
                 "generation_mode": "agent_authored",
             },
             "entries": [
@@ -55,14 +54,8 @@ class GlossaryJsonToExcelTests(unittest.TestCase):
                     "definition": "Customer sales transaction header.",
                     "business_usage": "Used to track sales lifecycle and order totals.",
                     "synonyms": ["Order"],
-                    "source_tables": ["sales_orders"],
-                    "source_columns": ["sales_order_id", "status", "total_amount"],
-                    "confidence": 0.92,
-                    "confidence_tier": "high",
-                    "inference_basis": "Derived from table description and columns.",
-                    "source_refs": ["sales_orders.status", "sales_orders.total_amount"],
                     "notes": "",
-                    "status": "confirmed_from_schema",
+                    "status": "draft",
                 }
             ],
         }
@@ -71,11 +64,15 @@ class GlossaryJsonToExcelTests(unittest.TestCase):
             input_path = Path(tmpdir) / "glossary.json"
             input_path.write_text(json.dumps(payload), encoding="utf-8")
             output_path = export_module.run(input_path)
-            wb = load_workbook(output_path, data_only=True)
+            wb = load_workbook(output_path)
             self.assertEqual(wb.sheetnames, ["Glossary", "RunMetadata"])
             headers = [cell.value for cell in wb["Glossary"][1]]
             self.assertEqual(headers, export_module.EXPECTED_HEADERS)
             self.assertEqual(wb["Glossary"]["A2"].value, "Sales Order")
+            validations = list(wb["Glossary"].data_validations.dataValidation)
+            self.assertEqual(len(validations), 1)
+            self.assertEqual(validations[0].formula1, '"draft,approved,rejected"')
+            self.assertIn("G2", str(validations[0].sqref))
 
 
 if __name__ == "__main__":

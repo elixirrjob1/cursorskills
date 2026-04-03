@@ -11,6 +11,10 @@ from openpyxl.styles import Alignment, Font, PatternFill
 
 _GLOSSARY_ROWS = [
     {
+        "Field": "glossary_terms",
+        "Description": "Comma-separated OpenMetadata glossary term FQNs assigned to the table or column.",
+    },
+    {
         "Field": "semantic_class",
         "Description": "Specific meaning inferred for the column, such as email, timestamp, given_name, or customer_identifier.",
     },
@@ -485,6 +489,7 @@ def _table_overview_row(table):
         "has_sensitive_fields": table.get("has_sensitive_fields", ""),
         "cdc_enabled": table.get("cdc_enabled", ""),
         "table_description": table.get("table_description", ""),
+        "glossary_terms": _join_list(table.get("glossary_terms", [])),
         "classification_summary_json": _compact_json(table.get("classification_summary")),
         "unit_summary_json": _compact_json(table.get("unit_summary")),
         "row_count_projection_1y": table.get("row_count_projection_1y", ""),
@@ -533,6 +538,7 @@ def _column_rows(table):
                 "data_category": column.get("data_category", ""),
                 "semantic_class": column.get("semantic_class", ""),
                 "column_description": column.get("column_description", column.get("description", "")),
+                "glossary_terms": _join_list(column.get("glossary_terms", [])),
                 "concept_id": column.get("concept_id", ""),
                 "concept_confidence": column.get("concept_confidence", ""),
                 "concept_alias_group": column.get("concept_alias_group", ""),

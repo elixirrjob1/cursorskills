@@ -751,6 +751,241 @@ def _build_description_generator() -> AzureDescriptionGenerator:
     return AzureDescriptionGenerator()
 
 
+# ============================================================================
+# Glossary term assignment via Azure OpenAI
+# ============================================================================
+
+
+def fetch_openmetadata_glossary_terms() -> List[Dict[str, Any]]:
+    """Fetch all glossary terms from OpenMetadata and normalize to a flat list."""
+    try:
+        response = _openmetadata_request("GET", "glossaryTerms", params={"limit": 1000, "fields": "tags"})
+    except Exception as exc:
+        logger.warning("Could not fetch OpenMetadata glossary terms: %s", exc)
+        return []
+    raw_terms = (response.get("data") or []) if isinstance(response, dict) else []
+    terms: List[Dict[str, Any]] = []
+    for item in raw_terms:
+        if not isinstance(item, dict):
+            continue
+        fqn = str(item.get("fullyQualifiedName") or "").strip()
+        if not fqn:
+            continue
+        terms.append({
+            "fqn": fqn,
+            "name": str(item.get("name") or "").strip(),
+            "display_name": str(item.get("displayName") or "").strip(),
+            "description": str(item.get("description") or "").strip(),
+            "synonyms": [str(s).strip() for s in (item.get("synonyms") or []) if str(s).strip()],
+        })
+    return terms
+
+
+def _tokenize_for_overlap(text: str) -> Set[str]:
+    """Split text into lowercase tokens for overlap scoring."""
+    return {t for t in re.split(r"[_\s\-./]+", str(text or "").lower()) if len(t) > 1}
+
+
+def _shortlist_glossary_candidates(
+    *,
+    glossary_terms: List[Dict[str, Any]],
+    context_tokens: Set[str],
+    top_n: int = 10,
+) -> List[Dict[str, Any]]:
+    """Return the top-N glossary terms ranked by token overlap with context."""
+    if not glossary_terms or not context_tokens:
+        return glossary_terms[:top_n] if glossary_terms else []
+
+    scored: List[tuple[float, int, Dict[str, Any]]] = []
+    for idx, term in enumerate(glossary_terms):
+        term_tokens: Set[str] = set()
+        term_tokens |= _tokenize_for_overlap(term.get("name", ""))
+        term_tokens |= _tokenize_for_overlap(term.get("display_name", ""))
+        term_tokens |= _tokenize_for_overlap(term.get("description", ""))
+        for syn in term.get("synonyms") or []:
+            term_tokens |= _tokenize_for_overlap(syn)
+        overlap = len(term_tokens & context_tokens)
+        if overlap > 0:
+            scored.append((overlap, idx, term))
+
+    scored.sort(key=lambda x: (-x[0], x[1]))
+    return [entry[2] for entry in scored[:top_n]]
+
+
+def shortlist_glossary_terms_for_table(
+    *,
+    glossary_terms: List[Dict[str, Any]],
+    schema_name: str,
+    table_name: str,
+    table_description: str,
+    columns: List[Dict[str, Any]],
+    top_n: int = 10,
+) -> List[Dict[str, Any]]:
+    """Build context tokens from table metadata and return top-N glossary candidates."""
+    tokens: Set[str] = set()
+    tokens |= _tokenize_for_overlap(schema_name)
+    tokens |= _tokenize_for_overlap(table_name)
+    tokens |= _tokenize_for_overlap(table_description)
+    for col in columns:
+        tokens |= _tokenize_for_overlap(col.get("name", ""))
+        tokens |= _tokenize_for_overlap(col.get("column_description", ""))
+        tokens |= _tokenize_for_overlap(col.get("semantic_class", ""))
+    return _shortlist_glossary_candidates(glossary_terms=glossary_terms, context_tokens=tokens, top_n=top_n)
+
+
+def shortlist_glossary_terms_for_column(
+    *,
+    glossary_terms: List[Dict[str, Any]],
+    schema_name: str,
+    table_name: str,
+    table_description: str,
+    column_name: str,
+    data_type: str,
+    column_description: str,
+    semantic_class: str,
+    top_n: int = 10,
+) -> List[Dict[str, Any]]:
+    """Build context tokens from column metadata and return top-N glossary candidates."""
+    tokens: Set[str] = set()
+    tokens |= _tokenize_for_overlap(schema_name)
+    tokens |= _tokenize_for_overlap(table_name)
+    tokens |= _tokenize_for_overlap(table_description)
+    tokens |= _tokenize_for_overlap(column_name)
+    tokens |= _tokenize_for_overlap(data_type)
+    tokens |= _tokenize_for_overlap(column_description)
+    tokens |= _tokenize_for_overlap(semantic_class)
+    return _shortlist_glossary_candidates(glossary_terms=glossary_terms, context_tokens=tokens, top_n=top_n)
+
+
+class AzureGlossaryAssigner:
+    """Assigns glossary term FQNs to tables and columns using Azure OpenAI."""
+
+    _SYSTEM_PROMPT = (
+        "You assign business glossary terms to database objects. "
+        "Choose only from the provided candidate terms. "
+        "Return only term FQNs. Return [] if uncertain. "
+        "Prefer precision over recall. "
+        "Multiple terms are allowed only when clearly justified."
+    )
+
+    def __init__(self, generator: AzureDescriptionGenerator) -> None:
+        self._generator = generator
+
+    def is_available(self) -> bool:
+        return self._generator.is_available()
+
+    def _call_llm(self, messages: List[Dict[str, str]]) -> List[str]:
+        if not self.is_available():
+            return []
+        response = self._generator._client.chat.completions.create(
+            model=self._generator.deployment,
+            messages=messages,
+            temperature=0.0,
+            top_p=1.0,
+        )
+        choices = getattr(response, "choices", []) or []
+        if not choices:
+            return []
+        message = getattr(choices[0], "message", None)
+        content = getattr(message, "content", "") if message else ""
+        content = str(content or "").strip()
+        if not content:
+            return []
+        try:
+            parsed = json.loads(content)
+        except json.JSONDecodeError:
+            match = re.search(r"\{[^}]*\}", content, re.DOTALL)
+            if match:
+                try:
+                    parsed = json.loads(match.group())
+                except json.JSONDecodeError:
+                    return []
+            else:
+                return []
+        if isinstance(parsed, dict):
+            terms = parsed.get("glossary_terms", [])
+        elif isinstance(parsed, list):
+            terms = parsed
+        else:
+            return []
+        return [str(t).strip() for t in terms if isinstance(t, str) and str(t).strip()]
+
+    @staticmethod
+    def _format_candidates(candidates: List[Dict[str, Any]]) -> str:
+        items = []
+        for c in candidates:
+            parts = [f"fqn: {c['fqn']}", f"name: {c.get('name', '')}"]
+            if c.get("display_name"):
+                parts.append(f"display_name: {c['display_name']}")
+            if c.get("description"):
+                parts.append(f"description: {c['description']}")
+            if c.get("synonyms"):
+                parts.append(f"synonyms: {', '.join(c['synonyms'])}")
+            items.append(" | ".join(parts))
+        return "\n".join(items)
+
+    def assign_table(
+        self,
+        *,
+        schema_name: str,
+        table_name: str,
+        table_description: str,
+        columns: List[Dict[str, Any]],
+        candidates: List[Dict[str, Any]],
+    ) -> List[str]:
+        if not candidates:
+            return []
+        col_summary = ", ".join(
+            f"{c.get('name', '')} ({c.get('semantic_class', '')})" for c in columns[:20]
+        )
+        user_prompt = "\n".join([
+            "Assign glossary terms to this TABLE. Return JSON: {\"glossary_terms\": [\"FQN\", ...]} or {\"glossary_terms\": []}.",
+            f"Schema: {schema_name}",
+            f"Table: {table_name}",
+            f"Description: {table_description or '(none)'}",
+            f"Columns: {col_summary}",
+            "",
+            "Candidate glossary terms:",
+            self._format_candidates(candidates),
+        ])
+        return self._call_llm([
+            {"role": "system", "content": self._SYSTEM_PROMPT},
+            {"role": "user", "content": user_prompt},
+        ])
+
+    def assign_column(
+        self,
+        *,
+        schema_name: str,
+        table_name: str,
+        table_description: str,
+        column_name: str,
+        data_type: str,
+        column_description: str,
+        semantic_class: str,
+        candidates: List[Dict[str, Any]],
+    ) -> List[str]:
+        if not candidates:
+            return []
+        user_prompt = "\n".join([
+            "Assign glossary terms to this COLUMN. Return JSON: {\"glossary_terms\": [\"FQN\", ...]} or {\"glossary_terms\": []}.",
+            f"Schema: {schema_name}",
+            f"Table: {table_name}",
+            f"Table description: {table_description or '(none)'}",
+            f"Column: {column_name}",
+            f"Data type: {data_type}",
+            f"Description: {column_description or '(none)'}",
+            f"Semantic class: {semantic_class or '(unknown)'}",
+            "",
+            "Candidate glossary terms:",
+            self._format_candidates(candidates),
+        ])
+        return self._call_llm([
+            {"role": "system", "content": self._SYSTEM_PROMPT},
+            {"role": "user", "content": user_prompt},
+        ])
+
+
 def _default_row_count_projections(row_count: int) -> Dict[str, int]:
     safe_row_count = int(row_count or 0)
     return {
@@ -3076,6 +3311,15 @@ def build_source_system_document(
             table_names=tables,
         )
         description_generator = _build_description_generator() if generate_missing_descriptions else None
+        glossary_assigner: Optional[AzureGlossaryAssigner] = None
+        all_glossary_terms: List[Dict[str, Any]] = []
+        if description_generator and description_generator.is_available():
+            all_glossary_terms = fetch_openmetadata_glossary_terms()
+            if all_glossary_terms:
+                glossary_assigner = AzureGlossaryAssigner(description_generator)
+                logger.info("Loaded %d glossary terms for LLM-based assignment", len(all_glossary_terms))
+            else:
+                logger.info("No glossary terms found in OpenMetadata; skipping LLM glossary assignment")
         _collect_projection_inputs(engine, schema, config)
         projection_lookup = _direct_history_projection_lookup(engine, schema, tables, row_counts)
         stored_projection_lookup = _projection_lookup(engine, config)
@@ -3272,6 +3516,57 @@ def build_source_system_document(
                                 fk_columns,
                                 raw_table_description,
                             )
+
+                if glossary_assigner and glossary_assigner.is_available() and all_glossary_terms:
+                    try:
+                        table_candidates = shortlist_glossary_terms_for_table(
+                            glossary_terms=all_glossary_terms,
+                            schema_name=table_schema,
+                            table_name=table_name,
+                            table_description=str(table_entry.get("table_description") or ""),
+                            columns=enriched_columns,
+                        )
+                        assigned = glossary_assigner.assign_table(
+                            schema_name=table_schema,
+                            table_name=table_name,
+                            table_description=str(table_entry.get("table_description") or ""),
+                            columns=enriched_columns,
+                            candidates=table_candidates,
+                        )
+                        if assigned:
+                            table_entry["glossary_terms"] = assigned
+                            logger.info("Assigned %d glossary term(s) to table %s.%s", len(assigned), table_schema, table_name)
+
+                        for col_dict in enriched_columns:
+                            col_candidates = shortlist_glossary_terms_for_column(
+                                glossary_terms=all_glossary_terms,
+                                schema_name=table_schema,
+                                table_name=table_name,
+                                table_description=str(table_entry.get("table_description") or ""),
+                                column_name=str(col_dict.get("name") or ""),
+                                data_type=str(col_dict.get("type") or ""),
+                                column_description=str(col_dict.get("column_description") or ""),
+                                semantic_class=str(col_dict.get("semantic_class") or ""),
+                            )
+                            col_assigned = glossary_assigner.assign_column(
+                                schema_name=table_schema,
+                                table_name=table_name,
+                                table_description=str(table_entry.get("table_description") or ""),
+                                column_name=str(col_dict.get("name") or ""),
+                                data_type=str(col_dict.get("type") or ""),
+                                column_description=str(col_dict.get("column_description") or ""),
+                                semantic_class=str(col_dict.get("semantic_class") or ""),
+                                candidates=col_candidates,
+                            )
+                            if col_assigned:
+                                col_dict["glossary_terms"] = col_assigned
+                                logger.info(
+                                    "Assigned %d glossary term(s) to column %s.%s.%s",
+                                    len(col_assigned), table_schema, table_name, col_dict.get("name"),
+                                )
+                    except Exception as exc:
+                        logger.warning("Glossary assignment failed for table %s.%s: %s", table_schema, table_name, exc)
+
                 enriched_tables.append(table_entry)
             except Exception as e:
                 logger.warning(f"Skipped table '{table_name}': {e}")

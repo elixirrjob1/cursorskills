@@ -781,81 +781,6 @@ def fetch_openmetadata_glossary_terms() -> List[Dict[str, Any]]:
     return terms
 
 
-def _tokenize_for_overlap(text: str) -> Set[str]:
-    """Split text into lowercase tokens for overlap scoring."""
-    return {t for t in re.split(r"[_\s\-./]+", str(text or "").lower()) if len(t) > 1}
-
-
-def _shortlist_glossary_candidates(
-    *,
-    glossary_terms: List[Dict[str, Any]],
-    context_tokens: Set[str],
-    top_n: int = 10,
-) -> List[Dict[str, Any]]:
-    """Return the top-N glossary terms ranked by token overlap with context."""
-    if not glossary_terms or not context_tokens:
-        return glossary_terms[:top_n] if glossary_terms else []
-
-    scored: List[tuple[float, int, Dict[str, Any]]] = []
-    for idx, term in enumerate(glossary_terms):
-        term_tokens: Set[str] = set()
-        term_tokens |= _tokenize_for_overlap(term.get("name", ""))
-        term_tokens |= _tokenize_for_overlap(term.get("display_name", ""))
-        term_tokens |= _tokenize_for_overlap(term.get("description", ""))
-        for syn in term.get("synonyms") or []:
-            term_tokens |= _tokenize_for_overlap(syn)
-        overlap = len(term_tokens & context_tokens)
-        if overlap > 0:
-            scored.append((overlap, idx, term))
-
-    scored.sort(key=lambda x: (-x[0], x[1]))
-    return [entry[2] for entry in scored[:top_n]]
-
-
-def shortlist_glossary_terms_for_table(
-    *,
-    glossary_terms: List[Dict[str, Any]],
-    schema_name: str,
-    table_name: str,
-    table_description: str,
-    columns: List[Dict[str, Any]],
-    top_n: int = 10,
-) -> List[Dict[str, Any]]:
-    """Build context tokens from table metadata and return top-N glossary candidates."""
-    tokens: Set[str] = set()
-    tokens |= _tokenize_for_overlap(schema_name)
-    tokens |= _tokenize_for_overlap(table_name)
-    tokens |= _tokenize_for_overlap(table_description)
-    for col in columns:
-        tokens |= _tokenize_for_overlap(col.get("name", ""))
-        tokens |= _tokenize_for_overlap(col.get("column_description", ""))
-        tokens |= _tokenize_for_overlap(col.get("semantic_class", ""))
-    return _shortlist_glossary_candidates(glossary_terms=glossary_terms, context_tokens=tokens, top_n=top_n)
-
-
-def shortlist_glossary_terms_for_column(
-    *,
-    glossary_terms: List[Dict[str, Any]],
-    schema_name: str,
-    table_name: str,
-    table_description: str,
-    column_name: str,
-    data_type: str,
-    column_description: str,
-    semantic_class: str,
-    top_n: int = 10,
-) -> List[Dict[str, Any]]:
-    """Build context tokens from column metadata and return top-N glossary candidates."""
-    tokens: Set[str] = set()
-    tokens |= _tokenize_for_overlap(schema_name)
-    tokens |= _tokenize_for_overlap(table_name)
-    tokens |= _tokenize_for_overlap(table_description)
-    tokens |= _tokenize_for_overlap(column_name)
-    tokens |= _tokenize_for_overlap(data_type)
-    tokens |= _tokenize_for_overlap(column_description)
-    tokens |= _tokenize_for_overlap(semantic_class)
-    return _shortlist_glossary_candidates(glossary_terms=glossary_terms, context_tokens=tokens, top_n=top_n)
-
 
 class AzureGlossaryAssigner:
     """Assigns glossary term FQNs to tables and columns using Azure OpenAI."""
@@ -3519,35 +3444,27 @@ def build_source_system_document(
 
                 if glossary_assigner and glossary_assigner.is_available() and all_glossary_terms:
                     try:
-                        table_candidates = shortlist_glossary_terms_for_table(
-                            glossary_terms=all_glossary_terms,
-                            schema_name=table_schema,
-                            table_name=table_name,
-                            table_description=str(table_entry.get("table_description") or ""),
-                            columns=enriched_columns,
-                        )
-                        assigned = glossary_assigner.assign_table(
-                            schema_name=table_schema,
-                            table_name=table_name,
-                            table_description=str(table_entry.get("table_description") or ""),
-                            columns=enriched_columns,
-                            candidates=table_candidates,
-                        )
-                        if assigned:
-                            table_entry["glossary_terms"] = assigned
-                            logger.info("Assigned %d glossary term(s) to table %s.%s", len(assigned), table_schema, table_name)
-
-                        for col_dict in enriched_columns:
-                            col_candidates = shortlist_glossary_terms_for_column(
-                                glossary_terms=all_glossary_terms,
+                        if not table_entry.get("glossary_terms"):
+                            assigned = glossary_assigner.assign_table(
                                 schema_name=table_schema,
                                 table_name=table_name,
                                 table_description=str(table_entry.get("table_description") or ""),
-                                column_name=str(col_dict.get("name") or ""),
-                                data_type=str(col_dict.get("type") or ""),
-                                column_description=str(col_dict.get("column_description") or ""),
-                                semantic_class=str(col_dict.get("semantic_class") or ""),
+                                columns=enriched_columns,
+                                candidates=all_glossary_terms,
                             )
+                            if assigned:
+                                table_entry["glossary_terms"] = assigned
+                                logger.info("Assigned %d glossary term(s) to table %s.%s", len(assigned), table_schema, table_name)
+                        else:
+                            logger.info("Table %s.%s already tagged; skipping LLM glossary assignment", table_schema, table_name)
+
+                        for col_dict in enriched_columns:
+                            if col_dict.get("glossary_terms"):
+                                logger.info(
+                                    "Column %s.%s.%s already tagged; skipping LLM glossary assignment",
+                                    table_schema, table_name, col_dict.get("name"),
+                                )
+                                continue
                             col_assigned = glossary_assigner.assign_column(
                                 schema_name=table_schema,
                                 table_name=table_name,
@@ -3556,7 +3473,7 @@ def build_source_system_document(
                                 data_type=str(col_dict.get("type") or ""),
                                 column_description=str(col_dict.get("column_description") or ""),
                                 semantic_class=str(col_dict.get("semantic_class") or ""),
-                                candidates=col_candidates,
+                                candidates=all_glossary_terms,
                             )
                             if col_assigned:
                                 col_dict["glossary_terms"] = col_assigned

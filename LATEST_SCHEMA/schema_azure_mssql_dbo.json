@@ -1,6 +1,6 @@
 {
   "metadata": {
-    "generated_at": "2026-04-07T08:55:59.245988+00:00",
+    "generated_at": "2026-04-07T10:07:13.375975+00:00",
     "database_url": "pioneertest.database.windows.net:1433/free-sql-db-3300567?driver=ODBC+Driver+18+for+SQL+Server&TrustServerCertificate=yes",
     "schema_filter": "dbo",
     "total_tables": 10,
@@ -399,7 +399,7 @@
           "type": "bigint",
           "nullable": false,
           "is_incremental": false,
-          "column_description": "Unique identifier for each customer in the retail operations system.",
+          "column_description": "Unique identifier for each customer in the retail operations system, serving as the primary key for the customers table.",
           "glossary_terms": [
             "RetailDomainGlossary.CustomerIdentifier"
           ],
@@ -432,7 +432,7 @@
           "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
           "nullable": false,
           "is_incremental": false,
-          "column_description": "Stores the given name of a customer as a non-null Unicode string.",
+          "column_description": "Stores the given name of a customer as a non-null, case-insensitive Unicode string.",
           "glossary_terms": [],
           "cardinality": 100,
           "null_count": 0,
@@ -463,9 +463,7 @@
           "nullable": false,
           "is_incremental": false,
           "column_description": "The \"last_name\" column in the \"customers\" table stores the non-nullable family name of a customer as a case-insensitive Unicode string.",
-          "glossary_terms": [
-            "RetailDomainGlossary.Customer"
-          ],
+          "glossary_terms": [],
           "cardinality": 100,
           "null_count": 0,
           "data_range": {
@@ -494,7 +492,7 @@
           "type": "nvarchar(450)",
           "nullable": true,
           "is_incremental": false,
-          "column_description": "Stores the email address of the customer, allowing null values for cases where an email is not provided.",
+          "column_description": "Stores the email address of the customer, allowing null values, with a maximum length of 450 characters.",
           "glossary_terms": [],
           "cardinality": 100,
           "null_count": 0,
@@ -599,7 +597,7 @@
           "type": "datetime2",
           "nullable": false,
           "is_incremental": true,
-          "column_description": "Tracks the timestamp of the most recent update to a customer record, ensuring accurate audit and change history.",
+          "column_description": "The `updated_at` column in the `customers` table stores the non-nullable timestamp of the most recent update to a customer's record.",
           "glossary_terms": [],
           "column_timezone": "(UTC) Coordinated Universal Time",
           "cardinality": 95,
@@ -630,8 +628,9 @@
           "concept_alias_group": "updated_at"
         }
       ],
-      "table_description": "The \"customers\" table stores information about retail customers, including their unique ID, name, contact details, and timestamps for record creation and updates.",
+      "table_description": "The \"customers\" table stores information about retail system customers, including unique identifiers, names, contact details, and timestamps for record creation and updates.",
       "glossary_terms": [
+        "RetailDomainGlossary.Customer",
         "RetailDomainGlossary.CustomerIdentifier"
       ],
       "primary_keys": [
@@ -790,8 +789,10 @@
           "type": "bigint",
           "nullable": false,
           "is_incremental": false,
-          "column_description": "Identifies the store where the employee is assigned, referencing the `store_id` column in the `stores` table.",
-          "glossary_terms": [],
+          "column_description": "Associates each employee with a specific store, referencing the unique identifier in the `stores.store_id` column.",
+          "glossary_terms": [
+            "RetailDomainGlossary.StoreLocation"
+          ],
           "cardinality": 5,
           "null_count": 0,
           "data_range": {
@@ -820,7 +821,7 @@
           "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
           "nullable": false,
           "is_incremental": false,
-          "column_description": "Stores the given name of an employee, represented as a non-null Unicode string.",
+          "column_description": "Stores the given name of an employee as a non-null Unicode string.",
           "glossary_terms": [],
           "cardinality": 20,
           "null_count": 0,
@@ -848,7 +849,7 @@
           "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
           "nullable": false,
           "is_incremental": false,
-          "column_description": "The \"last_name\" column in the \"employees\" table stores the non-nullable family name of each employee as a case-insensitive Unicode string.",
+          "column_description": "The \"last_name\" column in the \"employees\" table stores the non-nullable family name of an employee as a case-insensitive Unicode string.",
           "glossary_terms": [],
           "cardinality": 20,
           "null_count": 0,
@@ -909,7 +910,7 @@
           "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
           "nullable": false,
           "is_incremental": false,
-          "column_description": "Stores the job role or position of an employee within the organization, such as \"Cashier\" or \"Sales,\" as a non-null text value.",
+          "column_description": "Stores the job role or position of an employee within the organization, represented as a non-nullable text value.",
           "glossary_terms": [],
           "cardinality": 4,
           "null_count": 0,
@@ -939,7 +940,7 @@
           "type": "date",
           "nullable": false,
           "is_incremental": false,
-          "column_description": "The `hire_date` column in the `employees` table stores the non-nullable date an employee was hired, used for tracking employment start dates.",
+          "column_description": "The `hire_date` column in the `employees` table records the date an employee was hired, is mandatory, and uses the `date` data type.",
           "glossary_terms": [],
           "cardinality": 20,
           "null_count": 0,
@@ -1008,7 +1009,7 @@
           "type": "datetime2",
           "nullable": false,
           "is_incremental": true,
-          "column_description": "The `updated_at` column in the `employees` table stores the non-nullable timestamp of the most recent update to an employee record.",
+          "column_description": "Tracks the timestamp of the most recent update to an employee record, ensuring accurate audit trails for changes.",
           "glossary_terms": [],
           "column_timezone": "(UTC) Coordinated Universal Time",
           "cardinality": 20,
@@ -1039,8 +1040,13 @@
           "concept_alias_group": "updated_at"
         }
       ],
-      "table_description": "The `employees` table stores detailed information about retail system employees, including their unique identifiers, store assignments, personal details, job roles, hire dates, and record timestamps.",
-      "glossary_terms": [],
+      "table_description": "The `employees` table stores detailed information about retail system employees, including their unique identifiers, store associations, personal details, roles, hire dates, and record timestamps for creation and updates.",
+      "glossary_terms": [
+        "RetailDomainGlossary.Customer",
+        "RetailDomainGlossary.PhysicalStore",
+        "RetailDomainGlossary.Role",
+        "RetailDomainGlossary.Timestamp"
+      ],
       "primary_keys": [
         "employee_id"
       ],
@@ -1232,8 +1238,10 @@
           "type": "bigint",
           "nullable": false,
           "is_incremental": false,
-          "column_description": "Represents the unique identifier of the store associated with the inventory record, referencing the `store_id` column in the `stores` table.",
-          "glossary_terms": [],
+          "column_description": "Identifier linking inventory records to the associated store, referencing the `stores.store_id` column.",
+          "glossary_terms": [
+            "RetailDomainGlossary.StoreLocation"
+          ],
           "cardinality": 5,
           "null_count": 0,
           "data_range": {
@@ -1263,7 +1271,9 @@
           "nullable": false,
           "is_incremental": false,
           "column_description": "References the unique identifier of a product from the products table, linking inventory records to specific products.",
-          "glossary_terms": [],
+          "glossary_terms": [
+            "RetailDomainGlossary.Product"
+          ],
           "cardinality": 47,
           "null_count": 0,
           "data_range": {
@@ -1292,9 +1302,10 @@
           "type": "integer",
           "nullable": false,
           "is_incremental": false,
-          "column_description": "The `quantity_on_hand` column in the `inventory` table stores the current stock level of a product as a non-null integer.",
+          "column_description": "Tracks the current quantity of a product available in inventory, expressed as a non-null integer.",
           "glossary_terms": [
-            "RetailDomainGlossary.Inventory"
+            "RetailDomainGlossary.Inventory",
+            "RetailDomainGlossary.LocationLevelInventory"
           ],
           "cardinality": 68,
           "null_count": 0,
@@ -1368,9 +1379,7 @@
           "nullable": true,
           "is_incremental": false,
           "column_description": "The `last_restocked_at` column records the timestamp of the most recent restocking event for an inventory item, allowing null values if the item has not been restocked.",
-          "glossary_terms": [
-            "RetailDomainGlossary.Replenishment"
-          ],
+          "glossary_terms": [],
           "column_timezone": "(UTC) Coordinated Universal Time",
           "cardinality": 89,
           "null_count": 0,
@@ -1474,7 +1483,7 @@
           "type": "numeric(10,2)",
           "nullable": true,
           "is_incremental": false,
-          "column_description": "Represents the monetary value of inventory stock, stored as a numeric value with two decimal places, and may be null.",
+          "column_description": "Represents the monetary value of inventory stock, stored as a numeric value with up to 10 digits and 2 decimal places, and may be null.",
           "glossary_terms": [
             "RetailDomainGlossary.Inventory"
           ],
@@ -1523,7 +1532,8 @@
       "table_description": "Current stock levels with normalized stock unit representation.",
       "glossary_terms": [
         "RetailDomainGlossary.Inventory",
-        "RetailDomainGlossary.InventoryByProductAndLocation"
+        "RetailDomainGlossary.InventoryTracking",
+        "RetailDomainGlossary.UnitOfMeasure"
       ],
       "primary_keys": [
         "inventory_id"
@@ -1679,7 +1689,7 @@
           "is_incremental": false,
           "column_description": "Unique identifier for each product in the retail system, serving as the primary key for the products table.",
           "glossary_terms": [
-            "RetailDomainGlossary.Barcode"
+            "RetailDomainGlossary.Product"
           ],
           "cardinality": 50,
           "null_count": 0,
@@ -1712,7 +1722,7 @@
           "is_incremental": false,
           "column_description": "The `supplier_id` column in the `products` table is a non-nullable foreign key referencing the `supplier_id` column in the `suppliers` table, identifying the supplier associated with each product.",
           "glossary_terms": [
-            "RetailDomainGlossary.SupplierCode"
+            "RetailDomainGlossary.Supplier"
           ],
           "cardinality": 10,
           "null_count": 0,
@@ -1774,8 +1784,10 @@
           "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
           "nullable": false,
           "is_incremental": false,
-          "column_description": "Stores the name of the product as a non-null, case-insensitive Unicode string.",
-          "glossary_terms": [],
+          "column_description": "The \"name\" column in the \"products\" table stores the non-nullable name of each product as a Unicode string.",
+          "glossary_terms": [
+            "RetailDomainGlossary.Product"
+          ],
           "cardinality": 50,
           "null_count": 0,
           "data_range": {
@@ -1802,7 +1814,7 @@
           "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
           "nullable": false,
           "is_incremental": false,
-          "column_description": "Indicates the product's category classification, such as \"Books,\" \"Clothing,\" or \"Electronics,\" stored as a non-nullable nvarchar value.",
+          "column_description": "Indicates the product's category classification, such as \"Books,\" \"Clothing,\" or \"Electronics,\" stored as a non-null, case-insensitive text value.",
           "glossary_terms": [
             "RetailDomainGlossary.ProductCategory"
           ],
@@ -1835,7 +1847,7 @@
           "type": "numeric(10,2)",
           "nullable": false,
           "is_incremental": false,
-          "column_description": "The `unit_price` column stores the non-null selling price of a product as a numeric value with up to 10 digits and 2 decimal places, representing a currency amount.",
+          "column_description": "The `unit_price` column stores the selling price of a product as a non-null numeric value with up to 10 digits and 2 decimal places, representing a currency amount.",
           "glossary_terms": [
             "RetailDomainGlossary.SellingPrice"
           ],
@@ -1870,7 +1882,7 @@
           "type": "numeric(10,2)",
           "nullable": false,
           "is_incremental": false,
-          "column_description": "The `cost_price` column stores the non-null numeric cost amount (up to 10 digits with 2 decimal places) representing the purchase price of a product in the retail system.",
+          "column_description": "The `cost_price` column in the `products` table stores the non-null numeric value representing the purchase cost of a product in currency format with up to 10 digits and 2 decimal places.",
           "glossary_terms": [
             "RetailDomainGlossary.CostPrice"
           ],
@@ -2064,8 +2076,10 @@
           "type": "numeric(10,2)",
           "nullable": true,
           "is_incremental": false,
-          "column_description": "Represents the length measurement of a product in numeric format, allowing null values.",
-          "glossary_terms": [],
+          "column_description": "Represents the length measurement of a product, stored as a numeric value with up to two decimal places, and may be null if not applicable.",
+          "glossary_terms": [
+            "RetailDomainGlossary.UnitOfMeasure"
+          ],
           "cardinality": 0,
           "null_count": 50,
           "data_category": "continuous",
@@ -2129,9 +2143,7 @@
           "nullable": true,
           "is_incremental": false,
           "column_description": "Stores optional textual details about a product, such as features or specifications.",
-          "glossary_terms": [
-            "RetailDomainGlossary.Product"
-          ],
+          "glossary_terms": [],
           "cardinality": 0,
           "null_count": 50,
           "data_category": "nominal",
@@ -2157,7 +2169,7 @@
           "is_incremental": false,
           "column_description": "Primary supplier relationship used for join candidate detection.",
           "glossary_terms": [
-            "RetailDomainGlossary.SupplierPurchaseRelationship"
+            "RetailDomainGlossary.Supplier"
           ],
           "cardinality": 10,
           "null_count": 0,
@@ -2185,8 +2197,10 @@
       ],
       "table_description": "Master product catalog including physical units for analyzer unit-context testing.",
       "glossary_terms": [
-        "RetailDomainGlossary.Inventory",
-        "RetailDomainGlossary.SupplierCode"
+        "RetailDomainGlossary.Product",
+        "RetailDomainGlossary.ProductCategory",
+        "RetailDomainGlossary.CostPrice",
+        "RetailDomainGlossary.UnitOfMeasure"
       ],
       "primary_keys": [
         "product_id"
@@ -2378,9 +2392,7 @@
           "nullable": false,
           "is_incremental": false,
           "column_description": "Unique identifier for each purchase order item record in the `purchase_order_items` table.",
-          "glossary_terms": [
-            "RetailDomainGlossary.OrderLine"
-          ],
+          "glossary_terms": [],
           "cardinality": 246,
           "null_count": 0,
           "data_range": {
@@ -2410,7 +2422,7 @@
           "type": "bigint",
           "nullable": false,
           "is_incremental": false,
-          "column_description": "Represents the unique identifier of the associated purchase order, linking purchase order items to their parent purchase order in the `purchase_orders` table.",
+          "column_description": "Identifier linking each purchase order item to its associated purchase order in the `purchase_orders` table.",
           "glossary_terms": [
             "RetailDomainGlossary.PurchaseOrder"
           ],
@@ -2444,7 +2456,7 @@
           "is_incremental": false,
           "column_description": "Identifier linking each purchase order item to a specific product in the products table.",
           "glossary_terms": [
-            "RetailDomainGlossary.ProductCategory"
+            "RetailDomainGlossary.Product"
           ],
           "cardinality": 49,
           "null_count": 0,
@@ -2474,10 +2486,8 @@
           "type": "integer",
           "nullable": false,
           "is_incremental": false,
-          "column_description": "The `quantity` column in the `purchase_order_items` table stores the non-null integer value representing the number of units of a product included in a specific purchase order item.",
-          "glossary_terms": [
-            "RetailDomainGlossary.UnitOfMeasure"
-          ],
+          "column_description": "The \"quantity\" column in the \"purchase_order_items\" table stores the non-null integer value representing the number of units of a product included in a specific purchase order item.",
+          "glossary_terms": [],
           "cardinality": 41,
           "null_count": 0,
           "data_range": {
@@ -2555,7 +2565,7 @@
           "type": "datetime2",
           "nullable": false,
           "is_incremental": false,
-          "column_description": "The `created_at` column records the non-nullable timestamp indicating when each purchase order item record was created.",
+          "column_description": "Records the timestamp when a purchase order item entry is created, stored as a non-nullable datetime value.",
           "glossary_terms": [],
           "column_timezone": "(UTC) Coordinated Universal Time",
           "cardinality": 246,
@@ -2627,7 +2637,7 @@
           "is_incremental": false,
           "column_description": "The `ordered_qty_value` column stores the numeric quantity value (up to two decimal places) of items ordered in a purchase order, which can be null.",
           "glossary_terms": [
-            "RetailDomainGlossary.PurchaseOrder"
+            "RetailDomainGlossary.Quantity"
           ],
           "cardinality": 0,
           "null_count": 246,
@@ -2700,8 +2710,8 @@
       "table_description": "Line items with order quantities and explicit unit labels.",
       "glossary_terms": [
         "RetailDomainGlossary.OrderLine",
+        "RetailDomainGlossary.Quantity",
         "RetailDomainGlossary.UnitOfMeasure",
-        "RetailDomainGlossary.CostPrice",
         "RetailDomainGlossary.PurchaseOrder"
       ],
       "primary_keys": [
@@ -2892,7 +2902,7 @@
           "is_incremental": false,
           "column_description": "Identifies the supplier associated with a purchase order, referencing the `supplier_id` column in the `suppliers` table.",
           "glossary_terms": [
-            "RetailDomainGlossary.SupplierCode"
+            "RetailDomainGlossary.Supplier"
           ],
           "cardinality": 10,
           "null_count": 0,
@@ -2922,8 +2932,10 @@
           "type": "bigint",
           "nullable": false,
           "is_incremental": false,
-          "column_description": "Identifies the store associated with the purchase order, referencing the `store_id` column in the `stores` table.",
-          "glossary_terms": [],
+          "column_description": "Identifier for the store associated with the purchase order, referencing the `store_id` column in the `stores` table.",
+          "glossary_terms": [
+            "RetailDomainGlossary.StoreLocation"
+          ],
           "cardinality": 5,
           "null_count": 0,
           "data_range": {
@@ -2952,7 +2964,7 @@
           "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
           "nullable": false,
           "is_incremental": false,
-          "column_description": "Indicates the current state of a purchase order (e.g., \"Ordered,\" \"Received\") as a non-null categorical value.",
+          "column_description": "Indicates the current state of a purchase order (e.g., \"Ordered\", \"Received\"), stored as a non-nullable text category.",
           "glossary_terms": [
             "RetailDomainGlossary.OrderStatus"
           ],
@@ -2987,7 +2999,7 @@
           "type": "date",
           "nullable": false,
           "is_incremental": false,
-          "column_description": "The `order_date` column in the `purchase_orders` table records the date a purchase order was placed, is mandatory, and uses the `date` data type.",
+          "column_description": "The `order_date` column in the `purchase_orders` table records the date a purchase order was placed and cannot be null.",
           "glossary_terms": [],
           "cardinality": 123,
           "null_count": 0,
@@ -3022,9 +3034,7 @@
           "nullable": true,
           "is_incremental": false,
           "column_description": "The `expected_date` column in the `purchase_orders` table records the anticipated delivery date for a purchase order, allowing null values.",
-          "glossary_terms": [
-            "RetailDomainGlossary.OrderDeliveryRelationship"
-          ],
+          "glossary_terms": [],
           "cardinality": 123,
           "null_count": 0,
           "data_range": {
@@ -3057,7 +3067,7 @@
           "type": "datetime2",
           "nullable": false,
           "is_incremental": false,
-          "column_description": "The `created_at` column stores the non-nullable timestamp indicating when a purchase order record was initially created in the system.",
+          "column_description": "The `created_at` column records the timestamp when a purchase order record was initially created, using a non-nullable `datetime2` data type.",
           "glossary_terms": [],
           "column_timezone": "(UTC) Coordinated Universal Time",
           "cardinality": 123,
@@ -3092,7 +3102,7 @@
           "type": "datetime2",
           "nullable": false,
           "is_incremental": true,
-          "column_description": "The `updated_at` column stores the non-nullable timestamp of the most recent update to a purchase order record.",
+          "column_description": "The `updated_at` column stores the non-null timestamp indicating the last modification date and time of a purchase order record.",
           "glossary_terms": [],
           "column_timezone": "(UTC) Coordinated Universal Time",
           "cardinality": 123,
@@ -3152,6 +3162,8 @@
       "table_description": "Procurement headers including approver employee relationship.",
       "glossary_terms": [
         "RetailDomainGlossary.PurchaseOrder",
+        "RetailDomainGlossary.Supplier",
+        "RetailDomainGlossary.StoreLocation",
         "RetailDomainGlossary.OrderStatus"
       ],
       "primary_keys": [
@@ -3333,10 +3345,8 @@
           "type": "bigint",
           "nullable": false,
           "is_incremental": false,
-          "column_description": "Unique identifier for each sales order item in the sales_order_items table.",
-          "glossary_terms": [
-            "RetailDomainGlossary.OrderLine"
-          ],
+          "column_description": "Unique identifier for each item in a sales order, serving as the primary key for the `sales_order_items` table.",
+          "glossary_terms": [],
           "cardinality": 508,
           "null_count": 0,
           "data_range": {
@@ -3398,9 +3408,9 @@
           "type": "bigint",
           "nullable": false,
           "is_incremental": false,
-          "column_description": "Identifier for the product associated with the sales order item, referencing the primary key in the products table.",
+          "column_description": "Identifies the product associated with a sales order item, referencing the `products.product_id` column.",
           "glossary_terms": [
-            "RetailDomainGlossary.ProductCategory"
+            "RetailDomainGlossary.Product"
           ],
           "cardinality": 50,
           "null_count": 0,
@@ -3430,9 +3440,9 @@
           "type": "integer",
           "nullable": false,
           "is_incremental": false,
-          "column_description": "The \"quantity\" column in the \"sales_order_items\" table stores the number of units of a product included in a sales order item, represented as a non-null integer.",
+          "column_description": "The \"quantity\" column in the \"sales_order_items\" table stores the non-null integer value representing the number of units of a product included in a specific sales order item.",
           "glossary_terms": [
-            "RetailDomainGlossary.OrderLine"
+            "RetailDomainGlossary.Quantity"
           ],
           "cardinality": 5,
           "null_count": 0,
@@ -3474,7 +3484,7 @@
           "type": "numeric(15,2)",
           "nullable": false,
           "is_incremental": false,
-          "column_description": "The `unit_price` column in the `sales_order_items` table stores the per-unit selling price of a product in the sales order as a non-null numeric value with two decimal places.",
+          "column_description": "The \"unit_price\" column stores the non-null numeric price per unit of a product in a sales order item, represented as a currency amount with up to 15 digits and 2 decimal places.",
           "glossary_terms": [
             "RetailDomainGlossary.SellingPrice"
           ],
@@ -3511,7 +3521,7 @@
           "type": "datetime2",
           "nullable": false,
           "is_incremental": false,
-          "column_description": "Records the timestamp when a sales order item entry is created, ensuring accurate tracking of creation events.",
+          "column_description": "The `created_at` column records the timestamp when a sales order item was created, stored as a non-nullable `datetime2` value.",
           "glossary_terms": [],
           "column_timezone": "(UTC) Coordinated Universal Time",
           "cardinality": 508,
@@ -3546,7 +3556,7 @@
           "type": "datetime2",
           "nullable": false,
           "is_incremental": true,
-          "column_description": "The `updated_at` column in the `sales_order_items` table stores the non-nullable timestamp of the most recent update to a sales order item record.",
+          "column_description": "The `updated_at` column stores the non-nullable timestamp of the most recent update to a sales order item record in the `sales_order_items` table.",
           "glossary_terms": [],
           "column_timezone": "(UTC) Coordinated Universal Time",
           "cardinality": 508,
@@ -3583,7 +3593,7 @@
           "is_incremental": false,
           "column_description": "The `sold_qty_value` column stores the numeric value representing the quantity of a product sold in a sales order item, allowing up to two decimal places, and can be null.",
           "glossary_terms": [
-            "RetailDomainGlossary.OrderLine"
+            "RetailDomainGlossary.Quantity"
           ],
           "cardinality": 0,
           "null_count": 508,
@@ -3656,8 +3666,9 @@
       "table_description": "Sales line items with sold quantity and explicit unit labels.",
       "glossary_terms": [
         "RetailDomainGlossary.OrderLine",
-        "RetailDomainGlossary.SalesOrder",
-        "RetailDomainGlossary.UnitOfMeasure"
+        "RetailDomainGlossary.Quantity",
+        "RetailDomainGlossary.UnitOfMeasure",
+        "RetailDomainGlossary.Sale"
       ],
       "primary_keys": [
         "sales_order_item_id"
@@ -3812,7 +3823,7 @@
           "type": "bigint",
           "nullable": false,
           "is_incremental": false,
-          "column_description": "Unique identifier for each sales order in the system, serving as the primary key for the sales_orders table.",
+          "column_description": "Unique identifier for each sales order in the system.",
           "glossary_terms": [
             "RetailDomainGlossary.SalesOrder"
           ],
@@ -3847,7 +3858,7 @@
           "is_incremental": false,
           "column_description": "Identifies the store associated with a sales order, referencing the `store_id` column in the `stores` table.",
           "glossary_terms": [
-            "RetailDomainGlossary.SalesChannel"
+            "RetailDomainGlossary.StoreLocation"
           ],
           "cardinality": 5,
           "null_count": 0,
@@ -3877,8 +3888,9 @@
           "type": "bigint",
           "nullable": true,
           "is_incremental": false,
-          "column_description": "Represents the identifier of the customer associated with a sales order, referencing the `customer_id` column in the `customers` table, and may be null if no customer is linked.",
+          "column_description": "Identifies the customer associated with a sales order, referencing the `customer_id` column in the `customers` table; nullable to accommodate orders without a registered customer.",
           "glossary_terms": [
+            "RetailDomainGlossary.Customer",
             "RetailDomainGlossary.CustomerIdentifier"
           ],
           "cardinality": 76,
@@ -4009,9 +4021,9 @@
           "type": "numeric(12,2)",
           "nullable": false,
           "is_incremental": false,
-          "column_description": "The `total_amount` column in the `sales_orders` table stores the non-nullable total monetary value of a sales order as a numeric value with up to 12 digits and 2 decimal places.",
+          "column_description": "The `total_amount` column in the `sales_orders` table stores the non-null total monetary value of a sales order as a numeric value with up to 12 digits and 2 decimal places.",
           "glossary_terms": [
-            "RetailDomainGlossary.SalesOrder"
+            "RetailDomainGlossary.NetSales"
           ],
           "cardinality": 200,
           "null_count": 0,
@@ -4046,7 +4058,7 @@
           "type": "datetime2",
           "nullable": false,
           "is_incremental": false,
-          "column_description": "The `created_at` column records the timestamp when a sales order record is initially created, stored as a non-nullable `datetime2` value.",
+          "column_description": "The `created_at` column in the `sales_orders` table stores the non-nullable timestamp indicating when the sales order record was initially created.",
           "glossary_terms": [],
           "column_timezone": "(UTC) Coordinated Universal Time",
           "cardinality": 191,
@@ -4140,9 +4152,7 @@
       ],
       "table_description": "Sales headers including assigned sales representative relationship.",
       "glossary_terms": [
-        "RetailDomainGlossary.SalesOrder",
-        "RetailDomainGlossary.CustomerIdentifier",
-        "RetailDomainGlossary.OrderStatus"
+        "RetailDomainGlossary.SalesOrder"
       ],
       "primary_keys": [
         "sales_order_id"
@@ -4342,7 +4352,7 @@
           "is_incremental": false,
           "column_description": "Unique identifier for each store in the retail operations system.",
           "glossary_terms": [
-            "RetailDomainGlossary.StoreCode"
+            "RetailDomainGlossary.StoreLocation"
           ],
           "cardinality": 5,
           "null_count": 0,
@@ -4373,8 +4383,10 @@
           "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
           "nullable": false,
           "is_incremental": false,
-          "column_description": "The \"name\" column in the \"stores\" table is a non-nullable nvarchar field storing the name of a retail store.",
-          "glossary_terms": [],
+          "column_description": "The \"name\" column in the \"stores\" table is a non-nullable nvarchar field that stores the name of a retail store.",
+          "glossary_terms": [
+            "RetailDomainGlossary.PhysicalStore"
+          ],
           "cardinality": 5,
           "null_count": 0,
           "data_range": {
@@ -4401,7 +4413,7 @@
           "type": "nvarchar(450)",
           "nullable": false,
           "is_incremental": false,
-          "column_description": "Unique alphanumeric identifier for a store, used for internal reference and operations.",
+          "column_description": "Unique alphanumeric identifier for a store, used to distinguish stores within the retail system.",
           "glossary_terms": [
             "RetailDomainGlossary.StoreCode"
           ],
@@ -4490,7 +4502,9 @@
           "nullable": true,
           "is_incremental": false,
           "column_description": "The \"state\" column in the \"stores\" table stores the name of the state or province where a store is located, allowing null values.",
-          "glossary_terms": [],
+          "glossary_terms": [
+            "RetailDomainGlossary.StoreLocation"
+          ],
           "cardinality": 3,
           "null_count": 0,
           "data_range": {
@@ -4518,7 +4532,7 @@
           "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
           "nullable": true,
           "is_incremental": false,
-          "column_description": "The \"postal_code\" column in the \"stores\" table stores the postal or ZIP code of a store location as a nullable string.",
+          "column_description": "The \"postal_code\" column in the \"stores\" table stores the postal or ZIP code of a store location as a nullable nvarchar value.",
           "glossary_terms": [],
           "cardinality": 5,
           "null_count": 0,
@@ -4546,7 +4560,7 @@
           "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
           "nullable": true,
           "is_incremental": false,
-          "column_description": "The \"phone\" column in the \"stores\" table stores the contact phone number of a store as a nullable nvarchar value.",
+          "column_description": "Stores.phone is an optional nvarchar column storing the contact phone number for a store location.",
           "glossary_terms": [],
           "cardinality": 5,
           "null_count": 0,
@@ -4579,7 +4593,7 @@
           "type": "datetime2",
           "nullable": false,
           "is_incremental": false,
-          "column_description": "The `created_at` column stores the non-nullable timestamp indicating when a store record was initially created in the system.",
+          "column_description": "The `created_at` column in the `stores` table records the non-nullable timestamp indicating when a store record was initially created.",
           "glossary_terms": [],
           "column_timezone": "(UTC) Coordinated Universal Time",
           "cardinality": 5,
@@ -4645,8 +4659,10 @@
           "concept_alias_group": "updated_at"
         }
       ],
-      "table_description": "The \"stores\" table stores information about retail store locations, including unique identifiers, names, codes, addresses, contact details, and timestamps for record creation and updates.",
+      "table_description": "The \"stores\" table stores information about retail store locations, including unique identifiers, names, addresses, contact details, and timestamps for record creation and updates.",
       "glossary_terms": [
+        "RetailDomainGlossary.PhysicalStore",
+        "RetailDomainGlossary.StoreLocation",
         "RetailDomainGlossary.StoreCode"
       ],
       "primary_keys": [
@@ -4841,9 +4857,7 @@
           "nullable": false,
           "is_incremental": false,
           "column_description": "Unique identifier for each supplier, serving as the primary key in the suppliers table.",
-          "glossary_terms": [
-            "RetailDomainGlossary.SupplierCode"
-          ],
+          "glossary_terms": [],
           "cardinality": 10,
           "null_count": 0,
           "data_range": {
@@ -4925,7 +4939,7 @@
           "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
           "nullable": true,
           "is_incremental": false,
-          "column_description": "The \"email\" column in the \"suppliers\" table stores the email address of a supplier as a nullable nvarchar value for contact purposes.",
+          "column_description": "Stores the email address of the supplier, allowing null values for cases where no email is provided.",
           "glossary_terms": [],
           "cardinality": 10,
           "null_count": 0,
@@ -5059,7 +5073,9 @@
       ],
       "table_description": "The \"suppliers\" table stores information about suppliers, including their unique identifier, name, contact details, and timestamps for record creation and updates.",
       "glossary_terms": [
-        "RetailDomainGlossary.SupplierCode"
+        "RetailDomainGlossary.Supplier",
+        "RetailDomainGlossary.SupplierCode",
+        "RetailDomainGlossary.SupplierPurchaseRelationship"
       ],
       "primary_keys": [
         "supplier_id"

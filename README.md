@@ -28,6 +28,10 @@ cp .env.example .env
 
 Or just ask Cursor: *"Analyze my database"*, *"Run a data quality check"*, *"Project storage growth"* — skills are picked up automatically.
 
+## Documentation
+
+- [GlossarySkill setup and usage](docs/README.md) — domain glossary generation, OpenMetadata, and related workflow.
+
 ## Available Skills
 
 ### 1. Source System Analyser

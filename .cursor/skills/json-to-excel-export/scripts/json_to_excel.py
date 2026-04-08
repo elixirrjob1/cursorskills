@@ -6,6 +6,8 @@ from urllib.parse import parse_qs, urlparse
 from copy import deepcopy
 
 from openpyxl import Workbook
+from openpyxl.worksheet.datavalidation import DataValidation
+from openpyxl.utils import get_column_letter
 from openpyxl.styles import Alignment, Font, PatternFill
 
 
@@ -13,6 +15,10 @@ _GLOSSARY_ROWS = [
     {
         "Field": "glossary_terms",
         "Description": "Comma-separated OpenMetadata glossary term FQNs assigned to the table or column.",
+    },
+    {
+        "Field": "om_class_<ClassificationName>",
+        "Description": "One Excel dropdown column per OpenMetadata classification. Each cell stores one allowed tag FQN for that classification, such as PII.Sensitive or Tier.Tier1.",
     },
     {
         "Field": "semantic_class",
@@ -75,6 +81,8 @@ _GLOSSARY_ROWS = [
         "Description": "Human-readable formula showing how to convert the source unit to the canonical unit.",
     },
 ]
+
+_CLASSIFICATION_COLUMN_PREFIX = "om_class_"
 
 
 def _cell_value(value):
@@ -181,6 +189,48 @@ def _join_list(values):
     if not values:
         return ""
     return ", ".join(str(v) for v in values)
+
+
+def _safe_classification_key(value):
+    text = str(value or "").strip()
+    text = "".join(ch if ch.isalnum() else "_" for ch in text)
+    text = text.strip("_")
+    return text or "Classification"
+
+
+def _classification_excel_column_name(classification_name):
+    return f"{_CLASSIFICATION_COLUMN_PREFIX}{_safe_classification_key(classification_name)}"
+
+
+def _excel_classifications(metadata, entity_level):
+    classifications = []
+    for classification in metadata.get("openmetadata_classifications", []) or []:
+        if not isinstance(classification, dict):
+            continue
+        name = str(classification.get("name", "")).strip()
+        if not name:
+            continue
+        if entity_level == "table" and name.upper() == "PII":
+            continue
+        classifications.append(classification)
+    return classifications
+
+
+def _classification_selection_fields(tags, metadata, entity_level):
+    selected = {}
+    selected_tags = set(tags or [])
+    for classification in _excel_classifications(metadata, entity_level):
+        header = _classification_excel_column_name(classification.get("name", ""))
+        selected_value = ""
+        for option in classification.get("options", []) or []:
+            if not isinstance(option, dict):
+                continue
+            fqn = str(option.get("fqn", "")).strip()
+            if fqn and fqn in selected_tags:
+                selected_value = fqn
+                break
+        selected[header] = selected_value
+    return selected
 
 
 def _flatten_sensitive_fields(values):
@@ -374,6 +424,95 @@ def _db_analysis_config_rows(source_system_context):
     return rows
 
 
+def _openmetadata_classification_rows(metadata):
+    rows = []
+    for classification in metadata.get("openmetadata_classifications", []) or []:
+        if not isinstance(classification, dict):
+            continue
+        options = classification.get("options") or []
+        if not options:
+            rows.append(
+                {
+                    "classification_name": classification.get("name", ""),
+                    "provider": classification.get("provider", ""),
+                    "mutually_exclusive": classification.get("mutually_exclusive", ""),
+                    "allowed_on": _join_list(classification.get("allowed_on", [])),
+                    "option_name": "",
+                    "option_fqn": "",
+                }
+            )
+            continue
+        for option in options:
+            if not isinstance(option, dict):
+                continue
+            rows.append(
+                {
+                    "classification_name": classification.get("name", ""),
+                    "provider": classification.get("provider", ""),
+                    "mutually_exclusive": classification.get("mutually_exclusive", ""),
+                    "allowed_on": _join_list(classification.get("allowed_on", [])),
+                    "option_name": option.get("name", ""),
+                    "option_fqn": option.get("fqn", ""),
+                }
+            )
+    return rows
+
+
+def _classification_validation_rows(metadata):
+    classifications = _excel_classifications(metadata, "column")
+    if not classifications:
+        return []
+    headers = [_classification_excel_column_name(classification.get("name", "")) for classification in classifications]
+    option_lists = []
+    max_options = 0
+    for classification in classifications:
+        options = []
+        for option in classification.get("options", []) or []:
+            if not isinstance(option, dict):
+                continue
+            fqn = str(option.get("fqn", "")).strip()
+            if fqn:
+                options.append(fqn)
+        option_lists.append(options)
+        max_options = max(max_options, len(options))
+    rows = []
+    for idx in range(max_options):
+        row = {}
+        for header, options in zip(headers, option_lists):
+            row[header] = options[idx] if idx < len(options) else ""
+        rows.append(row)
+    return rows
+
+
+def _glossary_sheet_rows(metadata):
+    rows = list(_GLOSSARY_ROWS)
+    for classification in metadata.get("openmetadata_classifications", []) or []:
+        if not isinstance(classification, dict):
+            continue
+        classification_name = str(classification.get("name", "")).strip()
+        if not classification_name:
+            continue
+        rows.append(
+            {
+                "Field": f"classification: {classification_name}",
+                "Description": str(classification.get("description") or "").strip(),
+            }
+        )
+        for option in classification.get("options", []) or []:
+            if not isinstance(option, dict):
+                continue
+            option_fqn = str(option.get("fqn", "")).strip()
+            if not option_fqn:
+                continue
+            rows.append(
+                {
+                    "Field": f"classification option: {option_fqn}",
+                    "Description": str(option.get("description") or "").strip(),
+                }
+            )
+    return rows
+
+
 def _row_from_finding(schema_name, table_name, idx, finding):
     if not isinstance(finding, dict):
         return {
@@ -479,8 +618,8 @@ def _sheet_name(base_name, used_names):
     return candidate
 
 
-def _table_overview_row(table):
-    return {
+def _table_overview_row(table, metadata):
+    row = {
         "schema": table.get("schema", ""),
         "table_name": table.get("table", ""),
         "row_count": table.get("row_count", ""),
@@ -496,6 +635,8 @@ def _table_overview_row(table):
         "row_count_projection_2y": table.get("row_count_projection_2y", ""),
         "row_count_projection_5y": table.get("row_count_projection_5y", ""),
     }
+    row.update(_classification_selection_fields(table.get("classification_tags", []), metadata, "table"))
+    return row
 
 
 def _simple_value_rows(values, key_name):
@@ -519,44 +660,44 @@ def _mapping_rows(mapping, value_name):
     ]
 
 
-def _column_rows(table):
+def _column_rows(table, metadata):
     rows = []
     field_classifications = table.get("field_classifications") or {}
     sensitive_fields = table.get("sensitive_fields") or {}
     for column in table.get("columns", []) or []:
         unit_data = _unit_fields(column)
         column_name = column.get("name", "")
-        rows.append(
-            {
-                "column_name": column_name,
-                "data_type": column.get("type", ""),
-                "nullable": column.get("nullable", ""),
-                "classification": _cell_value(field_classifications.get(column_name, "")),
-                "sensitivity_label": _cell_value(sensitive_fields.get(column_name, "")),
-                "cardinality": column.get("cardinality", ""),
-                "null_count": column.get("null_count", ""),
-                "data_category": column.get("data_category", ""),
-                "semantic_class": column.get("semantic_class", ""),
-                "column_description": column.get("column_description", column.get("description", "")),
-                "glossary_terms": _join_list(column.get("glossary_terms", [])),
-                "concept_id": column.get("concept_id", ""),
-                "concept_confidence": column.get("concept_confidence", ""),
-                "concept_alias_group": column.get("concept_alias_group", ""),
-                "concept_evidence_json": _compact_json(column.get("concept_evidence")),
-                "concept_sources_json": _compact_json(column.get("concept_sources")),
-                "unit": unit_data["unit"],
-                "unit_source": unit_data["unit_source"],
-                "canonical_unit": unit_data["canonical_unit"],
-                "unit_system": unit_data["unit_system"],
-                "unit_confidence": unit_data["unit_confidence"],
-                "unit_notes": unit_data["unit_notes"],
-                "factor_to_canonical": unit_data["factor_to_canonical"],
-                "offset_to_canonical": unit_data["offset_to_canonical"],
-                "conversion_formula": unit_data["conversion_formula"],
-                "range_min": (column.get("data_range") or {}).get("min", ""),
-                "range_max": (column.get("data_range") or {}).get("max", ""),
-            }
-        )
+        row = {
+            "column_name": column_name,
+            "data_type": column.get("type", ""),
+            "nullable": column.get("nullable", ""),
+            "classification": _cell_value(field_classifications.get(column_name, "")),
+            "sensitivity_label": _cell_value(sensitive_fields.get(column_name, "")),
+            "cardinality": column.get("cardinality", ""),
+            "null_count": column.get("null_count", ""),
+            "data_category": column.get("data_category", ""),
+            "semantic_class": column.get("semantic_class", ""),
+            "column_description": column.get("column_description", column.get("description", "")),
+            "glossary_terms": _join_list(column.get("glossary_terms", [])),
+            "concept_id": column.get("concept_id", ""),
+            "concept_confidence": column.get("concept_confidence", ""),
+            "concept_alias_group": column.get("concept_alias_group", ""),
+            "concept_evidence_json": _compact_json(column.get("concept_evidence")),
+            "concept_sources_json": _compact_json(column.get("concept_sources")),
+            "unit": unit_data["unit"],
+            "unit_source": unit_data["unit_source"],
+            "canonical_unit": unit_data["canonical_unit"],
+            "unit_system": unit_data["unit_system"],
+            "unit_confidence": unit_data["unit_confidence"],
+            "unit_notes": unit_data["unit_notes"],
+            "factor_to_canonical": unit_data["factor_to_canonical"],
+            "offset_to_canonical": unit_data["offset_to_canonical"],
+            "conversion_formula": unit_data["conversion_formula"],
+            "range_min": (column.get("data_range") or {}).get("min", ""),
+            "range_max": (column.get("data_range") or {}).get("max", ""),
+        }
+        row.update(_classification_selection_fields(column.get("classification_tags", []), metadata, "column"))
+        rows.append(row)
     return rows
 
 
@@ -621,12 +762,19 @@ def _table_findings_rows(table):
 
 
 def _source_system_sections(metadata, connection, source_system_context):
-    metadata_rows = [{"property": key, "value": _cell_value(value)} for key, value in metadata.items()]
+    metadata_rows = [
+        {"property": key, "value": _cell_value(value)}
+        for key, value in metadata.items()
+        if key != "openmetadata_classifications"
+    ]
     connection_rows = [{"property": key, "value": _cell_value(value)} for key, value in connection.items()]
     sections = [
         ("Metadata", metadata_rows or [{"property": "", "value": ""}]),
         ("Connection", connection_rows or [{"property": "", "value": ""}]),
     ]
+    openmetadata_rows = _openmetadata_classification_rows(metadata)
+    if openmetadata_rows:
+        sections.append(("OpenMetadataClassifications", openmetadata_rows))
     sections.extend(
         [
             ("ContactsManual", _contacts_rows(source_system_context)),
@@ -640,8 +788,8 @@ def _source_system_sections(metadata, connection, source_system_context):
     return sections
 
 
-def _table_sheet_sections(table):
-    sections = [("Overview", [_table_overview_row(table)])]
+def _table_sheet_sections(table, metadata):
+    sections = [("Overview", [_table_overview_row(table, metadata)])]
 
     primary_keys = _simple_value_rows(table.get("primary_keys", []), "column_name")
     if primary_keys:
@@ -667,7 +815,7 @@ def _table_sheet_sections(table):
     if join_candidates:
         sections.append(("JoinCandidates", join_candidates))
 
-    columns = _column_rows(table)
+    columns = _column_rows(table, metadata)
     if columns:
         sections.append(("Columns", columns))
 
@@ -766,14 +914,71 @@ def _collect_sheets(payload):
         "Summary": {"sections": summary_sections},
         "SourceSystem": {"sections": _source_system_sections(metadata, connection, source_system_context)},
         "DataQualityFindings": data_quality_findings_rows,
-        "Glossary": list(_GLOSSARY_ROWS),
+        "Glossary": _glossary_sheet_rows(metadata),
     }
+    classification_validation_rows = _classification_validation_rows(metadata)
+    if classification_validation_rows:
+        sheets["__dv_classifications"] = classification_validation_rows
     used_sheet_names = set(sheets.keys())
     for table in tables:
         sheets[_sheet_name(table.get("table", "Table"), used_sheet_names)] = {
-            "sections": _table_sheet_sections(table)
+            "sections": _table_sheet_sections(table, metadata)
         }
     return sheets
+
+
+def _apply_classification_validations(wb):
+    if "__dv_classifications" not in wb.sheetnames:
+        return
+    options_ws = wb["__dv_classifications"]
+    option_headers = [cell.value for cell in options_ws[1] if cell.value not in (None, "")]
+    if not option_headers:
+        return
+    option_ranges = {}
+    for idx, header in enumerate(option_headers, start=1):
+        col_letter = get_column_letter(idx)
+        option_ranges[str(header)] = f"'__dv_classifications'!${col_letter}$2:${col_letter}${options_ws.max_row}"
+
+    for ws in wb.worksheets:
+        if ws.title in {"Summary", "SourceSystem", "DataQualityFindings", "Glossary", "__dv_classifications"}:
+            continue
+        if ws.sheet_state != "visible":
+            continue
+        rows = list(ws.iter_rows())
+        i = 0
+        while i < len(rows):
+            row = rows[i] or ()
+            section_name = row[0].value if row and len(row) > 0 else None
+            if section_name in (None, ""):
+                i += 1
+                continue
+            if i + 1 >= len(rows):
+                break
+            headers = [cell.value for cell in rows[i + 1]]
+            data_start = i + 2
+            data_end = data_start - 1
+            j = data_start
+            while j < len(rows):
+                current = rows[j]
+                if all(cell.value in (None, "") for cell in current):
+                    break
+                data_end = j
+                j += 1
+            if data_end >= data_start:
+                for col_idx, header in enumerate(headers, start=1):
+                    if header not in option_ranges:
+                        continue
+                    dv = DataValidation(
+                        type="list",
+                        formula1=option_ranges[str(header)],
+                        allow_blank=True,
+                        showErrorMessage=True,
+                        errorStyle="stop",
+                    )
+                    wb[ws.title].add_data_validation(dv)
+                    for row_idx in range(data_start, data_end + 1):
+                        dv.add(ws.cell(row=row_idx + 1, column=col_idx))
+            i = j + 1
 
 
 def _chunk_text(value, size=30000):
@@ -909,12 +1114,13 @@ def _write_workbook(sheet_rows, output_path):
                 _write_sheet(ws, sections[0][1])
             else:
                 _write_multi_section_sheet(ws, sections)
-        if sheet_name.startswith("__rt_"):
+        if sheet_name.startswith("__rt_") or sheet_name.startswith("__dv_"):
             ws.sheet_state = "hidden"
     if first:
         ws = wb.active
         ws.title = "Summary"
         _write_sheet(ws, [])
+    _apply_classification_validations(wb)
     wb.save(output_path)
 
 

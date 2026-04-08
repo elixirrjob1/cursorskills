@@ -19,6 +19,8 @@ LEGACY_VISIBLE_SHEETS = {
     "Units",
 }
 
+_CLASSIFICATION_COLUMN_PREFIX = "om_class_"
+
 
 def _norm(value):
     if value is None:
@@ -91,6 +93,107 @@ def _split_csv(value):
     if isinstance(v, str):
         return [x.strip() for x in v.split(",") if x.strip()]
     return [str(v)]
+
+
+def _parse_classification_tags(value):
+    return list(dict.fromkeys(_split_csv(value)))
+
+
+def _safe_classification_key(value):
+    text = str(value or "").strip()
+    text = "".join(ch if ch.isalnum() else "_" for ch in text)
+    text = text.strip("_")
+    return text or "Classification"
+
+
+def _classification_excel_column_name(classification_name):
+    return f"{_CLASSIFICATION_COLUMN_PREFIX}{_safe_classification_key(classification_name)}"
+
+
+def _excel_classifications(payload, entity_level):
+    metadata = payload.get("metadata", {}) if isinstance(payload, dict) else {}
+    catalog = metadata.get("openmetadata_classifications", []) if isinstance(metadata, dict) else []
+    out = []
+    for classification in catalog if isinstance(catalog, list) else []:
+        if not isinstance(classification, dict):
+            continue
+        name = str(_norm(classification.get("name")))
+        if not name:
+            continue
+        if entity_level == "table" and name.upper() == "PII":
+            continue
+        out.append(classification)
+    return out
+
+
+def _classification_tag_catalog(payload):
+    metadata = payload.get("metadata", {}) if isinstance(payload, dict) else {}
+    catalog = metadata.get("openmetadata_classifications", []) if isinstance(metadata, dict) else []
+    if not isinstance(catalog, list):
+        return {}
+    out = {}
+    for classification in catalog:
+        if not isinstance(classification, dict):
+            continue
+        classification_name = str(_norm(classification.get("name")))
+        allowed_on = {str(_norm(level)).lower() for level in (classification.get("allowed_on") or []) if str(_norm(level))}
+        mutually_exclusive = bool(classification.get("mutually_exclusive"))
+        for option in classification.get("options", []) or []:
+            if not isinstance(option, dict):
+                continue
+            fqn = str(_norm(option.get("fqn")))
+            if not fqn:
+                continue
+            out[fqn] = {
+                "classification_name": classification_name,
+                "allowed_on": allowed_on,
+                "mutually_exclusive": mutually_exclusive,
+            }
+    return out
+
+
+def _validate_classification_tags(payload, value, *, entity_level, entity_label):
+    tags = _parse_classification_tags(value)
+    catalog = _classification_tag_catalog(payload)
+    if not catalog:
+        return tags
+
+    selected_by_classification = {}
+    for tag in tags:
+        tag_meta = catalog.get(tag)
+        if not tag_meta:
+            raise ValueError(f"Invalid classification tag '{tag}' on {entity_label}")
+        classification_name = str(tag_meta.get("classification_name") or "")
+        if entity_level == "table" and classification_name.upper() == "PII":
+            raise ValueError(f"Classification 'PII' is not allowed on {entity_label}")
+        if tag_meta.get("mutually_exclusive"):
+            previous = selected_by_classification.get(classification_name)
+            if previous and previous != tag:
+                raise ValueError(
+                    f"Classification '{classification_name}' is mutually exclusive on {entity_label}: "
+                    f"cannot select both '{previous}' and '{tag}'"
+                )
+        selected_by_classification[classification_name] = tag
+    return tags
+
+
+def _extract_excel_classification_tags(row, payload, *, entity_level, entity_label):
+    selected_tags = []
+    found_excel_columns = False
+    for classification in _excel_classifications(payload, entity_level):
+        header = _classification_excel_column_name(classification.get("name", ""))
+        if header not in row:
+            continue
+        found_excel_columns = True
+        value = row.get(header)
+        if _is_blank(value):
+            continue
+        selected_tags.extend(_validate_classification_tags(payload, value, entity_level=entity_level, entity_label=entity_label))
+    if found_excel_columns:
+        return selected_tags
+    if "classification_tags" in row:
+        return _validate_classification_tags(payload, row.get("classification_tags"), entity_level=entity_level, entity_label=entity_label)
+    return None
 
 
 def _parse_sensitive_fields(value):
@@ -1041,6 +1144,14 @@ def _apply_table_detail_sheets(wb, payload):
 
         table = _ensure_table(payload, tindex, schema, table_name)
         _apply_table_sheet_overview(table, overview)
+        table_tags = _extract_excel_classification_tags(
+            overview,
+            payload,
+            entity_level="table",
+            entity_label=f"table {schema}.{table_name}",
+        )
+        if table_tags is not None:
+            table["classification_tags"] = table_tags
 
         primary_keys = _collect_name_rows(sections.get("PrimaryKeys", []))
         if primary_keys:
@@ -1113,6 +1224,14 @@ def _apply_table_detail_sheets(wb, payload):
                 "concept_alias_group": "concept_alias_group",
             }.items():
                 _set_if_changed(col, json_key, row.get(sheet_key))
+            column_tags = _extract_excel_classification_tags(
+                row,
+                payload,
+                entity_level="column",
+                entity_label=f"column {schema}.{table_name}.{column_name}",
+            )
+            if column_tags is not None:
+                col["classification_tags"] = column_tags
             for sheet_key, json_key in {
                 "concept_confidence": "concept_confidence",
                 "concept_evidence_json": "concept_evidence",

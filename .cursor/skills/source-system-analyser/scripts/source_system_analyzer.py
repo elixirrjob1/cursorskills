@@ -273,6 +273,19 @@ def _glossary_terms_from_openmetadata_tags(tags: Any) -> List[str]:
     return glossary_terms
 
 
+def _classification_tags_from_openmetadata_tags(tags: Any) -> List[str]:
+    classification_tags: List[str] = []
+    for tag in tags or []:
+        if not isinstance(tag, dict):
+            continue
+        if str(tag.get("source") or "").strip() == "Glossary":
+            continue
+        tag_fqn = str(tag.get("tagFQN") or "").strip()
+        if tag_fqn and tag_fqn not in classification_tags:
+            classification_tags.append(tag_fqn)
+    return classification_tags
+
+
 def _default_openmetadata_enrichment_status() -> Dict[str, Any]:
     return {
         "enabled": False,
@@ -293,6 +306,65 @@ def _openmetadata_ref_name(value: Any) -> str:
             if candidate:
                 return candidate
     return str(value or "").strip()
+
+
+def fetch_openmetadata_classification_catalog() -> List[Dict[str, Any]]:
+    """Fetch OpenMetadata classifications and their tags in a normalized analyzer shape."""
+    try:
+        classifications_response = _openmetadata_request("GET", "classifications", params={"limit": 1000})
+        tags_response = _openmetadata_request("GET", "tags", params={"limit": 1000})
+    except Exception as exc:
+        logger.warning("Could not fetch OpenMetadata classifications: %s", exc)
+        return []
+
+    raw_classifications = (classifications_response.get("data") or []) if isinstance(classifications_response, dict) else []
+    raw_tags = (tags_response.get("data") or []) if isinstance(tags_response, dict) else []
+
+    tags_by_classification: Dict[str, List[Dict[str, Any]]] = {}
+    for item in raw_tags:
+        if not isinstance(item, dict):
+            continue
+        classification_ref = item.get("classification") or {}
+        classification_name = str(
+            (classification_ref.get("fullyQualifiedName") if isinstance(classification_ref, dict) else "")
+            or (classification_ref.get("name") if isinstance(classification_ref, dict) else "")
+            or ""
+        ).strip()
+        if not classification_name:
+            fqn = str(item.get("fullyQualifiedName") or "").strip()
+            if "." in fqn:
+                classification_name = fqn.split(".", 1)[0].strip()
+        if not classification_name:
+            continue
+        tags_by_classification.setdefault(classification_name, []).append(item)
+
+    catalog: List[Dict[str, Any]] = []
+    for item in raw_classifications:
+        if not isinstance(item, dict):
+            continue
+        name = str(item.get("fullyQualifiedName") or item.get("name") or "").strip()
+        if not name:
+            continue
+        classification_tags = tags_by_classification.get(name, [])
+        catalog.append(
+            {
+                "name": name,
+                "provider": str(item.get("provider") or "").strip(),
+                "description": str(item.get("description") or "").strip(),
+                "mutually_exclusive": bool(item.get("mutuallyExclusive", False)),
+                "allowed_on": ["table", "column"],
+                "options": [
+                    {
+                        "name": str(tag.get("name") or "").strip(),
+                        "fqn": str(tag.get("fullyQualifiedName") or "").strip(),
+                        "description": str(tag.get("description") or "").strip(),
+                    }
+                    for tag in classification_tags
+                    if str(tag.get("fullyQualifiedName") or "").strip()
+                ],
+            }
+        )
+    return sorted(catalog, key=lambda item: item["name"].lower())
 
 
 def _openmetadata_table_matches(
@@ -389,8 +461,10 @@ def _fetch_openmetadata_glossary_assignments(
                 status["unmatched_tables"] += 1
                 continue
             table_terms = _glossary_terms_from_openmetadata_tags(payload.get("tags"))
+            table_classification_tags = _classification_tags_from_openmetadata_tags(payload.get("tags"))
             columns = payload.get("columns") or []
             column_terms: Dict[str, List[str]] = {}
+            column_classification_tags: Dict[str, List[str]] = {}
             for column in columns:
                 if not isinstance(column, dict):
                     continue
@@ -398,10 +472,13 @@ def _fetch_openmetadata_glossary_assignments(
                 if not column_name:
                     continue
                 column_terms[column_name] = _glossary_terms_from_openmetadata_tags(column.get("tags"))
+                column_classification_tags[column_name] = _classification_tags_from_openmetadata_tags(column.get("tags"))
 
             assignments[table_name] = {
                 "glossary_terms": table_terms,
+                "classification_tags": table_classification_tags,
                 "column_glossary_terms": column_terms,
+                "column_classification_tags": column_classification_tags,
             }
             status["matched_tables"] += 1
     except Exception as exc:
@@ -909,6 +986,176 @@ class AzureGlossaryAssigner:
             {"role": "system", "content": self._SYSTEM_PROMPT},
             {"role": "user", "content": user_prompt},
         ])
+
+
+class AzureClassificationTagAssigner:
+    """Assigns OpenMetadata classification tag FQNs to tables and columns using Azure OpenAI."""
+
+    _SYSTEM_PROMPT = (
+        "You assign OpenMetadata classification tags to database objects. "
+        "Choose only from the provided candidate tags. "
+        "Return only tag FQNs. Return [] if uncertain. "
+        "You may consider any candidate for either tables or columns because scope is not authoritative here. "
+        "Respect mutually exclusive classifications by selecting at most one option per classification. "
+        "Prefer precision over recall."
+    )
+
+    def __init__(self, generator: AzureDescriptionGenerator) -> None:
+        self._generator = generator
+
+    def is_available(self) -> bool:
+        return self._generator.is_available()
+
+    def _call_llm(self, messages: List[Dict[str, str]]) -> List[str]:
+        if not self.is_available():
+            return []
+        response = self._generator._client.chat.completions.create(
+            model=self._generator.deployment,
+            messages=messages,
+            temperature=0.0,
+            top_p=1.0,
+        )
+        choices = getattr(response, "choices", []) or []
+        if not choices:
+            return []
+        message = getattr(choices[0], "message", None)
+        content = str(getattr(message, "content", "") or "").strip() if message else ""
+        if not content:
+            return []
+        try:
+            parsed = json.loads(content)
+        except json.JSONDecodeError:
+            match = re.search(r"\{[^}]*\}", content, re.DOTALL)
+            if match:
+                try:
+                    parsed = json.loads(match.group())
+                except json.JSONDecodeError:
+                    return []
+            else:
+                return []
+        if isinstance(parsed, dict):
+            tags = parsed.get("classification_tags", [])
+        elif isinstance(parsed, list):
+            tags = parsed
+        else:
+            return []
+        return [str(tag).strip() for tag in tags if isinstance(tag, str) and str(tag).strip()]
+
+    @staticmethod
+    def _format_candidates(candidates: List[Dict[str, Any]]) -> str:
+        lines = []
+        for classification in candidates:
+            if not isinstance(classification, dict):
+                continue
+            header = (
+                f"classification: {classification.get('name', '')}"
+                f" | provider: {classification.get('provider', '')}"
+                f" | mutually_exclusive: {classification.get('mutually_exclusive', False)}"
+            )
+            lines.append(header)
+            for option in classification.get("options", []) or []:
+                if not isinstance(option, dict):
+                    continue
+                lines.append(
+                    f"  - fqn: {option.get('fqn', '')} | name: {option.get('name', '')}"
+                )
+        return "\n".join(lines)
+
+    @staticmethod
+    def _normalize_selected_tags(candidates: List[Dict[str, Any]], selected_tags: List[str]) -> List[str]:
+        option_to_classification: Dict[str, tuple[str, bool]] = {}
+        for classification in candidates:
+            if not isinstance(classification, dict):
+                continue
+            classification_name = str(classification.get("name") or "").strip()
+            mutually_exclusive = bool(classification.get("mutually_exclusive", False))
+            for option in classification.get("options", []) or []:
+                if not isinstance(option, dict):
+                    continue
+                fqn = str(option.get("fqn") or "").strip()
+                if fqn:
+                    option_to_classification[fqn] = (classification_name, mutually_exclusive)
+
+        normalized: List[str] = []
+        selected_by_classification: Dict[str, str] = {}
+        for tag in selected_tags:
+            fqn = str(tag or "").strip()
+            if not fqn or fqn not in option_to_classification:
+                continue
+            classification_name, mutually_exclusive = option_to_classification[fqn]
+            existing = selected_by_classification.get(classification_name)
+            if mutually_exclusive and existing and existing != fqn:
+                continue
+            if fqn not in normalized:
+                normalized.append(fqn)
+                selected_by_classification[classification_name] = fqn
+        return normalized
+
+    def assign_table(
+        self,
+        *,
+        schema_name: str,
+        table_name: str,
+        table_description: str,
+        columns: List[Dict[str, Any]],
+        candidates: List[Dict[str, Any]],
+    ) -> List[str]:
+        if not candidates:
+            return []
+        col_summary = ", ".join(
+            f"{c.get('name', '')} ({c.get('semantic_class', '') or c.get('type', '')})" for c in columns[:20]
+        )
+        user_prompt = "\n".join([
+            "Assign OpenMetadata classification tags to this TABLE. Return JSON: {\"classification_tags\": [\"FQN\", ...]} or {\"classification_tags\": []}.",
+            f"Schema: {schema_name}",
+            f"Table: {table_name}",
+            f"Description: {table_description or '(none)'}",
+            f"Columns: {col_summary}",
+            "",
+            "Candidate classifications and tags:",
+            self._format_candidates(candidates),
+        ])
+        selected = self._call_llm([
+            {"role": "system", "content": self._SYSTEM_PROMPT},
+            {"role": "user", "content": user_prompt},
+        ])
+        return self._normalize_selected_tags(candidates, selected)
+
+    def assign_column(
+        self,
+        *,
+        schema_name: str,
+        table_name: str,
+        table_description: str,
+        column_name: str,
+        data_type: str,
+        column_description: str,
+        semantic_class: str,
+        sample_values: List[Any],
+        candidates: List[Dict[str, Any]],
+    ) -> List[str]:
+        if not candidates:
+            return []
+        shown_samples = ", ".join(str(value) for value in sample_values[:3]) if sample_values else "(none)"
+        user_prompt = "\n".join([
+            "Assign OpenMetadata classification tags to this COLUMN. Return JSON: {\"classification_tags\": [\"FQN\", ...]} or {\"classification_tags\": []}.",
+            f"Schema: {schema_name}",
+            f"Table: {table_name}",
+            f"Table description: {table_description or '(none)'}",
+            f"Column: {column_name}",
+            f"Data type: {data_type}",
+            f"Description: {column_description or '(none)'}",
+            f"Semantic class: {semantic_class or '(unknown)'}",
+            f"Sample values: {shown_samples}",
+            "",
+            "Candidate classifications and tags:",
+            self._format_candidates(candidates),
+        ])
+        selected = self._call_llm([
+            {"role": "system", "content": self._SYSTEM_PROMPT},
+            {"role": "user", "content": user_prompt},
+        ])
+        return self._normalize_selected_tags(candidates, selected)
 
 
 def _default_row_count_projections(row_count: int) -> Dict[str, int]:
@@ -3230,6 +3477,7 @@ def build_source_system_document(
         connection_info = parse_connection_info(engine)
         db_timezone = fetch_database_timezone(engine, adapter=adapter)
         row_counts = fetch_row_counts(engine, tables, schema=schema, adapter=adapter)
+        openmetadata_classifications = fetch_openmetadata_classification_catalog()
         openmetadata_glossary_assignments, openmetadata_enrichment = _fetch_openmetadata_glossary_assignments(
             database_name=str(connection_info.get("database") or ""),
             schema_name=str(schema or ""),
@@ -3237,8 +3485,15 @@ def build_source_system_document(
         )
         description_generator = _build_description_generator() if generate_missing_descriptions else None
         glossary_assigner: Optional[AzureGlossaryAssigner] = None
+        classification_assigner: Optional[AzureClassificationTagAssigner] = None
         all_glossary_terms: List[Dict[str, Any]] = []
         if description_generator and description_generator.is_available():
+            if openmetadata_classifications:
+                classification_assigner = AzureClassificationTagAssigner(description_generator)
+                logger.info(
+                    "Loaded %d OpenMetadata classifications for LLM-based classification tag assignment",
+                    len(openmetadata_classifications),
+                )
             all_glossary_terms = fetch_openmetadata_glossary_terms()
             if all_glossary_terms:
                 glossary_assigner = AzureGlossaryAssigner(description_generator)
@@ -3308,8 +3563,14 @@ def build_source_system_document(
                 table_glossary_terms = list(
                     (openmetadata_glossary_assignments.get(table_name) or {}).get("glossary_terms") or []
                 )
+                table_classification_tags = list(
+                    (openmetadata_glossary_assignments.get(table_name) or {}).get("classification_tags") or []
+                )
                 table_column_glossary_terms = dict(
                     (openmetadata_glossary_assignments.get(table_name) or {}).get("column_glossary_terms") or {}
+                )
+                table_column_classification_tags = dict(
+                    (openmetadata_glossary_assignments.get(table_name) or {}).get("column_classification_tags") or {}
                 )
                 for col in table_columns:
                     raw_column_description = str((column_descriptions.get(table_name, {}) or {}).get(col["name"]) or "")
@@ -3320,6 +3581,7 @@ def build_source_system_document(
                         "is_incremental": col.get("is_incremental", False),
                         "column_description": raw_column_description,
                         "glossary_terms": list(table_column_glossary_terms.get(col["name"]) or []),
+                        "classification_tags": list(table_column_classification_tags.get(col["name"]) or []),
                     }
                     col_tz = get_column_timezone(col["type"], dialect, db_timezone)
                     if col_tz is not None:
@@ -3388,6 +3650,7 @@ def build_source_system_document(
                     "table": table_name, "schema": table_schema, "columns": enriched_columns,
                     "table_description": raw_table_description,
                     "glossary_terms": table_glossary_terms,
+                    "classification_tags": table_classification_tags,
                     "primary_keys": pk_columns,
                     "foreign_keys": [{"column": fk["column"], "references": fk["references"]} for fk in fk_columns],
                     "row_count": row_count,
@@ -3484,6 +3747,58 @@ def build_source_system_document(
                     except Exception as exc:
                         logger.warning("Glossary assignment failed for table %s.%s: %s", table_schema, table_name, exc)
 
+                if classification_assigner and classification_assigner.is_available() and openmetadata_classifications:
+                    try:
+                        if not table_entry.get("classification_tags"):
+                            assigned_tags = classification_assigner.assign_table(
+                                schema_name=table_schema,
+                                table_name=table_name,
+                                table_description=str(table_entry.get("table_description") or ""),
+                                columns=enriched_columns,
+                                candidates=openmetadata_classifications,
+                            )
+                            if assigned_tags:
+                                table_entry["classification_tags"] = assigned_tags
+                                logger.info(
+                                    "Assigned %d classification tag(s) to table %s.%s",
+                                    len(assigned_tags), table_schema, table_name,
+                                )
+                        else:
+                            logger.info(
+                                "Table %s.%s already has classification tags; skipping LLM classification assignment",
+                                table_schema, table_name,
+                            )
+
+                        for col_dict in enriched_columns:
+                            if col_dict.get("classification_tags"):
+                                logger.info(
+                                    "Column %s.%s.%s already has classification tags; skipping LLM classification assignment",
+                                    table_schema, table_name, col_dict.get("name"),
+                                )
+                                continue
+                            col_assigned_tags = classification_assigner.assign_column(
+                                schema_name=table_schema,
+                                table_name=table_name,
+                                table_description=str(table_entry.get("table_description") or ""),
+                                column_name=str(col_dict.get("name") or ""),
+                                data_type=str(col_dict.get("type") or ""),
+                                column_description=str(col_dict.get("column_description") or ""),
+                                semantic_class=str(col_dict.get("semantic_class") or ""),
+                                sample_values=list(col_dict.get("_sample_values") or []),
+                                candidates=openmetadata_classifications,
+                            )
+                            if col_assigned_tags:
+                                col_dict["classification_tags"] = col_assigned_tags
+                                logger.info(
+                                    "Assigned %d classification tag(s) to column %s.%s.%s",
+                                    len(col_assigned_tags), table_schema, table_name, col_dict.get("name"),
+                                )
+                    except Exception as exc:
+                        logger.warning(
+                            "Classification tag assignment failed for table %s.%s: %s",
+                            table_schema, table_name, exc,
+                        )
+
                 enriched_tables.append(table_entry)
             except Exception as e:
                 logger.warning(f"Skipped table '{table_name}': {e}")
@@ -3578,6 +3893,7 @@ def build_source_system_document(
                 "total_tables": len(enriched_tables),
                 "total_rows": total_rows,
                 "total_findings": total_findings,
+                "openmetadata_classifications": openmetadata_classifications,
             },
             "connection": {**connection_info, "timezone": db_timezone},
             "source_system_context": {

@@ -402,6 +402,75 @@ class SourceSystemAnalyzerIncrementalTests(unittest.TestCase):
         self.assertEqual(status["matched_tables"], 1)
         self.assertEqual(status["unmatched_tables"], 0)
 
+    @patch.dict("os.environ", {"OPENMETADATA_BASE_URL": "http://example:8585", "OPENMETADATA_EMAIL": "admin@example.com", "OPENMETADATA_PASSWORD": "secret"}, clear=False)
+    @patch.object(MODULE, "_openmetadata_request")
+    def test_fetch_openmetadata_classification_catalog_normalizes_scope_and_options(self, mock_request):
+        def side_effect(method, endpoint, params=None):
+            if endpoint == "classifications":
+                return {
+                    "data": [
+                        {"name": "PII", "fullyQualifiedName": "PII", "provider": "system", "mutuallyExclusive": True, "description": "Personally identifiable information."},
+                        {"name": "Tier", "fullyQualifiedName": "Tier", "provider": "system", "mutuallyExclusive": True, "description": "Business criticality tiers."},
+                    ]
+                }
+            if endpoint == "tags":
+                return {
+                    "data": [
+                        {
+                            "name": "Sensitive",
+                            "fullyQualifiedName": "PII.Sensitive",
+                            "classification": {"name": "PII"},
+                            "description": "Sensitive personal data.",
+                            "recognizers": [{"target": "column_name"}],
+                        },
+                        {
+                            "name": "NonSensitive",
+                            "fullyQualifiedName": "PII.NonSensitive",
+                            "classification": {"name": "PII"},
+                            "description": "Non-sensitive personal data.",
+                            "recognizers": [{"target": "content"}],
+                        },
+                        {
+                            "name": "Tier1",
+                            "fullyQualifiedName": "Tier.Tier1",
+                            "classification": {"name": "Tier"},
+                            "description": "Highest business criticality.",
+                            "recognizers": [],
+                        },
+                    ]
+                }
+            raise AssertionError(f"Unexpected endpoint {endpoint}")
+
+        mock_request.side_effect = side_effect
+        catalog = MODULE.fetch_openmetadata_classification_catalog()
+
+        self.assertEqual(
+            catalog,
+            [
+                {
+                    "name": "PII",
+                    "provider": "system",
+                    "description": "Personally identifiable information.",
+                    "mutually_exclusive": True,
+                    "allowed_on": ["table", "column"],
+                    "options": [
+                        {"name": "Sensitive", "fqn": "PII.Sensitive", "description": "Sensitive personal data."},
+                        {"name": "NonSensitive", "fqn": "PII.NonSensitive", "description": "Non-sensitive personal data."},
+                    ],
+                },
+                {
+                    "name": "Tier",
+                    "provider": "system",
+                    "description": "Business criticality tiers.",
+                    "mutually_exclusive": True,
+                    "allowed_on": ["table", "column"],
+                    "options": [
+                        {"name": "Tier1", "fqn": "Tier.Tier1", "description": "Highest business criticality."},
+                    ],
+                },
+            ],
+        )
+
     def test_build_source_system_document_preserves_existing_source_descriptions(self):
         fake_engine = types.SimpleNamespace(dialect=types.SimpleNamespace(name="postgresql"))
         fake_adapter = types.SimpleNamespace(
@@ -462,6 +531,230 @@ class SourceSystemAnalyzerIncrementalTests(unittest.TestCase):
         table = result["tables"][0]
         self.assertEqual(table["table_description"], "Source table comment")
         self.assertEqual(table["columns"][0]["column_description"], "Source column comment")
+
+    def test_build_source_system_document_includes_openmetadata_classification_tags(self):
+        fake_engine = types.SimpleNamespace(dialect=types.SimpleNamespace(name="postgresql"))
+        fake_adapter = types.SimpleNamespace(
+            resolve_default_schema=lambda engine: "public",
+            fetch_table_descriptions=lambda engine, schema: {},
+            fetch_column_descriptions=lambda engine, schema: {},
+            fetch_check_constraints=lambda engine, schema: {},
+            fetch_enum_columns=lambda engine, schema: {},
+            fetch_unique_constraints=lambda engine, schema: {},
+            detect_cdc_enabled=lambda engine, table_name, schema: False,
+            fetch_database_timezone=lambda engine: "UTC",
+        )
+
+        with ExitStack() as stack:
+            stack.enter_context(patch.object(MODULE, "get_engine", return_value=fake_engine))
+            stack.enter_context(patch.object(MODULE, "get_adapter", return_value=fake_adapter))
+            stack.enter_context(
+                patch.object(
+                    MODULE,
+                    "fetch_schema_metadata",
+                    return_value={
+                        "tables": ["customers"],
+                        "columns": {"customers": [{"name": "email", "type": "text", "nullable": True, "is_incremental": False}]},
+                        "primary_keys": {"customers": []},
+                        "foreign_keys": {"customers": []},
+                    },
+                )
+            )
+            stack.enter_context(patch.object(MODULE, "parse_connection_info", return_value={"driver": "postgresql", "database": "demo"}))
+            stack.enter_context(patch.object(MODULE, "fetch_database_timezone", return_value="UTC"))
+            stack.enter_context(patch.object(MODULE, "fetch_row_counts", return_value={"customers": 10}))
+            stack.enter_context(
+                patch.object(
+                    MODULE,
+                    "fetch_openmetadata_classification_catalog",
+                    return_value=[
+                        {
+                            "name": "PII",
+                            "provider": "system",
+                            "description": "Personally identifiable information.",
+                            "mutually_exclusive": True,
+                            "allowed_on": ["table", "column"],
+                            "options": [{"name": "Sensitive", "fqn": "PII.Sensitive", "description": "Sensitive personal data."}],
+                        }
+                    ],
+                )
+            )
+            stack.enter_context(
+                patch.object(
+                    MODULE,
+                    "_fetch_openmetadata_glossary_assignments",
+                    return_value=(
+                        {
+                            "customers": {
+                                "glossary_terms": ["Retail.Customer"],
+                                "classification_tags": ["Tier.Tier1"],
+                                "column_glossary_terms": {"email": ["Retail.Customer.Email"]},
+                                "column_classification_tags": {"email": ["PII.Sensitive"]},
+                            }
+                        },
+                        {
+                            "enabled": True,
+                            "configured": True,
+                            "database_service_name": "svc",
+                            "schema": "public",
+                            "match_strategy": "",
+                            "matched_tables": 1,
+                            "unmatched_tables": 0,
+                            "error": "",
+                        },
+                    ),
+                )
+            )
+            stack.enter_context(patch.object(MODULE, "_collect_projection_inputs"))
+            stack.enter_context(patch.object(MODULE, "_projection_lookup", return_value={}))
+            stack.enter_context(patch.object(MODULE, "_direct_history_projection_lookup", return_value={}))
+            stack.enter_context(patch.object(MODULE, "fetch_sample_rows", return_value=(["email"], [])))
+            stack.enter_context(patch.object(MODULE, "detect_partition_columns", return_value=([], "exact")))
+            stack.enter_context(patch.object(MODULE, "detect_incremental_columns", return_value=[]))
+            stack.enter_context(patch.object(MODULE, "fetch_column_statistics", return_value={}))
+            stack.enter_context(patch.object(MODULE, "detect_join_candidates", return_value=[]))
+            stack.enter_context(patch.object(MODULE, "_apply_concept_classification", return_value={"concepts": []}))
+            stack.enter_context(patch.object(MODULE, "check_controlled_value_candidates", return_value=[]))
+            stack.enter_context(patch.object(MODULE, "check_nullable_but_never_null", return_value=[]))
+            stack.enter_context(patch.object(MODULE, "check_missing_primary_keys", return_value=[]))
+            stack.enter_context(patch.object(MODULE, "check_missing_foreign_keys", return_value=[]))
+            stack.enter_context(patch.object(MODULE, "check_format_inconsistency", return_value=[]))
+            stack.enter_context(patch.object(MODULE, "check_range_violations", return_value=[]))
+            stack.enter_context(patch.object(MODULE, "check_timestamp_ordering", return_value=[]))
+            stack.enter_context(patch.object(MODULE, "check_delete_management", return_value=[]))
+            stack.enter_context(patch.object(MODULE, "check_late_arriving_data", return_value=[]))
+            stack.enter_context(patch.object(MODULE, "check_timezone", return_value=[]))
+            stack.enter_context(patch.object(MODULE, "check_unit_consistency", return_value=[]))
+            result = MODULE.build_source_system_document(
+                "postgresql://user:pass@localhost:5432/demo",
+                schema="public",
+                config={"exclude_schemas": [], "exclude_tables": [], "max_row_limit": None},
+            )
+
+        self.assertEqual(
+            result["metadata"]["openmetadata_classifications"],
+            [
+                {
+                    "name": "PII",
+                    "provider": "system",
+                    "description": "Personally identifiable information.",
+                    "mutually_exclusive": True,
+                    "allowed_on": ["table", "column"],
+                    "options": [{"name": "Sensitive", "fqn": "PII.Sensitive", "description": "Sensitive personal data."}],
+                }
+            ],
+        )
+        table = result["tables"][0]
+        self.assertEqual(table["classification_tags"], ["Tier.Tier1"])
+        self.assertEqual(table["columns"][0]["classification_tags"], ["PII.Sensitive"])
+
+    def test_build_source_system_document_uses_llm_for_missing_classification_tags(self):
+        fake_engine = types.SimpleNamespace(dialect=types.SimpleNamespace(name="postgresql"))
+
+        class _FakeGenerator:
+            def is_available(self):
+                return True
+
+            def generate_column_description(self, **kwargs):
+                return "Customer email address."
+
+            def generate_table_description(self, **kwargs):
+                return "Customer records."
+
+        with ExitStack() as stack:
+            stack.enter_context(patch.object(MODULE, "get_engine", return_value=fake_engine))
+            stack.enter_context(patch.object(MODULE, "get_adapter", return_value=None))
+            stack.enter_context(
+                patch.object(
+                    MODULE,
+                    "fetch_schema_metadata",
+                    return_value={
+                        "tables": ["customers"],
+                        "columns": {"customers": [{"name": "email", "type": "text", "nullable": True, "is_incremental": False}]},
+                        "primary_keys": {"customers": []},
+                        "foreign_keys": {"customers": []},
+                    },
+                )
+            )
+            stack.enter_context(patch.object(MODULE, "parse_connection_info", return_value={"driver": "postgresql", "database": "demo"}))
+            stack.enter_context(patch.object(MODULE, "fetch_database_timezone", return_value="UTC"))
+            stack.enter_context(patch.object(MODULE, "fetch_row_counts", return_value={"customers": 10}))
+            stack.enter_context(
+                patch.object(
+                    MODULE,
+                    "fetch_openmetadata_classification_catalog",
+                    return_value=[
+                        {
+                            "name": "PII",
+                            "provider": "system",
+                            "description": "Personally identifiable information.",
+                            "mutually_exclusive": True,
+                            "allowed_on": ["table", "column"],
+                            "options": [{"name": "Sensitive", "fqn": "PII.Sensitive", "description": "Sensitive personal data."}],
+                        }
+                    ],
+                )
+            )
+            stack.enter_context(
+                patch.object(
+                    MODULE,
+                    "_fetch_openmetadata_glossary_assignments",
+                    return_value=(
+                        {
+                            "customers": {
+                                "glossary_terms": [],
+                                "classification_tags": [],
+                                "column_glossary_terms": {"email": []},
+                                "column_classification_tags": {"email": []},
+                            }
+                        },
+                        {
+                            "enabled": True,
+                            "configured": True,
+                            "database_service_name": "svc",
+                            "schema": "public",
+                            "match_strategy": "",
+                            "matched_tables": 1,
+                            "unmatched_tables": 0,
+                            "error": "",
+                        },
+                    ),
+                )
+            )
+            stack.enter_context(patch.object(MODULE, "_collect_projection_inputs"))
+            stack.enter_context(patch.object(MODULE, "_projection_lookup", return_value={}))
+            stack.enter_context(patch.object(MODULE, "_direct_history_projection_lookup", return_value={}))
+            stack.enter_context(
+                patch.object(
+                    MODULE,
+                    "fetch_sample_rows",
+                    return_value=(["email"], [("alex@example.com",), ("sam@example.com",)]),
+                )
+            )
+            stack.enter_context(patch.object(MODULE, "detect_partition_columns", return_value=([], "exact")))
+            stack.enter_context(patch.object(MODULE, "detect_incremental_columns", return_value=[]))
+            stack.enter_context(patch.object(MODULE, "fetch_column_statistics", return_value={}))
+            stack.enter_context(patch.object(MODULE, "detect_join_candidates", return_value=[]))
+            stack.enter_context(patch.object(MODULE, "_apply_concept_classification", return_value={"concepts": []}))
+            stack.enter_context(patch.object(MODULE, "_build_description_generator", return_value=_FakeGenerator()))
+            stack.enter_context(patch.object(MODULE, "fetch_openmetadata_glossary_terms", return_value=[]))
+            assign_table = stack.enter_context(
+                patch.object(MODULE.AzureClassificationTagAssigner, "assign_table", return_value=["PII.Sensitive"])
+            )
+            assign_column = stack.enter_context(
+                patch.object(MODULE.AzureClassificationTagAssigner, "assign_column", return_value=["PII.Sensitive"])
+            )
+            result = MODULE.build_source_system_document(
+                "postgresql://user:pass@localhost:5432/demo",
+                schema="public",
+                config={"exclude_schemas": [], "exclude_tables": [], "max_row_limit": None},
+            )
+
+        assign_table.assert_called_once()
+        assign_column.assert_called_once()
+        table = result["tables"][0]
+        self.assertEqual(table["classification_tags"], ["PII.Sensitive"])
+        self.assertEqual(table["columns"][0]["classification_tags"], ["PII.Sensitive"])
 
     def test_build_source_system_document_uses_azure_for_missing_descriptions(self):
         fake_engine = types.SimpleNamespace(dialect=types.SimpleNamespace(name="postgresql"))

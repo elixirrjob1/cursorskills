@@ -85,6 +85,30 @@ class JsonExcelLayoutTests(unittest.TestCase):
                 "total_tables": 2,
                 "total_rows": 15,
                 "total_findings": 1,
+                "openmetadata_classifications": [
+                    {
+                        "name": "PII",
+                        "provider": "system",
+                        "description": "Personally identifiable information.",
+                        "mutually_exclusive": True,
+                        "allowed_on": ["table", "column"],
+                        "options": [
+                            {"name": "Sensitive", "fqn": "PII.Sensitive", "description": "Sensitive personal data."},
+                            {"name": "NonSensitive", "fqn": "PII.NonSensitive", "description": "Non-sensitive personal data."},
+                        ],
+                    },
+                    {
+                        "name": "Tier",
+                        "provider": "system",
+                        "description": "Business criticality tiers.",
+                        "mutually_exclusive": True,
+                        "allowed_on": ["table", "column"],
+                        "options": [
+                            {"name": "Tier1", "fqn": "Tier.Tier1", "description": "Highest business criticality."},
+                            {"name": "Tier2", "fqn": "Tier.Tier2", "description": "Important but not highest."},
+                        ],
+                    },
+                ],
             },
             "connection": {
                 "host": "localhost",
@@ -113,6 +137,7 @@ class JsonExcelLayoutTests(unittest.TestCase):
                     "schema": "public",
                     "table_description": "Customer master",
                     "glossary_terms": ["Retail.Customer"],
+                    "classification_tags": ["Tier.Tier1"],
                     "primary_keys": ["customer_id"],
                     "foreign_keys": [],
                     "row_count": 10,
@@ -144,6 +169,7 @@ class JsonExcelLayoutTests(unittest.TestCase):
                             "semantic_class": "customer_id",
                             "column_description": "Primary key",
                             "glossary_terms": ["Retail.Customer.Identifier"],
+                            "classification_tags": [],
                             "concept_id": "identifier.customer",
                             "concept_confidence": 0.98,
                             "concept_evidence": {"rule": "name"},
@@ -163,6 +189,7 @@ class JsonExcelLayoutTests(unittest.TestCase):
                             "semantic_class": "email",
                             "column_description": "Email address",
                             "glossary_terms": ["Retail.Customer.Email"],
+                            "classification_tags": ["PII.Sensitive"],
                             "concept_id": "contact.email",
                             "concept_confidence": 0.91,
                             "concept_evidence": {"rule": "regex"},
@@ -188,6 +215,7 @@ class JsonExcelLayoutTests(unittest.TestCase):
                     "table": "employees",
                     "schema": "public",
                     "glossary_terms": [],
+                    "classification_tags": ["Tier.Tier2"],
                     "primary_keys": ["employee_id"],
                     "foreign_keys": [{"column": "manager_id", "references": "employees.employee_id"}],
                     "row_count": 5,
@@ -217,6 +245,7 @@ class JsonExcelLayoutTests(unittest.TestCase):
                             "semantic_class": "employee_id",
                             "column_description": "Employee key",
                             "glossary_terms": [],
+                            "classification_tags": [],
                             "unit_context": {},
                         }
                     ],
@@ -255,6 +284,7 @@ class JsonExcelLayoutTests(unittest.TestCase):
             self.assertIn("DataQualityFindings", customer_sections)
             self.assertNotIn("FieldContextManual", source_sections)
             self.assertIn("DbAnalysisConfig", source_sections)
+            self.assertIn("OpenMetadataClassifications", source_sections)
             self.assertNotIn("FieldClassifications", customer_sections)
             self.assertNotIn("SensitiveFields", customer_sections)
             self.assertEqual(glossary_rows[0], ("Field", "Description"))
@@ -262,6 +292,7 @@ class JsonExcelLayoutTests(unittest.TestCase):
             self.assertTrue(
                 {
                     "glossary_terms",
+                    "om_class_<ClassificationName>",
                     "semantic_class",
                     "concept_id",
                     "concept_confidence",
@@ -279,24 +310,36 @@ class JsonExcelLayoutTests(unittest.TestCase):
                     "conversion_formula",
                 }.issubset(glossary_fields)
             )
+            glossary_descriptions = {row[0]: row[1] for row in glossary_rows[1:] if row and row[0]}
+            self.assertEqual(glossary_descriptions["classification: PII"], "Personally identifiable information.")
+            self.assertEqual(glossary_descriptions["classification option: PII.Sensitive"], "Sensitive personal data.")
+            self.assertEqual(glossary_descriptions["classification: Tier"], "Business criticality tiers.")
+            self.assertEqual(glossary_descriptions["classification option: Tier.Tier1"], "Highest business criticality.")
             self.assertEqual(list(source_sections["RestrictionsManual"][0].keys())[0], "table_name")
             self.assertEqual(source_sections["DbAnalysisConfig"][0]["exclude_schemas"], "audit")
             self.assertEqual(source_sections["DbAnalysisConfig"][0]["exclude_tables"], "event_log, audit.entries")
             self.assertEqual(source_sections["DbAnalysisConfig"][0]["max_row_limit"], 25)
+            self.assertEqual(source_sections["OpenMetadataClassifications"][0]["classification_name"], "PII")
+            self.assertEqual(source_sections["OpenMetadataClassifications"][0]["option_fqn"], "PII.Sensitive")
             self.assertIn("classification", customer_sections["Columns"][0])
             self.assertIn("sensitivity_label", customer_sections["Columns"][0])
+            self.assertIn("om_class_PII", customer_sections["Columns"][0])
+            self.assertIn("om_class_Tier", customer_sections["Columns"][0])
             self.assertNotIn("is_incremental", customer_sections["Columns"][0])
             self.assertNotIn("primary_keys", customer_sections["Overview"][0])
             self.assertNotIn("incremental_columns", customer_sections["Overview"][0])
             self.assertNotIn("partition_columns", customer_sections["Overview"][0])
             self.assertNotIn("partition_columns_candidates", customer_sections["Overview"][0])
             self.assertEqual(customer_sections["Overview"][0]["glossary_terms"], "Retail.Customer")
+            self.assertNotIn("om_class_PII", customer_sections["Overview"][0])
+            self.assertEqual(customer_sections["Overview"][0]["om_class_Tier"], "Tier.Tier1")
             self.assertEqual(customer_sections["Columns"][0]["glossary_terms"], "Retail.Customer.Identifier")
             self.assertEqual(customer_sections["Columns"][1]["glossary_terms"], "Retail.Customer.Email")
-            self.assertEqual(
-                list(customer_sections["Overview"][0].keys())[-3:],
-                ["row_count_projection_1y", "row_count_projection_2y", "row_count_projection_5y"],
-            )
+            self.assertEqual(customer_sections["Columns"][1]["om_class_PII"], "PII.Sensitive")
+            self.assertIn(customer_sections["Columns"][1]["om_class_Tier"], ("", None))
+            self.assertIn("row_count_projection_1y", customer_sections["Overview"][0])
+            self.assertIn("row_count_projection_2y", customer_sections["Overview"][0])
+            self.assertIn("row_count_projection_5y", customer_sections["Overview"][0])
             self.assertEqual(customer_sections["Overview"][0]["table_name"], "customers")
             self.assertEqual(customer_sections["Overview"][0]["row_count_projection_1y"], 15)
             self.assertEqual(customer_sections["Overview"][0]["row_count_projection_2y"], 20)
@@ -320,7 +363,10 @@ class JsonExcelLayoutTests(unittest.TestCase):
             _set_section_value(wb["customers"], "Columns", "sensitivity_label", "pii_email", match_col="column_name", match_value="email")
             _set_section_value(wb["customers"], "Columns", "column_description", "Preferred email", match_col="column_name", match_value="email")
             _set_section_value(wb["customers"], "Overview", "glossary_terms", "Retail.Customer, Retail.Buyer")
+            _set_section_value(wb["customers"], "Overview", "om_class_Tier", "Tier.Tier2")
             _set_section_value(wb["customers"], "Columns", "glossary_terms", "Retail.Customer.PrimaryEmail", match_col="column_name", match_value="email")
+            _set_section_value(wb["customers"], "Columns", "om_class_PII", "PII.NonSensitive", match_col="column_name", match_value="email")
+            _set_section_value(wb["customers"], "Columns", "om_class_Tier", "Tier.Tier1", match_col="column_name", match_value="email")
             _set_section_value(wb["customers"], "DataQualityFindings", "detail", "Emails still missing", match_col="finding_index", match_value=1)
             wb["Glossary"]["B2"] = "Changed glossary text should be ignored"
             wb.save(output)
@@ -348,10 +394,47 @@ class JsonExcelLayoutTests(unittest.TestCase):
             self.assertEqual(customers["field_classifications"]["email"], "customer_contact")
             self.assertEqual(customers["sensitive_fields"]["email"], "pii_email")
             self.assertEqual(customers["glossary_terms"], ["Retail.Customer", "Retail.Buyer"])
+            self.assertEqual(customers["classification_tags"], ["Tier.Tier2"])
             email_col = next(col for col in customers["columns"] if col["name"] == "email")
             self.assertEqual(email_col["column_description"], "Preferred email")
             self.assertEqual(email_col["glossary_terms"], ["Retail.Customer.PrimaryEmail"])
+            self.assertEqual(sorted(email_col["classification_tags"]), ["PII.NonSensitive", "Tier.Tier1"])
             self.assertEqual(customers["data_quality"]["findings"][0]["detail"], "Emails still missing")
+
+    def test_reader_rejects_invalid_classification_tags(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            output = Path(tmpdir) / "schema.xlsx"
+            self._write_workbook(output)
+
+            wb = load_workbook(output)
+            _set_section_value(wb["customers"], "Overview", "om_class_Tier", "Unknown.Tag")
+            wb.save(output)
+
+            edited_wb = load_workbook(output, data_only=True)
+            payload = excel_to_json._read_roundtrip_payload(edited_wb)
+            with self.assertRaisesRegex(ValueError, "Invalid classification tag 'Unknown.Tag' on table public.customers"):
+                excel_to_json.apply_all_visible_edits(edited_wb, payload)
+
+    def test_reader_rejects_table_level_pii_when_present_in_legacy_field(self):
+        payload = json.loads(json.dumps(self.payload))
+        payload["tables"][0]["classification_tags"] = ["PII.Sensitive"]
+        with self.assertRaisesRegex(ValueError, "Classification 'PII' is not allowed on table public.customers"):
+            excel_to_json._validate_classification_tags(
+                payload,
+                "PII.Sensitive",
+                entity_level="table",
+                entity_label="table public.customers",
+            )
+
+    def test_reader_rejects_mutually_exclusive_tags_in_legacy_field(self):
+        payload = json.loads(json.dumps(self.payload))
+        with self.assertRaisesRegex(ValueError, "mutually exclusive on column public.customers.email"):
+            excel_to_json._validate_classification_tags(
+                payload,
+                "PII.Sensitive, PII.NonSensitive",
+                entity_level="column",
+                entity_label="column public.customers.email",
+            )
 
 
 if __name__ == "__main__":

@@ -25,6 +25,26 @@ Example:
   .cursor/flat/schema_postgres_keyvault_public_public_postgresql.xlsx
 ```
 
+### OpenMetadata Glossary Terms
+
+The `DataGovernanceTerms` sheet is **fetched automatically** from OpenMetadata when the env vars `OPENMETADATA_BASE_URL` and auth credentials (`OPENMETADATA_EMAIL` / `OPENMETADATA_PASSWORD` or `OPENMETADATA_JWT_TOKEN`) are set. No extra flags or MCP calls are needed.
+
+To **skip** the automatic fetch:
+
+```bash
+.venv/bin/python .cursor/skills/json-to-excel-export/scripts/json_to_excel.py \
+  <input_json> <output_xlsx> --no-openmetadata
+```
+
+To provide a **pre-fetched** glossary file instead:
+
+```bash
+.venv/bin/python .cursor/skills/json-to-excel-export/scripts/json_to_excel.py \
+  <input_json> <output_xlsx> --glossary-json <glossary_json>
+```
+
+If OpenMetadata is unreachable or credentials are missing, the script continues without the sheet.
+
 Reverse (Excel back to JSON):
 
 ```bash
@@ -48,6 +68,7 @@ Workbook tabs:
 - `Summary`
 - `SourceSystem`
 - `DataQualityFindings`
+- `DataGovernanceTerms` (when `--glossary-json` is provided)
 - one worksheet per source table
 - hidden round-trip tabs (`__rt_*`)
 

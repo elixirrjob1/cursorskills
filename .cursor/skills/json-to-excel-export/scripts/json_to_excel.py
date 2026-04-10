@@ -1,6 +1,10 @@
 #!/usr/bin/env python3
 import argparse
+import base64
 import json
+import logging
+import os
+import sys
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 from copy import deepcopy
@@ -9,6 +13,79 @@ from openpyxl import Workbook
 from openpyxl.worksheet.datavalidation import DataValidation
 from openpyxl.utils import get_column_letter
 from openpyxl.styles import Alignment, Font, PatternFill
+
+_log = logging.getLogger(__name__)
+
+
+# ---------------------------------------------------------------------------
+# OpenMetadata direct REST helpers (mirrors tools/openmetadata_mcp/server.py)
+# ---------------------------------------------------------------------------
+
+def _om_base_url() -> str | None:
+    raw = os.getenv("OPENMETADATA_BASE_URL", "").strip().rstrip("/")
+    if not raw:
+        return None
+    return f"{raw}/api" if not raw.endswith("/api") else raw
+
+
+def _om_login_token() -> str | None:
+    jwt = os.getenv("OPENMETADATA_JWT_TOKEN", "").strip()
+    if jwt:
+        return jwt
+    base = _om_base_url()
+    email = os.getenv("OPENMETADATA_EMAIL", "").strip()
+    password = os.getenv("OPENMETADATA_PASSWORD", "")
+    if not base or not email or not password:
+        return None
+    import requests as _req
+    encoded = base64.b64encode(password.encode("utf-8")).decode("ascii")
+    for pwd in (encoded, password):
+        try:
+            resp = _req.post(
+                f"{base}/v1/users/login",
+                headers={"Accept": "application/json", "Content-Type": "application/json"},
+                json={"email": email, "password": pwd},
+                timeout=(10, 30),
+            )
+            resp.raise_for_status()
+            data = resp.json() if resp.content else {}
+            for key in ("accessToken", "jwtToken", "token", "id_token"):
+                val = data.get(key) if isinstance(data, dict) else None
+                if isinstance(val, str) and val.strip():
+                    return val.strip()
+        except Exception:
+            continue
+    return None
+
+
+def _om_fetch_glossary_payload() -> dict | None:
+    """Fetch glossaries + terms from OpenMetadata REST API. Returns None on any failure."""
+    base = _om_base_url()
+    if not base:
+        return None
+    token = _om_login_token()
+    if not token:
+        _log.warning("OpenMetadata credentials not available; skipping glossary fetch.")
+        return None
+    import requests as _req
+    headers = {
+        "Accept": "application/json",
+        "Authorization": f"Bearer {token}",
+    }
+    try:
+        g_resp = _req.get(f"{base}/v1/glossaries", params={"limit": 1000}, headers=headers, timeout=(10, 30))
+        g_resp.raise_for_status()
+        glossaries = (g_resp.json() or {}).get("data", [])
+
+        t_resp = _req.get(f"{base}/v1/glossaryTerms", params={"limit": 1000}, headers=headers, timeout=(10, 30))
+        t_resp.raise_for_status()
+        terms = (t_resp.json() or {}).get("data", [])
+
+        _log.info("Fetched %d glossaries and %d terms from OpenMetadata.", len(glossaries), len(terms))
+        return {"glossaries": glossaries, "terms": terms}
+    except Exception as exc:
+        _log.warning("Failed to fetch glossary data from OpenMetadata: %s", exc)
+        return None
 
 
 _GLOSSARY_ROWS = [
@@ -484,6 +561,36 @@ def _classification_validation_rows(metadata):
     return rows
 
 
+def _business_terms_sheet_rows(glossary_payload):
+    if not glossary_payload:
+        return []
+    glossaries = glossary_payload.get("glossaries") or []
+    glossary_display = {}
+    for g in glossaries:
+        if isinstance(g, dict):
+            fqn = g.get("fullyQualifiedName") or g.get("name", "")
+            glossary_display[fqn] = g.get("displayName") or g.get("name", "")
+    rows = []
+    for term in glossary_payload.get("terms") or []:
+        if not isinstance(term, dict):
+            continue
+        glossary_info = term.get("glossary") or {}
+        glossary_fqn = glossary_info.get("fullyQualifiedName") or glossary_info.get("name", "")
+        glossary_name = glossary_display.get(glossary_fqn, "") or glossary_info.get("displayName") or glossary_info.get("name", "")
+        rows.append(
+            {
+                "glossary": glossary_name,
+                "term": term.get("displayName") or term.get("name", ""),
+                "fully_qualified_name": term.get("fullyQualifiedName", ""),
+                "description": term.get("description", ""),
+                "synonyms": _join_list(term.get("synonyms", [])),
+                "status": term.get("entityStatus", ""),
+            }
+        )
+    rows.sort(key=lambda r: (r["glossary"], r["term"]))
+    return rows
+
+
 def _glossary_sheet_rows(metadata):
     rows = list(_GLOSSARY_ROWS)
     for classification in metadata.get("openmetadata_classifications", []) or []:
@@ -830,7 +937,7 @@ def _table_sheet_sections(table, metadata):
     return sections
 
 
-def _collect_sheets(payload):
+def _collect_sheets(payload, glossary_payload=None):
     tables = payload.get("tables", []) or []
     connection = payload.get("connection", {}) or {}
     metadata = payload.get("metadata", {}) or {}
@@ -916,6 +1023,9 @@ def _collect_sheets(payload):
         "DataQualityFindings": data_quality_findings_rows,
         "Glossary": _glossary_sheet_rows(metadata),
     }
+    business_terms = _business_terms_sheet_rows(glossary_payload)
+    if business_terms:
+        sheets["DataGovernanceTerms"] = business_terms
     classification_validation_rows = _classification_validation_rows(metadata)
     if classification_validation_rows:
         sheets["__dv_classifications"] = classification_validation_rows
@@ -940,7 +1050,7 @@ def _apply_classification_validations(wb):
         option_ranges[str(header)] = f"'__dv_classifications'!${col_letter}$2:${col_letter}${options_ws.max_row}"
 
     for ws in wb.worksheets:
-        if ws.title in {"Summary", "SourceSystem", "DataQualityFindings", "Glossary", "__dv_classifications"}:
+        if ws.title in {"Summary", "SourceSystem", "DataQualityFindings", "Glossary", "DataGovernanceTerms", "__dv_classifications"}:
             continue
         if ws.sheet_state != "visible":
             continue
@@ -1128,7 +1238,22 @@ def main():
     parser = argparse.ArgumentParser(description="Convert schema JSON to styled Excel workbook")
     parser.add_argument("input_json", help="Path to source JSON file")
     parser.add_argument("output_xlsx", nargs="?", help="Path to output .xlsx file")
+    parser.add_argument(
+        "--glossary-json",
+        dest="glossary_json",
+        default=None,
+        help="Path to OpenMetadata glossary JSON file. When omitted the script fetches directly from OpenMetadata.",
+    )
+    parser.add_argument(
+        "--no-openmetadata",
+        dest="no_openmetadata",
+        action="store_true",
+        default=False,
+        help="Skip automatic OpenMetadata glossary fetch (omit the DataGovernanceTerms sheet).",
+    )
     args = parser.parse_args()
+
+    logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 
     input_path = Path(args.input_json).expanduser().resolve()
     output_path = (
@@ -1138,7 +1263,15 @@ def main():
     )
 
     payload = json.loads(input_path.read_text(encoding="utf-8"))
-    sheet_rows = _collect_sheets(payload)
+
+    glossary_payload = None
+    if args.glossary_json:
+        glossary_path = Path(args.glossary_json).expanduser().resolve()
+        glossary_payload = json.loads(glossary_path.read_text(encoding="utf-8"))
+    elif not args.no_openmetadata:
+        glossary_payload = _om_fetch_glossary_payload()
+
+    sheet_rows = _collect_sheets(payload, glossary_payload=glossary_payload)
     sheet_rows.update(_roundtrip_sheets(payload))
     _write_workbook(sheet_rows, output_path)
     row_count = sum(len(v) for v in sheet_rows.values())

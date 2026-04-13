@@ -31,14 +31,14 @@
 ## 3. Source System Inventory
 | Source System | Database / Schema | Table / File | Frequency | Owner | Notes |
 |---------------|-------------------|--------------|-----------|-------|-------|
-|  |  |  |  |  |  |
+| Snowflake | DRIP_DATA_INTELLIGENCE.BRONZE_ERP__DBO | See field-level mapping |  |  | Immediate technical source is Snowflake bronze; original lineage comes from the analyzer source system. |
 
 ---
 
 ## 4. Target Schema Definition
 | Target Database | Schema | Table Name | SCD Type | Grain / Primary Key | Distribution | Table Type | Notes |
 |-----------------|--------|------------|----------|----------------------|-------------|------------|-------|
-|  |  | DimConsultant | Type 2 on Title, Level, Department, StandardBillRate, StandardCostRate | ConsultantHashPK |  | Dimension (Conformed, SCD Type 2) | Employee/consultant master dimension containing professional details, organizational hierarchy, and employment attributes. Supports historical tracking via SCD Type 2 for changes in title, department, or rate. |
+| DRIP_DATA_INTELLIGENCE | GOLD | DimConsultant | Type 2 on Title, Level, Department, StandardBillRate, StandardCostRate | ConsultantHashPK |  | Dimension (Conformed, SCD Type 2) | Employee/consultant master dimension containing professional details, organizational hierarchy, and employment attributes. Supports historical tracking via SCD Type 2 for changes in title, department, or rate. |
 
 ---
 

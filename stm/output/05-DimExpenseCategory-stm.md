@@ -31,14 +31,14 @@
 ## 3. Source System Inventory
 | Source System | Database / Schema | Table / File | Frequency | Owner | Notes |
 |---------------|-------------------|--------------|-----------|-------|-------|
-|  |  |  |  |  |  |
+| Snowflake | DRIP_DATA_INTELLIGENCE.BRONZE_ERP__DBO | See field-level mapping |  |  | Immediate technical source is Snowflake bronze; original lineage comes from the analyzer source system. |
 
 ---
 
 ## 4. Target Schema Definition
 | Target Database | Schema | Table Name | SCD Type | Grain / Primary Key | Distribution | Table Type | Notes |
 |-----------------|--------|------------|----------|----------------------|-------------|------------|-------|
-|  |  | DimExpenseCategory |  | ExpenseCategoryHashPK |  | Dimension (SCD Type 1) | Expense classification hierarchy for categorizing project expenses. Includes category and subcategory levels for roll-up analysis. |
+| DRIP_DATA_INTELLIGENCE | GOLD | DimExpenseCategory |  | ExpenseCategoryHashPK |  | Dimension (SCD Type 1) | Expense classification hierarchy for categorizing project expenses. Includes category and subcategory levels for roll-up analysis. |
 
 ---
 

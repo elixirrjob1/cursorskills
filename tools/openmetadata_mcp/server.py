@@ -898,5 +898,51 @@ def assign_tags_to_column(table_fqn: str, column_name: str, tag_fqns: list[str])
     )
 
 
+@mcp.tool()
+def update_table_description(table_fqn: str, description: str) -> str:
+    """Update the description of a table entity in OpenMetadata."""
+    table_entity = _get_table_entity(table_fqn, fields="columns,tags")
+    table_id = table_entity.get("id")
+    if not table_id:
+        raise RuntimeError(f"Table entity missing id for '{table_fqn}'.")
+    op = "replace" if table_entity.get("description") else "add"
+    updated = _patch_json_patch(
+        f"tables/{table_id}",
+        [{"op": op, "path": "/description", "value": description}],
+    )
+    return _render(
+        {
+            "success": True,
+            "table": updated.get("fullyQualifiedName") or table_fqn,
+            "description": updated.get("description", ""),
+        }
+    )
+
+
+@mcp.tool()
+def update_column_description(table_fqn: str, column_name: str, description: str) -> str:
+    """Update the description of a column within a table entity in OpenMetadata."""
+    table_entity = _get_table_entity(table_fqn, fields="columns,tags")
+    table_id = table_entity.get("id")
+    if not table_id:
+        raise RuntimeError(f"Table entity missing id for '{table_fqn}'.")
+    column_index = _find_column_index(table_entity, column_name)
+    column = table_entity["columns"][column_index]
+    op = "replace" if column.get("description") else "add"
+    updated = _patch_json_patch(
+        f"tables/{table_id}",
+        [{"op": op, "path": f"/columns/{column_index}/description", "value": description}],
+    )
+    updated_column = updated.get("columns", [])[column_index]
+    return _render(
+        {
+            "success": True,
+            "table": updated.get("fullyQualifiedName") or table_fqn,
+            "column": updated_column.get("name") or column_name,
+            "description": updated_column.get("description", ""),
+        }
+    )
+
+
 if __name__ == "__main__":
     mcp.run()

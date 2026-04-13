@@ -31,14 +31,14 @@
 ## 3. Source System Inventory
 | Source System | Database / Schema | Table / File | Frequency | Owner | Notes |
 |---------------|-------------------|--------------|-----------|-------|-------|
-|  |  |  |  |  |  |
+| Snowflake | DRIP_DATA_INTELLIGENCE.BRONZE_ERP__DBO | See field-level mapping |  |  | Immediate technical source is Snowflake bronze; original lineage comes from the analyzer source system. |
 
 ---
 
 ## 4. Target Schema Definition
 | Target Database | Schema | Table Name | SCD Type | Grain / Primary Key | Distribution | Table Type | Notes |
 |-----------------|--------|------------|----------|----------------------|-------------|------------|-------|
-|  |  | products |  | One row per product_id / product_id |  | Target Table (Source-Aligned) | Target product master table preserving supplier relationships, product attributes, pricing, and physical measurement fields in a source-aligned target layout. |
+| DRIP_DATA_INTELLIGENCE | GOLD | products |  | One row per product_id / product_id |  | Target Table (Source-Aligned) | Target product master table preserving supplier relationships, product attributes, pricing, and physical measurement fields in a source-aligned target layout. |
 
 ---
 
@@ -102,45 +102,99 @@ Definitions are included only when they are present in the analyzer JSON.
 
 | Scope | Column | Term FQN | Term Name | Definition |
 |-------|--------|----------|-----------|------------|
-| Table |  | RetailDomainGlossary.Product | Product |  |
-| Table |  | RetailDomainGlossary.ProductCategory | ProductCategory |  |
-| Table |  | RetailDomainGlossary.CostPrice | CostPrice |  |
-| Table |  | RetailDomainGlossary.UnitOfMeasure | UnitOfMeasure |  |
-| Column | product_id | RetailDomainGlossary.Product | Product |  |
-| Column | supplier_id | RetailDomainGlossary.Supplier | Supplier |  |
-| Column | sku | RetailDomainGlossary.Product | Product |  |
-| Column | name | RetailDomainGlossary.Product | Product |  |
-| Column | category | RetailDomainGlossary.ProductCategory | ProductCategory |  |
-| Column | unit_price | RetailDomainGlossary.SellingPrice | SellingPrice |  |
-| Column | cost_price | RetailDomainGlossary.CostPrice | CostPrice |  |
-| Column | weight_unit | RetailDomainGlossary.UnitOfMeasure | UnitOfMeasure |  |
-| Column | weight_value | RetailDomainGlossary.UnitOfMeasure | UnitOfMeasure |  |
-| Column | length_value | RetailDomainGlossary.UnitOfMeasure | UnitOfMeasure |  |
-| Column | length_unit | RetailDomainGlossary.UnitOfMeasure | UnitOfMeasure |  |
-| Column | product_description | RetailDomainGlossary.Product | Product |  |
-| Column | primary_supplier_id | RetailDomainGlossary.Supplier | Supplier |  |
+| Table |  | RetailDomainGlossary.Product | Product | A sellable item or SKU identified for catalog, pricing, and inventory purposes. **Type:** business_entity \| **Usage:** Merchandising, assortment planning, pricing, and inventory management.
+
+Review status: draft. |
+| Table |  | RetailDomainGlossary.ProductCategory | ProductCategory | A grouping of related products used to organise the range for merchandising, reporting, and buying. **Type:** business_entity \| **Usage:** Category management, planogram assignment, and buyer responsibility mapping.
+
+Inferred; standard way retailers organise products.
+
+Review status: draft. |
+| Table |  | RetailDomainGlossary.CostPrice | CostPrice | The amount the retailer pays the supplier per unit, before any rebates, allowances, or landed-cost adjustments. **Type:** business_attribute \| **Usage:** Margin calculation, price setting, and supplier negotiation.
+
+Inferred; necessary for financial monitoring.
+
+Review status: draft. |
+| Table |  | RetailDomainGlossary.UnitOfMeasure | UnitOfMeasure | The standard quantity designation for a product (e.g. each, pack, kilogram, litre) used in ordering, selling, and inventory. **Type:** business_attribute \| **Usage:** Purchase-order quantities, POS scanning, and stock counting.
+
+Inferred; essential for inventory and purchasing accuracy.
+
+Review status: draft. |
+| Column | product_id | RetailDomainGlossary.Product | Product | A sellable item or SKU identified for catalog, pricing, and inventory purposes. **Type:** business_entity \| **Usage:** Merchandising, assortment planning, pricing, and inventory management.
+
+Review status: draft. |
+| Column | supplier_id | RetailDomainGlossary.Supplier | Supplier | An external party that provides goods to the retailer, typically under negotiated commercial terms. **Type:** business_entity \| **Usage:** Procurement, vendor scorecards, cost negotiation, and accounts payable.
+
+Review status: draft. |
+| Column | sku | RetailDomainGlossary.Product | Product | A sellable item or SKU identified for catalog, pricing, and inventory purposes. **Type:** business_entity \| **Usage:** Merchandising, assortment planning, pricing, and inventory management.
+
+Review status: draft. |
+| Column | name | RetailDomainGlossary.Product | Product | A sellable item or SKU identified for catalog, pricing, and inventory purposes. **Type:** business_entity \| **Usage:** Merchandising, assortment planning, pricing, and inventory management.
+
+Review status: draft. |
+| Column | category | RetailDomainGlossary.ProductCategory | ProductCategory | A grouping of related products used to organise the range for merchandising, reporting, and buying. **Type:** business_entity \| **Usage:** Category management, planogram assignment, and buyer responsibility mapping.
+
+Inferred; standard way retailers organise products.
+
+Review status: draft. |
+| Column | unit_price | RetailDomainGlossary.SellingPrice | SellingPrice | The amount charged to the customer for a product at the point of sale, before or after promotional adjustments. **Type:** business_attribute \| **Usage:** POS configuration, margin analysis, and competitive pricing.
+
+Inferred; counterpart to cost price.
+
+Review status: draft. |
+| Column | cost_price | RetailDomainGlossary.CostPrice | CostPrice | The amount the retailer pays the supplier per unit, before any rebates, allowances, or landed-cost adjustments. **Type:** business_attribute \| **Usage:** Margin calculation, price setting, and supplier negotiation.
+
+Inferred; necessary for financial monitoring.
+
+Review status: draft. |
+| Column | weight_unit | RetailDomainGlossary.UnitOfMeasure | UnitOfMeasure | The standard quantity designation for a product (e.g. each, pack, kilogram, litre) used in ordering, selling, and inventory. **Type:** business_attribute \| **Usage:** Purchase-order quantities, POS scanning, and stock counting.
+
+Inferred; essential for inventory and purchasing accuracy.
+
+Review status: draft. |
+| Column | weight_value | RetailDomainGlossary.UnitOfMeasure | UnitOfMeasure | The standard quantity designation for a product (e.g. each, pack, kilogram, litre) used in ordering, selling, and inventory. **Type:** business_attribute \| **Usage:** Purchase-order quantities, POS scanning, and stock counting.
+
+Inferred; essential for inventory and purchasing accuracy.
+
+Review status: draft. |
+| Column | length_value | RetailDomainGlossary.UnitOfMeasure | UnitOfMeasure | The standard quantity designation for a product (e.g. each, pack, kilogram, litre) used in ordering, selling, and inventory. **Type:** business_attribute \| **Usage:** Purchase-order quantities, POS scanning, and stock counting.
+
+Inferred; essential for inventory and purchasing accuracy.
+
+Review status: draft. |
+| Column | length_unit | RetailDomainGlossary.UnitOfMeasure | UnitOfMeasure | The standard quantity designation for a product (e.g. each, pack, kilogram, litre) used in ordering, selling, and inventory. **Type:** business_attribute \| **Usage:** Purchase-order quantities, POS scanning, and stock counting.
+
+Inferred; essential for inventory and purchasing accuracy.
+
+Review status: draft. |
+| Column | product_description | RetailDomainGlossary.Product | Product | A sellable item or SKU identified for catalog, pricing, and inventory purposes. **Type:** business_entity \| **Usage:** Merchandising, assortment planning, pricing, and inventory management.
+
+Review status: draft. |
+| Column | primary_supplier_id | RetailDomainGlossary.Supplier | Supplier | An external party that provides goods to the retailer, typically under negotiated commercial terms. **Type:** business_entity \| **Usage:** Procurement, vendor scorecards, cost negotiation, and accounts payable.
+
+Review status: draft. |
 
 ---
 
 ## 7. Field-Level Mapping Matrix
 | Target Table | Target Column | Data Type | Field Type | Source System | Source Table | Source Column(s) | Transformation / Business Rule | Nullable? | Default / Fallback | Description |
 |--------------|---------------|-----------|------------|---------------|--------------|------------------|--------------------------------|-----------|--------------------|-------------|
-| products | product_id | bigint | Attribute |  |  |  |  | NO |  | Unique identifier for each product in the retail system, serving as the primary key for the products table. |
-| products | supplier_id | bigint | Attribute |  |  |  |  | NO |  | Represents the unique identifier of the supplier associated with a product, referencing the `supplier_id` column in the `suppliers` table. |
-| products | sku | nvarchar(450) | Attribute |  |  |  |  | NO |  | Unique alphanumeric identifier for a product used for inventory and sales tracking, required and limited to 450 characters. |
-| products | name | nvarchar collate "sql_latin1_general_cp1_ci_as" | Attribute |  |  |  |  | NO |  | The "name" column in the "products" table stores the non-nullable name of each product as a case-insensitive Unicode string. |
-| products | category | nvarchar collate "sql_latin1_general_cp1_ci_as" | Attribute |  |  |  |  | NO |  | Indicates the product's category classification, such as "Books," "Clothing," or "Electronics," stored as a non-nullable nvarchar string. |
-| products | unit_price | numeric(10,2) | Attribute |  |  |  |  | NO |  | The `unit_price` column stores the non-null selling price of a product as a numeric value with up to 10 digits and 2 decimal places, representing a currency amount. |
-| products | cost_price | numeric(10,2) | Attribute |  |  |  |  | NO |  | The `cost_price` column stores the non-null numeric cost amount (up to 10 digits with 2 decimal places) representing the purchase price of a product in the retail system. |
-| products | active | bit | Attribute |  |  |  |  | NO |  | Indicates whether a product is active and available for transactions, stored as a non-nullable boolean value. |
-| products | created_at | datetime2 | Attribute |  |  |  |  | NO |  | Indicates the timestamp when the product record was initially created, stored as a non-nullable datetime value. |
-| products | updated_at | datetime2 | Attribute |  |  |  |  | NO |  | The `updated_at` column stores the non-nullable timestamp of the most recent update to a product record in the `products` table. |
-| products | weight_unit | nvarchar(16) | Attribute |  |  |  |  | YES |  | Source weight unit (kg/lb) used for unit inference testing. |
-| products | weight_value | numeric(10,2) | Attribute |  |  |  |  | YES |  | The `weight_value` column stores the weight of a product as a numeric value with up to 10 digits and 2 decimal places, nullable if the weight is not specified. |
-| products | length_value | numeric(10,2) | Attribute |  |  |  |  | YES |  | Stores the length measurement of a product as a numeric value with up to two decimal places, nullable if not applicable. |
-| products | length_unit | nvarchar(16) | Attribute |  |  |  |  | YES |  | Source length unit (cm/in) used for unit inference testing. |
-| products | product_description | nvarchar collate "sql_latin1_general_cp1_ci_as" | Attribute |  |  |  |  | YES |  | Stores optional textual details about a product, such as features or specifications. |
-| products | primary_supplier_id | bigint | Attribute |  |  |  |  | YES |  | Primary supplier relationship used for join candidate detection. |
+| products | product_id | bigint | Attribute | Snowflake | PRODUCTS | PRODUCT_ID | Source type: number(38,0) | NO |  | Unique identifier for each product in the retail system, serving as the primary key for the products table. |
+| products | supplier_id | bigint | Attribute | Snowflake | PRODUCTS | SUPPLIER_ID | Source type: number(38,0) | NO |  | Represents the unique identifier of the supplier associated with a product, referencing the `supplier_id` column in the `suppliers` table. |
+| products | sku | nvarchar(450) | Attribute | Snowflake | PRODUCTS | SKU | Source type: text(900) | NO |  | Unique alphanumeric identifier for a product used for inventory and sales tracking, required and limited to 450 characters. |
+| products | name | nvarchar collate "sql_latin1_general_cp1_ci_as" | Attribute | Snowflake | PRODUCTS | NAME | Source type: text(256) | NO |  | The "name" column in the "products" table stores the non-nullable name of each product as a case-insensitive Unicode string. |
+| products | category | nvarchar collate "sql_latin1_general_cp1_ci_as" | Attribute | Snowflake | PRODUCTS | CATEGORY | Source type: text(256) | NO |  | Indicates the product's category classification, such as "Books," "Clothing," or "Electronics," stored as a non-nullable nvarchar string. |
+| products | unit_price | numeric(10,2) | Attribute | Snowflake | PRODUCTS | UNIT_PRICE | Source type: number(10,2) | NO |  | The `unit_price` column stores the non-null selling price of a product as a numeric value with up to 10 digits and 2 decimal places, representing a currency amount. |
+| products | cost_price | numeric(10,2) | Attribute | Snowflake | PRODUCTS | COST_PRICE | Source type: number(10,2) | NO |  | The `cost_price` column stores the non-null numeric cost amount (up to 10 digits with 2 decimal places) representing the purchase price of a product in the retail system. |
+| products | active | bit | Attribute | Snowflake | PRODUCTS | ACTIVE | Source type: boolean | NO |  | Indicates whether a product is active and available for transactions, stored as a non-nullable boolean value. |
+| products | created_at | datetime2 | Attribute | Snowflake | PRODUCTS | CREATED_AT | Source type: timestamp_ntz | NO |  | Indicates the timestamp when the product record was initially created, stored as a non-nullable datetime value. |
+| products | updated_at | datetime2 | Attribute | Snowflake | PRODUCTS | UPDATED_AT | Source type: timestamp_ntz | NO |  | The `updated_at` column stores the non-nullable timestamp of the most recent update to a product record in the `products` table. |
+| products | weight_unit | nvarchar(16) | Attribute | Snowflake | PRODUCTS | WEIGHT_UNIT | Source type: text(32) | YES |  | Source weight unit (kg/lb) used for unit inference testing. |
+| products | weight_value | numeric(10,2) | Attribute | Snowflake | PRODUCTS | WEIGHT_VALUE | Source type: number(10,2) | YES |  | The `weight_value` column stores the weight of a product as a numeric value with up to 10 digits and 2 decimal places, nullable if the weight is not specified. |
+| products | length_value | numeric(10,2) | Attribute | Snowflake | PRODUCTS | LENGTH_VALUE | Source type: number(10,2) | YES |  | Stores the length measurement of a product as a numeric value with up to two decimal places, nullable if not applicable. |
+| products | length_unit | nvarchar(16) | Attribute | Snowflake | PRODUCTS | LENGTH_UNIT | Source type: text(32) | YES |  | Source length unit (cm/in) used for unit inference testing. |
+| products | product_description | nvarchar collate "sql_latin1_general_cp1_ci_as" | Attribute | Snowflake | PRODUCTS | PRODUCT_DESCRIPTION | Source type: text(256) | YES |  | Stores optional textual details about a product, such as features or specifications. |
+| products | primary_supplier_id | bigint | Attribute | Snowflake | PRODUCTS | PRIMARY_SUPPLIER_ID | Source type: number(38,0) | YES |  | Primary supplier relationship used for join candidate detection. |
 
 ---
 
@@ -154,6 +208,9 @@ Definitions are included only when they are present in the analyzer JSON.
 ## 9. Data Quality & Validation Rules
 | Rule ID | Description | Check Type | Threshold / Condition | Action on Failure | Owner |
 |---------|-------------|------------|-----------------------|-------------------|-------|
+| DQ1 | PRODUCT_ID must not be NULL (primary key) | NOT NULL | PRODUCT_ID IS NOT NULL | Reject record |  |
+| DQ2 | PRODUCT_ID must be unique | Uniqueness | COUNT(DISTINCT PRODUCT_ID) = COUNT(*) | Reject record |  |
+| DQ3 | SUPPLIER_ID referential integrity check | Referential Integrity | All SUPPLIER_ID values exist in referenced parent table | Flag / quarantine |  |
 |  |  |  |  |  |  |
 
 ---
@@ -161,6 +218,7 @@ Definitions are included only when they are present in the analyzer JSON.
 ## 10. Load Strategy
 | Load Type | Method | Frequency | Dependencies | Error Handling / Recovery | Orchestration Tool |
 |-----------|--------|-----------|--------------|---------------------------|--------------------|
+| Incremental | Delta load using UPDATED_AT |  |  |  |  |
 |  |  |  |  |  |  |
 
 ---
@@ -168,7 +226,7 @@ Definitions are included only when they are present in the analyzer JSON.
 ## 11. Version Control & Governance
 | Version | Date | Author | Changes | Approved By |
 |---------|------|--------|---------|-------------|
-| 1.0 | 2026-04-10 | Cursor | Initial generation from target data model and analyzer schema JSON |  |
+| 1.0 | 2026-04-13 | Cursor | Initial generation from target data model and analyzer schema JSON |  |
 
 ---
 

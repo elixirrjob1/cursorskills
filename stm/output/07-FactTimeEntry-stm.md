@@ -31,14 +31,14 @@
 ## 3. Source System Inventory
 | Source System | Database / Schema | Table / File | Frequency | Owner | Notes |
 |---------------|-------------------|--------------|-----------|-------|-------|
-|  |  |  |  |  |  |
+| Snowflake | DRIP_DATA_INTELLIGENCE.BRONZE_ERP__DBO | See field-level mapping |  |  | Immediate technical source is Snowflake bronze; original lineage comes from the analyzer source system. |
 
 ---
 
 ## 4. Target Schema Definition
 | Target Database | Schema | Table Name | SCD Type | Grain / Primary Key | Distribution | Table Type | Notes |
 |-----------------|--------|------------|----------|----------------------|-------------|------------|-------|
-|  |  | FactTimeEntry |  | One row per consultant per day per project / TimeEntryHashPK |  | Fact (Transaction) | Core time tracking fact table recording consultant hours worked. Grain is one row per consultant per day per project, allowing detailed utilization analysis and billing calculations. |
+| DRIP_DATA_INTELLIGENCE | GOLD | FactTimeEntry |  | One row per consultant per day per project / TimeEntryHashPK |  | Fact (Transaction) | Core time tracking fact table recording consultant hours worked. Grain is one row per consultant per day per project, allowing detailed utilization analysis and billing calculations. |
 
 ---
 

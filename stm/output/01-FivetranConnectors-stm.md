@@ -31,14 +31,14 @@
 ## 3. Source System Inventory
 | Source System | Database / Schema | Table / File | Frequency | Owner | Notes |
 |---------------|-------------------|--------------|-----------|-------|-------|
-|  |  |  |  |  |  |
+| Snowflake | DRIP_DATA_INTELLIGENCE.BRONZE_ERP__DBO | See field-level mapping |  |  | Immediate technical source is Snowflake bronze; original lineage comes from the analyzer source system. |
 
 ---
 
 ## 4. Target Schema Definition
 | Target Database | Schema | Table Name | SCD Type | Grain / Primary Key | Distribution | Table Type | Notes |
 |-----------------|--------|------------|----------|----------------------|-------------|------------|-------|
-|  |  | FivetranConnectors |  | One row per source-system record |  | Target Table (Source-Aligned) | Target table for Fivetran connector operations, preserving source-aligned status and message fields for operational monitoring and downstream ingestion control. |
+| DRIP_DATA_INTELLIGENCE | GOLD | FivetranConnectors |  | One row per source-system record |  | Target Table (Source-Aligned) | Target table for Fivetran connector operations, preserving source-aligned status and message fields for operational monitoring and downstream ingestion control. |
 
 ---
 
@@ -66,15 +66,20 @@ Definitions are included only when they are present in the analyzer JSON.
 
 | Scope | Column | Term FQN | Term Name | Definition |
 |-------|--------|----------|-----------|------------|
-| Column | code | LendingCreditPlatform.CreditApplicationStatus | CreditApplicationStatus |  |
+| Column | code | LendingCreditPlatform.CreditApplicationStatus | CreditApplicationStatus | The workflow state of an application, such as received, in assessment, approved, declined, or withdrawn.
+
+Business usage: Workflow routing, SLA reporting, and customer communications during origination and underwriting.
+Term type: status
+
+Review status: Draft. |
 
 ---
 
 ## 7. Field-Level Mapping Matrix
 | Target Table | Target Column | Data Type | Field Type | Source System | Source Table | Source Column(s) | Transformation / Business Rule | Nullable? | Default / Fallback | Description |
 |--------------|---------------|-----------|------------|---------------|--------------|------------------|--------------------------------|-----------|--------------------|-------------|
-| FivetranConnectors | code | nvarchar collate "sql_latin1_general_cp1_ci_as" | Attribute |  |  |  |  | YES |  | Stores the status or result code for Fivetran connector operations, represented as a string. |
-| FivetranConnectors | message | nvarchar collate "sql_latin1_general_cp1_ci_as" | Attribute |  |  |  |  | YES |  | Stores optional status or informational messages related to Fivetran connector operations. |
+| FivetranConnectors | code | nvarchar collate "sql_latin1_general_cp1_ci_as" | Attribute | Snowflake |  |  |  | YES |  | Stores the status or result code for Fivetran connector operations, represented as a string. |
+| FivetranConnectors | message | nvarchar collate "sql_latin1_general_cp1_ci_as" | Attribute | Snowflake |  |  |  | YES |  | Stores optional status or informational messages related to Fivetran connector operations. |
 
 ---
 
@@ -102,7 +107,7 @@ Definitions are included only when they are present in the analyzer JSON.
 ## 11. Version Control & Governance
 | Version | Date | Author | Changes | Approved By |
 |---------|------|--------|---------|-------------|
-| 1.0 | 2026-04-10 | Cursor | Initial generation from target data model and analyzer schema JSON |  |
+| 1.0 | 2026-04-13 | Cursor | Initial generation from target data model and analyzer schema JSON |  |
 
 ---
 

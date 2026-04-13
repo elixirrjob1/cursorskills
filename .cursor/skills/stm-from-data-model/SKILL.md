@@ -12,7 +12,7 @@ Use this skill when:
 - the user wants STM/source-to-target mapping documents per target table
 - the output should follow a fixed STM template
 - analyzer glossary terms and classification tags should be copied into the STM
-- unknown source-side values must remain blank
+- unknown source-side values must remain blank, except for the hardcoded Snowflake source/target conventions below
 
 ## Inputs
 
@@ -21,6 +21,9 @@ Use this skill when:
 - Required inputs:
   - one markdown file describing the target warehouse model
   - one analyzer schema JSON file with table/column `glossary_terms` and `classification_tags`
+- Environment requirements for glossary definitions:
+  - `OPENMETADATA_BASE_URL`
+  - `OPENMETADATA_EMAIL` and `OPENMETADATA_PASSWORD`, or `OPENMETADATA_JWT_TOKEN`
 
 If the caller provides explicit paths, use them. Otherwise:
 - read the single `.md` file in `stm/input`
@@ -56,14 +59,24 @@ File naming:
 
 ## Population Rules
 
+Hardcode these warehouse conventions in every generated STM:
+- `Source System Inventory.Source System` = `Snowflake`
+- `Source System Inventory.Database / Schema` = `DRIP_DATA_INTELLIGENCE.BRONZE_ERP__DBO`
+- `Source System Inventory.Table / File` = `See field-level mapping`
+- `Source System Inventory.Notes` = `Immediate technical source is Snowflake bronze; original lineage comes from the analyzer source system.`
+- `Target Schema Definition.Target Database` = `DRIP_DATA_INTELLIGENCE`
+- `Target Schema Definition.Schema` = `GOLD`
+
 - Fill only fields derivable from the model markdown and analyzer JSON.
-- Leave unknown values literally blank.
+- Leave other unknown values literally blank.
 - Do not invent source systems, source tables, source columns, owners, orchestration, DQ thresholds, glossary definitions, or classification tags.
 - Do not query OpenMetadata during STM generation.
 - Use analyzer JSON `classification_tags` to populate classification sections.
 - Render only classification names and assigned tag FQNs in the classification section; do not expand classification definitions.
 - Use analyzer JSON `glossary_terms` directly for glossary sections.
-- If the analyzer JSON does not contain glossary definitions, leave the definition cell blank rather than inventing one.
+- Pull glossary definitions from the OpenMetadata API for the glossary terms referenced by the STM.
+- If glossary terms are present and OpenMetadata API access is not configured, fail with a clear error rather than silently leaving definitions blank.
+- If a referenced glossary term exists in the analyzer JSON but is not returned by OpenMetadata, fall back to the analyzer JSON definition when present; otherwise leave it blank.
 - Fill transformation logic conservatively:
   - explicit formulas from the model
   - explicit SCD behavior
@@ -86,4 +99,4 @@ Each generated STM must include:
 11. Version Control & Governance
 12. Sign-Off
 
-Use the user-provided STM structure exactly in spirit, but only populate values supported by the model markdown and analyzer JSON.
+Use the user-provided STM structure exactly in spirit, but only populate values supported by the model markdown, analyzer JSON, and OpenMetadata API.

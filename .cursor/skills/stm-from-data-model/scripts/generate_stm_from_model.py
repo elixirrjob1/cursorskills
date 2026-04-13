@@ -2,18 +2,34 @@
 from __future__ import annotations
 
 import argparse
+import base64
 import getpass
 import json
+import os
 import re
+import time
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+import requests
+
 
 _PROJECT_ROOT = Path(__file__).resolve().parents[3]
 DEFAULT_INPUT_DIR = _PROJECT_ROOT / "stm" / "input"
 DEFAULT_OUTPUT_DIR = _PROJECT_ROOT / "stm" / "output"
+SOURCE_SYSTEM = "Snowflake"
+SOURCE_DATABASE_SCHEMA = "DRIP_DATA_INTELLIGENCE.BRONZE_ERP__DBO"
+SOURCE_TABLE_FILE = "See field-level mapping"
+SOURCE_NOTES = "Immediate technical source is Snowflake bronze; original lineage comes from the analyzer source system."
+TARGET_DATABASE = "DRIP_DATA_INTELLIGENCE"
+TARGET_SCHEMA = "GOLD"
+OPENMETADATA_API_VERSION_PREFIX = "v1"
+OPENMETADATA_LOGIN_ENDPOINT = "users/login"
+OPENMETADATA_TIMEOUT = (10, 30)
+OPENMETADATA_USER_AGENT = "stm-from-data-model"
+_OPENMETADATA_TOKEN_CACHE: dict[str, str | None] = {"token": None}
 
 
 @dataclass
@@ -382,6 +398,144 @@ def _extract_glossary_definition_map(document: dict[str, Any]) -> dict[str, Glos
     return definition_map
 
 
+def _normalize_openmetadata_base_url(value: str) -> str:
+    base = (value or "").strip().rstrip("/")
+    if not base:
+        raise RuntimeError("Missing OpenMetadata base URL. Set OPENMETADATA_BASE_URL.")
+    return base if base.endswith("/api") else f"{base}/api"
+
+
+def _openmetadata_api_root() -> str:
+    return _normalize_openmetadata_base_url(os.getenv("OPENMETADATA_BASE_URL", ""))
+
+
+def _openmetadata_api_url(path: str) -> str:
+    cleaned = path.lstrip("/")
+    if not cleaned.startswith(f"{OPENMETADATA_API_VERSION_PREFIX}/"):
+        cleaned = f"{OPENMETADATA_API_VERSION_PREFIX}/{cleaned}"
+    return f"{_openmetadata_api_root()}/{cleaned}"
+
+
+def _openmetadata_login_payloads() -> list[dict[str, str]]:
+    email = os.getenv("OPENMETADATA_EMAIL", "").strip()
+    password = os.getenv("OPENMETADATA_PASSWORD", "")
+    if not email or not password:
+        raise RuntimeError(
+            "Missing OpenMetadata credentials. Set OPENMETADATA_EMAIL and OPENMETADATA_PASSWORD."
+        )
+    encoded_password = base64.b64encode(password.encode("utf-8")).decode("ascii")
+    return [
+        {"email": email, "password": encoded_password},
+        {"email": email, "password": password},
+    ]
+
+
+def _extract_openmetadata_token(payload: Any) -> str | None:
+    if isinstance(payload, str) and payload.strip():
+        return payload.strip()
+    if isinstance(payload, dict):
+        for key in ("accessToken", "jwtToken", "token", "id_token"):
+            value = payload.get(key)
+            if isinstance(value, str) and value.strip():
+                return value.strip()
+        for nested_key in ("data", "response"):
+            token = _extract_openmetadata_token(payload.get(nested_key))
+            if token:
+                return token
+    return None
+
+
+def _openmetadata_login() -> str:
+    jwt_token = os.getenv("OPENMETADATA_JWT_TOKEN", "").strip()
+    if jwt_token:
+        return jwt_token
+
+    cached = _OPENMETADATA_TOKEN_CACHE.get("token")
+    if isinstance(cached, str) and cached.strip():
+        return cached.strip()
+
+    last_error: Exception | None = None
+    for payload in _openmetadata_login_payloads():
+        try:
+            response = requests.post(
+                _openmetadata_api_url(OPENMETADATA_LOGIN_ENDPOINT),
+                headers={
+                    "Accept": "application/json",
+                    "Content-Type": "application/json",
+                    "User-Agent": OPENMETADATA_USER_AGENT,
+                },
+                json=payload,
+                timeout=OPENMETADATA_TIMEOUT,
+            )
+            response.raise_for_status()
+            data = response.json() if response.content else {}
+            token = _extract_openmetadata_token(data)
+            if token:
+                _OPENMETADATA_TOKEN_CACHE["token"] = token
+                return token
+            last_error = RuntimeError("OpenMetadata login succeeded but no JWT token was returned.")
+        except requests.exceptions.RequestException as exc:
+            last_error = exc
+
+    raise RuntimeError(f"OpenMetadata login failed: {last_error}") from last_error
+
+
+def _openmetadata_headers() -> dict[str, str]:
+    return {
+        "Accept": "application/json",
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {_openmetadata_login()}",
+        "User-Agent": OPENMETADATA_USER_AGENT,
+    }
+
+
+def _openmetadata_request(method: str, endpoint: str, params: dict[str, Any] | None = None) -> Any:
+    last_error: Exception | None = None
+    for attempt in range(2):
+        try:
+            response = requests.request(
+                method=method,
+                url=_openmetadata_api_url(endpoint),
+                headers=_openmetadata_headers(),
+                params=params,
+                timeout=OPENMETADATA_TIMEOUT,
+            )
+            if response.status_code == 401 and not os.getenv("OPENMETADATA_JWT_TOKEN"):
+                _OPENMETADATA_TOKEN_CACHE["token"] = None
+                if attempt < 1:
+                    continue
+            response.raise_for_status()
+            if response.status_code == 204 or not response.content:
+                return {}
+            return response.json()
+        except requests.exceptions.RequestException as exc:
+            last_error = exc
+            if attempt == 1:
+                break
+            time.sleep(2**attempt)
+
+    raise RuntimeError(f"OpenMetadata API request failed: {last_error}") from last_error
+
+
+def fetch_openmetadata_glossary_definitions() -> dict[str, GlossaryDefinition]:
+    payload = _openmetadata_request("GET", "glossaryTerms", params={"limit": 1000})
+    terms = payload.get("data")
+    if not isinstance(terms, list):
+        return {}
+
+    definitions: dict[str, GlossaryDefinition] = {}
+    for term in terms:
+        if not isinstance(term, dict):
+            continue
+        fqn = str(term.get("fullyQualifiedName") or "").strip()
+        if not fqn:
+            continue
+        term_name = str(term.get("name") or term.get("displayName") or _parse_tag_fqn(fqn)[1]).strip()
+        definition = str(term.get("description") or "").strip()
+        definitions[fqn] = GlossaryDefinition(term_name=term_name, definition=definition)
+    return definitions
+
+
 def load_analyzer_metadata(path: Path) -> AnalyzerMetadata:
     document = json.loads(path.read_text(encoding="utf-8"))
     metadata = document.get("metadata")
@@ -599,7 +753,10 @@ def render_stm(
     lines.append("## 3. Source System Inventory")
     lines.append("| Source System | Database / Schema | Table / File | Frequency | Owner | Notes |")
     lines.append("|---------------|-------------------|--------------|-----------|-------|-------|")
-    lines.append("|  |  |  |  |  |  |")
+    lines.append(
+        f"| {_markdown_escape(SOURCE_SYSTEM)} | {_markdown_escape(SOURCE_DATABASE_SCHEMA)} | "
+        f"{_markdown_escape(SOURCE_TABLE_FILE)} |  |  | {_markdown_escape(SOURCE_NOTES)} |"
+    )
     lines.append("")
     lines.append("---")
     lines.append("")
@@ -607,7 +764,7 @@ def render_stm(
     lines.append("| Target Database | Schema | Table Name | SCD Type | Grain / Primary Key | Distribution | Table Type | Notes |")
     lines.append("|-----------------|--------|------------|----------|----------------------|-------------|------------|-------|")
     lines.append(
-        f"|  |  | {_markdown_escape(table.name)} | {_markdown_escape(scd_type)} | "
+        f"| {_markdown_escape(TARGET_DATABASE)} | {_markdown_escape(TARGET_SCHEMA)} | {_markdown_escape(table.name)} | {_markdown_escape(scd_type)} | "
         f"{_markdown_escape(grain_pk)} |  | {_markdown_escape(table_type)} | {_markdown_escape(description)} |"
     )
     lines.append("")
@@ -621,7 +778,7 @@ def render_stm(
     for column in table.columns:
         lines.append(
             f"| {_markdown_escape(table.name)} | {_markdown_escape(column.name)} | {_markdown_escape(column.data_type)} | "
-            f"{_markdown_escape(_field_type(column, table))} |  |  |  | {_markdown_escape(_column_transformation_logic(column, table))} | "
+            f"{_markdown_escape(_field_type(column, table))} | {_markdown_escape(SOURCE_SYSTEM)} |  |  | {_markdown_escape(_column_transformation_logic(column, table))} | "
             f"{_markdown_escape(column.nullable)} |  | {_markdown_escape(column.description)} |"
         )
     lines.append("")
@@ -670,6 +827,16 @@ def render_stm(
     lines.append("- **QA / Testing Approval:** _____________________  ")
     lines.append("")
     return "\n".join(lines)
+
+
+def _has_glossary_terms(analyzer_metadata: AnalyzerMetadata) -> bool:
+    for table in analyzer_metadata.tables.values():
+        if table.glossary_terms:
+            return True
+        for column in table.columns.values():
+            if column.glossary_terms:
+                return True
+    return False
 
 
 def render_index(model_path: Path, analyzer_path: Path, output_dir: Path, tables: list[TableDef]) -> str:
@@ -754,6 +921,8 @@ def main() -> None:
     if not tables:
         raise ValueError(f"No table sections detected in {input_path}")
     analyzer_metadata = load_analyzer_metadata(analyzer_path)
+    if _has_glossary_terms(analyzer_metadata):
+        analyzer_metadata.glossary_definitions.update(fetch_openmetadata_glossary_definitions())
     author = str(doc.get("author") or args.author or getpass.getuser()).strip()
 
     for idx, table in enumerate(tables, start=1):

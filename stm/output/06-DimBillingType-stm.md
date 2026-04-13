@@ -31,14 +31,14 @@
 ## 3. Source System Inventory
 | Source System | Database / Schema | Table / File | Frequency | Owner | Notes |
 |---------------|-------------------|--------------|-----------|-------|-------|
-|  |  |  |  |  |  |
+| Snowflake | DRIP_DATA_INTELLIGENCE.BRONZE_ERP__DBO | See field-level mapping |  |  | Immediate technical source is Snowflake bronze; original lineage comes from the analyzer source system. |
 
 ---
 
 ## 4. Target Schema Definition
 | Target Database | Schema | Table Name | SCD Type | Grain / Primary Key | Distribution | Table Type | Notes |
 |-----------------|--------|------------|----------|----------------------|-------------|------------|-------|
-|  |  | DimBillingType |  | BillingTypeHashPK |  | Dimension (Junk Dimension) | Billing classification dimension combining billable status, billing category, and overtime flags. Reduces fact table width by consolidating low-cardinality billing attributes. |
+| DRIP_DATA_INTELLIGENCE | GOLD | DimBillingType |  | BillingTypeHashPK |  | Dimension (Junk Dimension) | Billing classification dimension combining billable status, billing category, and overtime flags. Reduces fact table width by consolidating low-cardinality billing attributes. |
 
 ---
 

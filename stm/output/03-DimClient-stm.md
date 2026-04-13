@@ -31,14 +31,14 @@
 ## 3. Source System Inventory
 | Source System | Database / Schema | Table / File | Frequency | Owner | Notes |
 |---------------|-------------------|--------------|-----------|-------|-------|
-|  |  |  |  |  |  |
+| Snowflake | DRIP_DATA_INTELLIGENCE.BRONZE_ERP__DBO | See field-level mapping |  |  | Immediate technical source is Snowflake bronze; original lineage comes from the analyzer source system. |
 
 ---
 
 ## 4. Target Schema Definition
 | Target Database | Schema | Table Name | SCD Type | Grain / Primary Key | Distribution | Table Type | Notes |
 |-----------------|--------|------------|----------|----------------------|-------------|------------|-------|
-|  |  | DimClient | Type 2 on AccountStatus, Industry, AccountManager | ClientHashPK |  | Dimension (SCD Type 2) | Client organization master containing company details, industry classification, and relationship attributes. Supports historical tracking for changes in account status or industry classification. |
+| DRIP_DATA_INTELLIGENCE | GOLD | DimClient | Type 2 on AccountStatus, Industry, AccountManager | ClientHashPK |  | Dimension (SCD Type 2) | Client organization master containing company details, industry classification, and relationship attributes. Supports historical tracking for changes in account status or industry classification. |
 
 ---
 

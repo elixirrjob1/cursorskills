@@ -31,14 +31,14 @@
 ## 3. Source System Inventory
 | Source System | Database / Schema | Table / File | Frequency | Owner | Notes |
 |---------------|-------------------|--------------|-----------|-------|-------|
-|  |  |  |  |  |  |
+| Snowflake | DRIP_DATA_INTELLIGENCE.BRONZE_ERP__DBO | See field-level mapping |  |  | Immediate technical source is Snowflake bronze; original lineage comes from the analyzer source system. |
 
 ---
 
 ## 4. Target Schema Definition
 | Target Database | Schema | Table Name | SCD Type | Grain / Primary Key | Distribution | Table Type | Notes |
 |-----------------|--------|------------|----------|----------------------|-------------|------------|-------|
-|  |  | DimProject | Type 2 on ProjectStatus, ProjectManager, BudgetHours, BudgetAmount | ProjectHashPK |  | Dimension (SCD Type 2) | Project master dimension containing engagement details, financials, and status information. Links to client dimension. Supports historical tracking for changes in status, budget, or project manager. |
+| DRIP_DATA_INTELLIGENCE | GOLD | DimProject | Type 2 on ProjectStatus, ProjectManager, BudgetHours, BudgetAmount | ProjectHashPK |  | Dimension (SCD Type 2) | Project master dimension containing engagement details, financials, and status information. Links to client dimension. Supports historical tracking for changes in status, budget, or project manager. |
 
 ---
 

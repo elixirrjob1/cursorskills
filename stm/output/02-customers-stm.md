@@ -31,14 +31,14 @@
 ## 3. Source System Inventory
 | Source System | Database / Schema | Table / File | Frequency | Owner | Notes |
 |---------------|-------------------|--------------|-----------|-------|-------|
-|  |  |  |  |  |  |
+| Snowflake | DRIP_DATA_INTELLIGENCE.BRONZE_ERP__DBO | See field-level mapping |  |  | Immediate technical source is Snowflake bronze; original lineage comes from the analyzer source system. |
 
 ---
 
 ## 4. Target Schema Definition
 | Target Database | Schema | Table Name | SCD Type | Grain / Primary Key | Distribution | Table Type | Notes |
 |-----------------|--------|------------|----------|----------------------|-------------|------------|-------|
-|  |  | customers |  | One row per customer_id / customer_id |  | Target Table (Source-Aligned) | Target customer master table preserving customer identifiers, names, contact details, and audit timestamps in an analyzer-compatible structure. |
+| DRIP_DATA_INTELLIGENCE | GOLD | customers |  | One row per customer_id / customer_id |  | Target Table (Source-Aligned) | Target customer master table preserving customer identifiers, names, contact details, and audit timestamps in an analyzer-compatible structure. |
 
 ---
 
@@ -88,22 +88,32 @@ Definitions are included only when they are present in the analyzer JSON.
 
 | Scope | Column | Term FQN | Term Name | Definition |
 |-------|--------|----------|-----------|------------|
-| Table |  | RetailDomainGlossary.Customer | Customer |  |
-| Table |  | RetailDomainGlossary.CustomerIdentifier | CustomerIdentifier |  |
-| Column | customer_id | RetailDomainGlossary.CustomerIdentifier | CustomerIdentifier |  |
+| Table |  | RetailDomainGlossary.Customer | Customer | The buyer of goods in a retail context, whether identified through a loyalty programme or anonymous at the point of sale. **Type:** business_entity \| **Usage:** Sales analysis, customer service, returns eligibility, and marketing segmentation.
+
+Review status: draft. |
+| Table |  | RetailDomainGlossary.CustomerIdentifier | CustomerIdentifier | A unique key assigned to a known customer, often linked to a loyalty card or account registration. **Type:** identifier \| **Usage:** Transaction linking, customer service, and CRM.
+
+Inferred from selling to customers.
+
+Review status: draft. |
+| Column | customer_id | RetailDomainGlossary.CustomerIdentifier | CustomerIdentifier | A unique key assigned to a known customer, often linked to a loyalty card or account registration. **Type:** identifier \| **Usage:** Transaction linking, customer service, and CRM.
+
+Inferred from selling to customers.
+
+Review status: draft. |
 
 ---
 
 ## 7. Field-Level Mapping Matrix
 | Target Table | Target Column | Data Type | Field Type | Source System | Source Table | Source Column(s) | Transformation / Business Rule | Nullable? | Default / Fallback | Description |
 |--------------|---------------|-----------|------------|---------------|--------------|------------------|--------------------------------|-----------|--------------------|-------------|
-| customers | customer_id | bigint | Attribute |  |  |  |  | NO |  | Unique identifier for each customer in the retail operations system. |
-| customers | first_name | nvarchar collate "sql_latin1_general_cp1_ci_as" | Attribute |  |  |  |  | NO |  | Stores the given name of a customer as a non-null, case-insensitive Unicode string. |
-| customers | last_name | nvarchar collate "sql_latin1_general_cp1_ci_as" | Attribute |  |  |  |  | NO |  | The "last_name" column in the "customers" table stores the non-nullable family name of a customer as a case-insensitive Unicode string. |
-| customers | email | nvarchar(450) | Attribute |  |  |  |  | YES |  | Stores the email address of the customer, allowing null values, for contact purposes. |
-| customers | phone | nvarchar collate "sql_latin1_general_cp1_ci_as" | Attribute |  |  |  |  | YES |  | Stores the customer's phone number as an optional text field for contact purposes. |
-| customers | created_at | datetime2 | Attribute |  |  |  |  | NO |  | The `created_at` column records the non-nullable timestamp indicating when a customer record was initially created in the system. |
-| customers | updated_at | datetime2 | Attribute |  |  |  |  | NO |  | Tracks the timestamp of the most recent update to a customer's record, ensuring accurate change history. |
+| customers | customer_id | bigint | Attribute | Snowflake | CUSTOMERS | CUSTOMER_ID | Source type: number(38,0) | NO |  | Unique identifier for each customer in the retail operations system. |
+| customers | first_name | nvarchar collate "sql_latin1_general_cp1_ci_as" | Attribute | Snowflake | CUSTOMERS | FIRST_NAME | Source type: text(256) | NO |  | Stores the given name of a customer as a non-null, case-insensitive Unicode string. |
+| customers | last_name | nvarchar collate "sql_latin1_general_cp1_ci_as" | Attribute | Snowflake | CUSTOMERS | LAST_NAME | Source type: text(256) | NO |  | The "last_name" column in the "customers" table stores the non-nullable family name of a customer as a case-insensitive Unicode string. |
+| customers | email | nvarchar(450) | Attribute | Snowflake | CUSTOMERS | EMAIL | Source type: text(900) | YES |  | Stores the email address of the customer, allowing null values, for contact purposes. |
+| customers | phone | nvarchar collate "sql_latin1_general_cp1_ci_as" | Attribute | Snowflake | CUSTOMERS | PHONE | Source type: text(256) | YES |  | Stores the customer's phone number as an optional text field for contact purposes. |
+| customers | created_at | datetime2 | Attribute | Snowflake | CUSTOMERS | CREATED_AT | Source type: timestamp_ntz | NO |  | The `created_at` column records the non-nullable timestamp indicating when a customer record was initially created in the system. |
+| customers | updated_at | datetime2 | Attribute | Snowflake | CUSTOMERS | UPDATED_AT | Source type: timestamp_ntz | NO |  | Tracks the timestamp of the most recent update to a customer's record, ensuring accurate change history. |
 
 ---
 
@@ -118,6 +128,8 @@ Definitions are included only when they are present in the analyzer JSON.
 ## 9. Data Quality & Validation Rules
 | Rule ID | Description | Check Type | Threshold / Condition | Action on Failure | Owner |
 |---------|-------------|------------|-----------------------|-------------------|-------|
+| DQ1 | CUSTOMER_ID must not be NULL (primary key) | NOT NULL | CUSTOMER_ID IS NOT NULL | Reject record |  |
+| DQ2 | CUSTOMER_ID must be unique | Uniqueness | COUNT(DISTINCT CUSTOMER_ID) = COUNT(*) | Reject record |  |
 |  |  |  |  |  |  |
 
 ---
@@ -125,6 +137,7 @@ Definitions are included only when they are present in the analyzer JSON.
 ## 10. Load Strategy
 | Load Type | Method | Frequency | Dependencies | Error Handling / Recovery | Orchestration Tool |
 |-----------|--------|-----------|--------------|---------------------------|--------------------|
+| Incremental | Delta load using UPDATED_AT |  |  |  |  |
 |  |  |  |  |  |  |
 
 ---
@@ -132,7 +145,7 @@ Definitions are included only when they are present in the analyzer JSON.
 ## 11. Version Control & Governance
 | Version | Date | Author | Changes | Approved By |
 |---------|------|--------|---------|-------------|
-| 1.0 | 2026-04-10 | Cursor | Initial generation from target data model and analyzer schema JSON |  |
+| 1.0 | 2026-04-13 | Cursor | Initial generation from target data model and analyzer schema JSON |  |
 
 ---
 

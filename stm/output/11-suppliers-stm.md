@@ -31,14 +31,14 @@
 ## 3. Source System Inventory
 | Source System | Database / Schema | Table / File | Frequency | Owner | Notes |
 |---------------|-------------------|--------------|-----------|-------|-------|
-|  |  |  |  |  |  |
+| Snowflake | DRIP_DATA_INTELLIGENCE.BRONZE_ERP__DBO | See field-level mapping |  |  | Immediate technical source is Snowflake bronze; original lineage comes from the analyzer source system. |
 
 ---
 
 ## 4. Target Schema Definition
 | Target Database | Schema | Table Name | SCD Type | Grain / Primary Key | Distribution | Table Type | Notes |
 |-----------------|--------|------------|----------|----------------------|-------------|------------|-------|
-|  |  | suppliers |  | One row per supplier_id / supplier_id |  | Target Table (Source-Aligned) | Target supplier master table preserving supplier identifiers, names, contact details, and audit timestamps in a source-aligned target design. |
+| DRIP_DATA_INTELLIGENCE | GOLD | suppliers |  | One row per supplier_id / supplier_id |  | Target Table (Source-Aligned) | Target supplier master table preserving supplier identifiers, names, contact details, and audit timestamps in a source-aligned target design. |
 
 ---
 
@@ -84,20 +84,22 @@ Definitions are included only when they are present in the analyzer JSON.
 
 | Scope | Column | Term FQN | Term Name | Definition |
 |-------|--------|----------|-----------|------------|
-| Table |  | RetailDomainGlossary.Supplier | Supplier |  |
+| Table |  | RetailDomainGlossary.Supplier | Supplier | An external party that provides goods to the retailer, typically under negotiated commercial terms. **Type:** business_entity \| **Usage:** Procurement, vendor scorecards, cost negotiation, and accounts payable.
+
+Review status: draft. |
 
 ---
 
 ## 7. Field-Level Mapping Matrix
 | Target Table | Target Column | Data Type | Field Type | Source System | Source Table | Source Column(s) | Transformation / Business Rule | Nullable? | Default / Fallback | Description |
 |--------------|---------------|-----------|------------|---------------|--------------|------------------|--------------------------------|-----------|--------------------|-------------|
-| suppliers | supplier_id | bigint | Attribute |  |  |  |  | NO |  | Unique identifier for each supplier, serving as the primary key in the suppliers table. |
-| suppliers | name | nvarchar collate "sql_latin1_general_cp1_ci_as" | Attribute |  |  |  |  | NO |  | The "name" column in the "suppliers" table is a non-nullable nvarchar field intended to store the name of the supplier, though sample data indicates it is currently unused. |
-| suppliers | contact_name | nvarchar collate "sql_latin1_general_cp1_ci_as" | Attribute |  |  |  |  | YES |  | The "contact_name" column in the "suppliers" table stores the name of the primary contact person for a supplier, allowing null values. |
-| suppliers | email | nvarchar collate "sql_latin1_general_cp1_ci_as" | Attribute |  |  |  |  | YES |  | Stores the email address of the supplier, allowing null values. |
-| suppliers | phone | nvarchar collate "sql_latin1_general_cp1_ci_as" | Attribute |  |  |  |  | YES |  | The "phone" column in the "suppliers" table stores the contact phone number of a supplier as a nullable string. |
-| suppliers | created_at | datetime2 | Attribute |  |  |  |  | NO |  | Records the timestamp when a supplier entry is initially created in the system, stored as a non-nullable datetime value. |
-| suppliers | updated_at | datetime2 | Attribute |  |  |  |  | NO |  | The `updated_at` column stores the non-nullable timestamp of the most recent update to a supplier record in the `suppliers` table. |
+| suppliers | supplier_id | bigint | Attribute | Snowflake | SUPPLIERS | SUPPLIER_ID | Source type: number(38,0) | NO |  | Unique identifier for each supplier, serving as the primary key in the suppliers table. |
+| suppliers | name | nvarchar collate "sql_latin1_general_cp1_ci_as" | Attribute | Snowflake | SUPPLIERS | NAME | Source type: text(256) | NO |  | The "name" column in the "suppliers" table is a non-nullable nvarchar field intended to store the name of the supplier, though sample data indicates it is currently unused. |
+| suppliers | contact_name | nvarchar collate "sql_latin1_general_cp1_ci_as" | Attribute | Snowflake | SUPPLIERS | CONTACT_NAME | Source type: text(256) | YES |  | The "contact_name" column in the "suppliers" table stores the name of the primary contact person for a supplier, allowing null values. |
+| suppliers | email | nvarchar collate "sql_latin1_general_cp1_ci_as" | Attribute | Snowflake | SUPPLIERS | EMAIL | Source type: text(256) | YES |  | Stores the email address of the supplier, allowing null values. |
+| suppliers | phone | nvarchar collate "sql_latin1_general_cp1_ci_as" | Attribute | Snowflake | SUPPLIERS | PHONE | Source type: text(256) | YES |  | The "phone" column in the "suppliers" table stores the contact phone number of a supplier as a nullable string. |
+| suppliers | created_at | datetime2 | Attribute | Snowflake | SUPPLIERS | CREATED_AT | Source type: timestamp_ntz | NO |  | Records the timestamp when a supplier entry is initially created in the system, stored as a non-nullable datetime value. |
+| suppliers | updated_at | datetime2 | Attribute | Snowflake | SUPPLIERS | UPDATED_AT | Source type: timestamp_ntz | NO |  | The `updated_at` column stores the non-nullable timestamp of the most recent update to a supplier record in the `suppliers` table. |
 
 ---
 
@@ -112,6 +114,8 @@ Definitions are included only when they are present in the analyzer JSON.
 ## 9. Data Quality & Validation Rules
 | Rule ID | Description | Check Type | Threshold / Condition | Action on Failure | Owner |
 |---------|-------------|------------|-----------------------|-------------------|-------|
+| DQ1 | SUPPLIER_ID must not be NULL (primary key) | NOT NULL | SUPPLIER_ID IS NOT NULL | Reject record |  |
+| DQ2 | SUPPLIER_ID must be unique | Uniqueness | COUNT(DISTINCT SUPPLIER_ID) = COUNT(*) | Reject record |  |
 |  |  |  |  |  |  |
 
 ---
@@ -119,6 +123,7 @@ Definitions are included only when they are present in the analyzer JSON.
 ## 10. Load Strategy
 | Load Type | Method | Frequency | Dependencies | Error Handling / Recovery | Orchestration Tool |
 |-----------|--------|-----------|--------------|---------------------------|--------------------|
+| Incremental | Delta load using UPDATED_AT |  |  |  |  |
 |  |  |  |  |  |  |
 
 ---
@@ -126,7 +131,7 @@ Definitions are included only when they are present in the analyzer JSON.
 ## 11. Version Control & Governance
 | Version | Date | Author | Changes | Approved By |
 |---------|------|--------|---------|-------------|
-| 1.0 | 2026-04-10 | Cursor | Initial generation from target data model and analyzer schema JSON |  |
+| 1.0 | 2026-04-13 | Cursor | Initial generation from target data model and analyzer schema JSON |  |
 
 ---
 

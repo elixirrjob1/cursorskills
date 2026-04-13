@@ -31,14 +31,14 @@
 ## 3. Source System Inventory
 | Source System | Database / Schema | Table / File | Frequency | Owner | Notes |
 |---------------|-------------------|--------------|-----------|-------|-------|
-|  |  |  |  |  |  |
+| Snowflake | DRIP_DATA_INTELLIGENCE.BRONZE_ERP__DBO | See field-level mapping |  |  | Immediate technical source is Snowflake bronze; original lineage comes from the analyzer source system. |
 
 ---
 
 ## 4. Target Schema Definition
 | Target Database | Schema | Table Name | SCD Type | Grain / Primary Key | Distribution | Table Type | Notes |
 |-----------------|--------|------------|----------|----------------------|-------------|------------|-------|
-|  |  | FactProjectSnapshot |  | One row per project per month / ProjectSnapshotHashPK |  | Fact (Periodic Snapshot) | Monthly project financial snapshot capturing cumulative and period metrics for project health monitoring. Enables trend analysis, variance reporting, and forecasting. |
+| DRIP_DATA_INTELLIGENCE | GOLD | FactProjectSnapshot |  | One row per project per month / ProjectSnapshotHashPK |  | Fact (Periodic Snapshot) | Monthly project financial snapshot capturing cumulative and period metrics for project health monitoring. Enables trend analysis, variance reporting, and forecasting. |
 
 ---
 

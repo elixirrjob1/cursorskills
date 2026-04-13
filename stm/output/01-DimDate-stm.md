@@ -31,14 +31,14 @@
 ## 3. Source System Inventory
 | Source System | Database / Schema | Table / File | Frequency | Owner | Notes |
 |---------------|-------------------|--------------|-----------|-------|-------|
-|  |  |  |  |  |  |
+| Snowflake | DRIP_DATA_INTELLIGENCE.BRONZE_ERP__DBO | See field-level mapping |  |  | Immediate technical source is Snowflake bronze; original lineage comes from the analyzer source system. |
 
 ---
 
 ## 4. Target Schema Definition
 | Target Database | Schema | Table Name | SCD Type | Grain / Primary Key | Distribution | Table Type | Notes |
 |-----------------|--------|------------|----------|----------------------|-------------|------------|-------|
-|  |  | DimDate |  | DateHashPK |  | Dimension (Conformed, Role-Playing) | Standard calendar dimension supporting time-based analysis across all fact tables. Used as role-playing dimension for various date contexts (time entry date, expense date, snapshot date, project start/end dates). |
+| DRIP_DATA_INTELLIGENCE | GOLD | DimDate |  | DateHashPK |  | Dimension (Conformed, Role-Playing) | Standard calendar dimension supporting time-based analysis across all fact tables. Used as role-playing dimension for various date contexts (time entry date, expense date, snapshot date, project start/end dates). |
 
 ---
 

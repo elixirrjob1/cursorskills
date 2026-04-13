@@ -31,14 +31,14 @@
 ## 3. Source System Inventory
 | Source System | Database / Schema | Table / File | Frequency | Owner | Notes |
 |---------------|-------------------|--------------|-----------|-------|-------|
-|  |  |  |  |  |  |
+| Snowflake | DRIP_DATA_INTELLIGENCE.BRONZE_ERP__DBO | See field-level mapping |  |  | Immediate technical source is Snowflake bronze; original lineage comes from the analyzer source system. |
 
 ---
 
 ## 4. Target Schema Definition
 | Target Database | Schema | Table Name | SCD Type | Grain / Primary Key | Distribution | Table Type | Notes |
 |-----------------|--------|------------|----------|----------------------|-------------|------------|-------|
-|  |  | FactProjectExpense |  | One row per expense transaction / ProjectExpenseHashPK |  | Fact (Transaction) | Project expense tracking fact table capturing all costs incurred for projects. Supports full expense lifecycle from submission through reimbursement and client billing. |
+| DRIP_DATA_INTELLIGENCE | GOLD | FactProjectExpense |  | One row per expense transaction / ProjectExpenseHashPK |  | Fact (Transaction) | Project expense tracking fact table capturing all costs incurred for projects. Supports full expense lifecycle from submission through reimbursement and client billing. |
 
 ---
 

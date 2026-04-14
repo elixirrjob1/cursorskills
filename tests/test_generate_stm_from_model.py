@@ -21,6 +21,15 @@ stm_module = _load_module("stm_from_data_model", SCRIPT_PATH)
 
 
 class GenerateStmFromModelTests(unittest.TestCase):
+    def test_markdown_escape_keeps_multiline_values_inside_one_cell(self):
+        escaped = stm_module._markdown_escape(
+            "Definition line 1 | usage\n\nReview status: draft."
+        )
+        self.assertEqual(
+            escaped,
+            "Definition line 1 \\| usage<br/><br/><br/><br/>Review status: draft.",
+        )
+
     @mock.patch.dict(
         "os.environ",
         {

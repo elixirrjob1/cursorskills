@@ -333,7 +333,10 @@ def _table_rule_rows(table: TableDef) -> list[tuple[str, str, str, str]]:
 
 
 def _markdown_escape(value: Any) -> str:
-    return str(value or "").replace("|", "\\|")
+    text = str(value or "")
+    text = text.replace("\r\n", "\n").replace("\r", "\n")
+    text = text.replace("\n", "<br/><br/>")
+    return text.replace("|", "\\|")
 
 
 def _list_of_strings(value: Any) -> list[str]:
@@ -713,7 +716,6 @@ def render_stm(
     primary_key = table.meta.get("Primary Key", "")
     grain = table.meta.get("Grain", "")
     scd_type = table.meta.get("SCD Type", "")
-    rules = _table_rule_rows(table)
     grain_pk = " / ".join(part for part in (grain, primary_key) if part)
     generated_date = doc.get("generated", "")
     today = datetime.now(UTC).date().isoformat()
@@ -784,34 +786,14 @@ def render_stm(
     lines.append("")
     lines.append("---")
     lines.append("")
-    lines.append("## 8. Transformation & Business Rules")
-    lines.append("| Rule ID | Name | Description | Example / Formula | Notes |")
-    lines.append("|---------|------|-------------|-------------------|-------|")
-    if rules:
-        for rule_id, name, desc, formula in rules:
-            lines.append(
-                f"| {_markdown_escape(rule_id)} | {_markdown_escape(name)} | {_markdown_escape(desc)} | {_markdown_escape(formula)} |  |"
-            )
-    else:
-        lines.append("|  |  |  |  |  |")
-    lines.append("")
-    lines.append("---")
-    lines.append("")
-    lines.append("## 9. Data Quality & Validation Rules")
-    lines.append("| Rule ID | Description | Check Type | Threshold / Condition | Action on Failure | Owner |")
-    lines.append("|---------|-------------|------------|-----------------------|-------------------|-------|")
-    lines.append("|  |  |  |  |  |  |")
-    lines.append("")
-    lines.append("---")
-    lines.append("")
-    lines.append("## 10. Load Strategy")
+    lines.append("## 8. Load Strategy")
     lines.append("| Load Type | Method | Frequency | Dependencies | Error Handling / Recovery | Orchestration Tool |")
     lines.append("|-----------|--------|-----------|--------------|---------------------------|--------------------|")
     lines.append("|  |  |  |  |  |  |")
     lines.append("")
     lines.append("---")
     lines.append("")
-    lines.append("## 11. Version Control & Governance")
+    lines.append("## 9. Version Control & Governance")
     lines.append("| Version | Date | Author | Changes | Approved By |")
     lines.append("|---------|------|--------|---------|-------------|")
     lines.append(
@@ -821,7 +803,7 @@ def render_stm(
     lines.append("")
     lines.append("---")
     lines.append("")
-    lines.append("## 12. Sign-Off")
+    lines.append("## 10. Sign-Off")
     lines.append("- **Business Owner Approval:** _____________________  ")
     lines.append("- **Data Engineering Lead Approval:** _____________________  ")
     lines.append("- **QA / Testing Approval:** _____________________  ")

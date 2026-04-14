@@ -1,14 +1,12 @@
 #!/usr/bin/env python3
-"""Enrich generated STM markdown files with source-side metadata from OpenMetadata."""
+"""Fetch table/column metadata from OpenMetadata and export as a flat CSV catalogue."""
 
 from __future__ import annotations
 
 import argparse
 import base64
 import csv
-import json
 import os
-import re
 import time
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
@@ -21,7 +19,6 @@ from dotenv import load_dotenv
 load_dotenv()
 
 _PROJECT_ROOT = Path(__file__).resolve().parents[4]
-DEFAULT_STM_DIR = _PROJECT_ROOT / "stm" / "output"
 DEFAULT_SCHEMA_FQN = "snowflake_fivetran.DRIP_DATA_INTELLIGENCE.BRONZE_ERP__DBO"
 DEFAULT_CATALOGUE_OUT = _PROJECT_ROOT / ".cursor" / "flat" / "data_catalogue.csv"
 
@@ -220,303 +217,11 @@ def export_catalogue_csv(catalogue: dict[str, CatalogueTable], schema_fqn: str, 
 
 
 # ---------------------------------------------------------------------------
-# Markdown table parsing / rewriting
-# ---------------------------------------------------------------------------
-
-_PIPE_RE = re.compile(r"(?<!\\)\|")
-
-
-def _parse_md_row(line: str) -> list[str]:
-    """Split a markdown table row into cell values."""
-    stripped = line.strip()
-    if stripped.startswith("|"):
-        stripped = stripped[1:]
-    if stripped.endswith("|"):
-        stripped = stripped[:-1]
-    return [c.strip() for c in _PIPE_RE.split(stripped)]
-
-
-def _build_md_row(cells: list[str]) -> str:
-    return "| " + " | ".join(cells) + " |"
-
-
-def _is_separator_row(line: str) -> bool:
-    return bool(re.match(r"^\|[\s\-:|]+\|$", line.strip()))
-
-
-def _find_section(lines: list[str], header_pattern: str) -> int | None:
-    for i, line in enumerate(lines):
-        if re.search(header_pattern, line, re.IGNORECASE):
-            return i
-    return None
-
-
-def _find_table_block(lines: list[str], start: int) -> tuple[int, int] | None:
-    """Find the header row and end of a markdown table starting from `start`."""
-    header_idx = None
-    for i in range(start, min(start + 10, len(lines))):
-        if lines[i].strip().startswith("|") and not _is_separator_row(lines[i]):
-            header_idx = i
-            break
-    if header_idx is None:
-        return None
-    end_idx = header_idx + 1
-    while end_idx < len(lines) and lines[end_idx].strip().startswith("|"):
-        end_idx += 1
-    return header_idx, end_idx
-
-
-# ---------------------------------------------------------------------------
-# STM enrichment logic
-# ---------------------------------------------------------------------------
-
-def _infer_table_name_from_stm(lines: list[str]) -> str:
-    """Extract the target table name from the field-level mapping header row values."""
-    sec = _find_section(lines, r"##\s+7\.\s+Field.Level Mapping")
-    if sec is None:
-        return ""
-    block = _find_table_block(lines, sec)
-    if block is None:
-        return ""
-    header_idx, end_idx = block
-    if end_idx - header_idx < 3:
-        return ""
-    first_data = _parse_md_row(lines[header_idx + 2])
-    if first_data:
-        return first_data[0]
-    return ""
-
-
-def enrich_field_mapping(
-    lines: list[str],
-    catalogue: dict[str, CatalogueTable],
-) -> list[str]:
-    sec = _find_section(lines, r"##\s+7\.\s+Field.Level Mapping")
-    if sec is None:
-        return lines
-    block = _find_table_block(lines, sec)
-    if block is None:
-        return lines
-
-    header_idx, end_idx = block
-    header_cells = _parse_md_row(lines[header_idx])
-
-    col_idx: dict[str, int] = {}
-    for i, h in enumerate(header_cells):
-        normalized = h.lower().strip().replace("*", "")
-        col_idx[normalized] = i
-
-    src_table_i = col_idx.get("source table")
-    src_col_i = col_idx.get("source column(s)")
-    target_table_i = col_idx.get("target table")
-    target_col_i = col_idx.get("target column")
-    transform_i = col_idx.get("transformation / business rule")
-
-    if src_table_i is None or src_col_i is None or target_col_i is None:
-        return lines
-
-    target_table_name = ""
-    if target_table_i is not None:
-        for row_i in range(header_idx + 2, end_idx):
-            cells = _parse_md_row(lines[row_i])
-            if _is_separator_row(lines[row_i]):
-                continue
-            if target_table_i < len(cells) and cells[target_table_i].strip():
-                target_table_name = cells[target_table_i].strip()
-                break
-
-    cat_table = catalogue.get(target_table_name.upper())
-    if cat_table is None:
-        return lines
-
-    new_lines = list(lines)
-    for row_i in range(header_idx + 2, end_idx):
-        if _is_separator_row(new_lines[row_i]):
-            continue
-        cells = _parse_md_row(new_lines[row_i])
-        while len(cells) < len(header_cells):
-            cells.append("")
-
-        target_col = cells[target_col_i].strip() if target_col_i < len(cells) else ""
-        cat_col = cat_table.columns.get(target_col.upper())
-        if cat_col is None:
-            continue
-
-        if src_table_i < len(cells) and not cells[src_table_i].strip():
-            cells[src_table_i] = cat_table.table_name
-        if src_col_i < len(cells) and not cells[src_col_i].strip():
-            cells[src_col_i] = cat_col.column_name
-
-        if transform_i is not None and transform_i < len(cells) and not cells[transform_i].strip():
-            target_dtype = cells[col_idx.get("data type", -1)].strip() if "data type" in col_idx else ""
-            src_dtype = cat_col.data_type
-            if target_dtype and src_dtype and target_dtype.lower() != src_dtype.lower():
-                cells[transform_i] = f"Source type: {src_dtype}"
-
-        new_lines[row_i] = _build_md_row(cells)
-
-    return new_lines
-
-
-def enrich_dq_rules(
-    lines: list[str],
-    catalogue: dict[str, CatalogueTable],
-    target_table_name: str,
-) -> list[str]:
-    sec = _find_section(lines, r"##\s+9\.\s+Data Quality")
-    if sec is None:
-        return lines
-    block = _find_table_block(lines, sec)
-    if block is None:
-        return lines
-
-    header_idx, end_idx = block
-    cat_table = catalogue.get(target_table_name.upper())
-    if cat_table is None:
-        return lines
-
-    existing_data_rows = []
-    for row_i in range(header_idx + 2, end_idx):
-        if not _is_separator_row(lines[row_i]):
-            cells = _parse_md_row(lines[row_i])
-            has_content = any(c.strip() for c in cells)
-            if has_content:
-                existing_data_rows.append(lines[row_i])
-
-    if existing_data_rows:
-        return lines
-
-    dq_rows: list[str] = []
-    rule_id = 0
-
-    for cname in sorted(cat_table.columns):
-        cc = cat_table.columns[cname]
-        if cc.is_key == "Yes":
-            rule_id += 1
-            dq_rows.append(_build_md_row([
-                f"DQ{rule_id}",
-                f"{cc.column_name} must not be NULL (primary key)",
-                "NOT NULL",
-                f"{cc.column_name} IS NOT NULL",
-                "Reject record",
-                "",
-            ]))
-            rule_id += 1
-            dq_rows.append(_build_md_row([
-                f"DQ{rule_id}",
-                f"{cc.column_name} must be unique",
-                "Uniqueness",
-                f"COUNT(DISTINCT {cc.column_name}) = COUNT(*)",
-                "Reject record",
-                "",
-            ]))
-
-    fk_pattern = re.compile(r"referencing|foreign key|references", re.IGNORECASE)
-    for cname in sorted(cat_table.columns):
-        cc = cat_table.columns[cname]
-        if cc.is_key != "Yes" and fk_pattern.search(cc.description):
-            rule_id += 1
-            dq_rows.append(_build_md_row([
-                f"DQ{rule_id}",
-                f"{cc.column_name} referential integrity check",
-                "Referential Integrity",
-                f"All {cc.column_name} values exist in referenced parent table",
-                "Flag / quarantine",
-                "",
-            ]))
-
-    if not dq_rows:
-        return lines
-
-    new_lines = list(lines[:end_idx - 1])
-    for dr in dq_rows:
-        new_lines.append(dr)
-    new_lines.extend(lines[end_idx - 1:])
-    return new_lines
-
-
-def enrich_load_strategy(
-    lines: list[str],
-    catalogue: dict[str, CatalogueTable],
-    target_table_name: str,
-) -> list[str]:
-    sec = _find_section(lines, r"##\s+10\.\s+Load Strategy")
-    if sec is None:
-        return lines
-    block = _find_table_block(lines, sec)
-    if block is None:
-        return lines
-
-    header_idx, end_idx = block
-    cat_table = catalogue.get(target_table_name.upper())
-    if cat_table is None:
-        return lines
-
-    existing_data_rows = []
-    for row_i in range(header_idx + 2, end_idx):
-        if not _is_separator_row(lines[row_i]):
-            cells = _parse_md_row(lines[row_i])
-            has_content = any(c.strip() for c in cells)
-            if has_content:
-                existing_data_rows.append(lines[row_i])
-
-    if existing_data_rows:
-        return lines
-
-    if cat_table.has_incremental:
-        load_row = _build_md_row([
-            "Incremental",
-            f"Delta load using {cat_table.incremental_column}",
-            "",
-            "",
-            "",
-            "",
-        ])
-    else:
-        load_row = _build_md_row([
-            "Full",
-            "Full table refresh",
-            "",
-            "",
-            "",
-            "",
-        ])
-
-    new_lines = list(lines[:end_idx - 1])
-    new_lines.append(load_row)
-    new_lines.extend(lines[end_idx - 1:])
-    return new_lines
-
-
-def enrich_stm_file(filepath: Path, catalogue: dict[str, CatalogueTable]) -> bool:
-    text = filepath.read_text(encoding="utf-8")
-    lines = text.splitlines()
-
-    target_table = _infer_table_name_from_stm(lines)
-    if not target_table:
-        return False
-
-    if target_table.upper() not in catalogue:
-        return False
-
-    lines = enrich_field_mapping(lines, catalogue)
-    lines = enrich_dq_rules(lines, catalogue, target_table)
-    lines = enrich_load_strategy(lines, catalogue, target_table)
-
-    new_text = "\n".join(lines) + "\n"
-    if new_text != text:
-        filepath.write_text(new_text, encoding="utf-8")
-        return True
-    return False
-
-
-# ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Enrich STM files from OpenMetadata catalogue")
-    parser.add_argument("--stm-dir", type=Path, default=DEFAULT_STM_DIR)
+    parser = argparse.ArgumentParser(description="Fetch OpenMetadata catalogue and export to CSV")
     parser.add_argument("--schema-fqn", default=DEFAULT_SCHEMA_FQN)
     parser.add_argument("--catalogue-out", type=Path, default=DEFAULT_CATALOGUE_OUT)
     args = parser.parse_args()
@@ -526,21 +231,7 @@ def main() -> None:
     print(f"  {len(catalogue)} tables, {sum(len(t.columns) for t in catalogue.values())} columns")
 
     export_catalogue_csv(catalogue, args.schema_fqn, args.catalogue_out)
-
-    stm_files = sorted(args.stm_dir.glob("*-stm.md"))
-    print(f"\nEnriching {len(stm_files)} STM files in {args.stm_dir}")
-
-    enriched = 0
-    skipped = 0
-    for stm_file in stm_files:
-        if enrich_stm_file(stm_file, catalogue):
-            print(f"  ENRICHED  {stm_file.name}")
-            enriched += 1
-        else:
-            print(f"  SKIPPED   {stm_file.name}")
-            skipped += 1
-
-    print(f"\nDone: {enriched} enriched, {skipped} skipped")
+    print("Done.")
 
 
 if __name__ == "__main__":

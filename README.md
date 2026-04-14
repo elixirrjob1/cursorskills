@@ -28,6 +28,132 @@ cp .env.example .env
 
 Or just ask Cursor: *"Analyze my database"*, *"Run a data quality check"*, *"Project storage growth"* — skills are picked up automatically.
 
+## End-to-End Flow
+
+The diagram below shows how every skill connects — from governance authoring through source analysis, ingestion, catalogue enrichment, and source-to-target mapping.
+
+![End-to-end data platform flow](docs/end-to-end-flow.png)
+
+<details>
+<summary>Mermaid source (click to expand)</summary>
+
+```mermaid
+flowchart TD
+    %% ── 1 · Governance Authoring ─────────────────────
+    subgraph GOV["1 · Governance Authoring"]
+        direction TB
+        BB([Business Brief]):::input --> GG[schema-glossary-generator]:::skill
+        GG --> GT[/"Glossary Terms — JSON + Excel"/]:::artifact
+        GT --> GR{"Review & Approve"}:::gate
+
+        DD([Domain Description]):::input --> VG[governance-vocab-generator]:::skill
+        VG --> CV[/"Classification Vocabulary — .md"/]:::artifact
+        CV --> CR{"Review & Approve"}:::gate
+    end
+
+    %% ── 2 · Publish to Catalogue ─────────────────────
+    subgraph PUSH["2 · Publish to Catalogue"]
+        direction TB
+        OM_G["Push Glossary to OpenMetadata"]:::action
+        OM_C["Push Classifications to OpenMetadata"]:::action
+    end
+
+    GR --> OM_G
+    CR --> OM_C
+    OM_G --> OMD[("OpenMetadata — Glossary + Classifications")]:::store
+    OM_C --> OMD
+
+    %% ── 3 · Source System Analysis ───────────────────
+    subgraph ANALYSE["3 · Source System Analysis"]
+        direction TB
+        SDB[("Source Database")]:::store
+        SA[source-system-analyser]:::skill
+        SJ[/"schema.json — Descriptions, Classifications, Glossary"/]:::artifact
+        SDB --> SA
+        SA --> SJ
+    end
+
+    OMD -->|"Glossary terms and classification tags"| SA
+
+    %% ── 4 · Ingestion and Landing ────────────────────
+    subgraph INGEST["4 · Ingestion and Landing"]
+        direction TB
+        FT[fivetran-from-analyzer]:::skill
+        FR[/"Fivetran Recommendations"/]:::artifact
+        SS[snowflake-setup]:::skill
+        SF[/"Snowflake Destination Provisioned"/]:::artifact
+        FE["Configure and Run Fivetran Sync"]:::action
+        BZ[("Snowflake Bronze Schema")]:::store
+
+        FT --> FR
+        SS --> SF
+        FR --> FE
+        SF --> FE
+        FE --> BZ
+    end
+
+    SJ --> FT
+    SJ --> SS
+    SDB -.->|"Data transfer via Fivetran"| BZ
+
+    %% ── 5 · Catalogue Sync and Enrichment ────────────
+    subgraph SYNC["5 · Catalogue Sync and Enrichment"]
+        direction TB
+        OMS["openmetadata-sync — Ingest from Snowflake"]:::skill
+        OMB["Bronze Tables in OpenMetadata"]:::action
+        ENR["openmetadata-sync + glossary-tagger"]:::skill
+        OME[("Enriched Bronze in OpenMetadata")]:::store
+
+        OMS --> OMB
+        OMB --> ENR
+        ENR --> OME
+    end
+
+    BZ --> OMS
+    SJ -->|"Descriptions, Tags, Glossary"| ENR
+
+    %% ── 6 · Source-to-Target Mapping ─────────────────
+    subgraph STMG["6 · Source-to-Target Mapping"]
+        direction TB
+        GM(["Gold / Target Data Model .md"]):::input
+        GEN[stm-from-data-model]:::skill
+        STF[/"STM Files — one per Target Table"/]:::artifact
+        SCE[stm-catalogue-enricher]:::skill
+        STMC[/"Completed and Enriched STMs"/]:::artifact
+
+        GM --> GEN
+        GEN --> STF
+        STF --> SCE
+        SCE --> STMC
+    end
+
+    SJ --> GEN
+    OME -->|"Source columns, Tags, Glossary"| SCE
+
+    %% ── Styles ───────────────────────────────────────
+    classDef input   fill:#e8f5e9,stroke:#388e3c,color:#1b5e20
+    classDef skill   fill:#e3f2fd,stroke:#1565c0,color:#0d47a1,font-weight:bold
+    classDef artifact fill:#fff8e1,stroke:#f9a825,color:#e65100
+    classDef gate    fill:#fce4ec,stroke:#c62828,color:#b71c1c
+    classDef action  fill:#f3e5f5,stroke:#7b1fa2,color:#4a148c
+    classDef store   fill:#efeff5,stroke:#546e7a,color:#263238
+```
+
+</details>
+
+### Flow Steps
+
+| Step | Name | What happens |
+|------|------|--------------|
+| 1 | **Governance Authoring** | Glossary terms and classification vocabularies are generated from business briefs, then reviewed and approved by a human. |
+| 2 | **Publish to Catalogue** | Approved glossary terms and classifications are pushed into OpenMetadata as the authoritative business vocabulary. |
+| 3 | **Source System Analysis** | The analyzer connects to the source database, profiles the schema, generates descriptions, and maps the approved glossary/classification metadata from OpenMetadata onto the discovered tables and columns. Output: `schema.json`. |
+| 4 | **Ingestion and Landing** | Snowflake destination is provisioned, Fivetran recommendations are produced from the analyzer output, and data is synced from the source into the Snowflake bronze schema. |
+| 5 | **Catalogue Sync and Enrichment** | Bronze tables are ingested from Snowflake into OpenMetadata, then enriched with descriptions, classification tags, and glossary terms from the analyzer. |
+| 6 | **Source-to-Target Mapping** | A target data model (gold layer) drives STM generation. The STM catalogue enricher queries the enriched bronze catalogue in OpenMetadata to fill in source columns, tags, and glossary terms. |
+
+For detailed step descriptions, see [docs/end-to-end-flow.md](docs/end-to-end-flow.md).
+
 ## Documentation
 
 - [GlossarySkill setup and usage](docs/README.md) — domain glossary generation, OpenMetadata, and related workflow.

@@ -1,0 +1,17 @@
+version: 2
+
+sources:
+  - name: bronze_erp__dbo
+    database: DRIP_DATA_INTELLIGENCE
+    schema: BRONZE_ERP__DBO
+    tables:
+      - name: CUSTOMERS
+      - name: EMPLOYEES
+      - name: INVENTORY
+      - name: PRODUCTS
+      - name: PURCHASE_ORDERS
+      - name: PURCHASE_ORDER_ITEMS
+      - name: SALES_ORDERS
+      - name: SALES_ORDER_ITEMS
+      - name: STORES
+      - name: SUPPLIERS

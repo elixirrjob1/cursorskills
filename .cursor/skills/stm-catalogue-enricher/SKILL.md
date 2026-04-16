@@ -92,23 +92,49 @@ For each row in the markdown table under "## 7. Field-Level Mapping":
 
 2. If they are empty, find the best matching source column using the MCP data:
    - Use the Target Table name, Target Column name, Field Type, and Description to reason about which source table and column is the correct match.
-   - For Foreign Key columns (Field Type = "Foreign Key"), the source column is typically the referenced entity's ID column (e.g. CustomerHashFK → CUSTOMERS.CUSTOMER_ID). Add a Transformation note like "Lookup DimCustomer surrogate key".
-   - For surrogate/hash Primary Key columns (e.g. ProductHashPK, CustomerHashPK), always map to the source table's natural key column (e.g. PRODUCTS.PRODUCT_ID, CUSTOMERS.CUSTOMER_ID). Fill Source Table and Source Column(s), and add a Transformation note like "Generate surrogate key from PRODUCT_ID" or "Hash/sequence from source natural key". These are NOT ETL-generated with no source — they always derive from a source key.
-   - Only match to columns that actually exist in the MCP results. If no reasonable match exists, leave the row empty.
+   - For Foreign Key columns (Field Type = "Foreign Key"), the source column is typically the referenced entity's ID column (e.g. CustomerHashFK → CUSTOMERS.CUSTOMER_ID).
+   - For surrogate/hash Primary Key columns (e.g. ProductHashPK, CustomerHashPK), always map to the source table's natural key column (e.g. PRODUCTS.PRODUCT_ID, CUSTOMERS.CUSTOMER_ID). These are NOT ETL-generated with no source — they always derive from a source key.
+   - Only match to columns that actually exist in the MCP results. If no reasonable match exists, leave Source Table and Source Column(s) **completely empty** — do NOT write "N/A", "—", "None", or any placeholder. An empty cell means "no source".
 
 3. Fill "Source Table" and "Source Column(s)" with the matched values from MCP.
 
-4. Handle Data Type differences:
-   - The "Data Type" column represents the TARGET type from the data model. Do NOT overwrite it.
-   - If the source data type (from MCP) differs from the target type, add a note in "Transformation / Business Rule" (e.g. "CAST from source number(38,0) to INT").
-   - If "Transformation / Business Rule" already has content, append rather than replace.
+4. **Write Snowflake SQL expressions** in the "Transformation / Business Rule" column.
+   Use the source column names (unqualified, uppercase) directly in the SQL. The downstream
+   dbt generator will add table aliases and CTE wrappers.
 
-5. For audit/metadata columns (EtlBatchId, LoadTimestamp), leave Source Table and Source Column(s) empty — these are ETL-generated.
+   CRITICAL: Write real SQL, not English descriptions. Examples:
+
+   | Pattern | SQL Expression |
+   |---------|---------------|
+   | Hash surrogate key | `CAST(SHA2(COALESCE(CAST(CUSTOMER_ID AS VARCHAR), '#@#@#@#@#'), 256) AS BINARY(32))` |
+   | Hash FK lookup | `CAST(SHA2(COALESCE(CAST(ORDER_DATE AS VARCHAR), '#@#@#@#@#'), 256) AS BINARY(32))` |
+   | Nullable FK | `IFF(CUSTOMER_ID IS NULL, NULL, CAST(SHA2(COALESCE(CAST(CUSTOMER_ID AS VARCHAR), '#@#@#@#@#'), 256) AS BINARY(32)))` |
+   | Type cast | `CAST(UNIT_PRICE AS DECIMAL(19,4))` |
+   | Concatenation | `FIRST_NAME \|\| ' ' \|\| LAST_NAME` |
+   | Computed measure | `CAST(QUANTITY * UNIT_PRICE AS DECIMAL(19,4))` |
+   | Cross-table computation | `CAST(QUANTITY * COST_PRICE AS DECIMAL(19,4))` (note: list both source tables) |
+   | Date extraction | `CAST(CREATED_AT AS DATE)` |
+   | Boolean derivation | `NOT IS_ACTIVE` or `IFF(STATUS = 'Active', TRUE, FALSE)` |
+   | String cleanup | `TRIM(NAME)` |
+   | Direct passthrough (same type) | (leave Transformation empty — no transform needed) |
+
+   **NEVER use LEFT() to truncate columns.** The target data type lengths from the data model
+   are tentative — source system precision takes precedence. If the source column is
+   VARCHAR(255) and the target model says VARCHAR(50), do NOT truncate. Let the source
+   precision flow through. TRIM() is acceptable for whitespace cleanup, but do not wrap
+   columns in LEFT(..., N) to force them into data model lengths.
+
+   If the source data type matches the target type exactly, leave Transformation **empty** —
+   no cast or transform is needed for a direct passthrough.
+
+   If "Transformation / Business Rule" already has content, append rather than replace.
+
+5. For audit/metadata columns (EtlBatchId, LoadTimestamp) and any column with no source match, leave Source Table and Source Column(s) **completely empty** — do NOT write "N/A", "—", "None", or any placeholder. These cells must be blank. Only write a Source Table value when a real source table name from MCP matches.
 
 6. For derived/computed columns that combine multiple source columns (e.g. FullName from FIRST_NAME + LAST_NAME, GrossAmount from QUANTITY × UNIT_PRICE):
    - Fill Source Table with the table the inputs come from.
    - Fill Source Column(s) with all input columns separated by commas (e.g. "FIRST_NAME, LAST_NAME").
-   - Add a Transformation note describing the computation (e.g. "Concatenate FIRST_NAME + ' ' + LAST_NAME", "QUANTITY × UNIT_PRICE").
+   - Write the SQL expression in Transformation (e.g. `FIRST_NAME || ' ' || LAST_NAME`, `CAST(QUANTITY * UNIT_PRICE AS DECIMAL(19,4))`).
    - The key distinction: if the column's value can be traced back to source columns, list them. Only leave source empty for truly ETL-generated values with no source input (batch IDs, load timestamps, SCD dates).
 
 ## Section 8 — Load Strategy
@@ -159,3 +185,4 @@ After the post-enrichment script completes, report to the user:
 - Preserve all existing non-empty values in the STM — only fill blanks.
 - If a target column cannot be matched in the catalogue, leave source fields empty.
 - The Data Type column represents the TARGET type. Do not overwrite it with source types.
+- **Never truncate with LEFT().** Source system column precision takes precedence over target data model lengths. Use TRIM() for whitespace only.

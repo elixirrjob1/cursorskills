@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "dbt": {
+      "command": "/home/fillip/projec/cursorskills/dbt_project/start-dbt-mcp.sh",
+      "args": []
+    }
+  }
+}

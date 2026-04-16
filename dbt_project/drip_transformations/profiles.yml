@@ -1,0 +1,12 @@
+drip_transformations:
+  target: dev
+  outputs:
+    dev:
+      type: snowflake
+      account: "{{ env_var('SNOWFLAKE_ACCOUNT', 'PLACEHOLDER') }}"
+      user: "{{ env_var('SNOWFLAKE_USER', 'PLACEHOLDER') }}"
+      password: "{{ env_var('SNOWFLAKE_FIVETRAN_PASSWORD', 'PLACEHOLDER') }}"
+      database: "{{ env_var('SNOWFLAKE_DATABASE', 'DRIP_DATA_INTELLIGENCE') }}"
+      warehouse: "{{ env_var('SNOWFLAKE_WAREHOUSE', 'FIVETRAN_DRIP_WH') }}"
+      schema: DBT_DEV
+      threads: 4

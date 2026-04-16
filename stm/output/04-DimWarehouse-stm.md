@@ -31,7 +31,7 @@
 ## 3. Source System Inventory
 | Source System | Database / Schema | Table / File | Frequency | Owner | Notes |
 |---------------|-------------------|--------------|-----------|-------|-------|
-| Snowflake | DRIP_DATA_INTELLIGENCE.BRONZE_ERP__DBO | No matching entity in bronze |  |  | OpenMetadata `list_tables` on `snowflake_fivetran.DRIP_DATA_INTELLIGENCE.BRONZE_ERP__DBO` lists CUSTOMERS, EMPLOYEES, INVENTORY, PRODUCTS, PURCHASE_ORDERS, PURCHASE_ORDER_ITEMS, SALES_ORDERS, SALES_ORDER_ITEMS, STORES, SUPPLIERS only — no warehouse / DC table. DimWarehouse attributes are reference-sourced (see §8). |
+| Snowflake | DRIP_DATA_INTELLIGENCE.BRONZE_ERP__DBO | See field-level mapping |  |  | Immediate technical source is Snowflake bronze; original lineage comes from the analyzer source system. |
 
 ---
 
@@ -45,7 +45,8 @@
 ## 5. Classification Tags
 | Scope | Column | Tag FQN | Classification |
 |-------|--------|---------|----------------|
-|  |  |  |  |
+| Table |  | Certification.Gold | Certification |
+| Table |  | Architecture.Enriched | Architecture |
 
 ---
 
@@ -61,8 +62,8 @@ Definitions are included only when they are present in the analyzer JSON.
 ## 7. Field-Level Mapping Matrix
 | Target Table | Target Column | Data Type | Field Type | Source System | Source Table | Source Column(s) | Transformation / Business Rule | Nullable? | Default / Fallback | Description |
 |--------------|---------------|-----------|------------|---------------|--------------|------------------|--------------------------------|-----------|--------------------|-------------|
-| DimWarehouse | WarehouseHashPK | INT | Primary Key | Snowflake |  |  |  | NO |  | Surrogate primary key for warehouse dimension |
-| DimWarehouse | WarehouseHashBK | VARCHAR(10) | Business Key | Snowflake |  |  |  | NO |  | Natural business key (warehouse code) |
+| DimWarehouse | WarehouseHashPK | INT | Primary Key | Snowflake |  |  | CAST(SHA2(COALESCE(CAST({SOURCE_COL} AS VARCHAR), '#@#@#@#@#'), 256) AS BINARY(32)) | NO |  | Surrogate primary key for warehouse dimension |
+| DimWarehouse | WarehouseHashBK | VARCHAR(10) | Business Key | Snowflake |  |  | CAST(SHA2(COALESCE(CAST({SOURCE_COL} AS VARCHAR), '#@#@#@#@#'), 256) AS BINARY(32)) | NO |  | Natural business key (warehouse code) |
 | DimWarehouse | WarehouseName | VARCHAR(100) | Attribute | Snowflake |  |  |  | NO |  | Warehouse display name |
 | DimWarehouse | WarehouseType | VARCHAR(20) | Attribute | Snowflake |  |  |  | NO |  | Type of warehouse (Distribution Center, Regional, Local) |
 | DimWarehouse | StreetAddress | VARCHAR(200) | Attribute | Snowflake |  |  |  | NO |  | Warehouse street address |
@@ -84,14 +85,14 @@ Definitions are included only when they are present in the analyzer JSON.
 ## 8. Load Strategy
 | Load Type | Method | Frequency | Dependencies | Error Handling / Recovery | Orchestration Tool |
 |-----------|--------|-----------|--------------|---------------------------|--------------------|
-| Full | Manual reference data load (file, MDM, or operational master feed) | On change or scheduled maintenance window | Authoritative warehouse hierarchy outside `BRONZE_ERP__DBO` | Idempotent full refresh; reject duplicates on `WarehouseHashBK`; validate required attributes |  |
+|  |  |  |  |  |  |
 
 ---
 
 ## 9. Version Control & Governance
 | Version | Date | Author | Changes | Approved By |
 |---------|------|--------|---------|-------------|
-| 1.0 | 2026-04-14 | fillip | Initial generation from target data model and analyzer schema JSON |  |
+| 1.0 | 2026-04-16 | fillip | Initial generation from target data model and analyzer schema JSON |  |
 
 ---
 

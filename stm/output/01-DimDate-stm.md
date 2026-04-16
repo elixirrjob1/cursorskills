@@ -45,7 +45,8 @@
 ## 5. Classification Tags
 | Scope | Column | Tag FQN | Classification |
 |-------|--------|---------|----------------|
-|  |  |  |  |
+| Table |  | Certification.Gold | Certification |
+| Table |  | Architecture.Enriched | Architecture |
 
 ---
 
@@ -61,7 +62,7 @@ Definitions are included only when they are present in the analyzer JSON.
 ## 7. Field-Level Mapping Matrix
 | Target Table | Target Column | Data Type | Field Type | Source System | Source Table | Source Column(s) | Transformation / Business Rule | Nullable? | Default / Fallback | Description |
 |--------------|---------------|-----------|------------|---------------|--------------|------------------|--------------------------------|-----------|--------------------|-------------|
-| DimDate | DateHashPK | INT | Primary Key | Snowflake |  |  |  | NO |  | Surrogate primary key for date dimension |
+| DimDate | DateHashPK | INT | Primary Key | Snowflake |  |  | CAST(SHA2(COALESCE(CAST({SOURCE_COL} AS VARCHAR), '#@#@#@#@#'), 256) AS BINARY(32)) | NO |  | Surrogate primary key for date dimension |
 | DimDate | DateValue | DATE | Attribute | Snowflake |  |  |  | NO |  | Actual calendar date value |
 | DimDate | DateKey | INT | Attribute | Snowflake |  |  |  | NO |  | Integer date key in YYYYMMDD format for partitioning |
 | DimDate | DayOfWeek | INT | Attribute | Snowflake |  |  |  | NO |  | Day of week number (1=Sunday, 7=Saturday) |
@@ -92,14 +93,14 @@ Definitions are included only when they are present in the analyzer JSON.
 ## 8. Load Strategy
 | Load Type | Method | Frequency | Dependencies | Error Handling / Recovery | Orchestration Tool |
 |-----------|--------|-----------|--------------|---------------------------|--------------------|
-| Full | Generated date spine — one-time load | One-time (re-run if fiscal calendar or holiday rules change) | None — no calendar or DimDate-equivalent table in `BRONZE_ERP__DBO` per OpenMetadata | Idempotent re-build of date range; validate row count and key uniqueness |  |
+|  |  |  |  |  |  |
 
 ---
 
 ## 9. Version Control & Governance
 | Version | Date | Author | Changes | Approved By |
 |---------|------|--------|---------|-------------|
-| 1.0 | 2026-04-14 | fillip | Initial generation from target data model and analyzer schema JSON |  |
+| 1.0 | 2026-04-16 | fillip | Initial generation from target data model and analyzer schema JSON |  |
 
 ---
 

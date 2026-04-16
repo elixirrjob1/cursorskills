@@ -45,8 +45,8 @@
 ## 5. Classification Tags
 | Scope | Column | Tag FQN | Classification |
 |-------|--------|---------|----------------|
-| Table |  | Architecture.Raw | Architecture |
-| Table |  | Certification.Bronze | Certification |
+| Table |  | Architecture.Enriched | Architecture |
+| Table |  | Certification.Gold | Certification |
 | Table |  | ComplianceLegal.GDPRCCPA | ComplianceLegal |
 | Table |  | Criticality.Operational | Criticality |
 | Table |  | Lifecycle.Active | Lifecycle |
@@ -88,13 +88,13 @@ Definitions are included only when they are present in the analyzer JSON.
 ## 7. Field-Level Mapping Matrix
 | Target Table | Target Column | Data Type | Field Type | Source System | Source Table | Source Column(s) | Transformation / Business Rule | Nullable? | Default / Fallback | Description |
 |--------------|---------------|-----------|------------|---------------|--------------|------------------|--------------------------------|-----------|--------------------|-------------|
-| DimSupplier | SupplierHashPK | INT | Primary Key | Snowflake | SUPPLIERS | SUPPLIER_ID | Generate surrogate key (for example hash or sequence) from natural key `SUPPLIER_ID`; ensure uniqueness per dimension grain. | NO |  | Surrogate primary key for supplier dimension |
-| DimSupplier | SupplierHashBK | VARCHAR(20) | Business Key | Snowflake | SUPPLIERS | SUPPLIER_ID | Cast numeric `SUPPLIER_ID` (number(38,0)) to `VARCHAR(20)` for business key storage. | NO |  | Natural business key (supplier ID from procurement system) |
-| DimSupplier | SupplierName | VARCHAR(100) | Attribute | Snowflake | SUPPLIERS | NAME | Map supplier name; trim and cast/truncate from `text(256)` to `VARCHAR(100)`; catalog notes sample data may be sparse—handle nulls if target requires non-null. | NO |  | Legal supplier name |
+| DimSupplier | SupplierHashPK | INT | Primary Key | Snowflake | SUPPLIERS | SUPPLIER_ID | CAST(SHA2(COALESCE(CAST(SUPPLIER_ID AS VARCHAR), '#@#@#@#@#'), 256) AS BINARY(32)) | NO |  | Surrogate primary key for supplier dimension |
+| DimSupplier | SupplierHashBK | VARCHAR(20) | Business Key | Snowflake | SUPPLIERS | SUPPLIER_ID | CAST(SHA2(COALESCE(CAST(SUPPLIER_ID AS VARCHAR), '#@#@#@#@#'), 256) AS BINARY(32)) | NO |  | Natural business key (supplier ID from procurement system) |
+| DimSupplier | SupplierName | VARCHAR(100) | Attribute | Snowflake | SUPPLIERS | NAME |  | NO |  | Legal supplier name |
 | DimSupplier | SupplierDBAName | VARCHAR(100) | Attribute | Snowflake |  |  |  | YES |  | Supplier doing-business-as name |
-| DimSupplier | ContactName | VARCHAR(100) | Attribute | Snowflake | SUPPLIERS | CONTACT_NAME | Trim and cast/truncate from `text(256)` to `VARCHAR(100)`. | YES |  | Primary contact person name |
-| DimSupplier | ContactEmail | VARCHAR(100) | Attribute | Snowflake | SUPPLIERS | EMAIL | Trim and cast/truncate from `text(256)` to `VARCHAR(100)`. | YES |  | Primary contact email |
-| DimSupplier | ContactPhone | VARCHAR(20) | Attribute | Snowflake | SUPPLIERS | PHONE | Trim and cast/truncate from `text(256)` to `VARCHAR(20)`. | YES |  | Primary contact phone |
+| DimSupplier | ContactName | VARCHAR(100) | Attribute | Snowflake | SUPPLIERS | CONTACT_NAME |  | YES |  | Primary contact person name |
+| DimSupplier | ContactEmail | VARCHAR(100) | Attribute | Snowflake | SUPPLIERS | EMAIL |  | YES |  | Primary contact email |
+| DimSupplier | ContactPhone | VARCHAR(20) | Attribute | Snowflake | SUPPLIERS | PHONE |  | YES |  | Primary contact phone |
 | DimSupplier | StreetAddress | VARCHAR(200) | Attribute | Snowflake |  |  |  | NO |  | Supplier street address |
 | DimSupplier | City | VARCHAR(50) | Attribute | Snowflake |  |  |  | NO |  | Supplier city |
 | DimSupplier | StateProvince | VARCHAR(50) | Attribute | Snowflake |  |  |  | NO |  | Supplier state or province |
@@ -115,15 +115,14 @@ Definitions are included only when they are present in the analyzer JSON.
 ## 8. Load Strategy
 | Load Type | Method | Frequency | Dependencies | Error Handling / Recovery | Orchestration Tool |
 |-----------|--------|-----------|--------------|---------------------------|--------------------|
-| Incremental | High-water mark on bronze `SUPPLIERS.UPDATED_AT` (timestamp_ntz) to select changed supplier rows since last run. |  | `snowflake_fivetran.DRIP_DATA_INTELLIGENCE.BRONZE_ERP__DBO.SUPPLIERS` synced and `UPDATED_AT` populated. |  |  |
+| Incremental | CDC / UPDATED_AT | Scheduled | Source bronze table available | Retry failed batch; log and alert on consecutive failures | dbt |
 
 ---
 
 ## 9. Version Control & Governance
 | Version | Date | Author | Changes | Approved By |
 |---------|------|--------|---------|-------------|
-| 1.0 | 2026-04-14 | fillip | Initial generation from target data model and analyzer schema JSON |  |
-| 1.1 | 2026-04-14 | fillip | Section 7–8 enriched from OpenMetadata `SUPPLIERS` in `snowflake_fivetran.DRIP_DATA_INTELLIGENCE.BRONZE_ERP__DBO`. |  |
+| 1.0 | 2026-04-16 | fillip | Initial generation from target data model and analyzer schema JSON |  |
 
 ---
 

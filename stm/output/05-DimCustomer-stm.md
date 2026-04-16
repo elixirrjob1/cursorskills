@@ -45,8 +45,8 @@
 ## 5. Classification Tags
 | Scope | Column | Tag FQN | Classification |
 |-------|--------|---------|----------------|
-| Table |  | Architecture.Raw | Architecture |
-| Table |  | Certification.Bronze | Certification |
+| Table |  | Architecture.Enriched | Architecture |
+| Table |  | Certification.Gold | Certification |
 | Table |  | ComplianceLegal.GDPRCCPA | ComplianceLegal |
 | Table |  | Criticality.TransactionalCore | Criticality |
 | Table |  | Lifecycle.Active | Lifecycle |
@@ -92,13 +92,13 @@ Definitions are included only when they are present in the analyzer JSON.
 ## 7. Field-Level Mapping Matrix
 | Target Table | Target Column | Data Type | Field Type | Source System | Source Table | Source Column(s) | Transformation / Business Rule | Nullable? | Default / Fallback | Description |
 |--------------|---------------|-----------|------------|---------------|--------------|------------------|--------------------------------|-----------|--------------------|-------------|
-| DimCustomer | CustomerHashPK | INT | Primary Key | Snowflake | CUSTOMERS | CUSTOMER_ID | Generate surrogate key | NO |  | Surrogate primary key for customer dimension |
-| DimCustomer | CustomerHashBK | VARCHAR(20) | Business Key | Snowflake | CUSTOMERS | CUSTOMER_ID | Cast source number(38,0) CUSTOMER_ID to VARCHAR(20) for business key | NO |  | Natural business key (customer ID from CRM) |
-| DimCustomer | FirstName | VARCHAR(50) | Attribute | Snowflake | CUSTOMERS | FIRST_NAME | Truncate or cast source text(256) to VARCHAR(50) as needed | NO |  | Customer first name |
-| DimCustomer | LastName | VARCHAR(50) | Attribute | Snowflake | CUSTOMERS | LAST_NAME | Truncate or cast source text(256) to VARCHAR(50) as needed | NO |  | Customer last name |
-| DimCustomer | FullName | VARCHAR(100) | Attribute | Snowflake | CUSTOMERS | FIRST_NAME, LAST_NAME | Concatenate FIRST_NAME + ' ' + LAST_NAME; truncate to VARCHAR(100) if needed | NO |  | Concatenated full name for display |
-| DimCustomer | EmailAddress | VARCHAR(100) | Attribute | Snowflake | CUSTOMERS | EMAIL | Truncate or cast source text(900) to VARCHAR(100) as needed | YES |  | Primary email address |
-| DimCustomer | PhoneNumber | VARCHAR(20) | Attribute | Snowflake | CUSTOMERS | PHONE | Truncate or cast source text(256) to VARCHAR(20) as needed | YES |  | Primary phone number |
+| DimCustomer | CustomerHashPK | INT | Primary Key | Snowflake | CUSTOMERS | CUSTOMER_ID | CAST(SHA2(COALESCE(CAST(CUSTOMER_ID AS VARCHAR), '#@#@#@#@#'), 256) AS BINARY(32)) | NO |  | Surrogate primary key for customer dimension |
+| DimCustomer | CustomerHashBK | VARCHAR(20) | Business Key | Snowflake | CUSTOMERS | CUSTOMER_ID | CAST(SHA2(COALESCE(CAST(CUSTOMER_ID AS VARCHAR), '#@#@#@#@#'), 256) AS BINARY(32)) | NO |  | Natural business key (customer ID from CRM) |
+| DimCustomer | FirstName | VARCHAR(50) | Attribute | Snowflake | CUSTOMERS | FIRST_NAME |  | NO |  | Customer first name |
+| DimCustomer | LastName | VARCHAR(50) | Attribute | Snowflake | CUSTOMERS | LAST_NAME |  | NO |  | Customer last name |
+| DimCustomer | FullName | VARCHAR(100) | Attribute | Snowflake | CUSTOMERS | FIRST_NAME, LAST_NAME | TRIM(FIRST_NAME) \|\| ' ' \|\| TRIM(LAST_NAME) | NO |  | Concatenated full name for display |
+| DimCustomer | EmailAddress | VARCHAR(100) | Attribute | Snowflake | CUSTOMERS | EMAIL |  | YES |  | Primary email address |
+| DimCustomer | PhoneNumber | VARCHAR(20) | Attribute | Snowflake | CUSTOMERS | PHONE |  | YES |  | Primary phone number |
 | DimCustomer | StreetAddress | VARCHAR(200) | Attribute | Snowflake |  |  |  | YES |  | Mailing street address |
 | DimCustomer | City | VARCHAR(50) | Attribute | Snowflake |  |  |  | YES |  | Customer city |
 | DimCustomer | StateProvince | VARCHAR(50) | Attribute | Snowflake |  |  |  | YES |  | Customer state or province |
@@ -106,7 +106,7 @@ Definitions are included only when they are present in the analyzer JSON.
 | DimCustomer | Country | VARCHAR(50) | Attribute | Snowflake |  |  |  | YES |  | Customer country |
 | DimCustomer | CustomerType | VARCHAR(20) | Attribute | Snowflake |  |  |  | NO |  | Customer classification (Individual, Business, Wholesale) |
 | DimCustomer | AcquisitionChannel | VARCHAR(50) | Attribute | Snowflake |  |  |  | NO |  | How customer was acquired (Online, Store, Referral, Advertising) |
-| DimCustomer | AcquisitionDate | DATE | Attribute | Snowflake | CUSTOMERS | CREATED_AT | CAST(CREATED_AT AS DATE); catalogue describes CREATED_AT as when the customer record was initially created | NO |  | Date customer was first acquired |
+| DimCustomer | AcquisitionDate | DATE | Attribute | Snowflake | CUSTOMERS | CREATED_AT | CAST(CREATED_AT AS DATE) | NO |  | Date customer was first acquired |
 | DimCustomer | LoyaltyTier | VARCHAR(20) | Attribute | Snowflake |  |  |  | NO |  | Current loyalty tier (Bronze, Silver, Gold, Platinum) |
 | DimCustomer | LoyaltyPoints | INT | Attribute | Snowflake |  |  |  | NO |  | Current loyalty points balance |
 | DimCustomer | LoyaltyJoinDate | DATE | Attribute | Snowflake |  |  |  | YES |  | Date customer joined loyalty program |
@@ -122,14 +122,14 @@ Definitions are included only when they are present in the analyzer JSON.
 ## 8. Load Strategy
 | Load Type | Method | Frequency | Dependencies | Error Handling / Recovery | Orchestration Tool |
 |-----------|--------|-----------|--------------|---------------------------|--------------------|
-| Incremental | High-water mark on bronze `CUSTOMERS.UPDATED_AT` (timestamp_ntz) |  | Source: `snowflake_fivetran.DRIP_DATA_INTELLIGENCE.BRONZE_ERP__DBO.CUSTOMERS` |  |  |
+| Incremental | CDC / UPDATED_AT | Scheduled |  | Standard error handling and retry | dbt |
 
 ---
 
 ## 9. Version Control & Governance
 | Version | Date | Author | Changes | Approved By |
 |---------|------|--------|---------|-------------|
-| 1.0 | 2026-04-14 | fillip | Initial generation from target data model and analyzer schema JSON |  |
+| 1.0 | 2026-04-16 | fillip | Initial generation from target data model and analyzer schema JSON |  |
 
 ---
 

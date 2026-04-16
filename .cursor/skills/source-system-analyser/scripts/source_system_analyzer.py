@@ -997,7 +997,16 @@ class AzureClassificationTagAssigner:
         "Return only tag FQNs. Return [] if uncertain. "
         "You may consider any candidate for either tables or columns because scope is not authoritative here. "
         "Respect mutually exclusive classifications by selecting at most one option per classification. "
-        "Prefer precision over recall."
+        "Prefer precision over recall.\n\n"
+        "CRITICAL — Layer-derived classifications (Architecture, Certification) must be "
+        "determined by the schema/layer the table physically sits in, NOT by inspecting "
+        "data content or column names:\n"
+        "  • Schema contains 'bronze', 'raw', or 'landing' → Architecture.Raw, Certification.Bronze\n"
+        "  • Schema contains 'silver', 'staging', 'cleansed' → Architecture.Enriched, Certification.Silver\n"
+        "  • Schema contains 'gold', 'enriched', 'curated', 'mart' → Architecture.Enriched, Certification.Gold\n"
+        "A table in a bronze schema is ALWAYS Architecture.Raw and Certification.Bronze, "
+        "even if its columns look structured or contain computed fields — those come from "
+        "the source system, not from platform transformations."
     )
 
     def __init__(self, generator: AzureDescriptionGenerator) -> None:
@@ -1091,6 +1100,49 @@ class AzureClassificationTagAssigner:
                 selected_by_classification[classification_name] = fqn
         return normalized
 
+    _SCHEMA_LAYER_RULES: Dict[str, Dict[str, str]] = {
+        "bronze": {"Architecture": "Architecture.Raw", "Certification": "Certification.Bronze"},
+        "raw": {"Architecture": "Architecture.Raw", "Certification": "Certification.Bronze"},
+        "landing": {"Architecture": "Architecture.Raw", "Certification": "Certification.Bronze"},
+        "silver": {"Architecture": "Architecture.Enriched", "Certification": "Certification.Silver"},
+        "staging": {"Architecture": "Architecture.Enriched", "Certification": "Certification.Silver"},
+        "cleansed": {"Architecture": "Architecture.Enriched", "Certification": "Certification.Silver"},
+        "gold": {"Architecture": "Architecture.Enriched", "Certification": "Certification.Gold"},
+        "enriched": {"Architecture": "Architecture.Enriched", "Certification": "Certification.Gold"},
+        "curated": {"Architecture": "Architecture.Curated", "Certification": "Certification.Gold"},
+        "mart": {"Architecture": "Architecture.Enriched", "Certification": "Certification.Gold"},
+    }
+
+    @classmethod
+    def _enforce_layer_tags(cls, schema_name: str, tags: List[str], candidates: List[Dict[str, Any]]) -> List[str]:
+        """Override Architecture and Certification tags based on schema name."""
+        schema_lower = schema_name.lower().replace("_", "").replace("-", "")
+        overrides: Dict[str, str] = {}
+        for keyword, mapping in cls._SCHEMA_LAYER_RULES.items():
+            if keyword in schema_lower:
+                overrides.update(mapping)
+                break
+        if not overrides:
+            return tags
+
+        valid_fqns = set()
+        for classification in candidates:
+            for option in classification.get("options", []) or []:
+                fqn = str(option.get("fqn") or "").strip()
+                if fqn:
+                    valid_fqns.add(fqn)
+
+        result: List[str] = []
+        for tag in tags:
+            classification_prefix = tag.split(".")[0] if "." in tag else ""
+            if classification_prefix in overrides:
+                continue
+            result.append(tag)
+        for override_fqn in overrides.values():
+            if override_fqn in valid_fqns and override_fqn not in result:
+                result.append(override_fqn)
+        return result
+
     def assign_table(
         self,
         *,
@@ -1119,7 +1171,8 @@ class AzureClassificationTagAssigner:
             {"role": "system", "content": self._SYSTEM_PROMPT},
             {"role": "user", "content": user_prompt},
         ])
-        return self._normalize_selected_tags(candidates, selected)
+        normalized = self._normalize_selected_tags(candidates, selected)
+        return self._enforce_layer_tags(schema_name, normalized, candidates)
 
     def assign_column(
         self,

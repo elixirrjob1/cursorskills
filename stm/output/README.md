@@ -2,7 +2,7 @@
 
 - Source model: `stm/input/retail-data-model-2026-04-13.md`
 - Analyzer schema: `LATEST_SCHEMA/schema_azure_mssql_dbo.json`
-- Generated at: `2026-04-14T11:31:17.947354+00:00`
+- Generated at: `2026-04-16T09:59:07.340373+00:00`
 - Output directory: `stm/output`
 
 ## Generated STM Documents

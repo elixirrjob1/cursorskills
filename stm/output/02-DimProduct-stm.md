@@ -58,12 +58,9 @@
 | Column | ProductHashPK | Criticality.TransactionalCore | Criticality |
 | Column | ProductHashPK | PII.None | PII |
 | Column | ProductHashPK | QualityTrust.SystemOfRecord | QualityTrust |
-| Column | IsActive | Criticality.TransactionalCore | Criticality |
-| Column | IsActive | Lifecycle.Active | Lifecycle |
-| Column | IsActive | PII.None | PII |
-| Column | EffectiveDate | Architecture.Raw | Architecture |
-| Column | EffectiveDate | Criticality.TransactionalCore | Criticality |
-| Column | EffectiveDate | PII.None | PII |
+| Column | IsDiscontinued | Criticality.TransactionalCore | Criticality |
+| Column | IsDiscontinued | Lifecycle.Active | Lifecycle |
+| Column | IsDiscontinued | PII.None | PII |
 | Column | UnitListPrice | ComplianceLegal.TaxVAT | ComplianceLegal |
 | Column | UnitListPrice | Criticality.TransactionalCore | Criticality |
 | Column | UnitListPrice | PII.None | PII |
@@ -101,25 +98,25 @@ Definitions are included only when they are present in the analyzer JSON.
 ## 7. Field-Level Mapping Matrix
 | Target Table | Target Column | Data Type | Field Type | Source System | Source Table | Source Column(s) | Transformation / Business Rule | Nullable? | Default / Fallback | Description |
 |--------------|---------------|-----------|------------|---------------|--------------|------------------|--------------------------------|-----------|--------------------|-------------|
-| DimProduct | ProductHashPK | INT | Primary Key | Snowflake | PRODUCTS | PRODUCT_ID | Generate surrogate key from PRODUCT_ID (source number(38,0) → INT hash/surrogate per ETL) | NO |  | Surrogate primary key for product dimension |
-| DimProduct | ProductHashBK | VARCHAR(20) | Business Key | Snowflake | PRODUCTS | SKU | Source text(900); cast/truncate to VARCHAR(20) per target constraint | NO |  | Natural business key from source system (SKU) |
-| DimProduct | ProductName | VARCHAR(100) | Attribute | Snowflake | PRODUCTS | NAME | Source text(256); truncate or validate length vs target VARCHAR(100) | NO |  | Full product display name |
-| DimProduct | ProductDescription | VARCHAR(500) | Attribute | Snowflake | PRODUCTS | PRODUCT_DESCRIPTION | Source text(256); no widening needed for target VARCHAR(500) | YES |  | Detailed product description |
-| DimProduct | CategoryCode | VARCHAR(10) | Attribute | Snowflake |  |  | PRODUCTS has CATEGORY (text) only; no separate category code column in catalogue | NO |  | Product category code |
-| DimProduct | CategoryName | VARCHAR(50) | Attribute | Snowflake | PRODUCTS | CATEGORY | Source text(256); truncate vs target VARCHAR(50) if needed | NO |  | Product category name (top level of hierarchy) |
-| DimProduct | SubcategoryCode | VARCHAR(10) | Attribute | Snowflake |  |  | No subcategory column on PRODUCTS in catalogue | NO |  | Product subcategory code |
-| DimProduct | SubcategoryName | VARCHAR(50) | Attribute | Snowflake |  |  | No subcategory column on PRODUCTS in catalogue | NO |  | Product subcategory name (second level of hierarchy) |
-| DimProduct | BrandCode | VARCHAR(10) | Attribute | Snowflake |  |  | No brand column on PRODUCTS in catalogue | NO |  | Brand identifier code |
-| DimProduct | BrandName | VARCHAR(50) | Attribute | Snowflake |  |  | No brand column on PRODUCTS in catalogue | NO |  | Brand display name (third level of hierarchy) |
-| DimProduct | UnitOfMeasure | VARCHAR(20) | Attribute | Snowflake |  |  | No retail UOM column on PRODUCTS (LENGTH_UNIT, WEIGHT_UNIT are dimension units only) | NO |  | Standard unit of measure (Each, Case, Pound, etc.) |
-| DimProduct | PackSize | VARCHAR(20) | Attribute | Snowflake |  |  | No pack-size description column on PRODUCTS in catalogue | YES |  | Package size description |
-| DimProduct | UnitCost | DECIMAL(19,4) | Attribute | Snowflake | PRODUCTS | COST_PRICE | Source number(10,2) → DECIMAL(19,4) | NO |  | Standard unit cost at time of record |
-| DimProduct | UnitListPrice | DECIMAL(19,4) | Attribute | Snowflake | PRODUCTS | UNIT_PRICE | Source number(10,2) → DECIMAL(19,4) | NO |  | Standard list price at time of record |
-| DimProduct | IsActive | BOOLEAN | Attribute | Snowflake | PRODUCTS | ACTIVE | Direct map (source boolean) | NO |  | True if product is currently active for sale |
-| DimProduct | IsDiscontinued | BOOLEAN | Attribute | Snowflake |  |  | No discontinued flag on PRODUCTS in catalogue | NO |  | True if product has been discontinued |
-| DimProduct | EffectiveDate | DATE | Attribute | Snowflake | PRODUCTS | CREATED_AT | Cast source timestamp_ntz to DATE; confirm vs SCD2 effective-dating design | NO |  | Start date when this version became effective |
-| DimProduct | ExpirationDate | DATE | Attribute | Snowflake |  |  | ETL-generated SCD Type 2 end date | YES |  | End date when this version expired (NULL if current) |
-| DimProduct | IsCurrent | BOOLEAN | Attribute | Snowflake |  |  | ETL-generated SCD Type 2 current-row flag | NO |  | True if this is the current active version |
+| DimProduct | ProductHashPK | INT | Primary Key | Snowflake | PRODUCTS | PRODUCT_ID | CAST(SHA2(COALESCE(CAST(PRODUCT_ID AS VARCHAR), '#@#@#@#@#'), 256) AS BINARY(32)) | NO |  | Surrogate primary key for product dimension |
+| DimProduct | ProductHashBK | VARCHAR(20) | Business Key | Snowflake | PRODUCTS | SKU | CAST(SHA2(COALESCE(CAST(SKU AS VARCHAR), '#@#@#@#@#'), 256) AS BINARY(32)) | NO |  | Natural business key from source system (SKU) |
+| DimProduct | ProductName | VARCHAR(100) | Attribute | Snowflake | PRODUCTS | NAME | TRIM(NAME) | NO |  | Full product display name |
+| DimProduct | ProductDescription | VARCHAR(500) | Attribute | Snowflake | PRODUCTS | PRODUCT_DESCRIPTION | TRIM(PRODUCT_DESCRIPTION) | YES |  | Detailed product description |
+| DimProduct | CategoryCode | VARCHAR(10) | Attribute | Snowflake |  |  |  | NO |  | Product category code |
+| DimProduct | CategoryName | VARCHAR(50) | Attribute | Snowflake | PRODUCTS | CATEGORY | TRIM(CATEGORY) | NO |  | Product category name (top level of hierarchy) |
+| DimProduct | SubcategoryCode | VARCHAR(10) | Attribute | Snowflake |  |  |  | NO |  | Product subcategory code |
+| DimProduct | SubcategoryName | VARCHAR(50) | Attribute | Snowflake |  |  |  | NO |  | Product subcategory name (second level of hierarchy) |
+| DimProduct | BrandCode | VARCHAR(10) | Attribute | Snowflake |  |  |  | NO |  | Brand identifier code |
+| DimProduct | BrandName | VARCHAR(50) | Attribute | Snowflake |  |  |  | NO |  | Brand display name (third level of hierarchy) |
+| DimProduct | UnitOfMeasure | VARCHAR(20) | Attribute | Snowflake |  |  |  | NO |  | Standard unit of measure (Each, Case, Pound, etc.) |
+| DimProduct | PackSize | VARCHAR(20) | Attribute | Snowflake |  |  |  | YES |  | Package size description |
+| DimProduct | UnitCost | DECIMAL(19,4) | Attribute | Snowflake | PRODUCTS | COST_PRICE |  | NO |  | Standard unit cost at time of record |
+| DimProduct | UnitListPrice | DECIMAL(19,4) | Attribute | Snowflake | PRODUCTS | UNIT_PRICE |  | NO |  | Standard list price at time of record |
+| DimProduct | IsActive | BOOLEAN | Attribute | Snowflake | PRODUCTS | ACTIVE |  | NO |  | True if product is currently active for sale |
+| DimProduct | IsDiscontinued | BOOLEAN | Attribute | Snowflake | PRODUCTS | ACTIVE | IFF(ACTIVE, FALSE, TRUE) | NO |  | True if product has been discontinued |
+| DimProduct | EffectiveDate | DATE | Attribute | Snowflake |  |  |  | NO |  | Start date when this version became effective |
+| DimProduct | ExpirationDate | DATE | Attribute | Snowflake |  |  |  | YES |  | End date when this version expired (NULL if current) |
+| DimProduct | IsCurrent | BOOLEAN | Attribute | Snowflake |  |  |  | NO |  | True if this is the current active version |
 | DimProduct | EtlBatchId | INT | Audit/Metadata | Snowflake |  |  |  | NO |  | ETL batch identifier that loaded this record |
 | DimProduct | LoadTimestamp | TIMESTAMP | Audit/Metadata | Snowflake |  |  |  | NO |  | Timestamp when record was loaded |
 
@@ -128,14 +125,14 @@ Definitions are included only when they are present in the analyzer JSON.
 ## 8. Load Strategy
 | Load Type | Method | Frequency | Dependencies | Error Handling / Recovery | Orchestration Tool |
 |-----------|--------|-----------|--------------|---------------------------|--------------------|
-| Incremental | High-water mark / change capture on PRODUCTS.UPDATED_AT (timestamp_ntz) | Per schedule (e.g. daily) | Upstream Fivetran sync of BRONZE_ERP__DBO.PRODUCTS | Replay from last successful watermark; quarantine rows with NULL UPDATED_AT if encountered |  |
+| Incremental | CDC / Merge on ProductHashBK | Scheduled | Source bronze table loaded | Retry failed batches; log errors to ETL audit table | dbt / Orchestrator |
 
 ---
 
 ## 9. Version Control & Governance
 | Version | Date | Author | Changes | Approved By |
 |---------|------|--------|---------|-------------|
-| 1.0 | 2026-04-14 | fillip | Initial generation from target data model and analyzer schema JSON |  |
+| 1.0 | 2026-04-16 | fillip | Initial generation from target data model and analyzer schema JSON |  |
 
 ---
 

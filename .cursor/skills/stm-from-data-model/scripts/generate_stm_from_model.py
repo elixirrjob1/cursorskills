@@ -261,32 +261,58 @@ def _normalize_formula(text: str) -> str:
 
 
 def _column_transformation_logic(column: ColumnDef, table: TableDef) -> str:
+    """Return a Snowflake SQL expression skeleton for the target column.
+
+    Uses {SOURCE_COL} as a placeholder when the actual source column name
+    is not yet known (filled later by the enrichment subagent).
+    """
     desc = column.description
     lower = desc.lower()
+    name = column.name
+    data_type = column.data_type
+
+    if name.endswith("HashPK"):
+        return "CAST(SHA2(COALESCE(CAST({SOURCE_COL} AS VARCHAR), '#@#@#@#@#'), 256) AS BINARY(32))"
+    if name.endswith("HashBK"):
+        return "CAST(SHA2(COALESCE(CAST({SOURCE_COL} AS VARCHAR), '#@#@#@#@#'), 256) AS BINARY(32))"
+    if name.endswith("HashFK"):
+        nullable = column.nullable.upper() == "YES"
+        if nullable:
+            return "IFF({SOURCE_COL} IS NULL, NULL, CAST(SHA2(COALESCE(CAST({SOURCE_COL} AS VARCHAR), '#@#@#@#@#'), 256) AS BINARY(32)))"
+        return "CAST(SHA2(COALESCE(CAST({SOURCE_COL} AS VARCHAR), '#@#@#@#@#'), 256) AS BINARY(32))"
+
+    if "scd type 2 row effective start date" in lower:
+        return "CAST({SOURCE_COL} AS DATE)"
+    if "scd type 2 row expiration date" in lower:
+        return "CAST({SOURCE_COL} AS DATE)"
+    if "scd type 2 current row flag" in lower:
+        return "IFF({SOURCE_COL} IS NULL, TRUE, FALSE)"
+
+    if "degenerate dimension" in lower:
+        return f"CAST({{SOURCE_COL}} AS {data_type})"
+
+    if "foreign key to" in lower:
+        return "CAST(SHA2(COALESCE(CAST({SOURCE_COL} AS VARCHAR), '#@#@#@#@#'), 256) AS BINARY(32))"
+
     normalized = desc.replace(" ", "").lower()
     if "calculated billable amount" in lower and "billablehours*billrate" in normalized:
-        return "BillableHours * BillRate"
+        return "CAST(BILLABLE_HOURS * BILL_RATE AS DECIMAL(19,4))"
     if "calculated cost amount" in lower and "hoursworked*costrate" in normalized:
-        return "HoursWorked * CostRate"
+        return "CAST(HOURS_WORKED * COST_RATE AS DECIMAL(19,4))"
     if "calculated margin" in lower and "billedamount-costamount" in normalized:
-        return "BilledAmount - CostAmount"
+        return "CAST(BILLED_AMOUNT - COST_AMOUNT AS DECIMAL(19,4))"
     if "calculated" in lower and "(" in desc and ")" in desc:
         match = re.search(r"\(([^)]+)\)", desc)
-        return _normalize_formula(match.group(1)) if match else ""
-    if "scd type 2 row effective start date" in lower:
-        return "Populate when a new SCD Type 2 version becomes effective."
-    if "scd type 2 row expiration date" in lower:
-        return "Populate with the end date of the current SCD Type 2 version."
-    if "scd type 2 current row flag" in lower:
-        return "Set to indicate whether the row is the current SCD Type 2 version."
-    if "degenerate dimension" in lower:
-        return "Carry forward the source transaction identifier without a separate dimension lookup."
-    if "foreign key to" in lower:
-        return "Lookup and populate the referenced target dimension key."
+        if match:
+            formula = _normalize_formula(match.group(1))
+            return f"CAST({formula} AS {data_type})"
+
     for business_rule in table.business_rules:
         rule = business_rule.strip().removeprefix("-").strip()
-        if rule.startswith(f"{column.name} ="):
-            return rule.split("=", 1)[1].strip()
+        if rule.startswith(f"{name} ="):
+            formula = rule.split("=", 1)[1].strip()
+            return f"CAST({formula} AS {data_type})"
+
     return ""
 
 
@@ -626,6 +652,74 @@ def _find_analyzer_column(table_metadata: AnalyzerTableMetadata, column_name: st
     return AnalyzerColumnMetadata()
 
 
+_TAG_TIER: dict[str, int] = {
+    "Architecture.Enriched": 3, "Architecture.Curated": 2, "Architecture.Raw": 1,
+    "Certification.Gold": 3, "Certification.Silver": 2, "Certification.Bronze": 1,
+    "PII.Sensitive": 3, "PII.NonSensitive": 2, "PII.None": 1,
+    "Tier.Tier1": 3, "Tier.Tier2": 2, "Tier.Tier3": 1,
+}
+
+_TARGET_SCHEMA_LAYER_OVERRIDES: dict[str, dict[str, str]] = {
+    "GOLD": {"Architecture": "Architecture.Enriched", "Certification": "Certification.Gold"},
+    "SILVER": {"Architecture": "Architecture.Enriched", "Certification": "Certification.Silver"},
+    "ENRICHED": {"Architecture": "Architecture.Enriched", "Certification": "Certification.Gold"},
+    "CURATED": {"Architecture": "Architecture.Curated", "Certification": "Certification.Gold"},
+    "BRONZE": {"Architecture": "Architecture.Raw", "Certification": "Certification.Bronze"},
+    "RAW": {"Architecture": "Architecture.Raw", "Certification": "Certification.Bronze"},
+}
+
+
+def _deduplicate_tags(
+    rows: list[tuple[str, str, str, str]],
+) -> list[tuple[str, str, str, str]]:
+    """Deduplicate (scope, column, tag_fqn, classification) rows.
+
+    For table-level: one tag per classification, highest tier wins.
+    For column-level: one tag per (column, classification), highest tier wins.
+    """
+    table_best: dict[str, tuple[str, str, str, str]] = {}
+    col_best: dict[tuple[str, str], tuple[str, str, str, str]] = {}
+    table_order: list[str] = []
+    col_order: list[tuple[str, str]] = []
+
+    for row in rows:
+        scope, column, tag_fqn, classification = row
+        tier = _TAG_TIER.get(tag_fqn, 0)
+
+        if scope == "Table":
+            existing = table_best.get(classification)
+            if existing is None:
+                table_best[classification] = row
+                table_order.append(classification)
+            else:
+                existing_tier = _TAG_TIER.get(existing[2], 0)
+                if tier > existing_tier:
+                    table_best[classification] = row
+        else:
+            key = (column, classification)
+            existing = col_best.get(key)
+            if existing is None:
+                col_best[key] = row
+                col_order.append(key)
+            else:
+                existing_tier = _TAG_TIER.get(existing[2], 0)
+                if tier > existing_tier:
+                    col_best[key] = row
+
+    result: list[tuple[str, str, str, str]] = []
+    seen_t: set[str] = set()
+    for cls in table_order:
+        if cls not in seen_t:
+            result.append(table_best[cls])
+            seen_t.add(cls)
+    seen_c: set[tuple[str, str]] = set()
+    for key in col_order:
+        if key not in seen_c:
+            result.append(col_best[key])
+            seen_c.add(key)
+    return result
+
+
 def _append_classification_section(
     lines: list[str],
     table: TableDef,
@@ -636,27 +730,38 @@ def _append_classification_section(
     lines.append("| Scope | Column | Tag FQN | Classification |")
     lines.append("|-------|--------|---------|----------------|")
 
-    section_has_rows = False
+    raw_rows: list[tuple[str, str, str, str]] = []
     for tag in analyzer_table.classification_tags:
         definition = analyzer_metadata.classification_definitions.get(tag, ClassificationDefinition())
         classification_name = definition.classification_name or _parse_tag_fqn(tag)[0]
-        lines.append(
-            f"| Table |  | {_markdown_escape(tag)} | {_markdown_escape(classification_name)} |"
-        )
-        section_has_rows = True
+        raw_rows.append(("Table", "", tag, classification_name))
 
     for column in table.columns:
         column_metadata = _find_analyzer_column(analyzer_table, column.name)
         for tag in column_metadata.classification_tags:
             definition = analyzer_metadata.classification_definitions.get(tag, ClassificationDefinition())
             classification_name = definition.classification_name or _parse_tag_fqn(tag)[0]
-            lines.append(
-                f"| Column | {_markdown_escape(column.name)} | {_markdown_escape(tag)} | {_markdown_escape(classification_name)} |"
-            )
-            section_has_rows = True
+            raw_rows.append(("Column", column.name, tag, classification_name))
 
-    if not section_has_rows:
+    deduped = _deduplicate_tags(raw_rows)
+
+    layer_overrides = _TARGET_SCHEMA_LAYER_OVERRIDES.get(TARGET_SCHEMA.upper(), {})
+    if layer_overrides:
+        deduped = [
+            (scope, col, layer_overrides[classification] if scope == "Table" and classification in layer_overrides else fqn, classification)
+            for scope, col, fqn, classification in deduped
+        ]
+        for cls, override_fqn in layer_overrides.items():
+            if not any(c == cls for _, _, _, c in deduped):
+                deduped.insert(0, ("Table", "", override_fqn, cls))
+
+    if not deduped:
         lines.append("|  |  |  |  |")
+    else:
+        for scope, column, tag_fqn, classification in deduped:
+            lines.append(
+                f"| {scope} | {_markdown_escape(column)} | {_markdown_escape(tag_fqn)} | {_markdown_escape(classification)} |"
+            )
 
     lines.append("")
     lines.append("---")
@@ -904,7 +1009,10 @@ def main() -> None:
         raise ValueError(f"No table sections detected in {input_path}")
     analyzer_metadata = load_analyzer_metadata(analyzer_path)
     if _has_glossary_terms(analyzer_metadata):
-        analyzer_metadata.glossary_definitions.update(fetch_openmetadata_glossary_definitions())
+        try:
+            analyzer_metadata.glossary_definitions.update(fetch_openmetadata_glossary_definitions())
+        except RuntimeError:
+            print("OpenMetadata unavailable — using glossary definitions from analyzer JSON only.")
     author = str(doc.get("author") or args.author or getpass.getuser()).strip()
 
     for idx, table in enumerate(tables, start=1):

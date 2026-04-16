@@ -1,0 +1,26 @@
+account_id: null
+decoded_access_token:
+  access_token_response:
+    access_token: eyJhbGciOiJSUzI1NiIsImtpZCI6ImY1ZTJlYWJiY2I3MDBlMTdiOTkxODE3ZjBkN2JjMTM2ZWRmZmUwMTkiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL3JtMjkxLnVzMS5kYnQuY29tLyIsImF1ZCI6Imh0dHBzOi8vcm0yOTEudXMxLmRidC5jb20vIiwiZXhwIjoxNzc2MjQ0MjkwLCJzdWIiOiI3MDQ3MTgyMzU0NTY1MCIsImNsaWVudF9pZCI6IjM0ZWM2MWU4MzRjZGZmZDlkZDkwYTMyMjMxOTM3ODIxIiwiaWF0IjoxNzc2MjQwNjkwLCJqdGkiOiI0NWZmMmQ2OS01NTExLTQ3YTQtYWYyOC0zNTQxZDU0NmI0YjYiLCJzY29wZSI6InVzZXJfYWNjZXNzIG9mZmxpbmVfYWNjZXNzIiwiaHR0cHM6Ly9kYnQuY29tL2VtYWlsIjoiZmlsaXAubWFyaWNAZWxpeGlyci5jb20iLCJodHRwczovL2RidC5jb20vYWNjb3VudF9pZCI6NzA0NzE4MjM1NTI2MTMsImh0dHBzOi8vZGJ0LmNvbS9hY2NvdW50X2lkZW50aWZpZXIiOiJhY3RfM0NOd0E3blI0WU5TcE1WUHN1WmR4WmJtVmw2IiwiaHR0cHM6Ly9kYnQuY29tL2ZhbWlseSI6IlFVc3ZzdTFpN3AxNWJrQ09lNlprMVEiLCJodHRwczovL2RidC5jb20vc2NoZW1hX3ZlcnNpb24iOjF9.sNgJqwde_5E2p762CK3b1qwnoB0l9mcBBP008e_BJU3Yvd9wzfJhVIJ-aIwT7VCiKc6-45bo0FqSgPRJ8IzaD6LJpmuxfjwlFycoin9Mv-tg4bOJdkjO3GOQgtXrr198_ZHXnHTwbCTzMc7KF0w8aknziTQCukxOMRDBZmCBNoWT83yUwT18QEgtRuqbsDzP3qodxKzxJ-Qbs7P5L6a3yKz7FtvE3SPJEmr_uh9igN2FmV7ze7ZtPlVbniXbJZFLVUZQHaeGyNNPLh2Fe3_0XGjixmQXQ3wHR02f4Y7Mq55PfECXTyCADEIikzQ_Ki1QEQ8a__mTymkyodHaIrj-bMDWyc1H7ai03WerwdGLj1cVY3pFgOfcHHVFkrZhYa7gyW87qmv8fG1NW4AKXO7TAZmE4qcgEyq6He2VY1L9eLPHrnnbcpaZoluTJsIHMI-VqEclFs-G4pQAu5Nush4cUvowo21Px36KFSO9ylZ1M8RaIZnqqJSqKMntGfi4dV0ZlyWOXv14PaCYNtYY7O8CnFLD4AwdhRvI3YJtwMHIi9O_Dpoq7YPCe6D8IM3W8a67wgmfRqIV0R2nK6ptkWykz0lMgYclIOjmyV0hRkFWI0jRFjMh-k_SoYkQ9j3X4G6t2CixqdLe4e8WKPH2Eeb_vDOnYIIC7cHEF7hAMFuKp2I
+    expires_at: 1776244290
+    expires_in: 3600
+    refresh_token: dLxQ87ou0o4u6jxq4-vnjXFNVCsrjVJR988DBQWKQLc
+    scope: user_access offline_access
+    token_type: bearer
+  decoded_claims:
+    aud: https://rm291.us1.dbt.com/
+    client_id: 34ec61e834cdffd9dd90a32231937821
+    exp: 1776244290
+    https://dbt.com/account_id: 70471823552613
+    https://dbt.com/account_identifier: act_3CNwA7nR4YNSpMVPsuZdxZbmVl6
+    https://dbt.com/email: filip.maric@elixirr.com
+    https://dbt.com/family: QUsvsu1i7p15bkCOe6Zk1Q
+    https://dbt.com/schema_version: 1
+    iat: 1776240690
+    iss: https://rm291.us1.dbt.com/
+    jti: 45ff2d69-5511-47a4-af28-3541d546b4b6
+    scope: user_access offline_access
+    sub: '70471823545650'
+dev_environment: null
+host_prefix: null
+prod_environment: null

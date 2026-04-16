@@ -15,9 +15,15 @@ import sys
 from pathlib import Path
 from typing import Any
 
+import re
+
 from dotenv import load_dotenv
 
 load_dotenv()
+
+_BOGUS_TABLE = re.compile(
+    r"(?i)^(n/a|none|tbd|not applicable|unknown|—|--|see field|no matching)\s*$"
+)
 
 _SCRIPT_DIR = Path(__file__).resolve().parent
 sys.path.insert(0, str(_SCRIPT_DIR))
@@ -93,6 +99,8 @@ def _extract_source_mappings(stm_path: Path) -> list[dict[str, str]]:
         src_col_raw = cells[idx_src_c].strip() if idx_src_c < len(cells) else ""
         tgt_col = cells[idx_tgt].strip() if idx_tgt < len(cells) else ""
         if not src_table_raw or not src_col_raw:
+            continue
+        if _BOGUS_TABLE.match(src_table_raw):
             continue
         # Handle comma-separated multi-table references (e.g. "SALES_ORDER_ITEMS, PRODUCTS")
         for src_table in (t.strip() for t in src_table_raw.split(",")):
@@ -239,6 +247,110 @@ def _replace_section_table(text: str, section_prefix: str, new_table: str) -> st
 # Per-STM processing
 # ---------------------------------------------------------------------------
 
+_TARGET_SCHEMA_LAYER_OVERRIDES: dict[str, dict[str, str]] = {
+    "GOLD": {"Architecture": "Architecture.Enriched", "Certification": "Certification.Gold"},
+    "SILVER": {"Architecture": "Architecture.Enriched", "Certification": "Certification.Silver"},
+    "ENRICHED": {"Architecture": "Architecture.Enriched", "Certification": "Certification.Gold"},
+    "CURATED": {"Architecture": "Architecture.Curated", "Certification": "Certification.Gold"},
+    "BRONZE": {"Architecture": "Architecture.Raw", "Certification": "Certification.Bronze"},
+    "RAW": {"Architecture": "Architecture.Raw", "Certification": "Certification.Bronze"},
+}
+
+_TAG_TIER = {
+    "Architecture.Enriched": 3, "Architecture.Curated": 2, "Architecture.Raw": 1,
+    "Certification.Gold": 3, "Certification.Silver": 2, "Certification.Bronze": 1,
+    "PII.Sensitive": 3, "PII.NonSensitive": 2, "PII.None": 1,
+    "Tier.Tier1": 3, "Tier.Tier2": 2, "Tier.Tier3": 1,
+}
+
+
+def _deduplicate_classification_tags(rows: list[dict[str, str]]) -> list[dict[str, str]]:
+    """Deduplicate table-level tags: one tag per classification, highest tier wins.
+
+    Column-level tags are deduplicated per (column, classification).
+    """
+    table_best: dict[str, dict[str, str]] = {}
+    col_best: dict[tuple[str, str], dict[str, str]] = {}
+    col_order: list[tuple[str, str]] = []
+    table_order: list[str] = []
+
+    for row in rows:
+        cls = row["classification"]
+        fqn = row["tag_fqn"]
+        tier = _TAG_TIER.get(fqn, 0)
+
+        if row["scope"] == "Table":
+            existing = table_best.get(cls)
+            if existing is None:
+                table_best[cls] = row
+                table_order.append(cls)
+            else:
+                existing_tier = _TAG_TIER.get(existing["tag_fqn"], 0)
+                if tier > existing_tier:
+                    table_best[cls] = row
+        else:
+            key = (row["column"], cls)
+            existing = col_best.get(key)
+            if existing is None:
+                col_best[key] = row
+                col_order.append(key)
+            else:
+                existing_tier = _TAG_TIER.get(existing["tag_fqn"], 0)
+                if tier > existing_tier:
+                    col_best[key] = row
+
+    deduped: list[dict[str, str]] = []
+    seen_table: set[str] = set()
+    for cls in table_order:
+        if cls not in seen_table:
+            deduped.append(table_best[cls])
+            seen_table.add(cls)
+    seen_col: set[tuple[str, str]] = set()
+    for key in col_order:
+        if key not in seen_col:
+            deduped.append(col_best[key])
+            seen_col.add(key)
+    return deduped
+
+
+def _extract_target_schema(stm_path: Path) -> str:
+    """Read the target schema from Section 4 of the STM."""
+    lines = stm_path.read_text().splitlines()
+    rows = _parse_table_rows(lines, "## 4.")
+    if len(rows) < 2:
+        return ""
+    header = [h.lower() for h in rows[0]]
+    try:
+        idx = header.index("schema")
+    except ValueError:
+        return ""
+    cells = rows[1]
+    return cells[idx].strip().upper() if idx < len(cells) else ""
+
+
+def _apply_layer_overrides(
+    rows: list[dict[str, str]], target_schema: str,
+) -> list[dict[str, str]]:
+    """Override layer-derived tags (Architecture, Certification) to match the target schema."""
+    overrides = _TARGET_SCHEMA_LAYER_OVERRIDES.get(target_schema)
+    if not overrides:
+        return rows
+
+    result: list[dict[str, str]] = []
+    for row in rows:
+        if row["scope"] == "Table" and row["classification"] in overrides:
+            result.append({**row, "tag_fqn": overrides[row["classification"]]})
+        else:
+            result.append(row)
+
+    for classification, tag_fqn in overrides.items():
+        if not any(r["classification"] == classification for r in result):
+            result.insert(0, {
+                "scope": "Table", "column": "", "tag_fqn": tag_fqn, "classification": classification,
+            })
+    return result
+
+
 def _process_stm(
     stm_path: Path,
     schema_fqn: str,
@@ -279,6 +391,10 @@ def _process_stm(
             if ref["column"]:
                 ref["column"] = src_to_target.get(ref["column"].upper(), ref["column"])
             all_gloss_refs.append(ref)
+
+    all_class = _deduplicate_classification_tags(all_class)
+    target_schema = _extract_target_schema(stm_path)
+    all_class = _apply_layer_overrides(all_class, target_schema)
 
     glossary_rows: list[dict[str, str]] = []
     for ref in all_gloss_refs:

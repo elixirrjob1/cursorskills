@@ -46,7 +46,7 @@
 | Scope | Column | Tag FQN | Classification |
 |-------|--------|---------|----------------|
 | Table |  | Architecture.Enriched | Architecture |
-| Table |  | Certification.Bronze | Certification |
+| Table |  | Certification.Gold | Certification |
 | Table |  | Criticality.Operational | Criticality |
 | Table |  | Lifecycle.Active | Lifecycle |
 | Table |  | PII.Sensitive | PII |
@@ -86,14 +86,14 @@ Definitions are included only when they are present in the analyzer JSON.
 ## 7. Field-Level Mapping Matrix
 | Target Table | Target Column | Data Type | Field Type | Source System | Source Table | Source Column(s) | Transformation / Business Rule | Nullable? | Default / Fallback | Description |
 |--------------|---------------|-----------|------------|---------------|--------------|------------------|--------------------------------|-----------|--------------------|-------------|
-| DimStore | StoreHashPK | INT | Primary Key | Snowflake | STORES | STORE_ID | Generate surrogate INT key from natural key STORE_ID (warehouse standard hash or mapping table). CAST DECIMAL(38,0) to INT when within INT range. | NO |  | Surrogate primary key for store dimension |
-| DimStore | StoreHashBK | VARCHAR(10) | Business Key | Snowflake | STORES | CODE | Truncate or cast source text(900) to VARCHAR(10); align length with business rules if CODE exceeds 10 characters. | NO |  | Natural business key (store number) |
-| DimStore | StoreName | VARCHAR(100) | Attribute | Snowflake | STORES | NAME | Cast or substring to VARCHAR(100) if source length exceeds target. | NO |  | Store display name |
+| DimStore | StoreHashPK | INT | Primary Key | Snowflake | STORES | STORE_ID | CAST(SHA2(COALESCE(CAST(STORE_ID AS VARCHAR), '#@#@#@#@#'), 256) AS BINARY(32)) | NO |  | Surrogate primary key for store dimension |
+| DimStore | StoreHashBK | VARCHAR(10) | Business Key | Snowflake | STORES | CODE | CAST(SHA2(COALESCE(CAST(CODE AS VARCHAR), '#@#@#@#@#'), 256) AS BINARY(32)) | NO |  | Natural business key (store number) |
+| DimStore | StoreName | VARCHAR(100) | Attribute | Snowflake | STORES | NAME |  | NO |  | Store display name |
 | DimStore | StoreType | VARCHAR(20) | Attribute | Snowflake |  |  |  | NO |  | Type of store (Flagship, Standard, Outlet, Express) |
-| DimStore | StreetAddress | VARCHAR(200) | Attribute | Snowflake | STORES | ADDRESS | Cast to VARCHAR(200); source nullable—apply COALESCE or reject per DQ if target non-null required. | NO |  | Store street address |
-| DimStore | City | VARCHAR(50) | Attribute | Snowflake | STORES | CITY | Cast to VARCHAR(50); source nullable—apply COALESCE or reject per DQ if target non-null required. | NO |  | City where store is located |
-| DimStore | StateProvince | VARCHAR(50) | Attribute | Snowflake | STORES | STATE | Cast to VARCHAR(50); source nullable—apply COALESCE or reject per DQ if target non-null required. | NO |  | State or province |
-| DimStore | PostalCode | VARCHAR(20) | Attribute | Snowflake | STORES | POSTAL_CODE | Cast to VARCHAR(20); source nullable—apply COALESCE or reject per DQ if target non-null required. | NO |  | Postal or ZIP code |
+| DimStore | StreetAddress | VARCHAR(200) | Attribute | Snowflake | STORES | ADDRESS |  | NO |  | Store street address |
+| DimStore | City | VARCHAR(50) | Attribute | Snowflake | STORES | CITY |  | NO |  | City where store is located |
+| DimStore | StateProvince | VARCHAR(50) | Attribute | Snowflake | STORES | STATE |  | NO |  | State or province |
+| DimStore | PostalCode | VARCHAR(20) | Attribute | Snowflake | STORES | POSTAL_CODE |  | NO |  | Postal or ZIP code |
 | DimStore | Country | VARCHAR(50) | Attribute | Snowflake |  |  |  | NO |  | Country name |
 | DimStore | Latitude | DECIMAL(9,6) | Attribute | Snowflake |  |  |  | YES |  | Geographic latitude for mapping |
 | DimStore | Longitude | DECIMAL(9,6) | Attribute | Snowflake |  |  |  | YES |  | Geographic longitude for mapping |
@@ -114,14 +114,14 @@ Definitions are included only when they are present in the analyzer JSON.
 ## 8. Load Strategy
 | Load Type | Method | Frequency | Dependencies | Error Handling / Recovery | Orchestration Tool |
 |-----------|--------|-----------|--------------|---------------------------|--------------------|
-| Incremental | Upsert/merge into GOLD.DimStore using watermark on `STORES.UPDATED_AT` (timestamp_ntz); include only current business rows per extract rules. Full reload if incremental watermark is unavailable. |  | Bronze extract `BRONZE_ERP__DBO.STORES`, surrogate key resolution for STORE_ID | Replay from last successful watermark; quarantine rows failing NOT NULL or type constraints |  |
+| Incremental | Merge / Upsert on STORE_ID | Daily | STORES.UPDATED_AT |  |  |
 
 ---
 
 ## 9. Version Control & Governance
 | Version | Date | Author | Changes | Approved By |
 |---------|------|--------|---------|-------------|
-| 1.0 | 2026-04-14 | fillip | Initial generation from target data model and analyzer schema JSON |  |
+| 1.0 | 2026-04-16 | fillip | Initial generation from target data model and analyzer schema JSON |  |
 
 ---
 

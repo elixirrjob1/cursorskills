@@ -23,10 +23,12 @@ Every target table (dimension or fact) produces **two** dbt models:
 
 | Model file | Folder | Materialization | Purpose |
 |---|---|---|---|
-| `vw_interim_{entity}_{source_system}.sql` | `models/views/` | `view` | Holds all transformation logic; references `{{ source() }}` directly |
-| `{model_name}.sql` | `models/enriched/` | `incremental` | `SELECT * FROM {{ ref('vw_interim_{entity}_{source_system}') }}` with incremental filter |
+| `vw_{Entity}.sql` | `models/views/` | `view` | Holds all transformation logic; references `{{ source() }}` directly |
+| `{Entity}.sql` | `models/enriched/` | `incremental` | `SELECT * FROM {{ ref('vw_{Entity}') }}` with incremental filter |
 
-**View naming convention:** `vw_interim_<entity>_<source_system>` where entity is the snake_case target table name and source_system is derived from the source schema (e.g. `erp` from `BRONZE_ERP__DBO`). Example: `vw_interim_dim_employee_erp`.
+**View naming convention:** `vw_<Entity>` where `<Entity>` is the STM's `Target Table` **verbatim PascalCase**. Example: `vw_DimEmployee`, `vw_FactSales`.
+
+**Incremental model naming:** `<Entity>` verbatim PascalCase (e.g. `DimEmployee.sql`, `FactSales.sql`). NOT snake_case.
 
 **Why two models?** The view is "what we want to load" and the incremental table is "what got loaded." This enables model-to-model data testing and comparison downstream.
 
@@ -46,7 +48,7 @@ python3 .cursor/skills/dbt-model-from-stm/scripts/generate_dbt_models.py \
 
 This produces:
 - `models/staging/_sources.yml` — source definitions for `{{ source() }}` references
-- `models/views/_schema.yml` — model entries for the `_v` view models, with column descriptions and tests
+- `models/views/_schema.yml` — model entries for the `vw_` view models, with column descriptions and tests
 - `models/enriched/_schema.yml` — model entries for the base incremental models, with column descriptions and tests
 
 It does NOT generate enriched model SQL — that is Phase 2.
@@ -68,9 +70,9 @@ You must produce TWO files:
 ### File 1 — View model
 Write to: {dbt_project}/models/views/{view_model_name}.sql
 
-The view_model_name follows the pattern: vw_interim_{entity}_{source_system}
-where entity = snake_case target table name, source_system = erp (from BRONZE_ERP__DBO).
-Example: vw_interim_dim_employee_erp
+The view_model_name follows the pattern: vw_{Entity}
+where {Entity} = the STM's `Target Table` verbatim (PascalCase).
+Examples: vw_DimEmployee, vw_FactSales, vw_DimProduct
 
 This model holds all transformation logic.
 
@@ -85,15 +87,22 @@ Rules for the view:
 - In the FROM clause, use the CTE name directly without aliasing (e.g. `FROM cteEMPLOYEES`, not `FROM cteEMPLOYEES e`).
 - For fact tables with multiple CTEs that need JOINs, use the CTE names directly in JOIN clauses (e.g. `FROM cteSALES_ORDER_ITEMS JOIN cteSALES_ORDERS ON ...`). If column names conflict between CTEs, qualify with the CTE name.
 
-**Source CTE — latest record deduplication:**
-- The source CTE must include a ROW_NUMBER() window but NOT filter it:
-    ROW_NUMBER() OVER (PARTITION BY <business_key_col> ORDER BY <modified_timestamp> DESC) AS LatestRank
-- Use the best available ordering column from the source (_FIVETRAN_SYNCED, UPDATED_AT, etc.).
-- Do NOT filter inside the CTE. Instead, the WHERE LatestRank = 1 filter goes at the very bottom of the final SELECT statement, after all column transformations.
-- Structure must be:
-    WITH cte<TABLE> AS (SELECT *, ROW_NUMBER() ... AS LatestRank FROM source)
-    SELECT <all transformed columns> FROM cte<TABLE> WHERE LatestRank = 1
-- If no ordering column exists, omit deduplication and add a comment.
+**Source CTE — latest record deduplication (Snowflake QUALIFY):**
+- Use Snowflake's QUALIFY clause to filter on ROW_NUMBER() in a single step — do NOT create a separate CTE just for deduplication.
+- The QUALIFY clause goes AFTER the FROM/JOIN/WHERE and operates on window functions directly.
+- Pattern:
+    WITH cte<TABLE> AS (
+        SELECT
+            <columns>
+        FROM {{ source('...', '...') }}
+        QUALIFY ROW_NUMBER() OVER (
+            PARTITION BY <business_key_col>
+            ORDER BY <modified_timestamp> DESC
+        ) = 1
+    )
+- Use the best available ordering column from the source (_FIVETRAN_SYNCED, UPDATED_AT, LAST_UPDATE_DATE, etc.).
+- Do NOT add a separate LatestRank column + WHERE LatestRank = 1 filter. QUALIFY replaces that pattern entirely.
+- If no ordering column exists, omit QUALIFY and add a `-- NOTE: no deduplication column available` comment.
 
 **Hash key generation (SHA2_256 + COALESCE sentinel):**
 - All HashPK, HashBK, HashFK columns use this pattern:
@@ -116,36 +125,50 @@ Rules for the view:
   For example, if Transformation = "CAST(QUANTITY * UNIT_PRICE AS DECIMAL(19,4))",
   write: CAST(QUANTITY * UNIT_PRICE AS DECIMAL(19,4)).
   HOWEVER: if the STM transformation uses MD5(), replace it with the SHA2 pattern above.
+- **Output aliases must match the STM's `Target Column` EXACTLY — PascalCase, verbatim.**
+  Examples: `AS EmployeeHashPK`, `AS FirstName`, `AS HomeStoreHashFK`, `AS LoadTimestamp`, `AS Hashbytes`.
+  DO NOT snake_case the alias (no `employee_hash_pk`, no `first_name`). Copy the STM column name as-is.
 - For fact tables with multiple source CTEs joined together, qualify column names with the CTE name
   ONLY when the same column name exists in multiple CTEs. Otherwise keep columns unqualified.
 - If Transformation is empty and Source Table/Column are filled, it's a direct passthrough —
-  just reference the source column directly (e.g. FIRST_NAME).
+  just reference the source column directly (e.g. `FIRST_NAME AS FirstName`).
 - Do NOT truncate fields with LEFT() or force data type lengths. Let columns pass through
   at source precision. TRIM() is acceptable but do not wrap in LEFT(..., N).
 - For columns with no source mapping (empty Source Table + Source Column),
   use the default value from the STM if one exists (e.g. 'Unknown', 0, TRUE),
   or CAST(NULL AS <DataType>) if no default. Either way, add an inline comment:
   `-- not available in source`
-  Example: `'Unknown' AS customer_type, -- not available in source`
-  Example: `CAST(NULL AS DATE) AS termination_date, -- not available in source`
+  Example: `'Unknown' AS CustomerType, -- not available in source`
+  Example: `CAST(NULL AS DATE) AS TerminationDate, -- not available in source`
 - Place {{ config(...) }} BEFORE the WITH keyword.
 
-### File 2 — Incremental model
-Write to: {dbt_project}/models/enriched/{model_name}.sql
+**Audit/metadata columns:**
+- `LoadTimestamp` (STM name) must be sourced from `_FIVETRAN_SYNCED` (the Fivetran sync timestamp on every source table), NOT from `CURRENT_TIMESTAMP()`.
+  Using `CURRENT_TIMESTAMP()` would update every row on every run and break incremental logic (no rows would ever be filtered out).
+  Write: `_FIVETRAN_SYNCED AS LoadTimestamp`
+- Include `_FIVETRAN_SYNCED` in the source CTE's SELECT list so it can be projected through to LoadTimestamp.
+- `EtlBatchId` remains `CAST(0 AS INT) AS EtlBatchId -- not available in source` or similar until a batch ID is wired in.
 
-This model reads from the view and persists the table.
+### File 2 — Incremental model
+Write to: {dbt_project}/models/enriched/{Entity}.sql
+
+The filename `{Entity}` is the STM's `Target Table` verbatim PascalCase (e.g. `DimEmployee.sql`, `FactSales.sql`). NOT snake_case.
 
 Content:
 {{ config(
     materialized='incremental',
-    unique_key='<pk_column_snake_case>'
+    unique_key='<PK_COLUMN_VERBATIM_FROM_STM>'
 ) }}
 
-SELECT * FROM {{ ref('{view_model_name}') }}
+SELECT * FROM {{ ref('vw_<Entity>') }}
 
 {{% if is_incremental() %}}
-WHERE load_timestamp > (SELECT MAX(load_timestamp) FROM {{ this }})
+WHERE LoadTimestamp > (SELECT MAX(LoadTimestamp) FROM {{ this }})
 {{% endif %}}
+
+- The view name reference must match the PascalCase naming: `vw_<Entity>` (e.g. `vw_DimEmployee`, `vw_FactSales`).
+- `unique_key` is the STM Primary Key column name verbatim (e.g. `'EmployeeHashPK'`, `'SalesHashPK'`) — NOT snake_cased.
+- The incremental filter references `LoadTimestamp` (PascalCase, as named in the view).
 
 Replace <pk_column_snake_case> with the snake_case primary key from the STM
 (the column where Field Type = "Primary Key").
@@ -166,14 +189,16 @@ After all subagents complete, run:
 
 ## Conventions
 
-- **Two models per table:** `models/views/vw_interim_{entity}_{source}` (view with logic) + `models/enriched/{entity}` (incremental from view)
+- **Two models per table:** `models/views/vw_{Entity}` (view with logic) + `models/enriched/{Entity}` (incremental from view)
 - **No staging layer:** view models use `{{ source() }}` directly
 - **No precision truncation:** do not use `LEFT()` to force field lengths — let source precision flow through
 - **Unmapped columns:** `CAST(NULL AS <type>)` or STM default, with `-- not available in source` comment
-- **View naming:** `vw_interim_<entity>_<source_system>` (e.g. `vw_interim_dim_employee_erp`)
+- **Model/file naming — STM-verbatim (PascalCase):** file names and dbt model names use the STM `Target Table` verbatim — e.g. `DimEmployee.sql`, `vw_DimEmployee.sql`, `FactSales.sql`, `vw_FactSales.sql`. NEVER snake_case. The only lowercase piece is the literal `vw_` prefix on view models.
 - **CTE naming:** `cte<TABLE_NAME>` (e.g. `cteEMPLOYEES`, `cteSALES_ORDER_ITEMS`)
+- **Column naming — STM-verbatim (PascalCase):** target-column aliases and schema.yml entries MUST match the STM's `Target Column` exactly (e.g. `EmployeeHashPK`, `FirstName`, `HomeStoreHashFK`, `LoadTimestamp`, `Hashbytes`). Do NOT snake_case them.
 - **Column references:** unqualified (no table/CTE prefix) unless needed to disambiguate in multi-CTE joins
-- **Dedup rank column:** `LatestRank` (PascalCase, matching reference convention)
+- **Deduplication:** Snowflake `QUALIFY ROW_NUMBER() OVER (PARTITION BY ... ORDER BY ... DESC) = 1` inside the source CTE — no separate LatestRank column
+- **load_timestamp:** sourced from `_FIVETRAN_SYNCED`, NEVER from `CURRENT_TIMESTAMP()` (breaks incremental logic)
 
 ## Key Generation & Hashing Convention
 
@@ -210,37 +235,69 @@ SHA2(
     COALESCE(CAST(attr_col_1 AS VARCHAR), '#@#@#@#@#')
     || '|' || COALESCE(CAST(attr_col_2 AS VARCHAR), '#@#@#@#@#')
     || '|' || COALESCE(CAST(attr_col_N AS VARCHAR), '#@#@#@#@#')
-, 256) AS hashbytes
+, 256) AS Hashbytes
 ```
+
+The alias is `Hashbytes` (PascalCase) to match the STM's Target Column name.
 
 Include only columns that are **sourced from the source system** — i.e. they have a real Source Table and Source Column in the STM. **Exclude** unmapped columns (those with no source, hardcoded defaults like 'Unknown', 0, NULL placeholders). Since unmapped columns never change, including them in hashbytes adds no change detection value and just produces noise.
 
-Also exclude HashPK, HashBK, HashFK, and audit/metadata fields (etl_batch_id, load_timestamp). This enables downstream SCD Type 1/2 processing by comparing source hashbytes vs target hashbytes.
+Also exclude HashPK, HashBK, HashFK, and audit/metadata fields (`EtlBatchId`, `LoadTimestamp`). This enables downstream SCD Type 1/2 processing by comparing source Hashbytes vs target Hashbytes.
 
-### Latest Record Deduplication
+### Latest Record Deduplication — Snowflake QUALIFY
 
-The source CTE adds the ROW_NUMBER() but does NOT filter. The filter goes at the bottom of the final SELECT:
+Use Snowflake's `QUALIFY` clause to deduplicate in a single step. Do NOT create a separate CTE with a LatestRank column followed by `WHERE LatestRank = 1` — `QUALIFY` applies the window-function filter directly.
 
 ```sql
 WITH cte<TABLE_NAME> AS (
     SELECT
-        *,
-        ROW_NUMBER() OVER (
-            PARTITION BY <business_key_column(s)>
-            ORDER BY <last_modified_column> DESC
-        ) AS LatestRank
+        <columns including _FIVETRAN_SYNCED>
     FROM {{ source('...', '...') }}
+    QUALIFY ROW_NUMBER() OVER (
+        PARTITION BY <business_key_column(s)>
+        ORDER BY <last_modified_column> DESC
+    ) = 1
 )
 
 SELECT
-    <all hash keys>,
-    <all attribute columns>,
-    <hashbytes>,
-    <audit columns>
+    <all hash keys aliased PascalCase: EmployeeHashPK, EmployeeHashBK, ...>,
+    <all attribute columns aliased PascalCase: FirstName, LastName, ...>,
+    <Hashbytes>,
+    <audit columns: EtlBatchId, _FIVETRAN_SYNCED AS LoadTimestamp>
 FROM cte<TABLE_NAME>
-WHERE LatestRank = 1
 ```
 
-The `WHERE LatestRank = 1` must be the last line before the closing semicolon — after all column transformations, not inside the CTE. Columns are referenced WITHOUT a prefix (e.g. `FIRST_NAME`, not `cteEMPLOYEES.FIRST_NAME`).
+Use the best available ordering column from the source (e.g., `_FIVETRAN_SYNCED`, `UPDATED_AT`, `LAST_UPDATE_DATE`). If no obvious ordering column exists, omit the `QUALIFY` and add a `-- NOTE: no deduplication column available` comment.
 
-Use the most appropriate ordering column from the source (e.g., `_FIVETRAN_SYNCED`, `UPDATED_AT`, `LAST_UPDATE_DATE`, or whatever timestamp column exists). If no obvious ordering column exists, omit the deduplication and add a `-- NOTE: no deduplication column available` comment.
+### LoadTimestamp sourced from _FIVETRAN_SYNCED
+
+Every view must emit `LoadTimestamp` from the source table's `_FIVETRAN_SYNCED` column, not from `CURRENT_TIMESTAMP()`. This is critical:
+
+- `CURRENT_TIMESTAMP()` would assign a fresh timestamp to every row on every run, which makes `WHERE LoadTimestamp > MAX(LoadTimestamp)` match every row — incremental logic breaks.
+- `_FIVETRAN_SYNCED` reflects when Fivetran actually synced that row from the source, so only new/changed rows advance `LoadTimestamp`.
+
+The source CTE must select `_FIVETRAN_SYNCED` so it can be projected through:
+
+```sql
+WITH cte<TABLE> AS (
+    SELECT
+        <business cols>,
+        _FIVETRAN_SYNCED
+    FROM {{ source('...', '...') }}
+    QUALIFY ROW_NUMBER() OVER (PARTITION BY <pk> ORDER BY _FIVETRAN_SYNCED DESC) = 1
+)
+SELECT
+    ...,
+    _FIVETRAN_SYNCED AS LoadTimestamp
+FROM cte<TABLE>
+```
+
+### Column alias case convention — STM verbatim
+
+Every output column alias in the view and every `name:` entry in the schema YAML must match the STM's `Target Column` exactly. The STM uses PascalCase (`EmployeeHashPK`, `FirstName`, `HomeStoreHashFK`, `IsActive`, `LoadTimestamp`, `Hashbytes`). Keep it that way. NEVER snake_case target column names. Only dbt model/file names are snake_case.
+
+Examples:
+
+- STM `EmployeeHashPK` → `AS EmployeeHashPK` in SQL, `- name: EmployeeHashPK` in YAML, `unique_key='EmployeeHashPK'` in the incremental config.
+- STM `HomeStoreHashFK` → `AS HomeStoreHashFK`.
+- STM `LoadTimestamp` → `AS LoadTimestamp`; the incremental `WHERE` clause uses `LoadTimestamp > (SELECT MAX(LoadTimestamp) FROM {{ this }})`.

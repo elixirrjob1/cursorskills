@@ -21,17 +21,27 @@ from dataclasses import dataclass, field
 # Markdown table parser
 # ---------------------------------------------------------------------------
 
+_ESCAPED_PIPE_SENTINEL = "\x00ESCPIPE\x00"
+
+
+def _split_md_row(line: str) -> list[str]:
+    """Split a markdown table row on '|', honouring '\\|' escape sequences inside cells."""
+    protected = line.replace("\\|", _ESCAPED_PIPE_SENTINEL)
+    parts = [p.strip().replace(_ESCAPED_PIPE_SENTINEL, "|") for p in protected.strip("|").split("|")]
+    return parts
+
+
 def parse_md_table(text: str) -> list[dict[str, str]]:
     lines = [l.strip() for l in text.strip().splitlines() if l.strip()]
     if len(lines) < 2:
         return []
     header_line = lines[0]
-    headers = [h.strip().strip("*") for h in header_line.strip("|").split("|")]
+    headers = [h.strip("*") for h in _split_md_row(header_line)]
     rows = []
     for line in lines[2:]:
         if set(line.replace("|", "").replace("-", "").strip()) <= {""}:
             continue
-        vals = [v.strip() for v in line.strip("|").split("|")]
+        vals = _split_md_row(line)
         row = {}
         for i, h in enumerate(headers):
             row[h] = vals[i] if i < len(vals) else ""
@@ -201,27 +211,21 @@ def write_file(path: str, content: str):
     print(f"  wrote {path}")
 
 
-def _source_system_abbrev(stm: "STM") -> str:
-    """Derive a short source system abbreviation from the source database/schema."""
-    db_schema = stm.source_database_schema.upper()
-    if "ERP" in db_schema:
-        return "erp"
-    if "CRM" in db_schema:
-        return "crm"
-    if "EBS" in db_schema:
-        return "ebs"
-    return "src"
-
-
 def _view_model_name(stm: "STM") -> str:
-    """Generate view model name: vw_interim_<entity>_<source_system>."""
-    entity = to_snake(stm.target_table)
-    abbrev = _source_system_abbrev(stm)
-    return f"vw_interim_{entity}_{abbrev}"
+    """Generate view model name: vw_<Entity> with Entity verbatim from STM (PascalCase)."""
+    return f"vw_{stm.target_table}"
+
+
+def _yaml_quote(value: str) -> str:
+    """Escape a string for use inside a YAML double-quoted scalar."""
+    return value.replace("\\", "\\\\").replace("\"", "\\\"")
 
 
 def generate_view_schema_yml(stms: list[STM]) -> str:
-    """Generate _schema.yml for the view models only."""
+    """Generate _schema.yml for the view models only.
+
+    Both model names (vw_<Entity>) and column names are preserved verbatim from the STM (PascalCase).
+    """
     lines = ["version: 2", "", "models:"]
     for stm in stms:
         view_name = _view_model_name(stm)
@@ -229,13 +233,13 @@ def generate_view_schema_yml(stms: list[STM]) -> str:
         view_desc = f"View layer for {stm.target_table} — transformation logic from bronze source."
         if stm.purpose:
             view_desc += f" {stm.purpose}"
-        lines.append(f"    description: \"{view_desc}\"")
+        lines.append(f"    description: \"{_yaml_quote(view_desc)}\"")
         lines.append("    columns:")
         for col in stm.columns:
-            sn = to_snake(col.target_column)
-            lines.append(f"      - name: {sn}")
+            col_name = col.target_column
+            lines.append(f"      - name: {col_name}")
             if col.description:
-                lines.append(f"        description: \"{col.description}\"")
+                lines.append(f"        description: \"{_yaml_quote(col.description)}\"")
             tests = []
             if col.field_type == "Primary Key":
                 tests.extend(["unique", "not_null"])
@@ -250,21 +254,24 @@ def generate_view_schema_yml(stms: list[STM]) -> str:
 
 
 def generate_enriched_schema_yml(stms: list[STM]) -> str:
-    """Generate _schema.yml for the incremental models only."""
+    """Generate _schema.yml for the incremental models only.
+
+    Column names AND model names are preserved verbatim from the STM (PascalCase).
+    """
     lines = ["version: 2", "", "models:"]
     for stm in stms:
-        model_name = to_snake(stm.target_table)
+        model_name = stm.target_table
         lines.append(f"  - name: {model_name}")
         base_desc = stm.purpose or f"{stm.target_table} dimension/fact table."
         view_name = _view_model_name(stm)
         base_desc += f" Incrementally materialized from {view_name}."
-        lines.append(f"    description: \"{base_desc}\"")
+        lines.append(f"    description: \"{_yaml_quote(base_desc)}\"")
         lines.append("    columns:")
         for col in stm.columns:
-            sn = to_snake(col.target_column)
-            lines.append(f"      - name: {sn}")
+            col_name = col.target_column
+            lines.append(f"      - name: {col_name}")
             if col.description:
-                lines.append(f"        description: \"{col.description}\"")
+                lines.append(f"        description: \"{_yaml_quote(col.description)}\"")
             tests = []
             if col.field_type == "Primary Key":
                 tests.extend(["unique", "not_null"])
@@ -299,13 +306,13 @@ def run(stm_paths: list[str], dbt_project: str):
     print(f"  View schema:    {views_dir}/_schema.yml")
     print(f"  Enriched schema: {enriched_dir}/_schema.yml")
     print(f"\nModel SQL NOT generated — use subagents next.")
-    print("Each STM produces TWO models: a vw_interim view (models/views/) + an incremental table (models/enriched/).")
+    print("Each STM produces TWO models: a vw_<Entity> view (models/views/) + an incremental table (models/enriched/) — both PascalCase from STM Target Table.")
 
     print("\n--- STM summary for subagent dispatch ---")
     for stm in stms:
         if not stm.target_table:
             continue
-        model_name = to_snake(stm.target_table)
+        model_name = stm.target_table
         view_name = _view_model_name(stm)
         src_refs = ", ".join(stm.source_tables)
         print(f"  views/{view_name} + enriched/{model_name} <- sources: [{src_refs}] (STM: {stm.filepath})")

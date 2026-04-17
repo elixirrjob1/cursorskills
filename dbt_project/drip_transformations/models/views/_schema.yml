@@ -1,793 +1,797 @@
 version: 2
 
 models:
-  - name: vw_interim_dim_date_erp
+  - name: vw_DimDate
     description: "View layer for DimDate — transformation logic from bronze source. Standard date dimension with fiscal calendar support. Used as a role-playing dimension across all fact tables."
     columns:
-      - name: date_hash_pk
+      - name: DateHashPK
         description: "Surrogate primary key for date dimension"
         tests:
           - unique
           - not_null
-      - name: date_value
+      - name: DateValue
         description: "Actual calendar date value"
         tests:
           - not_null
-      - name: date_key
+      - name: DateKey
         description: "Integer date key in YYYYMMDD format for partitioning"
         tests:
           - not_null
-      - name: day_of_week
+      - name: DayOfWeek
         description: "Day of week number (1=Sunday, 7=Saturday)"
         tests:
           - not_null
-      - name: day_name
+      - name: DayName
         description: "Full name of day (Sunday, Monday, etc.)"
         tests:
           - not_null
-      - name: day_of_month
+      - name: DayOfMonth
         description: "Day number within the month (1-31)"
         tests:
           - not_null
-      - name: day_of_year
+      - name: DayOfYear
         description: "Day number within the year (1-366)"
         tests:
           - not_null
-      - name: week_of_year
+      - name: WeekOfYear
         description: "ISO week number within the year (1-53)"
         tests:
           - not_null
-      - name: month_number
+      - name: MonthNumber
         description: "Month number (1-12)"
         tests:
           - not_null
-      - name: month_name
+      - name: MonthName
         description: "Full name of month (January, February, etc.)"
         tests:
           - not_null
-      - name: month_abbrev
+      - name: MonthAbbrev
         description: "Three-letter month abbreviation (Jan, Feb, etc.)"
         tests:
           - not_null
-      - name: quarter_number
+      - name: QuarterNumber
         description: "Calendar quarter number (1-4)"
         tests:
           - not_null
-      - name: quarter_name
+      - name: QuarterName
         description: "Quarter label (Q1, Q2, Q3, Q4)"
         tests:
           - not_null
-      - name: year_number
+      - name: YearNumber
         description: "Four-digit calendar year"
         tests:
           - not_null
-      - name: year_month
+      - name: YearMonth
         description: "Year and month in YYYY-MM format"
         tests:
           - not_null
-      - name: year_quarter
+      - name: YearQuarter
         description: "Year and quarter in YYYY-Q# format"
         tests:
           - not_null
-      - name: fiscal_month_number
+      - name: FiscalMonthNumber
         description: "Fiscal month number (1-12)"
         tests:
           - not_null
-      - name: fiscal_quarter_number
+      - name: FiscalQuarterNumber
         description: "Fiscal quarter number (1-4)"
         tests:
           - not_null
-      - name: fiscal_year_number
+      - name: FiscalYearNumber
         description: "Fiscal year number"
         tests:
           - not_null
-      - name: is_weekend
+      - name: IsWeekend
         description: "True if Saturday or Sunday"
         tests:
           - not_null
-      - name: is_holiday
+      - name: IsHoliday
         description: "True if a recognized holiday"
         tests:
           - not_null
-      - name: holiday_name
+      - name: HolidayName
         description: "Name of holiday if applicable"
-      - name: is_last_day_of_month
+      - name: IsLastDayOfMonth
         description: "True if last day of calendar month"
         tests:
           - not_null
-      - name: is_last_day_of_quarter
+      - name: IsLastDayOfQuarter
         description: "True if last day of calendar quarter"
         tests:
           - not_null
-      - name: is_last_day_of_year
+      - name: IsLastDayOfYear
         description: "True if last day of calendar year"
         tests:
           - not_null
-  - name: vw_interim_dim_product_erp
+  - name: vw_DimProduct
     description: "View layer for DimProduct — transformation logic from bronze source. Product master with full hierarchy (Category > Subcategory > Brand > Product). Supports SCD Type 2 for historical tracking."
     columns:
-      - name: product_hash_pk
+      - name: ProductHashPK
         description: "Surrogate primary key for product dimension"
         tests:
           - unique
           - not_null
-      - name: product_hash_bk
+      - name: ProductHashBK
         description: "Natural business key from source system (SKU)"
         tests:
           - not_null
-      - name: product_name
+      - name: ProductName
         description: "Full product display name"
         tests:
           - not_null
-      - name: product_description
+      - name: ProductDescription
         description: "Detailed product description"
-      - name: category_code
+      - name: CategoryCode
         description: "Product category code"
         tests:
           - not_null
-      - name: category_name
+      - name: CategoryName
         description: "Product category name (top level of hierarchy)"
         tests:
           - not_null
-      - name: subcategory_code
+      - name: SubcategoryCode
         description: "Product subcategory code"
         tests:
           - not_null
-      - name: subcategory_name
+      - name: SubcategoryName
         description: "Product subcategory name (second level of hierarchy)"
         tests:
           - not_null
-      - name: brand_code
+      - name: BrandCode
         description: "Brand identifier code"
         tests:
           - not_null
-      - name: brand_name
+      - name: BrandName
         description: "Brand display name (third level of hierarchy)"
         tests:
           - not_null
-      - name: unit_of_measure
+      - name: UnitOfMeasure
         description: "Standard unit of measure (Each, Case, Pound, etc.)"
         tests:
           - not_null
-      - name: pack_size
+      - name: PackSize
         description: "Package size description"
-      - name: unit_cost
+      - name: UnitCost
         description: "Standard unit cost at time of record"
         tests:
           - not_null
-      - name: unit_list_price
+      - name: UnitListPrice
         description: "Standard list price at time of record"
         tests:
           - not_null
-      - name: is_active
+      - name: IsActive
         description: "True if product is currently active for sale"
         tests:
           - not_null
-      - name: is_discontinued
+      - name: IsDiscontinued
         description: "True if product has been discontinued"
         tests:
           - not_null
-      - name: effective_date
+      - name: EffectiveDate
         description: "Start date when this version became effective"
         tests:
           - not_null
-      - name: expiration_date
+      - name: ExpirationDate
         description: "End date when this version expired (NULL if current)"
-      - name: is_current
+      - name: IsCurrent
         description: "True if this is the current active version"
         tests:
           - not_null
-      - name: etl_batch_id
+      - name: EtlBatchId
         description: "ETL batch identifier that loaded this record"
         tests:
           - not_null
-      - name: load_timestamp
+      - name: LoadTimestamp
         description: "Timestamp when record was loaded"
         tests:
           - not_null
-  - name: vw_interim_dim_store_erp
+  - name: vw_DimStore
     description: "View layer for DimStore — transformation logic from bronze source. Retail store locations with geographic hierarchy (Region > District > Store)."
     columns:
-      - name: store_hash_pk
+      - name: StoreHashPK
         description: "Surrogate primary key for store dimension"
         tests:
           - unique
           - not_null
-      - name: store_hash_bk
+      - name: StoreHashBK
         description: "Natural business key (store number)"
         tests:
           - not_null
-      - name: store_name
+      - name: StoreName
         description: "Store display name"
         tests:
           - not_null
-      - name: store_type
+      - name: StoreType
         description: "Type of store (Flagship, Standard, Outlet, Express)"
         tests:
           - not_null
-      - name: street_address
+      - name: StreetAddress
         description: "Store street address"
         tests:
           - not_null
-      - name: city
+      - name: City
         description: "City where store is located"
         tests:
           - not_null
-      - name: state_province
+      - name: StateProvince
         description: "State or province"
         tests:
           - not_null
-      - name: postal_code
+      - name: PostalCode
         description: "Postal or ZIP code"
         tests:
           - not_null
-      - name: country
+      - name: Country
         description: "Country name"
         tests:
           - not_null
-      - name: latitude
+      - name: Latitude
         description: "Geographic latitude for mapping"
-      - name: longitude
+      - name: Longitude
         description: "Geographic longitude for mapping"
-      - name: district_code
+      - name: DistrictCode
         description: "District identifier code"
         tests:
           - not_null
-      - name: district_name
+      - name: DistrictName
         description: "District name (second level of hierarchy)"
         tests:
           - not_null
-      - name: region_code
+      - name: RegionCode
         description: "Region identifier code"
         tests:
           - not_null
-      - name: region_name
+      - name: RegionName
         description: "Region name (top level of hierarchy)"
         tests:
           - not_null
-      - name: store_manager
+      - name: StoreManager
         description: "Current store manager name"
-      - name: open_date
+      - name: OpenDate
         description: "Date store opened for business"
         tests:
           - not_null
-      - name: close_date
+      - name: CloseDate
         description: "Date store closed (NULL if still open)"
-      - name: square_footage
+      - name: SquareFootage
         description: "Total store square footage"
-      - name: is_active
+      - name: IsActive
         description: "True if store is currently operating"
         tests:
           - not_null
-      - name: etl_batch_id
+      - name: EtlBatchId
         description: "ETL batch identifier that loaded this record"
         tests:
           - not_null
-      - name: load_timestamp
+      - name: LoadTimestamp
         description: "Timestamp when record was loaded"
         tests:
           - not_null
-  - name: vw_interim_dim_warehouse_erp
+  - name: vw_DimWarehouse
     description: "View layer for DimWarehouse — transformation logic from bronze source. Warehouse and distribution center locations with geographic hierarchy (Region > District > Warehouse)."
     columns:
-      - name: warehouse_hash_pk
+      - name: WarehouseHashPK
         description: "Surrogate primary key for warehouse dimension"
         tests:
           - unique
           - not_null
-      - name: warehouse_hash_bk
+      - name: WarehouseHashBK
         description: "Natural business key (warehouse code)"
         tests:
           - not_null
-      - name: warehouse_name
+      - name: WarehouseName
         description: "Warehouse display name"
         tests:
           - not_null
-      - name: warehouse_type
+      - name: WarehouseType
         description: "Type of warehouse (Distribution Center, Regional, Local)"
         tests:
           - not_null
-      - name: street_address
+      - name: StreetAddress
         description: "Warehouse street address"
         tests:
           - not_null
-      - name: city
+      - name: City
         description: "City where warehouse is located"
         tests:
           - not_null
-      - name: state_province
+      - name: StateProvince
         description: "State or province"
         tests:
           - not_null
-      - name: postal_code
+      - name: PostalCode
         description: "Postal or ZIP code"
         tests:
           - not_null
-      - name: country
+      - name: Country
         description: "Country name"
         tests:
           - not_null
-      - name: district_code
+      - name: DistrictCode
         description: "District identifier code"
         tests:
           - not_null
-      - name: district_name
+      - name: DistrictName
         description: "District name (second level of hierarchy)"
         tests:
           - not_null
-      - name: region_code
+      - name: RegionCode
         description: "Region identifier code"
         tests:
           - not_null
-      - name: region_name
+      - name: RegionName
         description: "Region name (top level of hierarchy)"
         tests:
           - not_null
-      - name: total_capacity_units
+      - name: TotalCapacityUnits
         description: "Total storage capacity in standard units"
-      - name: is_active
+      - name: IsActive
         description: "True if warehouse is currently operating"
         tests:
           - not_null
-      - name: etl_batch_id
+      - name: EtlBatchId
         description: "ETL batch identifier that loaded this record"
         tests:
           - not_null
-      - name: load_timestamp
+      - name: LoadTimestamp
         description: "Timestamp when record was loaded"
         tests:
           - not_null
-  - name: vw_interim_dim_customer_erp
+  - name: vw_DimCustomer
     description: "View layer for DimCustomer — transformation logic from bronze source. Customer master with loyalty program information and acquisition tracking. Supports SCD Type 2."
     columns:
-      - name: customer_hash_pk
+      - name: CustomerHashPK
         description: "Surrogate primary key for customer dimension"
         tests:
           - unique
           - not_null
-      - name: customer_hash_bk
+      - name: CustomerHashBK
         description: "Natural business key (customer ID from CRM)"
         tests:
           - not_null
-      - name: first_name
+      - name: FirstName
         description: "Customer first name"
         tests:
           - not_null
-      - name: last_name
+      - name: LastName
         description: "Customer last name"
         tests:
           - not_null
-      - name: full_name
-        description: "Concatenated first and last name"
-      - name: email_address
+      - name: FullName
+        description: "Concatenated full name for display"
+        tests:
+          - not_null
+      - name: EmailAddress
         description: "Primary email address"
-      - name: phone_number
+      - name: PhoneNumber
         description: "Primary phone number"
-      - name: street_address
+      - name: StreetAddress
         description: "Mailing street address"
-      - name: city
+      - name: City
         description: "Customer city"
-      - name: state_province
+      - name: StateProvince
         description: "Customer state or province"
-      - name: postal_code
+      - name: PostalCode
         description: "Customer postal code"
-      - name: country
+      - name: Country
         description: "Customer country"
-      - name: customer_type
+      - name: CustomerType
         description: "Customer classification (Individual, Business, Wholesale)"
         tests:
           - not_null
-      - name: acquisition_channel
+      - name: AcquisitionChannel
         description: "How customer was acquired (Online, Store, Referral, Advertising)"
         tests:
           - not_null
-      - name: acquisition_date
+      - name: AcquisitionDate
         description: "Date customer was first acquired"
         tests:
           - not_null
-      - name: loyalty_tier
+      - name: LoyaltyTier
         description: "Current loyalty tier (Bronze, Silver, Gold, Platinum)"
         tests:
           - not_null
-      - name: loyalty_points
+      - name: LoyaltyPoints
         description: "Current loyalty points balance"
         tests:
           - not_null
-      - name: loyalty_join_date
+      - name: LoyaltyJoinDate
         description: "Date customer joined loyalty program"
-      - name: is_active
+      - name: IsActive
         description: "True if customer account is active"
         tests:
           - not_null
-      - name: effective_date
+      - name: EffectiveDate
         description: "Start date when this version became effective"
         tests:
           - not_null
-      - name: expiration_date
+      - name: ExpirationDate
         description: "End date when this version expired (NULL if current)"
-      - name: is_current
+      - name: IsCurrent
         description: "True if this is the current active version"
         tests:
           - not_null
-      - name: etl_batch_id
+      - name: EtlBatchId
         description: "ETL batch identifier that loaded this record"
         tests:
           - not_null
-      - name: load_timestamp
+      - name: LoadTimestamp
         description: "Timestamp when record was loaded"
         tests:
           - not_null
-  - name: vw_interim_dim_supplier_erp
+  - name: vw_DimSupplier
     description: "View layer for DimSupplier — transformation logic from bronze source. Supplier master with contact information and payment terms."
     columns:
-      - name: supplier_hash_pk
+      - name: SupplierHashPK
         description: "Surrogate primary key for supplier dimension"
         tests:
           - unique
           - not_null
-      - name: supplier_hash_bk
+      - name: SupplierHashBK
         description: "Natural business key (supplier ID from procurement system)"
         tests:
           - not_null
-      - name: supplier_name
+      - name: SupplierName
         description: "Legal supplier name"
         tests:
           - not_null
-      - name: supplier_dba_name
+      - name: SupplierDBAName
         description: "Supplier doing-business-as name"
-      - name: contact_name
+      - name: ContactName
         description: "Primary contact person name"
-      - name: contact_email
+      - name: ContactEmail
         description: "Primary contact email"
-      - name: contact_phone
+      - name: ContactPhone
         description: "Primary contact phone"
-      - name: street_address
+      - name: StreetAddress
         description: "Supplier street address"
         tests:
           - not_null
-      - name: city
+      - name: City
         description: "Supplier city"
         tests:
           - not_null
-      - name: state_province
+      - name: StateProvince
         description: "Supplier state or province"
         tests:
           - not_null
-      - name: postal_code
+      - name: PostalCode
         description: "Supplier postal code"
         tests:
           - not_null
-      - name: country
+      - name: Country
         description: "Supplier country"
         tests:
           - not_null
-      - name: payment_terms_code
+      - name: PaymentTermsCode
         description: "Payment terms code (NET30, NET60, 2/10NET30, etc.)"
         tests:
           - not_null
-      - name: payment_terms_description
+      - name: PaymentTermsDescription
         description: "Payment terms description"
         tests:
           - not_null
-      - name: payment_terms_days
+      - name: PaymentTermsDays
         description: "Number of days for payment"
         tests:
           - not_null
-      - name: lead_time_days
+      - name: LeadTimeDays
         description: "Standard lead time in days"
         tests:
           - not_null
-      - name: minimum_order_amount
+      - name: MinimumOrderAmount
         description: "Minimum order amount if applicable"
-      - name: is_active
+      - name: IsActive
         description: "True if supplier is currently active"
         tests:
           - not_null
-      - name: is_preferred
+      - name: IsPreferred
         description: "True if supplier is a preferred vendor"
         tests:
           - not_null
-      - name: etl_batch_id
+      - name: EtlBatchId
         description: "ETL batch identifier that loaded this record"
         tests:
           - not_null
-      - name: load_timestamp
+      - name: LoadTimestamp
         description: "Timestamp when record was loaded"
         tests:
           - not_null
-  - name: vw_interim_dim_employee_erp
+  - name: vw_DimEmployee
     description: "View layer for DimEmployee — transformation logic from bronze source. Employee master for tracking sales associates and other staff involved in transactions."
     columns:
-      - name: employee_hash_pk
+      - name: EmployeeHashPK
         description: "Surrogate primary key for employee dimension"
         tests:
           - unique
           - not_null
-      - name: employee_hash_bk
+      - name: EmployeeHashBK
         description: "Natural business key (employee ID from HR system)"
         tests:
           - not_null
-      - name: first_name
+      - name: FirstName
         description: "Employee first name"
         tests:
           - not_null
-      - name: last_name
+      - name: LastName
         description: "Employee last name"
         tests:
           - not_null
-      - name: full_name
-        description: "Concatenated first and last name"
-      - name: email_address
+      - name: FullName
+        description: "Concatenated full name for display"
+        tests:
+          - not_null
+      - name: EmailAddress
         description: "Employee email address"
-      - name: job_title
+      - name: JobTitle
         description: "Current job title"
         tests:
           - not_null
-      - name: department
+      - name: Department
         description: "Department name"
         tests:
           - not_null
-      - name: hire_date
+      - name: HireDate
         description: "Date employee was hired"
         tests:
           - not_null
-      - name: termination_date
+      - name: TerminationDate
         description: "Date employee was terminated (NULL if active)"
-      - name: manager_employee_hash_fk
+      - name: ManagerEmployeeHashFK
         description: "Foreign key to manager employee record"
-      - name: home_store_hash_fk
+      - name: HomeStoreHashFK
         description: "Foreign key to employee primary store location"
-      - name: is_active
+      - name: IsActive
         description: "True if employee is currently employed"
         tests:
           - not_null
-      - name: etl_batch_id
+      - name: EtlBatchId
         description: "ETL batch identifier that loaded this record"
         tests:
           - not_null
-      - name: load_timestamp
+      - name: LoadTimestamp
         description: "Timestamp when record was loaded"
         tests:
           - not_null
-  - name: vw_interim_fact_sales_erp
+  - name: vw_FactSales
     description: "View layer for FactSales — transformation logic from bronze source. Sales transaction line items capturing all retail sales activity. Returns are modeled as negative quantities."
     columns:
-      - name: sales_hash_pk
+      - name: SalesHashPK
         description: "Surrogate primary key for sales fact"
         tests:
           - unique
           - not_null
-      - name: date_hash_fk
+      - name: DateHashFK
         description: "Foreign key to date dimension (transaction date)"
         tests:
           - not_null
-      - name: product_hash_fk
+      - name: ProductHashFK
         description: "Foreign key to product dimension"
         tests:
           - not_null
-      - name: store_hash_fk
+      - name: StoreHashFK
         description: "Foreign key to store dimension"
         tests:
           - not_null
-      - name: customer_hash_fk
+      - name: CustomerHashFK
         description: "Foreign key to customer dimension (NULL for anonymous sales)"
-      - name: employee_hash_fk
+      - name: EmployeeHashFK
         description: "Foreign key to employee dimension (sales associate)"
-      - name: transaction_number
+      - name: TransactionNumber
         description: "Degenerate dimension - source transaction ID"
         tests:
           - not_null
-      - name: transaction_line_number
+      - name: TransactionLineNumber
         description: "Line item number within the transaction"
         tests:
           - not_null
-      - name: transaction_type
+      - name: TransactionType
         description: "Transaction type (Sale, Return, Exchange)"
         tests:
           - not_null
-      - name: quantity
+      - name: Quantity
         description: "Quantity sold (negative for returns)"
         tests:
           - not_null
-      - name: unit_price
+      - name: UnitPrice
         description: "Unit selling price at time of transaction"
         tests:
           - not_null
-      - name: unit_cost
+      - name: UnitCost
         description: "Unit cost at time of transaction"
         tests:
           - not_null
-      - name: gross_amount
+      - name: GrossAmount
         description: "Gross amount before discounts (Quantity x UnitPrice)"
         tests:
           - not_null
-      - name: discount_amount
+      - name: DiscountAmount
         description: "Total discount amount applied"
         tests:
           - not_null
-      - name: tax_amount
+      - name: TaxAmount
         description: "Tax amount charged"
         tests:
           - not_null
-      - name: net_amount
+      - name: NetAmount
         description: "Net amount after discounts and tax"
         tests:
           - not_null
-      - name: cost_amount
+      - name: CostAmount
         description: "Total cost of goods sold"
         tests:
           - not_null
-      - name: profit_amount
+      - name: ProfitAmount
         description: "Profit amount (NetAmount - CostAmount)"
         tests:
           - not_null
-      - name: is_promotion
+      - name: IsPromotion
         description: "True if item was sold under a promotion"
         tests:
           - not_null
-      - name: promotion_code
+      - name: PromotionCode
         description: "Promotion code if applicable"
-      - name: payment_method
+      - name: PaymentMethod
         description: "Payment method used (Cash, Credit, Debit, GiftCard)"
         tests:
           - not_null
-      - name: etl_batch_id
+      - name: EtlBatchId
         description: "ETL batch identifier that loaded this record"
         tests:
           - not_null
-      - name: load_timestamp
+      - name: LoadTimestamp
         description: "Timestamp when record was loaded"
         tests:
           - not_null
-  - name: vw_interim_fact_inventory_snapshot_erp
+  - name: vw_FactInventorySnapshot
     description: "View layer for FactInventorySnapshot — transformation logic from bronze source. Daily snapshot of inventory positions at each warehouse location."
     columns:
-      - name: inventory_snapshot_hash_pk
+      - name: InventorySnapshotHashPK
         description: "Surrogate primary key for inventory snapshot"
         tests:
           - unique
           - not_null
-      - name: date_hash_fk
+      - name: DateHashFK
         description: "Foreign key to date dimension (snapshot date)"
         tests:
           - not_null
-      - name: product_hash_fk
+      - name: ProductHashFK
         description: "Foreign key to product dimension"
         tests:
           - not_null
-      - name: warehouse_hash_fk
+      - name: WarehouseHashFK
         description: "Foreign key to warehouse dimension"
         tests:
           - not_null
-      - name: quantity_on_hand
+      - name: QuantityOnHand
         description: "Total quantity physically in warehouse"
         tests:
           - not_null
-      - name: quantity_reserved
+      - name: QuantityReserved
         description: "Quantity reserved for pending orders"
         tests:
           - not_null
-      - name: quantity_available
+      - name: QuantityAvailable
         description: "Quantity available for new orders (OnHand - Reserved)"
         tests:
           - not_null
-      - name: quantity_on_order
+      - name: QuantityOnOrder
         description: "Quantity on incoming purchase orders"
         tests:
           - not_null
-      - name: quantity_in_transit
+      - name: QuantityInTransit
         description: "Quantity currently in transit to warehouse"
         tests:
           - not_null
-      - name: reorder_point
+      - name: ReorderPoint
         description: "Inventory level that triggers reorder"
         tests:
           - not_null
-      - name: safety_stock_level
+      - name: SafetyStockLevel
         description: "Minimum safety stock level"
         tests:
           - not_null
-      - name: days_of_supply
+      - name: DaysOfSupply
         description: "Estimated days of supply based on avg demand"
-      - name: unit_cost
+      - name: UnitCost
         description: "Current unit cost for valuation"
         tests:
           - not_null
-      - name: inventory_value
+      - name: InventoryValue
         description: "Total inventory value (QuantityOnHand x UnitCost)"
         tests:
           - not_null
-      - name: etl_batch_id
+      - name: EtlBatchId
         description: "ETL batch identifier that loaded this record"
         tests:
           - not_null
-      - name: load_timestamp
+      - name: LoadTimestamp
         description: "Timestamp when record was loaded"
         tests:
           - not_null
-  - name: vw_interim_fact_purchase_order_erp
+  - name: vw_FactPurchaseOrder
     description: "View layer for FactPurchaseOrder — transformation logic from bronze source. Purchase order tracking with milestone dates and quantities at each stage. Row is updated as PO progresses."
     columns:
-      - name: purchase_order_hash_pk
+      - name: PurchaseOrderHashPK
         description: "Surrogate primary key for purchase order fact"
         tests:
           - unique
           - not_null
-      - name: product_hash_fk
+      - name: ProductHashFK
         description: "Foreign key to product dimension"
         tests:
           - not_null
-      - name: supplier_hash_fk
+      - name: SupplierHashFK
         description: "Foreign key to supplier dimension"
         tests:
           - not_null
-      - name: warehouse_hash_fk
+      - name: WarehouseHashFK
         description: "Foreign key to receiving warehouse dimension"
         tests:
           - not_null
-      - name: date_ordered_hash_fk
+      - name: DateOrderedHashFK
         description: "Foreign key to date dimension (order placed date)"
         tests:
           - not_null
-      - name: date_expected_hash_fk
+      - name: DateExpectedHashFK
         description: "Foreign key to date dimension (expected delivery date)"
-      - name: date_shipped_hash_fk
+      - name: DateShippedHashFK
         description: "Foreign key to date dimension (supplier ship date)"
-      - name: date_received_hash_fk
+      - name: DateReceivedHashFK
         description: "Foreign key to date dimension (warehouse received date)"
-      - name: date_invoiced_hash_fk
+      - name: DateInvoicedHashFK
         description: "Foreign key to date dimension (invoice received date)"
-      - name: purchase_order_number
+      - name: PurchaseOrderNumber
         description: "Degenerate dimension - source PO number"
         tests:
           - not_null
-      - name: purchase_order_line_number
+      - name: PurchaseOrderLineNumber
         description: "Line item number within the PO"
         tests:
           - not_null
-      - name: order_status
+      - name: OrderStatus
         description: "Current status (Ordered, Shipped, Received, Invoiced, Closed, Cancelled)"
         tests:
           - not_null
-      - name: quantity_ordered
+      - name: QuantityOrdered
         description: "Quantity originally ordered"
         tests:
           - not_null
-      - name: quantity_shipped
+      - name: QuantityShipped
         description: "Quantity shipped by supplier"
-      - name: quantity_received
+      - name: QuantityReceived
         description: "Quantity received at warehouse"
-      - name: quantity_accepted
+      - name: QuantityAccepted
         description: "Quantity accepted after inspection"
-      - name: quantity_rejected
+      - name: QuantityRejected
         description: "Quantity rejected during receiving"
-      - name: unit_cost
+      - name: UnitCost
         description: "Agreed unit cost on purchase order"
         tests:
           - not_null
-      - name: order_amount
+      - name: OrderAmount
         description: "Total order line amount (QuantityOrdered x UnitCost)"
         tests:
           - not_null
-      - name: shipped_amount
+      - name: ShippedAmount
         description: "Total shipped amount"
-      - name: received_amount
+      - name: ReceivedAmount
         description: "Total received amount"
-      - name: invoiced_amount
+      - name: InvoicedAmount
         description: "Total invoiced amount"
-      - name: days_to_ship
+      - name: DaysToShip
         description: "Days from order to ship (DateShipped - DateOrdered)"
-      - name: days_in_transit
+      - name: DaysInTransit
         description: "Days in transit (DateReceived - DateShipped)"
-      - name: days_to_receive
+      - name: DaysToReceive
         description: "Total days to receive (DateReceived - DateOrdered)"
-      - name: days_to_invoice
+      - name: DaysToInvoice
         description: "Days from receipt to invoice (DateInvoiced - DateReceived)"
-      - name: etl_batch_id
+      - name: EtlBatchId
         description: "ETL batch identifier that loaded this record"
         tests:
           - not_null
-      - name: load_timestamp
+      - name: LoadTimestamp
         description: "Timestamp when record was last updated"
         tests:
           - not_null

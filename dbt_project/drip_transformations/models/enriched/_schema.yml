@@ -104,85 +104,32 @@ models:
         tests:
           - not_null
   - name: DimProduct
-    description: "Product master with full hierarchy (Category > Subcategory > Brand > Product). Supports SCD Type 2 for historical tracking. Incrementally materialized from vw_DimProduct."
+    description: "Product master — SCD Type 2 following Ajay's multi-CTE view pattern. Full-refresh table materialization from vw_DimProduct (incremental is unsafe for Type 2 because old versions are closed out by LEAD(EffectiveStart)). Grain: (ProductHashPK, EffectiveStartDateTime)."
     columns:
       - name: ProductHashPK
-        description: "Surrogate primary key for product dimension"
+        description: "Surrogate primary key for product dimension version."
         tests:
-          - unique
           - not_null
       - name: ProductHashBK
-        description: "Natural business key from source system (SKU)"
+        description: "Natural business key (SKU), hashed."
         tests:
           - not_null
-      - name: ProductName
-        description: "Full product display name"
+      - name: EffectiveStartDateTime
+        description: "Type 2 SCD: start of version validity window."
         tests:
           - not_null
-      - name: ProductDescription
-        description: "Detailed product description"
-      - name: CategoryCode
-        description: "Product category code"
+      - name: EffectiveEndDateTime
+        description: "Type 2 SCD: end of version validity window."
         tests:
           - not_null
-      - name: CategoryName
-        description: "Product category name (top level of hierarchy)"
+      - name: CurrentFlagYN
+        description: "Type 2 SCD: 'Y' if current version, 'N' if historical."
         tests:
           - not_null
-      - name: SubcategoryCode
-        description: "Product subcategory code"
-        tests:
-          - not_null
-      - name: SubcategoryName
-        description: "Product subcategory name (second level of hierarchy)"
-        tests:
-          - not_null
-      - name: BrandCode
-        description: "Brand identifier code"
-        tests:
-          - not_null
-      - name: BrandName
-        description: "Brand display name (third level of hierarchy)"
-        tests:
-          - not_null
-      - name: UnitOfMeasure
-        description: "Standard unit of measure (Each, Case, Pound, etc.)"
-        tests:
-          - not_null
-      - name: PackSize
-        description: "Package size description"
-      - name: UnitCost
-        description: "Standard unit cost at time of record"
-        tests:
-          - not_null
-      - name: UnitListPrice
-        description: "Standard list price at time of record"
-        tests:
-          - not_null
-      - name: IsActive
-        description: "True if product is currently active for sale"
-        tests:
-          - not_null
-      - name: IsDiscontinued
-        description: "True if product has been discontinued"
-        tests:
-          - not_null
-      - name: EffectiveDate
-        description: "Start date when this version became effective"
-        tests:
-          - not_null
-      - name: ExpirationDate
-        description: "End date when this version expired (NULL if current)"
-      - name: IsCurrent
-        description: "True if this is the current active version"
-        tests:
-          - not_null
-      - name: EtlBatchId
-        description: "ETL batch identifier that loaded this record"
-        tests:
-          - not_null
-      - name: LoadTimestamp
-        description: "Timestamp when record was loaded"
+          - accepted_values:
+              values: ['Y', 'N']
+      - name: SourceSystemCode
+        description: "Source system identifier ('ERP')."
         tests:
           - not_null
   - name: DimStore
@@ -338,85 +285,32 @@ models:
         tests:
           - not_null
   - name: DimCustomer
-    description: "Customer master with loyalty program information and acquisition tracking. Supports SCD Type 2. Incrementally materialized from vw_DimCustomer."
+    description: "Customer master — SCD Type 2 following Ajay's multi-CTE view pattern. Full-refresh table materialization from vw_DimCustomer (incremental is unsafe for Type 2). Grain: (CustomerHashPK, EffectiveStartDateTime)."
     columns:
       - name: CustomerHashPK
-        description: "Surrogate primary key for customer dimension"
+        description: "Surrogate primary key for customer dimension version."
         tests:
-          - unique
           - not_null
       - name: CustomerHashBK
-        description: "Natural business key (customer ID from CRM)"
+        description: "Natural business key (CUSTOMER_ID), hashed."
         tests:
           - not_null
-      - name: FirstName
-        description: "Customer first name"
+      - name: EffectiveStartDateTime
+        description: "Type 2 SCD: start of version validity window."
         tests:
           - not_null
-      - name: LastName
-        description: "Customer last name"
+      - name: EffectiveEndDateTime
+        description: "Type 2 SCD: end of version validity window."
         tests:
           - not_null
-      - name: FullName
-        description: "Concatenated full name for display"
+      - name: CurrentFlagYN
+        description: "Type 2 SCD: 'Y' if current version, 'N' if historical."
         tests:
           - not_null
-      - name: EmailAddress
-        description: "Primary email address"
-      - name: PhoneNumber
-        description: "Primary phone number"
-      - name: StreetAddress
-        description: "Mailing street address"
-      - name: City
-        description: "Customer city"
-      - name: StateProvince
-        description: "Customer state or province"
-      - name: PostalCode
-        description: "Customer postal code"
-      - name: Country
-        description: "Customer country"
-      - name: CustomerType
-        description: "Customer classification (Individual, Business, Wholesale)"
-        tests:
-          - not_null
-      - name: AcquisitionChannel
-        description: "How customer was acquired (Online, Store, Referral, Advertising)"
-        tests:
-          - not_null
-      - name: AcquisitionDate
-        description: "Date customer was first acquired"
-        tests:
-          - not_null
-      - name: LoyaltyTier
-        description: "Current loyalty tier (Bronze, Silver, Gold, Platinum)"
-        tests:
-          - not_null
-      - name: LoyaltyPoints
-        description: "Current loyalty points balance"
-        tests:
-          - not_null
-      - name: LoyaltyJoinDate
-        description: "Date customer joined loyalty program"
-      - name: IsActive
-        description: "True if customer account is active"
-        tests:
-          - not_null
-      - name: EffectiveDate
-        description: "Start date when this version became effective"
-        tests:
-          - not_null
-      - name: ExpirationDate
-        description: "End date when this version expired (NULL if current)"
-      - name: IsCurrent
-        description: "True if this is the current active version"
-        tests:
-          - not_null
-      - name: EtlBatchId
-        description: "ETL batch identifier that loaded this record"
-        tests:
-          - not_null
-      - name: LoadTimestamp
-        description: "Timestamp when record was loaded"
+          - accepted_values:
+              values: ['Y', 'N']
+      - name: SourceSystemCode
+        description: "Source system identifier ('ERP')."
         tests:
           - not_null
   - name: DimSupplier

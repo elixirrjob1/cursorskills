@@ -24,7 +24,11 @@ Every target table (dimension or fact) produces **two** dbt models:
 | Model file | Folder | Materialization | Purpose |
 |---|---|---|---|
 | `vw_{Entity}.sql` | `models/views/` | `view` | Holds all transformation logic; references `{{ source() }}` directly |
-| `{Entity}.sql` | `models/enriched/` | `incremental` | `SELECT * FROM {{ ref('vw_{Entity}') }}` with incremental filter |
+| `{Entity}.sql` | `models/enriched/` | `incremental` (Type 1) or `table` (Type 2) | `SELECT * FROM {{ ref('vw_{Entity}') }}` |
+
+**Type 1 vs Type 2 materialization:**
+- Type 1 (SCD Type 1 or non-SCD): enriched model is `incremental` with `unique_key=<HashPK>` and a `WHERE LoadTimestamp > MAX(LoadTimestamp)` filter.
+- Type 2: enriched model is `table` (full refresh). Incremental materialization is **unsafe** for Type 2 because a new version of an existing row rewrites the end-date (`EffectiveEndDateTime`, `CurrentFlagYN`) of the previous version, which `unique_key` would silently overwrite. Full refresh from the view is the only correct pattern when the view computes `LEAD(EffectiveStartDateTime)` over the partition.
 
 **View naming convention:** `vw_<Entity>` where `<Entity>` is the STM's `Target Table` **verbatim PascalCase**. Example: `vw_DimEmployee`, `vw_FactSales`.
 
@@ -64,6 +68,19 @@ You are generating dbt models for Snowflake from a source-to-target mapping.
 
 Read the STM file: {stm_filepath}
 Read the sources file: {dbt_project}/models/staging/_sources.yml
+Read the skill file: .cursor/skills/dbt-model-from-stm/SKILL.md
+
+### Step 0 — Detect SCD type
+
+Before writing SQL, determine whether this is an SCD Type 2 STM. It IS Type 2 if ANY of:
+- Section 4 (Target Schema Definition) lists `SCD Type = Type 2`.
+- Section 7 (Field-Level Mapping Matrix) uses the Ajay format: one or more `### Data Condition N` blocks followed by a `### Final` block.
+- Section 7 target columns include all of `EffectiveStartDateTime`, `EffectiveEndDateTime`, `CurrentFlagYN`.
+- Section 8 lists rule `BR12 — Type 2 Metadata`.
+
+If Type 2 → follow the **SCD Type 2 Handling (Ajay Kalyan multi-CTE pattern)** section of SKILL.md. Use the 5-CTE pipeline (`cte_prep` → `cte_prep_hash` → `cte_prep_hash_lag` → `cte_row_reduce` → `fin`), `HASH()` for keys (→ NUMBER(38,0)), `SHA2_BINARY()` for Hashbytes (→ BINARY), Fivetran history-mode columns for Type 2 windowing, and `materialized='table'` for the enriched model.
+
+Otherwise (Type 1 / non-SCD) → follow the Type 1 pattern described below in this prompt (single `cte<TABLE>` with QUALIFY, SHA2 VARCHAR(64) keys, `materialized='incremental'` on `LoadTimestamp`).
 
 You must produce TWO files:
 
@@ -76,7 +93,7 @@ Examples: vw_DimEmployee, vw_FactSales, vw_DimProduct
 
 This model holds all transformation logic.
 
-Rules for the view:
+Rules for the view (Type 1 — use the Type 2 section of SKILL.md if Step 0 detected Type 2):
 - Start with: {{ config(materialized='view') }}
 - Use WITH ... AS CTEs referencing source tables via {{ source('<source_name>', '<TABLE>') }}.
   Look up the correct source name from _sources.yml.
@@ -150,12 +167,13 @@ Rules for the view:
 - Include `_FIVETRAN_SYNCED` in the source CTE's SELECT list so it can be projected through to LoadTimestamp.
 - `EtlBatchId` remains `CAST(0 AS INT) AS EtlBatchId -- not available in source` or similar until a batch ID is wired in.
 
-### File 2 — Incremental model
+### File 2 — Enriched model
 Write to: {dbt_project}/models/enriched/{Entity}.sql
 
 The filename `{Entity}` is the STM's `Target Table` verbatim PascalCase (e.g. `DimEmployee.sql`, `FactSales.sql`). NOT snake_case.
 
-Content:
+**If Step 0 detected Type 1 / non-SCD — write an incremental model:**
+
 {{ config(
     materialized='incremental',
     unique_key='<PK_COLUMN_VERBATIM_FROM_STM>'
@@ -167,9 +185,23 @@ SELECT * FROM {{ ref('vw_<Entity>') }}
 WHERE LoadTimestamp > (SELECT MAX(LoadTimestamp) FROM {{ this }})
 {{% endif %}}
 
+**If Step 0 detected Type 2 — write a full-refresh table model (no incremental, no unique_key):**
+
+{{ config(
+    materialized='table'
+) }}
+
+-- SCD Type 2: full refresh from the view, which rebuilds the complete version
+-- history on every run. Incremental is unsafe for Type 2 because closing out
+-- old versions requires re-evaluating LEAD(EffectiveStartDateTime) across the
+-- whole partition.
+SELECT * FROM {{ ref('vw_<Entity>') }}
+
+Rules (both variants):
 - The view name reference must match the PascalCase naming: `vw_<Entity>` (e.g. `vw_DimEmployee`, `vw_FactSales`).
-- `unique_key` is the STM Primary Key column name verbatim (e.g. `'EmployeeHashPK'`, `'SalesHashPK'`) — NOT snake_cased.
-- The incremental filter references `LoadTimestamp` (PascalCase, as named in the view).
+- For Type 1 only: `unique_key` is the STM Primary Key column name verbatim (e.g. `'EmployeeHashPK'`, `'SalesHashPK'`) — NOT snake_cased.
+- For Type 1 only: the incremental filter references `LoadTimestamp` (PascalCase, as named in the view).
+- For Type 2: do NOT set `unique_key` — the same HashPK legitimately repeats (once per version). The composite grain is `(<Entity>HashPK, EffectiveStartDateTime)`; document it in the schema.yml description.
 
 Replace <pk_column_snake_case> with the snake_case primary key from the STM
 (the column where Field Type = "Primary Key").
@@ -188,12 +220,184 @@ After all subagents complete, run:
 2. `list` via dbt MCP — confirm all models registered
 3. `get_lineage_dev` on a sample model — confirm dependency graph is correct (source -> views/_v -> enriched/incremental)
 
+## SCD Type 2 Handling (Ajay Kalyan multi-CTE pattern)
+
+### How to detect Type 2 from the STM
+
+An STM is Type 2 when **any** of these are true:
+- Section 4 (Target Schema Definition) says `SCD Type = Type 2`.
+- Section 7 (Field-Level Mapping Matrix) uses the Ajay format: multiple `### Data Condition N` blocks followed by a `### Final` block.
+- Section 7 has target columns `EffectiveStartDateTime`, `EffectiveEndDateTime`, `CurrentFlagYN` (with `Field Type = Type 2 Metadata`).
+- Section 8 lists rule `BR12 — Type 2 Metadata` requiring the three Type 2 columns.
+
+If any of the above match, generate the Type 2 view pattern below instead of the Type 1 pattern.
+
+### View SQL structure (Type 2)
+
+The view does NOT use the Type 1 `cte<TABLE>` + `QUALIFY ROW_NUMBER()` pattern. Instead, it uses a 5-CTE pipeline that unifies source versions, hashes for change detection, reduces rows to real change boundaries, and projects the final Type 2 row:
+
+```sql
+{{ config(materialized='view') }}
+
+WITH cte_prep AS (
+    -- 1. Alias every source column and attach Type 2 windowing metadata.
+    --    For Fivetran history-mode sources, pull _FIVETRAN_START / _FIVETRAN_END / _FIVETRAN_ACTIVE
+    --    as EffectiveStartDateTimeUTC / EffectiveEndDateTimeRaw / IsFivetranActive.
+    --    Hard-code DataCondition, SourceSystemCode, FileName here.
+    SELECT
+        <business_cols>,
+        _FIVETRAN_SYNCED   AS InsertedDateTimeUTC,
+        _FIVETRAN_START    AS EffectiveStartDateTimeUTC,
+        _FIVETRAN_END      AS EffectiveEndDateTimeRaw,
+        _FIVETRAN_ACTIVE   AS IsFivetranActive,
+        'ERP'              AS SourceSystemCode,
+        ''                 AS FileName,
+        'Data Condition 1' AS DataCondition
+    FROM {{ source('<source>', '<TABLE>') }}
+),
+
+cte_prep_hash AS (
+    -- 2. Compute Hashbytes over all BUSINESS attributes (sorted alphabetically),
+    --    pipe-delimited, NULL-sentinel '#@#@#@#@#'.
+    --    Exclude keys/metadata/audit columns from the hash input.
+    SELECT
+        *,
+        SHA2_BINARY(
+               IFNULL(CAST(<attr_a> AS VARCHAR), '#@#@#@#@#') || '|'
+            || IFNULL(CAST(<attr_b> AS VARCHAR), '#@#@#@#@#') || '|'
+            || ...
+            , 256
+        ) AS Hashbytes
+    FROM cte_prep
+),
+
+cte_prep_hash_lag AS (
+    -- 3. For every business key, compute LAG(Hashbytes) to see the previous version's hash,
+    --    and LEAD(EffectiveStartDateTimeUTC) - 1 microsecond to derive the real
+    --    EffectiveEndDateTime of this version from the next version's start.
+    SELECT
+        *,
+        LAG(Hashbytes) OVER (
+            PARTITION BY <BUSINESS_KEY>
+            ORDER BY EffectiveStartDateTimeUTC
+        ) AS LagHash,
+        DATEADD(
+            MICROSECOND, -1,
+            LEAD(EffectiveStartDateTimeUTC) OVER (
+                PARTITION BY <BUSINESS_KEY>
+                ORDER BY EffectiveStartDateTimeUTC
+            )
+        ) AS LeadEffectiveStartDateTimeUTC,
+        InsertedDateTimeUTC AS StageInsertedDateTimeUTC
+    FROM cte_prep_hash
+),
+
+cte_row_reduce AS (
+    -- 4. Keep only rows that represent a real change boundary:
+    --    either the first version (LagHash IS NULL) or a row whose attributes
+    --    differ from the previous version (Hashbytes <> LagHash).
+    --    This collapses Fivetran "no-op updates" (same business attributes, new _FIVETRAN_START).
+    SELECT *
+    FROM cte_prep_hash_lag
+    WHERE Hashbytes <> LagHash OR LagHash IS NULL
+),
+
+fin AS (
+    -- 5. Project final Type 2 row with Ajay's standard column ordering:
+    --    keys -> business attributes -> Type 2 metadata -> audit -> source -> Hashbytes -> DataCondition.
+    SELECT
+        HASH(IFNULL(CAST(<BUSINESS_KEY> AS VARCHAR), '#@#@#@#@#'), SourceSystemCode) AS <Entity>HashPK,
+        HASH(IFNULL(CAST(<NATURAL_KEY> AS VARCHAR), '#@#@#@#@#'), SourceSystemCode) AS <Entity>HashBK,
+        <business attribute SELECTs, mirroring the STM Final section>,
+        CAST(EffectiveStartDateTimeUTC AS TIMESTAMP_TZ) AS EffectiveStartDateTime,
+        CAST(COALESCE(LeadEffectiveStartDateTimeUTC, EffectiveEndDateTimeRaw) AS TIMESTAMP_TZ)
+            AS EffectiveEndDateTime,
+        CASE
+            WHEN LeadEffectiveStartDateTimeUTC IS NULL AND IsFivetranActive THEN 'Y'
+            ELSE 'N'
+        END AS CurrentFlagYN,
+        CAST(EffectiveStartDateTimeUTC AS TIMESTAMP_TZ) AS CreatedDateTime,
+        CAST(InsertedDateTimeUTC       AS TIMESTAMP_TZ) AS ModifiedDateTime,
+        SourceSystemCode,
+        CAST(<BUSINESS_KEY> AS VARCHAR(40))  AS Source<Entity>PK,
+        CAST(<NATURAL_KEY>  AS VARCHAR(100)) AS Source<Entity>BK,
+        FileName,
+        CAST(StageInsertedDateTimeUTC AS TIMESTAMP_TZ) AS StageInsertedDateTimeUTC,
+        Hashbytes,
+        DataCondition
+    FROM cte_row_reduce
+)
+
+SELECT * FROM fin
+```
+
+### Type 2 key & hash conventions (differ from Type 1)
+
+Type 2 models follow **Ajay's** convention, which differs from the Type 1 convention earlier in this skill:
+
+| Column class | Type 1 | Type 2 |
+|---|---|---|
+| `*HashPK`, `*HashBK`, `*HashFK` | `SHA2(..., 256)` → `VARCHAR(64)` | `HASH(<col>, 'ERP')` → `NUMBER(38,0)` (Snowflake native 64-bit) |
+| `Hashbytes` (change detection) | `SHA2(..., 256)` → `VARCHAR(64)` | `SHA2_BINARY(..., 256)` → `BINARY` |
+
+`HASH()` and `SHA2_BINARY()` are both Snowflake-native and do not depend on the session `BINARY_INPUT_FORMAT` (the warning against `CAST(... AS BINARY)` does **not** apply — these are dedicated functions, not casts). Always match the STM's `Data Type` column:
+- STM says `NUMBER(38,0)` for `*Hash*` → use `HASH(...)`.
+- STM says `BINARY` for `Hashbytes` → use `SHA2_BINARY(...)`.
+
+Do NOT mix conventions within a single view.
+
+### Fivetran history-mode awareness
+
+When the STM says the source is in **Fivetran history mode** (Section 3 "Notes" mentions `_FIVETRAN_START` / `_FIVETRAN_END` / `_FIVETRAN_ACTIVE`), the Type 2 windowing logic comes FROM THE SOURCE — do NOT generate synthetic version windows. The view's job is simply to:
+1. Pass `_FIVETRAN_START` through as `EffectiveStartDateTime`.
+2. Close each version via `LEAD(_FIVETRAN_START) - 1 microsecond`, falling back to `_FIVETRAN_END` for the current/open version.
+3. Derive `CurrentFlagYN` from `_FIVETRAN_ACTIVE` + absence of a LEAD row.
+4. Collapse no-op updates via the `Hashbytes <> LagHash` filter.
+
+If the STM explicitly lists "Data Condition 2" for hard deletes or similar, union an additional source-reading CTE into `cte_prep` before hashing. Most Fivetran history-mode sources do NOT need Data Condition 2 because `_FIVETRAN_END ≠ '9999-12-31 23:59:59.999'` already marks closed/deleted rows.
+
+### Type 2 enriched model (full refresh)
+
+The enriched model is `table` (not `incremental`):
+
+```sql
+{{ config(
+    materialized='table'
+) }}
+
+-- SCD Type 2: full refresh from the view, which rebuilds the complete version
+-- history on every run. Incremental is unsafe for Type 2 because closing out
+-- old versions requires re-evaluating LEAD(EffectiveStartDateTime) across the
+-- whole partition.
+SELECT * FROM {{ ref('vw_<Entity>') }}
+```
+
+### Type 2 schema.yml conventions
+
+- The PK has a `not_null` test but **NOT** a `unique` test — the same `<Entity>HashPK` legitimately appears once per version.
+- The model's documented grain is composite: `(<Entity>HashPK, EffectiveStartDateTime)`.
+- `CurrentFlagYN` gets `accepted_values: ['Y', 'N']`.
+- `EffectiveStartDateTime`, `EffectiveEndDateTime`, `CurrentFlagYN`, `SourceSystemCode` all get `not_null`.
+- Remove legacy Type 1 columns (`EtlBatchId`, `LoadTimestamp`, `IsCurrent`) from the Type 2 schema.yml entry — they are replaced by the Type 2 metadata + audit columns listed in the STM's Final section.
+- Do not add `dbt_utils.unique_combination_of_columns` tests unless `dbt_utils` is declared in `packages.yml`. Document the composite grain in the model description instead.
+
+### Unmapped columns in Type 2 views
+
+Same rule as Type 1: every target column that has no source (empty Source Table + Source Column in the STM Final section) must emit `CAST(NULL AS <type>)` or the STM default, with an inline `-- not available in source` comment on the SAME line:
+
+```sql
+CAST(NULL AS VARCHAR(10)) AS BrandCode,   -- not available in source
+CAST(NULL AS VARCHAR(50)) AS SubcategoryName, -- not available in source
+```
+
+This applies to Type 2 exactly as it does to Type 1. A Type 2 view must not silently cast unmapped columns to NULL without the comment — reviewers need to see at a glance which attributes are gaps vs real source-backed data.
+
 ## Conventions
 
 - **Two models per table:** `models/views/vw_{Entity}` (view with logic) + `models/enriched/{Entity}` (incremental from view)
 - **No staging layer:** view models use `{{ source() }}` directly
 - **No precision truncation:** do not use `LEFT()` to force field lengths — let source precision flow through
-- **Unmapped columns:** `CAST(NULL AS <type>)` or STM default, with `-- not available in source` comment
+- **Unmapped columns (applies to Type 1 AND Type 2):** every column with empty Source Table + Source Column in the STM's mapping must emit `CAST(NULL AS <type>)` (or the STM default) with an inline `-- not available in source` comment on the same line. This rule is non-negotiable — reviewers rely on it to see at a glance which target attributes are genuine data gaps vs real source-backed data.
 - **Model/file naming — STM-verbatim (PascalCase):** file names and dbt model names use the STM `Target Table` verbatim — e.g. `DimEmployee.sql`, `vw_DimEmployee.sql`, `FactSales.sql`, `vw_FactSales.sql`. NEVER snake_case. The only lowercase piece is the literal `vw_` prefix on view models.
 - **CTE naming:** `cte<TABLE_NAME>` (e.g. `cteEMPLOYEES`, `cteSALES_ORDER_ITEMS`)
 - **Column naming — STM-verbatim (PascalCase):** target-column aliases and schema.yml entries MUST match the STM's `Target Column` exactly (e.g. `EmployeeHashPK`, `FirstName`, `HomeStoreHashFK`, `LoadTimestamp`, `Hashbytes`). Do NOT snake_case them.

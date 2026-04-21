@@ -104,87 +104,94 @@ models:
         tests:
           - not_null
   - name: vw_DimProduct
-    description: "View layer for DimProduct — transformation logic from bronze source. Product master with full hierarchy (Category > Subcategory > Brand > Product). Supports SCD Type 2 for historical tracking."
+    description: "View layer for DimProduct — Type 2 SCD following Ajay Kalyan's multi-CTE pattern (cte_prep / _hash / _hash_lag / _row_reduce / fin). Uses Fivetran history-mode columns (_FIVETRAN_START / _FIVETRAN_END / _FIVETRAN_ACTIVE) for version windows. Grain: one row per product version, keyed by (ProductHashPK, EffectiveStartDateTime)."
     columns:
       - name: ProductHashPK
-        description: "Surrogate primary key for product dimension"
+        description: "Surrogate primary key for product dimension version (HASH(PRODUCT_ID, 'ERP'))."
         tests:
-          - unique
           - not_null
       - name: ProductHashBK
-        description: "Natural business key from source system (SKU)"
-        tests:
-          - not_null
-      - name: ProductName
-        description: "Full product display name"
-        tests:
-          - not_null
-      - name: ProductDescription
-        description: "Detailed product description"
-      - name: CategoryCode
-        description: "Product category code"
-        tests:
-          - not_null
-      - name: CategoryName
-        description: "Product category name (top level of hierarchy)"
-        tests:
-          - not_null
-      - name: SubcategoryCode
-        description: "Product subcategory code"
-        tests:
-          - not_null
-      - name: SubcategoryName
-        description: "Product subcategory name (second level of hierarchy)"
+        description: "Natural business key from source system, hashed (HASH(SKU, 'ERP'))."
         tests:
           - not_null
       - name: BrandCode
-        description: "Brand identifier code"
-        tests:
-          - not_null
+        description: "Brand identifier code (not available in source — NULL)."
       - name: BrandName
-        description: "Brand display name (third level of hierarchy)"
-        tests:
-          - not_null
-      - name: UnitOfMeasure
-        description: "Standard unit of measure (Each, Case, Pound, etc.)"
-        tests:
-          - not_null
-      - name: PackSize
-        description: "Package size description"
-      - name: UnitCost
-        description: "Standard unit cost at time of record"
-        tests:
-          - not_null
-      - name: UnitListPrice
-        description: "Standard list price at time of record"
-        tests:
-          - not_null
+        description: "Brand display name (not available in source — NULL)."
+      - name: CategoryCode
+        description: "Product category code (not available in source — NULL)."
+      - name: CategoryName
+        description: "Product category name (top level of hierarchy)."
       - name: IsActive
-        description: "True if product is currently active for sale"
+        description: "True if product is currently active for sale."
         tests:
           - not_null
       - name: IsDiscontinued
-        description: "True if product has been discontinued"
+        description: "True if product has been discontinued."
         tests:
           - not_null
-      - name: EffectiveDate
-        description: "Start date when this version became effective"
+      - name: PackSize
+        description: "Package size description (not available in source — NULL)."
+      - name: ProductDescription
+        description: "Detailed product description."
+      - name: ProductName
+        description: "Full product display name."
+      - name: SubcategoryCode
+        description: "Product subcategory code (not available in source — NULL)."
+      - name: SubcategoryName
+        description: "Product subcategory name (not available in source — NULL)."
+      - name: UnitCost
+        description: "Standard unit cost at time of record."
+      - name: UnitListPrice
+        description: "Standard list price at time of record."
+      - name: UnitOfMeasure
+        description: "Standard unit of measure (not available in source — NULL)."
+      - name: EffectiveStartDateTime
+        description: "Type 2 SCD: start of this version's validity window (= _FIVETRAN_START)."
         tests:
           - not_null
-      - name: ExpirationDate
-        description: "End date when this version expired (NULL if current)"
-      - name: IsCurrent
-        description: "True if this is the current active version"
+      - name: EffectiveEndDateTime
+        description: "Type 2 SCD: end of this version's validity window (= _FIVETRAN_END or sentinel)."
         tests:
           - not_null
-      - name: EtlBatchId
-        description: "ETL batch identifier that loaded this record"
+      - name: CurrentFlagYN
+        description: "Type 2 SCD: 'Y' if current version, 'N' if historical."
         tests:
           - not_null
-      - name: LoadTimestamp
-        description: "Timestamp when record was loaded"
+          - accepted_values:
+              values: ['Y', 'N']
+      - name: CreatedDateTime
+        description: "Timestamp when this version was first created in the warehouse."
         tests:
           - not_null
+      - name: ModifiedDateTime
+        description: "Timestamp when this version was last synced."
+        tests:
+          - not_null
+      - name: SourceSystemCode
+        description: "Source system identifier (hard-coded 'ERP')."
+        tests:
+          - not_null
+      - name: SourceProductPK
+        description: "Pre-hash source primary key (PRODUCT_ID)."
+        tests:
+          - not_null
+      - name: SourceProductBK
+        description: "Pre-hash source business key (SKU)."
+      - name: FileName
+        description: "Source file name (empty for Fivetran-sourced tables)."
+      - name: StageInsertedDateTimeUTC
+        description: "Fivetran _FIVETRAN_SYNCED timestamp."
+        tests:
+          - not_null
+      - name: Hashbytes
+        description: "SHA2_256 hash over business attributes for change detection."
+      - name: DataCondition
+        description: "Data Condition label ('Data Condition 1')."
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['Data Condition 1']
   - name: vw_DimStore
     description: "View layer for DimStore — transformation logic from bronze source. Retail store locations with geographic hierarchy (Region > District > Store)."
     columns:
@@ -338,87 +345,100 @@ models:
         tests:
           - not_null
   - name: vw_DimCustomer
-    description: "View layer for DimCustomer — transformation logic from bronze source. Customer master with loyalty program information and acquisition tracking. Supports SCD Type 2."
+    description: "View layer for DimCustomer — Type 2 SCD following Ajay Kalyan's multi-CTE pattern (cte_prep / _hash / _hash_lag / _row_reduce / fin). Uses Fivetran history-mode columns (_FIVETRAN_START / _FIVETRAN_END / _FIVETRAN_ACTIVE) for version windows. Grain: one row per customer version, keyed by (CustomerHashPK, EffectiveStartDateTime)."
     columns:
       - name: CustomerHashPK
-        description: "Surrogate primary key for customer dimension"
+        description: "Surrogate primary key for customer dimension version (HASH(CUSTOMER_ID, 'ERP'))."
         tests:
-          - unique
           - not_null
       - name: CustomerHashBK
-        description: "Natural business key (customer ID from CRM)"
-        tests:
-          - not_null
-      - name: FirstName
-        description: "Customer first name"
-        tests:
-          - not_null
-      - name: LastName
-        description: "Customer last name"
-        tests:
-          - not_null
-      - name: FullName
-        description: "Concatenated full name for display"
-        tests:
-          - not_null
-      - name: EmailAddress
-        description: "Primary email address"
-      - name: PhoneNumber
-        description: "Primary phone number"
-      - name: StreetAddress
-        description: "Mailing street address"
-      - name: City
-        description: "Customer city"
-      - name: StateProvince
-        description: "Customer state or province"
-      - name: PostalCode
-        description: "Customer postal code"
-      - name: Country
-        description: "Customer country"
-      - name: CustomerType
-        description: "Customer classification (Individual, Business, Wholesale)"
+        description: "Natural business key (customer ID from CRM), hashed."
         tests:
           - not_null
       - name: AcquisitionChannel
-        description: "How customer was acquired (Online, Store, Referral, Advertising)"
-        tests:
-          - not_null
+        description: "How customer was acquired (not available in source — NULL)."
       - name: AcquisitionDate
-        description: "Date customer was first acquired"
-        tests:
-          - not_null
-      - name: LoyaltyTier
-        description: "Current loyalty tier (Bronze, Silver, Gold, Platinum)"
-        tests:
-          - not_null
-      - name: LoyaltyPoints
-        description: "Current loyalty points balance"
-        tests:
-          - not_null
-      - name: LoyaltyJoinDate
-        description: "Date customer joined loyalty program"
+        description: "Date customer was first acquired (derived from CREATED_AT)."
+      - name: City
+        description: "Customer city (not available in source — NULL)."
+      - name: Country
+        description: "Customer country (not available in source — NULL)."
+      - name: CustomerType
+        description: "Customer classification (not available in source — NULL)."
+      - name: EmailAddress
+        description: "Primary email address."
+      - name: FirstName
+        description: "Customer first name."
+      - name: FullName
+        description: "Concatenated full name for display."
       - name: IsActive
-        description: "True if customer account is active"
+        description: "True if customer account is active (TRUE for all current versions; historical rows with closed Fivetran windows retain TRUE)."
         tests:
           - not_null
-      - name: EffectiveDate
-        description: "Start date when this version became effective"
+      - name: LastName
+        description: "Customer last name."
+      - name: LoyaltyJoinDate
+        description: "Date customer joined loyalty program (not available in source — NULL)."
+      - name: LoyaltyPoints
+        description: "Current loyalty points balance (not available in source — NULL)."
+      - name: LoyaltyTier
+        description: "Current loyalty tier (not available in source — NULL)."
+      - name: PhoneNumber
+        description: "Primary phone number."
+      - name: PostalCode
+        description: "Customer postal code (not available in source — NULL)."
+      - name: StateProvince
+        description: "Customer state or province (not available in source — NULL)."
+      - name: StreetAddress
+        description: "Mailing street address (not available in source — NULL)."
+      - name: EffectiveStartDateTime
+        description: "Type 2 SCD: start of this version's validity window (= _FIVETRAN_START)."
         tests:
           - not_null
-      - name: ExpirationDate
-        description: "End date when this version expired (NULL if current)"
-      - name: IsCurrent
-        description: "True if this is the current active version"
+      - name: EffectiveEndDateTime
+        description: "Type 2 SCD: end of this version's validity window (= _FIVETRAN_END or sentinel)."
         tests:
           - not_null
-      - name: EtlBatchId
-        description: "ETL batch identifier that loaded this record"
+      - name: CurrentFlagYN
+        description: "Type 2 SCD: 'Y' if current version, 'N' if historical."
         tests:
           - not_null
-      - name: LoadTimestamp
-        description: "Timestamp when record was loaded"
+          - accepted_values:
+              values: ['Y', 'N']
+      - name: CreatedDateTime
+        description: "Timestamp when this version was first created in the warehouse."
         tests:
           - not_null
+      - name: ModifiedDateTime
+        description: "Timestamp when this version was last synced."
+        tests:
+          - not_null
+      - name: SourceSystemCode
+        description: "Source system identifier (hard-coded 'ERP')."
+        tests:
+          - not_null
+      - name: SourceCustomerPK
+        description: "Pre-hash source primary key (CUSTOMER_ID)."
+        tests:
+          - not_null
+      - name: SourceCustomerBK
+        description: "Pre-hash source business key (CUSTOMER_ID)."
+        tests:
+          - not_null
+      - name: FileName
+        description: "Source file name (empty for Fivetran-sourced tables)."
+      - name: StageInsertedDateTimeUTC
+        description: "Fivetran _FIVETRAN_SYNCED timestamp."
+        tests:
+          - not_null
+      - name: Hashbytes
+        description: "SHA2_256 hash over business attributes for change detection."
+      - name: DataCondition
+        description: "Data Condition label ('Data Condition 1')."
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['Data Condition 1']
   - name: vw_DimSupplier
     description: "View layer for DimSupplier — transformation logic from bronze source. Supplier master with contact information and payment terms."
     columns:

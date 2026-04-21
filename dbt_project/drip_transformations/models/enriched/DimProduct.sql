@@ -1,10 +1,9 @@
 {{ config(
-    materialized='incremental',
-    unique_key='ProductHashPK'
+    materialized='table'
 ) }}
 
+-- SCD Type 2: full refresh from the view, which rebuilds the complete version
+-- history on every run. Incremental is unsafe for Type 2 because closing out
+-- old versions requires re-evaluating LEAD(EffectiveStartDateTime) across the
+-- whole partition.
 SELECT * FROM {{ ref('vw_DimProduct') }}
-
-{% if is_incremental() %}
-WHERE LoadTimestamp > (SELECT MAX(LoadTimestamp) FROM {{ this }})
-{% endif %}

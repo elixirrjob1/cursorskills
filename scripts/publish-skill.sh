@@ -34,12 +34,19 @@ publish_one() {
   local skill="$1"
   local prefix="$SKILLS_DIR/$skill"
   local repo_name="${REPO_PREFIX}${skill}"
-  local url="https://${PAT2_USER}@github.com/${PAT2_USER}/${repo_name}.git"
+  local owner url
+  owner="$(_repo_owner)"
+  url="https://${PAT2_USER}@github.com/${owner}/${repo_name}.git"
 
   echo "• $skill"
-  _create_private_repo "$repo_name" "Cursor skill: $skill"
+  if ! _create_private_repo "$repo_name" "Cursor skill: $skill"; then
+    FAILED+=("$skill (create)")
+    return 0
+  fi
   if (( CREATE_ONLY == 0 )); then
-    _push_snapshot "$prefix" "$url" "skill: $skill snapshot"
+    if ! _push_snapshot "$prefix" "$url" "skill: $skill snapshot"; then
+      FAILED+=("$skill (push)")
+    fi
   fi
 }
 
@@ -68,13 +75,19 @@ if (( ${#SKILLS[@]} == 0 )); then
   exit 1
 fi
 
-echo "Account: ${PAT2_USER}"
+echo "Owner:   $(_repo_owner)$( [[ -n "${PAT2_ORG:-}" ]] && echo ' (org)' || echo ' (user)' )"
 echo "Skills:  ${SKILLS[*]}"
 echo
 
+FAILED=()
 for s in "${SKILLS[@]}"; do
   publish_one "$s"
 done
 
 echo
+if (( ${#FAILED[@]} > 0 )); then
+  echo "Done with failures:"
+  for f in "${FAILED[@]}"; do echo "  - $f"; done
+  exit 1
+fi
 echo "Done."

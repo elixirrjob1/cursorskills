@@ -106,9 +106,9 @@ For each row in the markdown table under "## 7. Field-Level Mapping":
 
    | Pattern | SQL Expression |
    |---------|---------------|
-   | Hash surrogate key | `CAST(SHA2(COALESCE(CAST(CUSTOMER_ID AS VARCHAR), '#@#@#@#@#'), 256) AS BINARY(32))` |
-   | Hash FK lookup | `CAST(SHA2(COALESCE(CAST(ORDER_DATE AS VARCHAR), '#@#@#@#@#'), 256) AS BINARY(32))` |
-   | Nullable FK | `IFF(CUSTOMER_ID IS NULL, NULL, CAST(SHA2(COALESCE(CAST(CUSTOMER_ID AS VARCHAR), '#@#@#@#@#'), 256) AS BINARY(32)))` |
+   | Hash surrogate key | `SHA2(COALESCE(CAST(CUSTOMER_ID AS VARCHAR), '#@#@#@#@#'), 256)` |
+   | Hash FK lookup | `SHA2(COALESCE(CAST(ORDER_DATE AS VARCHAR), '#@#@#@#@#'), 256)` |
+   | Nullable FK | `IFF(CUSTOMER_ID IS NULL, NULL, SHA2(COALESCE(CAST(CUSTOMER_ID AS VARCHAR), '#@#@#@#@#'), 256))` |
    | Type cast | `CAST(UNIT_PRICE AS DECIMAL(19,4))` |
    | Concatenation | `FIRST_NAME \|\| ' ' \|\| LAST_NAME` |
    | Computed measure | `CAST(QUANTITY * UNIT_PRICE AS DECIMAL(19,4))` |

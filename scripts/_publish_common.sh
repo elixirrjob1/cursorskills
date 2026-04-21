@@ -12,7 +12,18 @@ _load_env() {
   set -a; . ./.env; set +a
   : "${PAT2:?PAT2 not set in .env}"
   : "${PAT2_USER:?PAT2_USER not set in .env}"
+  # PAT2_ORG is optional; if unset, we push to the user account
   export PAT2 PAT2_USER
+  export PAT2_ORG="${PAT2_ORG:-}"
+}
+
+# Returns the GitHub owner (org if set, else user) as stdout.
+_repo_owner() {
+  if [[ -n "${PAT2_ORG:-}" ]]; then
+    printf '%s' "$PAT2_ORG"
+  else
+    printf '%s' "$PAT2_USER"
+  fi
 }
 
 # Creates a throwaway GIT_ASKPASS script that feeds PAT2 to git at push time.
@@ -35,11 +46,20 @@ ASK
 }
 
 # --- repo lifecycle -----------------------------------------------------------
-# Create a private repo on ${PAT2_USER} if it does not already exist.
+# Create a private repo under the effective owner (org if PAT2_ORG set,
+# else user), if it does not already exist.
 # Args: repo_name, description
-# Returns 0 for both "created" and "exists". Nonzero only on hard failure.
+# Returns 0 for created/exists, 2 for NAME_RESERVED (422 but repo not fetchable),
+# nonzero otherwise.
 _create_private_repo() {
   local name="$1" desc="$2"
+  local owner endpoint
+  owner="$(_repo_owner)"
+  if [[ -n "${PAT2_ORG:-}" ]]; then
+    endpoint="https://api.github.com/orgs/${PAT2_ORG}/repos"
+  else
+    endpoint="https://api.github.com/user/repos"
+  fi
   local body http_code
   body=$(mktemp)
   http_code=$(curl -sS -o "$body" -w '%{http_code}' \
@@ -47,11 +67,27 @@ _create_private_repo() {
     -H "Authorization: Bearer ${PAT2}" \
     -H "Accept: application/vnd.github+json" \
     -H "X-GitHub-Api-Version: 2022-11-28" \
-    https://api.github.com/user/repos \
+    "$endpoint" \
     -d "$(printf '{"name":"%s","private":true,"description":"%s","auto_init":false}' "$name" "$desc")")
   case "$http_code" in
-    201) echo "  created github.com/${PAT2_USER}/${name}" ;;
-    422) echo "  exists  github.com/${PAT2_USER}/${name}" ;;
+    201)
+      echo "  created github.com/${owner}/${name}"
+      rm -f "$body"; return 0 ;;
+    422)
+      # GitHub returns 422 for "already exists" AND for "name reserved / soft-
+      # deleted". Distinguish by probing the repo via GET.
+      local probe
+      probe=$(curl -sS -o /dev/null -w '%{http_code}' \
+        -H "Authorization: Bearer ${PAT2}" \
+        "https://api.github.com/repos/${owner}/${name}")
+      if [[ "$probe" == "200" ]]; then
+        echo "  exists  github.com/${owner}/${name}"
+        rm -f "$body"; return 0
+      else
+        echo "  SKIPPED github.com/${owner}/${name} — name reserved (422 but GET returns ${probe}); likely a prior soft-deleted repo. Use a different name or clear the reservation via GitHub UI." >&2
+        cat "$body" >&2
+        rm -f "$body"; return 2
+      fi ;;
     *)
       echo "  FAILED create $name (HTTP $http_code):" >&2
       cat "$body" >&2
@@ -59,7 +95,6 @@ _create_private_repo() {
       return 1
       ;;
   esac
-  rm -f "$body"
 }
 
 # --- snapshot push ------------------------------------------------------------

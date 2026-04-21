@@ -89,8 +89,8 @@ Definitions are included only when they are present in the analyzer JSON.
 ## 7. Field-Level Mapping Matrix
 | Target Table | Target Column | Data Type | Field Type | Source System | Source Table | Source Column(s) | Transformation / Business Rule | Nullable? | Default / Fallback | Description |
 |--------------|---------------|-----------|------------|---------------|--------------|------------------|--------------------------------|-----------|--------------------|-------------|
-| DimEmployee | EmployeeHashPK | INT | Primary Key | Snowflake | EMPLOYEES | EMPLOYEE_ID | CAST(SHA2(COALESCE(CAST(EMPLOYEE_ID AS VARCHAR), '#@#@#@#@#'), 256) AS BINARY(32)) | NO |  | Surrogate primary key for employee dimension |
-| DimEmployee | EmployeeHashBK | VARCHAR(20) | Business Key | Snowflake | EMPLOYEES | EMPLOYEE_ID | CAST(SHA2(COALESCE(CAST(EMPLOYEE_ID AS VARCHAR), '#@#@#@#@#'), 256) AS BINARY(32)) | NO |  | Natural business key (employee ID from HR system) |
+| DimEmployee | EmployeeHashPK | INT | Primary Key | Snowflake | EMPLOYEES | EMPLOYEE_ID | SHA2(COALESCE(CAST(EMPLOYEE_ID AS VARCHAR), '#@#@#@#@#'), 256) | NO |  | Surrogate primary key for employee dimension |
+| DimEmployee | EmployeeHashBK | VARCHAR(20) | Business Key | Snowflake | EMPLOYEES | EMPLOYEE_ID | SHA2(COALESCE(CAST(EMPLOYEE_ID AS VARCHAR), '#@#@#@#@#'), 256) | NO |  | Natural business key (employee ID from HR system) |
 | DimEmployee | FirstName | VARCHAR(50) | Attribute | Snowflake | EMPLOYEES | FIRST_NAME |  | NO |  | Employee first name |
 | DimEmployee | LastName | VARCHAR(50) | Attribute | Snowflake | EMPLOYEES | LAST_NAME |  | NO |  | Employee last name |
 | DimEmployee | FullName | VARCHAR(100) | Attribute | Snowflake | EMPLOYEES | FIRST_NAME, LAST_NAME | TRIM(FIRST_NAME) \|\| ' ' \|\| TRIM(LAST_NAME) | NO |  | Concatenated full name for display |
@@ -99,8 +99,8 @@ Definitions are included only when they are present in the analyzer JSON.
 | DimEmployee | Department | VARCHAR(50) | Attribute | Snowflake |  |  |  | NO |  | Department name |
 | DimEmployee | HireDate | DATE | Attribute | Snowflake | EMPLOYEES | HIRE_DATE |  | NO |  | Date employee was hired |
 | DimEmployee | TerminationDate | DATE | Attribute | Snowflake |  |  |  | YES |  | Date employee was terminated (NULL if active) |
-| DimEmployee | ManagerEmployeeHashFK | INT | Foreign Key | Snowflake |  |  | IFF({SOURCE_COL} IS NULL, NULL, CAST(SHA2(COALESCE(CAST({SOURCE_COL} AS VARCHAR), '#@#@#@#@#'), 256) AS BINARY(32))) | YES |  | Foreign key to manager employee record |
-| DimEmployee | HomeStoreHashFK | INT | Foreign Key | Snowflake | EMPLOYEES | STORE_ID | IFF(STORE_ID IS NULL, NULL, CAST(SHA2(COALESCE(CAST(STORE_ID AS VARCHAR), '#@#@#@#@#'), 256) AS BINARY(32))) | YES |  | Foreign key to employee primary store location |
+| DimEmployee | ManagerEmployeeHashFK | INT | Foreign Key | Snowflake |  |  | IFF({SOURCE_COL} IS NULL, NULL, SHA2(COALESCE(CAST({SOURCE_COL} AS VARCHAR), '#@#@#@#@#'), 256)) | YES |  | Foreign key to manager employee record |
+| DimEmployee | HomeStoreHashFK | INT | Foreign Key | Snowflake | EMPLOYEES | STORE_ID | IFF(STORE_ID IS NULL, NULL, SHA2(COALESCE(CAST(STORE_ID AS VARCHAR), '#@#@#@#@#'), 256)) | YES |  | Foreign key to employee primary store location |
 | DimEmployee | IsActive | BOOLEAN | Attribute | Snowflake |  |  |  | NO |  | True if employee is currently employed |
 | DimEmployee | EtlBatchId | INT | Audit/Metadata | Snowflake |  |  |  | NO |  | ETL batch identifier that loaded this record |
 | DimEmployee | LoadTimestamp | TIMESTAMP | Audit/Metadata | Snowflake |  |  |  | NO |  | Timestamp when record was loaded |

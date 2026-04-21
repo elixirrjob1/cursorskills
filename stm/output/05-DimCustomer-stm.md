@@ -92,8 +92,8 @@ Definitions are included only when they are present in the analyzer JSON.
 ## 7. Field-Level Mapping Matrix
 | Target Table | Target Column | Data Type | Field Type | Source System | Source Table | Source Column(s) | Transformation / Business Rule | Nullable? | Default / Fallback | Description |
 |--------------|---------------|-----------|------------|---------------|--------------|------------------|--------------------------------|-----------|--------------------|-------------|
-| DimCustomer | CustomerHashPK | INT | Primary Key | Snowflake | CUSTOMERS | CUSTOMER_ID | CAST(SHA2(COALESCE(CAST(CUSTOMER_ID AS VARCHAR), '#@#@#@#@#'), 256) AS BINARY(32)) | NO |  | Surrogate primary key for customer dimension |
-| DimCustomer | CustomerHashBK | VARCHAR(20) | Business Key | Snowflake | CUSTOMERS | CUSTOMER_ID | CAST(SHA2(COALESCE(CAST(CUSTOMER_ID AS VARCHAR), '#@#@#@#@#'), 256) AS BINARY(32)) | NO |  | Natural business key (customer ID from CRM) |
+| DimCustomer | CustomerHashPK | INT | Primary Key | Snowflake | CUSTOMERS | CUSTOMER_ID | SHA2(COALESCE(CAST(CUSTOMER_ID AS VARCHAR), '#@#@#@#@#'), 256) | NO |  | Surrogate primary key for customer dimension |
+| DimCustomer | CustomerHashBK | VARCHAR(20) | Business Key | Snowflake | CUSTOMERS | CUSTOMER_ID | SHA2(COALESCE(CAST(CUSTOMER_ID AS VARCHAR), '#@#@#@#@#'), 256) | NO |  | Natural business key (customer ID from CRM) |
 | DimCustomer | FirstName | VARCHAR(50) | Attribute | Snowflake | CUSTOMERS | FIRST_NAME |  | NO |  | Customer first name |
 | DimCustomer | LastName | VARCHAR(50) | Attribute | Snowflake | CUSTOMERS | LAST_NAME |  | NO |  | Customer last name |
 | DimCustomer | FullName | VARCHAR(100) | Attribute | Snowflake | CUSTOMERS | FIRST_NAME, LAST_NAME | TRIM(FIRST_NAME) \|\| ' ' \|\| TRIM(LAST_NAME) | NO |  | Concatenated full name for display |

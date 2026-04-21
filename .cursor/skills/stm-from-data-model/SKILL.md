@@ -83,6 +83,21 @@ Hardcode these warehouse conventions in every generated STM:
   - explicit grain statements
   - explicit measure notes
 
+## Snowflake Data Type Conversion
+
+When the target data model specifies a data type that is not natively supported by Snowflake, convert it to the Snowflake equivalent when writing the STM's `Data Type` column. Apply this mapping everywhere a target-column data type is emitted (Field-Level Mapping Matrix and any later sections).
+
+| Source Type (in target model) | Snowflake Type |
+|---|---|
+| `BIGINT` | `NUMBER(38,0)` |
+| `VARBINARY`, `VARBINARY(n)` | `BINARY` |
+| Hash columns (`HashPK`, `HashBK`, `HashFK`) | `VARCHAR(64)` (stores `SHA2(..., 256)` hex output) |
+
+Notes:
+- Hash columns are hex output of `SHA2(..., 256)`, which is exactly 64 characters, so `VARCHAR(64)` is the correct storage type. Do **not** use `BINARY(32)` — a `VARCHAR→BINARY` cast depends on the session `BINARY_INPUT_FORMAT` (Base64 vs Hex) and can silently truncate.
+- Leave already-supported Snowflake types unchanged (`NUMBER(p,s)`, `VARCHAR(n)`, `DATE`, `TIMESTAMP_*`, `BOOLEAN`, etc.).
+- Add new source→Snowflake mappings to this table as new source systems are onboarded; do not guess.
+
 ## Template Rules
 
 Each generated STM must include:

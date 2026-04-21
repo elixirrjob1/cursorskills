@@ -260,6 +260,27 @@ def _normalize_formula(text: str) -> str:
     return value
 
 
+def _to_snowflake_type(data_type: str, column_name: str = "") -> str:
+    """Convert a model-declared data type to its Snowflake-supported equivalent.
+
+    Rules come from the team's SourceToTarget mapping convention. Unmapped
+    types pass through unchanged so hand-written Snowflake types (NUMBER, VARCHAR,
+    TIMESTAMP_NTZ, ...) are respected.
+    """
+    if not data_type:
+        return data_type
+    raw = data_type.strip()
+    upper = raw.upper()
+    # Hash columns are SHA2(..., 256) hex -> exactly 64 chars.
+    if column_name.endswith(("HashPK", "HashBK", "HashFK")):
+        return "VARCHAR(64)"
+    if upper == "BIGINT":
+        return "NUMBER(38,0)"
+    if upper == "VARBINARY" or upper.startswith("VARBINARY("):
+        return "BINARY"
+    return raw
+
+
 def _column_transformation_logic(column: ColumnDef, table: TableDef) -> str:
     """Return a Snowflake SQL expression skeleton for the target column.
 
@@ -272,14 +293,14 @@ def _column_transformation_logic(column: ColumnDef, table: TableDef) -> str:
     data_type = column.data_type
 
     if name.endswith("HashPK"):
-        return "CAST(SHA2(COALESCE(CAST({SOURCE_COL} AS VARCHAR), '#@#@#@#@#'), 256) AS BINARY(32))"
+        return "SHA2(COALESCE(CAST({SOURCE_COL} AS VARCHAR), '#@#@#@#@#'), 256)"
     if name.endswith("HashBK"):
-        return "CAST(SHA2(COALESCE(CAST({SOURCE_COL} AS VARCHAR), '#@#@#@#@#'), 256) AS BINARY(32))"
+        return "SHA2(COALESCE(CAST({SOURCE_COL} AS VARCHAR), '#@#@#@#@#'), 256)"
     if name.endswith("HashFK"):
         nullable = column.nullable.upper() == "YES"
         if nullable:
-            return "IFF({SOURCE_COL} IS NULL, NULL, CAST(SHA2(COALESCE(CAST({SOURCE_COL} AS VARCHAR), '#@#@#@#@#'), 256) AS BINARY(32)))"
-        return "CAST(SHA2(COALESCE(CAST({SOURCE_COL} AS VARCHAR), '#@#@#@#@#'), 256) AS BINARY(32))"
+            return "IFF({SOURCE_COL} IS NULL, NULL, SHA2(COALESCE(CAST({SOURCE_COL} AS VARCHAR), '#@#@#@#@#'), 256))"
+        return "SHA2(COALESCE(CAST({SOURCE_COL} AS VARCHAR), '#@#@#@#@#'), 256)"
 
     if "scd type 2 row effective start date" in lower:
         return "CAST({SOURCE_COL} AS DATE)"
@@ -292,7 +313,7 @@ def _column_transformation_logic(column: ColumnDef, table: TableDef) -> str:
         return f"CAST({{SOURCE_COL}} AS {data_type})"
 
     if "foreign key to" in lower:
-        return "CAST(SHA2(COALESCE(CAST({SOURCE_COL} AS VARCHAR), '#@#@#@#@#'), 256) AS BINARY(32))"
+        return "SHA2(COALESCE(CAST({SOURCE_COL} AS VARCHAR), '#@#@#@#@#'), 256)"
 
     normalized = desc.replace(" ", "").lower()
     if "calculated billable amount" in lower and "billablehours*billrate" in normalized:
@@ -884,7 +905,7 @@ def render_stm(
     lines.append("|--------------|---------------|-----------|------------|---------------|--------------|------------------|--------------------------------|-----------|--------------------|-------------|")
     for column in table.columns:
         lines.append(
-            f"| {_markdown_escape(table.name)} | {_markdown_escape(column.name)} | {_markdown_escape(column.data_type)} | "
+            f"| {_markdown_escape(table.name)} | {_markdown_escape(column.name)} | {_markdown_escape(_to_snowflake_type(column.data_type, column.name))} | "
             f"{_markdown_escape(_field_type(column, table))} | {_markdown_escape(SOURCE_SYSTEM)} |  |  | {_markdown_escape(_column_transformation_logic(column, table))} | "
             f"{_markdown_escape(column.nullable)} |  | {_markdown_escape(column.description)} |"
         )

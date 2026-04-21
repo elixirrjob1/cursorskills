@@ -19,8 +19,8 @@ WITH ctePRODUCTS AS (
 )
 
 SELECT
-    CAST(SHA2(COALESCE(CAST(PRODUCT_ID AS VARCHAR), '#@#@#@#@#'), 256) AS BINARY(32)) AS ProductHashPK,
-    CAST(SHA2(COALESCE(CAST(SKU AS VARCHAR), '#@#@#@#@#'), 256) AS BINARY(32)) AS ProductHashBK,
+    SHA2(COALESCE(CAST(PRODUCT_ID AS VARCHAR), '#@#@#@#@#'), 256) AS ProductHashPK,
+    SHA2(COALESCE(CAST(SKU AS VARCHAR), '#@#@#@#@#'), 256) AS ProductHashBK,
     TRIM(NAME) AS ProductName,
     TRIM(PRODUCT_DESCRIPTION) AS ProductDescription,
     CAST(NULL AS VARCHAR(10)) AS CategoryCode, -- not available in source

@@ -98,8 +98,8 @@ Definitions are included only when they are present in the analyzer JSON.
 ## 7. Field-Level Mapping Matrix
 | Target Table | Target Column | Data Type | Field Type | Source System | Source Table | Source Column(s) | Transformation / Business Rule | Nullable? | Default / Fallback | Description |
 |--------------|---------------|-----------|------------|---------------|--------------|------------------|--------------------------------|-----------|--------------------|-------------|
-| DimProduct | ProductHashPK | INT | Primary Key | Snowflake | PRODUCTS | PRODUCT_ID | CAST(SHA2(COALESCE(CAST(PRODUCT_ID AS VARCHAR), '#@#@#@#@#'), 256) AS BINARY(32)) | NO |  | Surrogate primary key for product dimension |
-| DimProduct | ProductHashBK | VARCHAR(20) | Business Key | Snowflake | PRODUCTS | SKU | CAST(SHA2(COALESCE(CAST(SKU AS VARCHAR), '#@#@#@#@#'), 256) AS BINARY(32)) | NO |  | Natural business key from source system (SKU) |
+| DimProduct | ProductHashPK | INT | Primary Key | Snowflake | PRODUCTS | PRODUCT_ID | SHA2(COALESCE(CAST(PRODUCT_ID AS VARCHAR), '#@#@#@#@#'), 256) | NO |  | Surrogate primary key for product dimension |
+| DimProduct | ProductHashBK | VARCHAR(20) | Business Key | Snowflake | PRODUCTS | SKU | SHA2(COALESCE(CAST(SKU AS VARCHAR), '#@#@#@#@#'), 256) | NO |  | Natural business key from source system (SKU) |
 | DimProduct | ProductName | VARCHAR(100) | Attribute | Snowflake | PRODUCTS | NAME | TRIM(NAME) | NO |  | Full product display name |
 | DimProduct | ProductDescription | VARCHAR(500) | Attribute | Snowflake | PRODUCTS | PRODUCT_DESCRIPTION | TRIM(PRODUCT_DESCRIPTION) | YES |  | Detailed product description |
 | DimProduct | CategoryCode | VARCHAR(10) | Attribute | Snowflake |  |  |  | NO |  | Product category code |

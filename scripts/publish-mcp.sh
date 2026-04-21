@@ -39,12 +39,19 @@ publish_one() {
   local mcp="$1"
   local prefix="$TOOLS_DIR/${mcp}${FOLDER_SUFFIX}"
   local repo_name="${REPO_PREFIX}${mcp}"
-  local url="https://${PAT2_USER}@github.com/${PAT2_USER}/${repo_name}.git"
+  local owner url
+  owner="$(_repo_owner)"
+  url="https://${PAT2_USER}@github.com/${owner}/${repo_name}.git"
 
   echo "• $mcp"
-  _create_private_repo "$repo_name" "MCP server: $mcp"
+  if ! _create_private_repo "$repo_name" "MCP server: $mcp"; then
+    FAILED+=("$mcp (create)")
+    return 0
+  fi
   if (( CREATE_ONLY == 0 )); then
-    _push_snapshot "$prefix" "$url" "mcp: $mcp snapshot"
+    if ! _push_snapshot "$prefix" "$url" "mcp: $mcp snapshot"; then
+      FAILED+=("$mcp (push)")
+    fi
   fi
 }
 
@@ -72,13 +79,19 @@ if (( ${#MCPS[@]} == 0 )); then
   exit 1
 fi
 
-echo "Account: ${PAT2_USER}"
+echo "Owner:   $(_repo_owner)$( [[ -n "${PAT2_ORG:-}" ]] && echo ' (org)' || echo ' (user)' )"
 echo "MCPs:    ${MCPS[*]}"
 echo
 
+FAILED=()
 for m in "${MCPS[@]}"; do
   publish_one "$m"
 done
 
 echo
+if (( ${#FAILED[@]} > 0 )); then
+  echo "Done with failures:"
+  for f in "${FAILED[@]}"; do echo "  - $f"; done
+  exit 1
+fi
 echo "Done."

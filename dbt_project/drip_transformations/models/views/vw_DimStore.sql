@@ -18,8 +18,8 @@ WITH cteSTORES AS (
 )
 
 SELECT
-    CAST(SHA2(COALESCE(CAST(STORE_ID AS VARCHAR), '#@#@#@#@#'), 256) AS BINARY(32)) AS StoreHashPK,
-    CAST(SHA2(COALESCE(CAST(CODE AS VARCHAR), '#@#@#@#@#'), 256) AS BINARY(32)) AS StoreHashBK,
+    SHA2(COALESCE(CAST(STORE_ID AS VARCHAR), '#@#@#@#@#'), 256) AS StoreHashPK,
+    SHA2(COALESCE(CAST(CODE AS VARCHAR), '#@#@#@#@#'), 256) AS StoreHashBK,
     NAME AS StoreName,
     CAST(NULL AS VARCHAR(20)) AS StoreType, -- not available in source
     ADDRESS AS StreetAddress,

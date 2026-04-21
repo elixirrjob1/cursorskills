@@ -16,8 +16,8 @@ WITH cteSUPPLIERS AS (
 )
 
 SELECT
-    CAST(SHA2(COALESCE(CAST(SUPPLIER_ID AS VARCHAR), '#@#@#@#@#'), 256) AS BINARY(32)) AS SupplierHashPK,
-    CAST(SHA2(COALESCE(CAST(SUPPLIER_ID AS VARCHAR), '#@#@#@#@#'), 256) AS BINARY(32)) AS SupplierHashBK,
+    SHA2(COALESCE(CAST(SUPPLIER_ID AS VARCHAR), '#@#@#@#@#'), 256) AS SupplierHashPK,
+    SHA2(COALESCE(CAST(SUPPLIER_ID AS VARCHAR), '#@#@#@#@#'), 256) AS SupplierHashBK,
     NAME AS SupplierName,
     CAST(NULL AS VARCHAR(100)) AS SupplierDBAName, -- not available in source
     CONTACT_NAME AS ContactName,

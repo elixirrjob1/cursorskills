@@ -29,10 +29,10 @@ ctePRODUCTS AS (
 )
 
 SELECT
-    CAST(SHA2(COALESCE(CAST(cteINVENTORY.INVENTORY_ID AS VARCHAR), '#@#@#@#@#'), 256) AS BINARY(32)) AS InventorySnapshotHashPK,
-    CAST(SHA2(COALESCE(CAST(cteINVENTORY.UPDATED_AT AS VARCHAR), '#@#@#@#@#'), 256) AS BINARY(32)) AS DateHashFK,
-    CAST(SHA2(COALESCE(CAST(cteINVENTORY.PRODUCT_ID AS VARCHAR), '#@#@#@#@#'), 256) AS BINARY(32)) AS ProductHashFK,
-    CAST(SHA2(COALESCE(CAST(cteINVENTORY.STORE_ID AS VARCHAR), '#@#@#@#@#'), 256) AS BINARY(32)) AS WarehouseHashFK,
+    SHA2(COALESCE(CAST(cteINVENTORY.INVENTORY_ID AS VARCHAR), '#@#@#@#@#'), 256) AS InventorySnapshotHashPK,
+    SHA2(COALESCE(CAST(cteINVENTORY.UPDATED_AT AS VARCHAR), '#@#@#@#@#'), 256) AS DateHashFK,
+    SHA2(COALESCE(CAST(cteINVENTORY.PRODUCT_ID AS VARCHAR), '#@#@#@#@#'), 256) AS ProductHashFK,
+    SHA2(COALESCE(CAST(cteINVENTORY.STORE_ID AS VARCHAR), '#@#@#@#@#'), 256) AS WarehouseHashFK,
     cteINVENTORY.QUANTITY_ON_HAND AS QuantityOnHand,
     CAST(NULL AS INT) AS QuantityReserved, -- not available in source
     CAST(NULL AS INT) AS QuantityAvailable, -- not available in source

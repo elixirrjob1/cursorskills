@@ -159,7 +159,8 @@ models:
         tests:
           - not_null
           - accepted_values:
-              values: ['Y', 'N']
+              arguments:
+                values: ['Y', 'N']
       - name: CreatedDateTime
         description: "Timestamp when this version was first created in the warehouse."
         tests:
@@ -191,7 +192,8 @@ models:
         tests:
           - not_null
           - accepted_values:
-              values: ['Data Condition 1']
+              arguments:
+                values: ['Data Condition 1']
   - name: vw_DimStore
     description: "View layer for DimStore — transformation logic from bronze source. Retail store locations with geographic hierarchy (Region > District > Store)."
     columns:
@@ -404,7 +406,8 @@ models:
         tests:
           - not_null
           - accepted_values:
-              values: ['Y', 'N']
+              arguments:
+                values: ['Y', 'N']
       - name: CreatedDateTime
         description: "Timestamp when this version was first created in the warehouse."
         tests:
@@ -438,7 +441,8 @@ models:
         tests:
           - not_null
           - accepted_values:
-              values: ['Data Condition 1']
+              arguments:
+                values: ['Data Condition 1']
   - name: vw_DimSupplier
     description: "View layer for DimSupplier — transformation logic from bronze source. Supplier master with contact information and payment terms."
     columns:

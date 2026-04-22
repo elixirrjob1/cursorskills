@@ -16,8 +16,8 @@ WITH cteSUPPLIERS AS (
 )
 
 SELECT
-    SHA2(COALESCE(CAST(SUPPLIER_ID AS VARCHAR), '#@#@#@#@#'), 256) AS SupplierHashPK,
-    SHA2(COALESCE(CAST(SUPPLIER_ID AS VARCHAR), '#@#@#@#@#'), 256) AS SupplierHashBK,
+    SHA2_BINARY(COALESCE(CAST(SUPPLIER_ID AS VARCHAR), '#@#@#@#@#'), 256) AS SupplierHashPK,
+    SHA2_BINARY(COALESCE(CAST(SUPPLIER_ID AS VARCHAR), '#@#@#@#@#'), 256) AS SupplierHashBK,
     NAME AS SupplierName,
     CAST(NULL AS VARCHAR(100)) AS SupplierDBAName, -- not available in source
     CONTACT_NAME AS ContactName,
@@ -35,7 +35,7 @@ SELECT
     CAST(NULL AS DECIMAL(19,4)) AS MinimumOrderAmount, -- not available in source
     CAST(NULL AS BOOLEAN) AS IsActive, -- not available in source
     CAST(NULL AS BOOLEAN) AS IsPreferred, -- not available in source
-    SHA2(
+    SHA2_BINARY(
         COALESCE(CAST(NAME AS VARCHAR), '#@#@#@#@#')
         || '|' || COALESCE(CAST(CONTACT_NAME AS VARCHAR), '#@#@#@#@#')
         || '|' || COALESCE(CAST(EMAIL AS VARCHAR), '#@#@#@#@#')

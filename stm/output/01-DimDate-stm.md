@@ -62,7 +62,7 @@ Definitions are included only when they are present in the analyzer JSON.
 ## 7. Field-Level Mapping Matrix
 | Target Table | Target Column | Data Type | Field Type | Source System | Source Table | Source Column(s) | Transformation / Business Rule | Nullable? | Default / Fallback | Description |
 |--------------|---------------|-----------|------------|---------------|--------------|------------------|--------------------------------|-----------|--------------------|-------------|
-| DimDate | DateHashPK | INT | Primary Key | Snowflake |  |  | SHA2(COALESCE(CAST({SOURCE_COL} AS VARCHAR), '#@#@#@#@#'), 256) | NO |  | Surrogate primary key for date dimension |
+| DimDate | DateHashPK | INT | Primary Key | Snowflake |  |  | SHA2_BINARY(COALESCE(CAST({SOURCE_COL} AS VARCHAR), '#@#@#@#@#'), 256) | NO |  | Surrogate primary key for date dimension |
 | DimDate | DateValue | DATE | Attribute | Snowflake |  |  |  | NO |  | Actual calendar date value |
 | DimDate | DateKey | INT | Attribute | Snowflake |  |  |  | NO |  | Integer date key in YYYYMMDD format for partitioning |
 | DimDate | DayOfWeek | INT | Attribute | Snowflake |  |  |  | NO |  | Day of week number (1=Sunday, 7=Saturday) |

@@ -43,15 +43,15 @@ ctePRODUCTS AS (
 )
 
 SELECT
-    SHA2(
+    SHA2_BINARY(
         COALESCE(CAST(cteSALES_ORDER_ITEMS.SALES_ORDER_ID AS VARCHAR), '#@#@#@#@#')
         || '|' || COALESCE(CAST(SALES_ORDER_ITEM_ID AS VARCHAR), '#@#@#@#@#')
     , 256) AS SalesHashPK,
-    SHA2(COALESCE(CAST(CAST(ORDER_DATE AS DATE) AS VARCHAR), '#@#@#@#@#'), 256) AS DateHashFK,
-    SHA2(COALESCE(CAST(cteSALES_ORDER_ITEMS.PRODUCT_ID AS VARCHAR), '#@#@#@#@#'), 256) AS ProductHashFK,
-    SHA2(COALESCE(CAST(STORE_ID AS VARCHAR), '#@#@#@#@#'), 256) AS StoreHashFK,
-    IFF(CUSTOMER_ID IS NULL, NULL, SHA2(COALESCE(CAST(CUSTOMER_ID AS VARCHAR), '#@#@#@#@#'), 256)) AS CustomerHashFK,
-    IFF(EMPLOYEE_ID IS NULL, NULL, SHA2(COALESCE(CAST(EMPLOYEE_ID AS VARCHAR), '#@#@#@#@#'), 256)) AS EmployeeHashFK,
+    SHA2_BINARY(COALESCE(CAST(CAST(ORDER_DATE AS DATE) AS VARCHAR), '#@#@#@#@#'), 256) AS DateHashFK,
+    SHA2_BINARY(COALESCE(CAST(cteSALES_ORDER_ITEMS.PRODUCT_ID AS VARCHAR), '#@#@#@#@#'), 256) AS ProductHashFK,
+    SHA2_BINARY(COALESCE(CAST(STORE_ID AS VARCHAR), '#@#@#@#@#'), 256) AS StoreHashFK,
+    IFF(CUSTOMER_ID IS NULL, NULL, SHA2_BINARY(COALESCE(CAST(CUSTOMER_ID AS VARCHAR), '#@#@#@#@#'), 256)) AS CustomerHashFK,
+    IFF(EMPLOYEE_ID IS NULL, NULL, SHA2_BINARY(COALESCE(CAST(EMPLOYEE_ID AS VARCHAR), '#@#@#@#@#'), 256)) AS EmployeeHashFK,
     CAST(cteSALES_ORDER_ITEMS.SALES_ORDER_ID AS VARCHAR(20)) AS TransactionNumber,
     SALES_ORDER_ITEM_ID AS TransactionLineNumber,
     CAST(NULL AS VARCHAR(10)) AS TransactionType, -- not available in source
@@ -67,7 +67,7 @@ SELECT
     CAST(NULL AS BOOLEAN) AS IsPromotion, -- not available in source
     CAST(NULL AS VARCHAR(20)) AS PromotionCode, -- not available in source
     CAST(NULL AS VARCHAR(20)) AS PaymentMethod, -- not available in source
-    SHA2(
+    SHA2_BINARY(
         COALESCE(CAST(cteSALES_ORDER_ITEMS.SALES_ORDER_ID AS VARCHAR), '#@#@#@#@#')
         || '|' || COALESCE(CAST(SALES_ORDER_ITEM_ID AS VARCHAR), '#@#@#@#@#')
         || '|' || COALESCE(CAST(QUANTITY AS VARCHAR), '#@#@#@#@#')

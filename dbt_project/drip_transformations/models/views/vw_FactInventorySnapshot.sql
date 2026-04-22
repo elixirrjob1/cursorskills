@@ -29,10 +29,10 @@ ctePRODUCTS AS (
 )
 
 SELECT
-    SHA2(COALESCE(CAST(cteINVENTORY.INVENTORY_ID AS VARCHAR), '#@#@#@#@#'), 256) AS InventorySnapshotHashPK,
-    SHA2(COALESCE(CAST(cteINVENTORY.UPDATED_AT AS VARCHAR), '#@#@#@#@#'), 256) AS DateHashFK,
-    SHA2(COALESCE(CAST(cteINVENTORY.PRODUCT_ID AS VARCHAR), '#@#@#@#@#'), 256) AS ProductHashFK,
-    SHA2(COALESCE(CAST(cteINVENTORY.STORE_ID AS VARCHAR), '#@#@#@#@#'), 256) AS WarehouseHashFK,
+    SHA2_BINARY(COALESCE(CAST(cteINVENTORY.INVENTORY_ID AS VARCHAR), '#@#@#@#@#'), 256) AS InventorySnapshotHashPK,
+    SHA2_BINARY(COALESCE(CAST(cteINVENTORY.UPDATED_AT AS VARCHAR), '#@#@#@#@#'), 256) AS DateHashFK,
+    SHA2_BINARY(COALESCE(CAST(cteINVENTORY.PRODUCT_ID AS VARCHAR), '#@#@#@#@#'), 256) AS ProductHashFK,
+    SHA2_BINARY(COALESCE(CAST(cteINVENTORY.STORE_ID AS VARCHAR), '#@#@#@#@#'), 256) AS WarehouseHashFK,
     cteINVENTORY.QUANTITY_ON_HAND AS QuantityOnHand,
     CAST(NULL AS INT) AS QuantityReserved, -- not available in source
     CAST(NULL AS INT) AS QuantityAvailable, -- not available in source
@@ -43,7 +43,7 @@ SELECT
     CAST(NULL AS INT) AS DaysOfSupply, -- not available in source
     ctePRODUCTS.COST_PRICE AS UnitCost,
     cteINVENTORY.STOCK_VALUE AS InventoryValue,
-    SHA2(
+    SHA2_BINARY(
         COALESCE(CAST(cteINVENTORY.QUANTITY_ON_HAND AS VARCHAR), '#@#@#@#@#')
         || '|' || COALESCE(CAST(cteINVENTORY.REORDER_LEVEL AS VARCHAR), '#@#@#@#@#')
         || '|' || COALESCE(CAST(ctePRODUCTS.COST_PRICE AS VARCHAR), '#@#@#@#@#')

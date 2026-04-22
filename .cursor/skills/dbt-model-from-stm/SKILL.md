@@ -78,9 +78,9 @@ Before writing SQL, determine whether this is an SCD Type 2 STM. It IS Type 2 if
 - Section 7 target columns include all of `EffectiveStartDateTime`, `EffectiveEndDateTime`, `CurrentFlagYN`.
 - Section 8 lists rule `BR12 — Type 2 Metadata`.
 
-If Type 2 → follow the **SCD Type 2 Handling (Ajay Kalyan multi-CTE pattern)** section of SKILL.md. Use the 5-CTE pipeline (`cte_prep` → `cte_prep_hash` → `cte_prep_hash_lag` → `cte_row_reduce` → `fin`), `HASH()` for keys (→ NUMBER(38,0)), `SHA2_BINARY()` for Hashbytes (→ BINARY), Fivetran history-mode columns for Type 2 windowing, and `materialized='table'` for the enriched model.
+If Type 2 → follow the **SCD Type 2 Handling (Ajay Kalyan multi-CTE pattern)** section of SKILL.md. Use the 5-CTE pipeline (`cte_prep` → `cte_prep_hash` → `cte_prep_hash_lag` → `cte_row_reduce` → `fin`), `SHA2_BINARY()` for keys and Hashbytes (→ BINARY(32)), Fivetran history-mode columns for Type 2 windowing, and `materialized='table'` for the enriched model.
 
-Otherwise (Type 1 / non-SCD) → follow the Type 1 pattern described below in this prompt (single `cte<TABLE>` with QUALIFY, SHA2 VARCHAR(64) keys, `materialized='incremental'` on `LoadTimestamp`).
+Otherwise (Type 1 / non-SCD) → follow the Type 1 pattern described below in this prompt (single `cte<TABLE>` with QUALIFY, `SHA2_BINARY` BINARY(32) keys, `materialized='incremental'` on `LoadTimestamp`).
 
 You must produce TWO files:
 
@@ -121,18 +121,18 @@ Rules for the view (Type 1 — use the Type 2 section of SKILL.md if Step 0 dete
 - Do NOT add a separate LatestRank column + WHERE LatestRank = 1 filter. QUALIFY replaces that pattern entirely.
 - If no ordering column exists, omit QUALIFY and add a `-- NOTE: no deduplication column available` comment.
 
-**Hash key generation (SHA2 + COALESCE sentinel, VARCHAR(64) output):**
-- All HashPK, HashBK, HashFK columns use plain `SHA2` — returns 64-char hex VARCHAR:
-    SHA2(COALESCE(CAST(col AS VARCHAR), '#@#@#@#@#'), 256)
+**Hash key generation (SHA2_BINARY + COALESCE sentinel, BINARY(32) output):**
+- All HashPK, HashBK, HashFK columns use `SHA2_BINARY(..., 256)` — returns raw 32-byte BINARY:
+    SHA2_BINARY(COALESCE(CAST(col AS VARCHAR), '#@#@#@#@#'), 256)
 - For composite keys, concatenate with '|' delimiters:
-    SHA2(COALESCE(CAST(col1 AS VARCHAR), '#@#@#@#@#') || '|' || COALESCE(CAST(col2 AS VARCHAR), '#@#@#@#@#'), 256)
-- Nullable FKs: wrap in IFF(col IS NULL, NULL, SHA2(...))
-- Do NOT use MD5. Always use SHA2 with digest size 256.
-- Do NOT wrap in `CAST(... AS BINARY(32))` or `SHA2_BINARY`. The team convention is human-readable hex stored as `VARCHAR(64)`. Casting to `BINARY` depends on the session `BINARY_INPUT_FORMAT` and can silently truncate.
+    SHA2_BINARY(COALESCE(CAST(col1 AS VARCHAR), '#@#@#@#@#') || '|' || COALESCE(CAST(col2 AS VARCHAR), '#@#@#@#@#'), 256)
+- Nullable FKs: wrap in IFF(col IS NULL, NULL, SHA2_BINARY(...))
+- Do NOT use MD5 or plain `SHA2` (hex VARCHAR). Always use `SHA2_BINARY` with digest size 256 — the output is `BINARY(32)`.
+- `SHA2_BINARY` is a dedicated Snowflake function, not a cast, so it is NOT affected by the session `BINARY_INPUT_FORMAT` warning that applies to `CAST(...AS BINARY)`.
 
 **Hashbytes change detection column:**
-- Add a `hashbytes` column as the last column before any audit/metadata fields.
-- It must be SHA2(256) of sourced attribute columns concatenated with '|' and COALESCE sentinel.
+- Add a `Hashbytes` column as the last column before any audit/metadata fields.
+- It must be `SHA2_BINARY(..., 256)` of sourced attribute columns concatenated with '|' and COALESCE sentinel. Output is `BINARY(32)`.
 - Include ONLY columns that have a real source mapping (Source Table + Source Column in the STM).
 - EXCLUDE unmapped columns (hardcoded defaults, NULLs with no source) — they never change so add no detection value.
 - EXCLUDE HashPK, HashBK, HashFK, and audit/metadata fields.
@@ -142,7 +142,7 @@ Rules for the view (Type 1 — use the Type 2 section of SKILL.md if Step 0 dete
   Use them directly — columns are referenced WITHOUT a table/CTE prefix since there's only one CTE per dimension.
   For example, if Transformation = "CAST(QUANTITY * UNIT_PRICE AS DECIMAL(19,4))",
   write: CAST(QUANTITY * UNIT_PRICE AS DECIMAL(19,4)).
-  HOWEVER: if the STM transformation uses MD5(), replace it with the SHA2 pattern above.
+  HOWEVER: if the STM transformation uses MD5() or plain SHA2(), replace it with the SHA2_BINARY pattern above.
 - **Output aliases must match the STM's `Target Column` EXACTLY — PascalCase, verbatim.**
   Examples: `AS EmployeeHashPK`, `AS FirstName`, `AS HomeStoreHashFK`, `AS LoadTimestamp`, `AS Hashbytes`.
   DO NOT snake_case the alias (no `employee_hash_pk`, no `first_name`). Copy the STM column name as-is.
@@ -306,8 +306,14 @@ fin AS (
     -- 5. Project final Type 2 row with Ajay's standard column ordering:
     --    keys -> business attributes -> Type 2 metadata -> audit -> source -> Hashbytes -> DataCondition.
     SELECT
-        HASH(IFNULL(CAST(<BUSINESS_KEY> AS VARCHAR), '#@#@#@#@#'), SourceSystemCode) AS <Entity>HashPK,
-        HASH(IFNULL(CAST(<NATURAL_KEY> AS VARCHAR), '#@#@#@#@#'), SourceSystemCode) AS <Entity>HashBK,
+        SHA2_BINARY(
+            COALESCE(CAST(<BUSINESS_KEY> AS VARCHAR), '#@#@#@#@#')
+            || '|' || COALESCE(CAST(SourceSystemCode AS VARCHAR), '#@#@#@#@#')
+        , 256) AS <Entity>HashPK,
+        SHA2_BINARY(
+            COALESCE(CAST(<NATURAL_KEY> AS VARCHAR), '#@#@#@#@#')
+            || '|' || COALESCE(CAST(SourceSystemCode AS VARCHAR), '#@#@#@#@#')
+        , 256) AS <Entity>HashBK,
         <business attribute SELECTs, mirroring the STM Final section>,
         CAST(EffectiveStartDateTimeUTC AS TIMESTAMP_TZ) AS EffectiveStartDateTime,
         CAST(COALESCE(LeadEffectiveStartDateTimeUTC, EffectiveEndDateTimeRaw) AS TIMESTAMP_TZ)
@@ -331,20 +337,20 @@ fin AS (
 SELECT * FROM fin
 ```
 
-### Type 2 key & hash conventions (differ from Type 1)
+### Type 2 key & hash conventions (unified with Type 1)
 
-Type 2 models follow **Ajay's** convention, which differs from the Type 1 convention earlier in this skill:
+Type 1 and Type 2 models now share the same hashing convention:
 
-| Column class | Type 1 | Type 2 |
-|---|---|---|
-| `*HashPK`, `*HashBK`, `*HashFK` | `SHA2(..., 256)` → `VARCHAR(64)` | `HASH(<col>, 'ERP')` → `NUMBER(38,0)` (Snowflake native 64-bit) |
-| `Hashbytes` (change detection) | `SHA2(..., 256)` → `VARCHAR(64)` | `SHA2_BINARY(..., 256)` → `BINARY` |
+| Column class | Both Type 1 and Type 2 |
+|---|---|
+| `*HashPK`, `*HashBK`, `*HashFK` | `SHA2_BINARY(..., 256)` → `BINARY(32)` |
+| `Hashbytes` (change detection) | `SHA2_BINARY(..., 256)` → `BINARY(32)` |
 
-`HASH()` and `SHA2_BINARY()` are both Snowflake-native and do not depend on the session `BINARY_INPUT_FORMAT` (the warning against `CAST(... AS BINARY)` does **not** apply — these are dedicated functions, not casts). Always match the STM's `Data Type` column:
-- STM says `NUMBER(38,0)` for `*Hash*` → use `HASH(...)`.
-- STM says `BINARY` for `Hashbytes` → use `SHA2_BINARY(...)`.
+`SHA2_BINARY()` is a dedicated Snowflake function (not a cast) and is not affected by the session `BINARY_INPUT_FORMAT` warning that applies to `CAST(...AS BINARY)`. Always use it with digest size `256`.
 
-Do NOT mix conventions within a single view.
+Composite keys concatenate inputs with `'|'` delimiters, each wrapped in `COALESCE(..., '#@#@#@#@#')`.
+
+Nullable FKs wrap the expression in `IFF(col IS NULL, NULL, SHA2_BINARY(...))`.
 
 ### Fivetran history-mode awareness
 
@@ -411,16 +417,16 @@ These rules apply to every view model generated by subagents.
 
 ### Hash Key Pattern (Snowflake)
 
-All hash-based keys use plain **`SHA2`** with digest size 256 and COALESCE sentinel values for NULL safety. `SHA2(..., 256)` returns `VARCHAR(64)` hex, which is the team's standard storage type for hash columns:
+All hash-based keys use **`SHA2_BINARY`** with digest size 256 and COALESCE sentinel values for NULL safety. `SHA2_BINARY(..., 256)` returns a raw 32-byte `BINARY(32)` digest:
 
 ```sql
-SHA2(
+SHA2_BINARY(
     COALESCE(CAST(source_col AS VARCHAR), '#@#@#@#@#')
     || '|' || COALESCE(CAST(source_system_code AS VARCHAR), '#@#@#@#@#')
 , 256)
 ```
 
-> **Do not cast to `BINARY(32)`** (neither `CAST(SHA2(...) AS BINARY(32))` nor `SHA2_BINARY(...)`). Snowflake's `BINARY_INPUT_FORMAT` session parameter can be `HEX` or `BASE64` depending on the account, so `VARCHAR→BINARY` casts are not portable. Keeping hash columns as `VARCHAR(64)` is human-readable, portable, and dodges the issue entirely.
+> `SHA2_BINARY` is a dedicated Snowflake function (not a cast) and is **not** affected by the session `BINARY_INPUT_FORMAT` warning that applies to `CAST(... AS BINARY)`. Do NOT use plain `SHA2` (hex VARCHAR) or `MD5`.
 
 When a hash key is derived from multiple columns, concatenate them with `'|'` delimiters, each wrapped in `COALESCE(..., '#@#@#@#@#')`.
 
@@ -428,17 +434,17 @@ When a hash key is derived from multiple columns, concatenate them with `'|'` de
 
 | Key suffix | Purpose | Derivation |
 |---|---|---|
-| `HashPK` | Surrogate primary key | `SHA2(..., 256)` of source business key column(s) + source system code, stored as `VARCHAR(64)` |
-| `HashBK` | Business key | `SHA2(..., 256)` of source natural key + source system code, stored as `VARCHAR(64)` |
-| `HashFK` | Foreign key | Same derivation as the referenced dimension's HashPK. Wrap in `IFF(col IS NULL, NULL, ...)` when nullable. `VARCHAR(64)`. |
-| `Hashbytes` | Change detection | `SHA2` (VARCHAR hex) of **sourced descriptive/attribute columns** concatenated. Used for SCD and incremental change comparison. Stays VARCHAR — no BINARY cast. |
+| `HashPK` | Surrogate primary key | `SHA2_BINARY(..., 256)` of source business key column(s) + source system code → `BINARY(32)` |
+| `HashBK` | Business key | `SHA2_BINARY(..., 256)` of source natural key + source system code → `BINARY(32)` |
+| `HashFK` | Foreign key | Same derivation as the referenced dimension's HashPK. Wrap in `IFF(col IS NULL, NULL, ...)` when nullable. `BINARY(32)`. |
+| `Hashbytes` | Change detection | `SHA2_BINARY(..., 256)` of **sourced descriptive/attribute columns** concatenated. Used for SCD and incremental change comparison. `BINARY(32)`. |
 
 ### Hashbytes Change Detection Column
 
-Every view must include a `hashbytes` column as the **last column before audit/metadata fields**. It concatenates all non-key, non-audit attribute columns:
+Every view must include a `Hashbytes` column as the **last column before audit/metadata fields**. It concatenates all non-key, non-audit attribute columns:
 
 ```sql
-SHA2(
+SHA2_BINARY(
     COALESCE(CAST(attr_col_1 AS VARCHAR), '#@#@#@#@#')
     || '|' || COALESCE(CAST(attr_col_2 AS VARCHAR), '#@#@#@#@#')
     || '|' || COALESCE(CAST(attr_col_N AS VARCHAR), '#@#@#@#@#')

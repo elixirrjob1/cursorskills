@@ -271,9 +271,9 @@ def _to_snowflake_type(data_type: str, column_name: str = "") -> str:
         return data_type
     raw = data_type.strip()
     upper = raw.upper()
-    # Hash columns are SHA2(..., 256) hex -> exactly 64 chars.
-    if column_name.endswith(("HashPK", "HashBK", "HashFK")):
-        return "VARCHAR(64)"
+    # Hash columns use SHA2_BINARY(..., 256) -> BINARY(32) (raw 32-byte digest).
+    if column_name.endswith(("HashPK", "HashBK", "HashFK", "Hashbytes")):
+        return "BINARY(32)"
     if upper == "BIGINT":
         return "NUMBER(38,0)"
     if upper == "VARBINARY" or upper.startswith("VARBINARY("):
@@ -293,14 +293,14 @@ def _column_transformation_logic(column: ColumnDef, table: TableDef) -> str:
     data_type = column.data_type
 
     if name.endswith("HashPK"):
-        return "SHA2(COALESCE(CAST({SOURCE_COL} AS VARCHAR), '#@#@#@#@#'), 256)"
+        return "SHA2_BINARY(COALESCE(CAST({SOURCE_COL} AS VARCHAR), '#@#@#@#@#'), 256)"
     if name.endswith("HashBK"):
-        return "SHA2(COALESCE(CAST({SOURCE_COL} AS VARCHAR), '#@#@#@#@#'), 256)"
+        return "SHA2_BINARY(COALESCE(CAST({SOURCE_COL} AS VARCHAR), '#@#@#@#@#'), 256)"
     if name.endswith("HashFK"):
         nullable = column.nullable.upper() == "YES"
         if nullable:
-            return "IFF({SOURCE_COL} IS NULL, NULL, SHA2(COALESCE(CAST({SOURCE_COL} AS VARCHAR), '#@#@#@#@#'), 256))"
-        return "SHA2(COALESCE(CAST({SOURCE_COL} AS VARCHAR), '#@#@#@#@#'), 256)"
+            return "IFF({SOURCE_COL} IS NULL, NULL, SHA2_BINARY(COALESCE(CAST({SOURCE_COL} AS VARCHAR), '#@#@#@#@#'), 256))"
+        return "SHA2_BINARY(COALESCE(CAST({SOURCE_COL} AS VARCHAR), '#@#@#@#@#'), 256)"
 
     if "scd type 2 row effective start date" in lower:
         return "CAST({SOURCE_COL} AS DATE)"
@@ -313,7 +313,7 @@ def _column_transformation_logic(column: ColumnDef, table: TableDef) -> str:
         return f"CAST({{SOURCE_COL}} AS {data_type})"
 
     if "foreign key to" in lower:
-        return "SHA2(COALESCE(CAST({SOURCE_COL} AS VARCHAR), '#@#@#@#@#'), 256)"
+        return "SHA2_BINARY(COALESCE(CAST({SOURCE_COL} AS VARCHAR), '#@#@#@#@#'), 256)"
 
     normalized = desc.replace(" ", "").lower()
     if "calculated billable amount" in lower and "billablehours*billrate" in normalized:

@@ -9,8 +9,8 @@ WITH cteWAREHOUSE_SEED AS (
 )
 
 SELECT
-    SHA2(COALESCE(CAST(warehouse_code AS VARCHAR), '#@#@#@#@#'), 256) AS WarehouseHashPK,
-    SHA2(COALESCE(CAST(warehouse_code AS VARCHAR), '#@#@#@#@#'), 256) AS WarehouseHashBK,
+    SHA2_BINARY(COALESCE(CAST(warehouse_code AS VARCHAR), '#@#@#@#@#'), 256) AS WarehouseHashPK,
+    SHA2_BINARY(COALESCE(CAST(warehouse_code AS VARCHAR), '#@#@#@#@#'), 256) AS WarehouseHashBK,
     CAST(NULL AS VARCHAR(100)) AS WarehouseName, -- not available in source
     CAST(NULL AS VARCHAR(20)) AS WarehouseType, -- not available in source
     CAST(NULL AS VARCHAR(200)) AS StreetAddress, -- not available in source
@@ -24,7 +24,7 @@ SELECT
     CAST(NULL AS VARCHAR(50)) AS RegionName, -- not available in source
     CAST(NULL AS INT) AS TotalCapacityUnits, -- not available in source
     CAST(NULL AS BOOLEAN) AS IsActive, -- not available in source
-    CAST(NULL AS VARCHAR(64)) AS Hashbytes, -- no source-mapped attributes; nothing to detect changes on
+    CAST(NULL AS BINARY(32)) AS Hashbytes, -- no source-mapped attributes; nothing to detect changes on
     CAST(0 AS INT) AS EtlBatchId, -- not available in source
     '1900-01-01'::TIMESTAMP_NTZ AS LoadTimestamp
 FROM cteWAREHOUSE_SEED

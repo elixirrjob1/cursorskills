@@ -61,8 +61,14 @@ cte_row_reduce AS (
 
 fin AS (
     SELECT
-        HASH(COALESCE(CAST(PRODUCT_ID AS VARCHAR), '#@#@#@#@#'), SourceSystemCode) AS ProductHashPK,
-        HASH(COALESCE(CAST(SKU        AS VARCHAR), '#@#@#@#@#'), SourceSystemCode) AS ProductHashBK,
+        SHA2_BINARY(
+            COALESCE(CAST(PRODUCT_ID AS VARCHAR), '#@#@#@#@#')
+            || '|' || COALESCE(CAST(SourceSystemCode AS VARCHAR), '#@#@#@#@#')
+        , 256) AS ProductHashPK,
+        SHA2_BINARY(
+            COALESCE(CAST(SKU AS VARCHAR), '#@#@#@#@#')
+            || '|' || COALESCE(CAST(SourceSystemCode AS VARCHAR), '#@#@#@#@#')
+        , 256) AS ProductHashBK,
         CAST(NULL AS VARCHAR(10)) AS BrandCode, -- not available in source
         CAST(NULL AS VARCHAR(50)) AS BrandName, -- not available in source
         CAST(NULL AS VARCHAR(10)) AS CategoryCode, -- not available in source

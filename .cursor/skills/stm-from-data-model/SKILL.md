@@ -91,10 +91,11 @@ When the target data model specifies a data type that is not natively supported 
 |---|---|
 | `BIGINT` | `NUMBER(38,0)` |
 | `VARBINARY`, `VARBINARY(n)` | `BINARY` |
-| Hash columns (`HashPK`, `HashBK`, `HashFK`) | `VARCHAR(64)` (stores `SHA2(..., 256)` hex output) |
+| Hash columns (`HashPK`, `HashBK`, `HashFK`, `Hashbytes`) | `BINARY(32)` (stores raw 32-byte digest from `SHA2_BINARY(..., 256)`) |
 
 Notes:
-- Hash columns are hex output of `SHA2(..., 256)`, which is exactly 64 characters, so `VARCHAR(64)` is the correct storage type. Do **not** use `BINARY(32)` — a `VARCHAR→BINARY` cast depends on the session `BINARY_INPUT_FORMAT` (Base64 vs Hex) and can silently truncate.
+- Hash columns use `SHA2_BINARY(..., 256)` which returns a native 32-byte `BINARY` value. `SHA2_BINARY` is a dedicated Snowflake function (not a cast), so it does **not** depend on the session `BINARY_INPUT_FORMAT` — it is portable and safe.
+- Do NOT use `VARCHAR(64)`/hex or `MD5`. The team standard is `BINARY(32)` via `SHA2_BINARY(..., 256)`.
 - Leave already-supported Snowflake types unchanged (`NUMBER(p,s)`, `VARCHAR(n)`, `DATE`, `TIMESTAMP_*`, `BOOLEAN`, etc.).
 - Add new source→Snowflake mappings to this table as new source systems are onboarded; do not guess.
 

@@ -69,15 +69,15 @@ cte_row_reduce AS (
 fin AS (
 
     SELECT
-        HASH(
-            IFNULL(CAST(CUSTOMER_ID AS VARCHAR), '#@#@#@#@#'),
-            SourceSystemCode
-        ) AS CustomerHashPK,
+        SHA2_BINARY(
+            COALESCE(CAST(CUSTOMER_ID AS VARCHAR), '#@#@#@#@#')
+            || '|' || COALESCE(CAST(SourceSystemCode AS VARCHAR), '#@#@#@#@#')
+        , 256) AS CustomerHashPK,
 
-        HASH(
-            IFNULL(CAST(CUSTOMER_ID AS VARCHAR), '#@#@#@#@#'),
-            SourceSystemCode
-        ) AS CustomerHashBK,
+        SHA2_BINARY(
+            COALESCE(CAST(CUSTOMER_ID AS VARCHAR), '#@#@#@#@#')
+            || '|' || COALESCE(CAST(SourceSystemCode AS VARCHAR), '#@#@#@#@#')
+        , 256) AS CustomerHashBK,
 
         CAST(NULL AS VARCHAR(50))          AS AcquisitionChannel, -- not available in source
         CAST(CREATED_AT AS DATE)           AS AcquisitionDate,

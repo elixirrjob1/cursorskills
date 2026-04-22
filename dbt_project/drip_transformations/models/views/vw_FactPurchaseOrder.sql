@@ -32,15 +32,15 @@ ctePURCHASE_ORDERS AS (
 )
 
 SELECT
-    SHA2(COALESCE(CAST(ctePURCHASE_ORDER_ITEMS.PO_ID AS VARCHAR), '#@#@#@#@#') || '|' || COALESCE(CAST(PO_ITEM_ID AS VARCHAR), '#@#@#@#@#'), 256) AS PurchaseOrderHashPK,
-    SHA2(COALESCE(CAST(PRODUCT_ID AS VARCHAR), '#@#@#@#@#'), 256) AS ProductHashFK,
-    SHA2(COALESCE(CAST(SUPPLIER_ID AS VARCHAR), '#@#@#@#@#'), 256) AS SupplierHashFK,
-    SHA2(COALESCE(CAST(STORE_ID AS VARCHAR), '#@#@#@#@#'), 256) AS WarehouseHashFK,
-    SHA2(COALESCE(CAST(ORDER_DATE AS VARCHAR), '#@#@#@#@#'), 256) AS DateOrderedHashFK,
-    IFF(EXPECTED_DATE IS NULL, NULL, SHA2(COALESCE(CAST(EXPECTED_DATE AS VARCHAR), '#@#@#@#@#'), 256)) AS DateExpectedHashFK,
-    CAST(NULL AS VARCHAR(64)) AS DateShippedHashFK, -- not available in source
-    CAST(NULL AS VARCHAR(64)) AS DateReceivedHashFK, -- not available in source
-    CAST(NULL AS VARCHAR(64)) AS DateInvoicedHashFK, -- not available in source
+    SHA2_BINARY(COALESCE(CAST(ctePURCHASE_ORDER_ITEMS.PO_ID AS VARCHAR), '#@#@#@#@#') || '|' || COALESCE(CAST(PO_ITEM_ID AS VARCHAR), '#@#@#@#@#'), 256) AS PurchaseOrderHashPK,
+    SHA2_BINARY(COALESCE(CAST(PRODUCT_ID AS VARCHAR), '#@#@#@#@#'), 256) AS ProductHashFK,
+    SHA2_BINARY(COALESCE(CAST(SUPPLIER_ID AS VARCHAR), '#@#@#@#@#'), 256) AS SupplierHashFK,
+    SHA2_BINARY(COALESCE(CAST(STORE_ID AS VARCHAR), '#@#@#@#@#'), 256) AS WarehouseHashFK,
+    SHA2_BINARY(COALESCE(CAST(ORDER_DATE AS VARCHAR), '#@#@#@#@#'), 256) AS DateOrderedHashFK,
+    IFF(EXPECTED_DATE IS NULL, NULL, SHA2_BINARY(COALESCE(CAST(EXPECTED_DATE AS VARCHAR), '#@#@#@#@#'), 256)) AS DateExpectedHashFK,
+    CAST(NULL AS BINARY(32)) AS DateShippedHashFK, -- not available in source
+    CAST(NULL AS BINARY(32)) AS DateReceivedHashFK, -- not available in source
+    CAST(NULL AS BINARY(32)) AS DateInvoicedHashFK, -- not available in source
     CAST(ctePURCHASE_ORDERS.PO_ID AS VARCHAR(20)) AS PurchaseOrderNumber,
     PO_ITEM_ID AS PurchaseOrderLineNumber,
     STATUS AS OrderStatus,
@@ -58,7 +58,7 @@ SELECT
     CAST(NULL AS INT) AS DaysInTransit, -- not available in source
     CAST(NULL AS INT) AS DaysToReceive, -- not available in source
     CAST(NULL AS INT) AS DaysToInvoice, -- not available in source
-    SHA2(
+    SHA2_BINARY(
         COALESCE(CAST(ctePURCHASE_ORDERS.PO_ID AS VARCHAR), '#@#@#@#@#')
         || '|' || COALESCE(CAST(PO_ITEM_ID AS VARCHAR), '#@#@#@#@#')
         || '|' || COALESCE(CAST(STATUS AS VARCHAR), '#@#@#@#@#')

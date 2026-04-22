@@ -18,8 +18,8 @@ WITH cteSTORES AS (
 )
 
 SELECT
-    SHA2_BINARY(COALESCE(CAST(STORE_ID AS VARCHAR), '#@#@#@#@#'), 256) AS StoreHashPK,
-    SHA2_BINARY(COALESCE(CAST(CODE AS VARCHAR), '#@#@#@#@#'), 256) AS StoreHashBK,
+    CAST(SHA2_BINARY(COALESCE(CAST(STORE_ID AS VARCHAR), '#@#@#@#@#'), 256) AS BINARY(32)) AS StoreHashPK,
+    CAST(SHA2_BINARY(COALESCE(CAST(CODE AS VARCHAR), '#@#@#@#@#'), 256) AS BINARY(32)) AS StoreHashBK,
     NAME AS StoreName,
     CAST(NULL AS VARCHAR(20)) AS StoreType, -- not available in source
     ADDRESS AS StreetAddress,
@@ -38,13 +38,13 @@ SELECT
     CAST(NULL AS DATE) AS CloseDate, -- not available in source
     CAST(NULL AS INT) AS SquareFootage, -- not available in source
     CAST(NULL AS BOOLEAN) AS IsActive, -- not available in source
-    SHA2_BINARY(
+    CAST(SHA2_BINARY(
         COALESCE(CAST(NAME AS VARCHAR), '#@#@#@#@#')
         || '|' || COALESCE(CAST(ADDRESS AS VARCHAR), '#@#@#@#@#')
         || '|' || COALESCE(CAST(CITY AS VARCHAR), '#@#@#@#@#')
         || '|' || COALESCE(CAST(STATE AS VARCHAR), '#@#@#@#@#')
         || '|' || COALESCE(CAST(POSTAL_CODE AS VARCHAR), '#@#@#@#@#')
-    , 256) AS Hashbytes,
+    , 256) AS BINARY(32)) AS Hashbytes,
     CAST(0 AS INT) AS EtlBatchId, -- not available in source
     _FIVETRAN_SYNCED AS LoadTimestamp
 FROM cteSTORES

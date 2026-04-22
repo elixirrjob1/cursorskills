@@ -103,10 +103,10 @@ Definitions are included only when they are present in the analyzer JSON.
 ## 7. Field-Level Mapping Matrix
 | Target Table | Target Column | Data Type | Field Type | Source System | Source Table | Source Column(s) | Transformation / Business Rule | Nullable? | Default / Fallback | Description |
 |--------------|---------------|-----------|------------|---------------|--------------|------------------|--------------------------------|-----------|--------------------|-------------|
-| FactInventorySnapshot | InventorySnapshotHashPK | INT | Primary Key | Snowflake | INVENTORY | INVENTORY_ID | SHA2_BINARY(COALESCE(CAST(INVENTORY_ID AS VARCHAR), '#@#@#@#@#'), 256) | NO |  | Surrogate primary key for inventory snapshot |
-| FactInventorySnapshot | DateHashFK | INT | Foreign Key | Snowflake | INVENTORY | UPDATED_AT | SHA2_BINARY(COALESCE(CAST(UPDATED_AT AS VARCHAR), '#@#@#@#@#'), 256) | NO |  | Foreign key to date dimension (snapshot date) |
-| FactInventorySnapshot | ProductHashFK | INT | Foreign Key | Snowflake | INVENTORY | PRODUCT_ID | SHA2_BINARY(COALESCE(CAST(PRODUCT_ID AS VARCHAR), '#@#@#@#@#'), 256) | NO |  | Foreign key to product dimension |
-| FactInventorySnapshot | WarehouseHashFK | INT | Foreign Key | Snowflake | INVENTORY | STORE_ID | SHA2_BINARY(COALESCE(CAST(STORE_ID AS VARCHAR), '#@#@#@#@#'), 256) | NO |  | Foreign key to warehouse dimension |
+| FactInventorySnapshot | InventorySnapshotHashPK | INT | Primary Key | Snowflake | INVENTORY | INVENTORY_ID | CAST(SHA2_BINARY(COALESCE(CAST(INVENTORY_ID AS VARCHAR), '#@#@#@#@#'), 256) AS BINARY(32)) | NO |  | Surrogate primary key for inventory snapshot |
+| FactInventorySnapshot | DateHashFK | INT | Foreign Key | Snowflake | INVENTORY | UPDATED_AT | CAST(SHA2_BINARY(COALESCE(CAST(UPDATED_AT AS VARCHAR), '#@#@#@#@#'), 256) AS BINARY(32)) | NO |  | Foreign key to date dimension (snapshot date) |
+| FactInventorySnapshot | ProductHashFK | INT | Foreign Key | Snowflake | INVENTORY | PRODUCT_ID | CAST(SHA2_BINARY(COALESCE(CAST(PRODUCT_ID AS VARCHAR), '#@#@#@#@#'), 256) AS BINARY(32)) | NO |  | Foreign key to product dimension |
+| FactInventorySnapshot | WarehouseHashFK | INT | Foreign Key | Snowflake | INVENTORY | STORE_ID | CAST(SHA2_BINARY(COALESCE(CAST(STORE_ID AS VARCHAR), '#@#@#@#@#'), 256) AS BINARY(32)) | NO |  | Foreign key to warehouse dimension |
 | FactInventorySnapshot | QuantityOnHand | INT | Attribute | Snowflake | INVENTORY | QUANTITY_ON_HAND |  | NO |  | Total quantity physically in warehouse |
 | FactInventorySnapshot | QuantityReserved | INT | Attribute | Snowflake |  |  |  | NO |  | Quantity reserved for pending orders |
 | FactInventorySnapshot | QuantityAvailable | INT | Attribute | Snowflake |  |  |  | NO |  | Quantity available for new orders (OnHand - Reserved) |

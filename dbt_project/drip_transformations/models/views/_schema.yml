@@ -107,11 +107,11 @@ models:
     description: "View layer for DimProduct — Type 2 SCD following Ajay Kalyan's multi-CTE pattern (cte_prep / _hash / _hash_lag / _row_reduce / fin). Uses Fivetran history-mode columns (_FIVETRAN_START / _FIVETRAN_END / _FIVETRAN_ACTIVE) for version windows. Grain: one row per product version, keyed by (ProductHashPK, EffectiveStartDateTime)."
     columns:
       - name: ProductHashPK
-        description: "Surrogate primary key for product dimension version (SHA2_BINARY(PRODUCT_ID + SourceSystemCode))."
+        description: "Surrogate primary key for product dimension version (CAST(SHA2_BINARY(PRODUCT_ID + SourceSystemCode) AS BINARY(32)))."
         tests:
           - not_null
       - name: ProductHashBK
-        description: "Natural business key from source system, hashed (SHA2_BINARY(SKU + SourceSystemCode))."
+        description: "Natural business key from source system, hashed (CAST(SHA2_BINARY(SKU + SourceSystemCode) AS BINARY(32)))."
         tests:
           - not_null
       - name: BrandCode
@@ -350,7 +350,7 @@ models:
     description: "View layer for DimCustomer — Type 2 SCD following Ajay Kalyan's multi-CTE pattern (cte_prep / _hash / _hash_lag / _row_reduce / fin). Uses Fivetran history-mode columns (_FIVETRAN_START / _FIVETRAN_END / _FIVETRAN_ACTIVE) for version windows. Grain: one row per customer version, keyed by (CustomerHashPK, EffectiveStartDateTime)."
     columns:
       - name: CustomerHashPK
-        description: "Surrogate primary key for customer dimension version (SHA2_BINARY(CUSTOMER_ID + SourceSystemCode))."
+        description: "Surrogate primary key for customer dimension version (CAST(SHA2_BINARY(CUSTOMER_ID + SourceSystemCode) AS BINARY(32)))."
         tests:
           - not_null
       - name: CustomerHashBK

@@ -91,11 +91,12 @@ When the target data model specifies a data type that is not natively supported 
 |---|---|
 | `BIGINT` | `NUMBER(38,0)` |
 | `VARBINARY`, `VARBINARY(n)` | `BINARY` |
-| Hash columns (`HashPK`, `HashBK`, `HashFK`, `Hashbytes`) | `BINARY(32)` (stores raw 32-byte digest from `SHA2_BINARY(..., 256)`) |
+| Hash columns (`HashPK`, `HashBK`, `HashFK`, `Hashbytes`) | `BINARY(32)` (stores 32-byte SHA-256 digest from `CAST(SHA2_BINARY(..., 256) AS BINARY(32))`) |
 
 Notes:
-- Hash columns use `SHA2_BINARY(..., 256)` which returns a native 32-byte `BINARY` value. `SHA2_BINARY` is a dedicated Snowflake function (not a cast), so it does **not** depend on the session `BINARY_INPUT_FORMAT` — it is portable and safe.
-- Do NOT use `VARCHAR(64)`/hex or `MD5`. The team standard is `BINARY(32)` via `SHA2_BINARY(..., 256)`.
+- Hash columns use `CAST(SHA2_BINARY(..., 256) AS BINARY(32))`. The explicit `CAST(... AS BINARY(32))` is required because Snowflake's `SHA2_BINARY` function signature returns `BINARY(64)` by default (to cover up to SHA-512) — without the cast the column shows as `BINARY(64)` in the catalog even though the stored bytes are only 32.
+- `CAST(SHA2_BINARY(...) AS BINARY(32))` is a size narrowing on an already-binary value, so it is NOT affected by the session `BINARY_INPUT_FORMAT` (which only applies to `VARCHAR → BINARY` casts).
+- Do NOT use `VARCHAR(64)`/hex or `MD5`. The team standard is `CAST(SHA2_BINARY(..., 256) AS BINARY(32))`.
 - Leave already-supported Snowflake types unchanged (`NUMBER(p,s)`, `VARCHAR(n)`, `DATE`, `TIMESTAMP_*`, `BOOLEAN`, etc.).
 - Add new source→Snowflake mappings to this table as new source systems are onboarded; do not guess.
 

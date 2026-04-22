@@ -7,7 +7,7 @@ WITH cteDATE_SPINE AS (
 )
 
 SELECT
-    SHA2_BINARY(COALESCE(CAST(DateValue AS VARCHAR), '#@#@#@#@#'), 256) AS DateHashPK,
+    CAST(SHA2_BINARY(COALESCE(CAST(DateValue AS VARCHAR), '#@#@#@#@#'), 256) AS BINARY(32)) AS DateHashPK,
     DateValue AS DateValue,
     CAST(TO_CHAR(DateValue, 'YYYYMMDD') AS INT) AS DateKey,
     MOD(DAYOFWEEKISO(DateValue), 7) + 1 AS DayOfWeek,
@@ -53,9 +53,9 @@ SELECT
     (DateValue = LAST_DAY(DateValue)) AS IsLastDayOfMonth,
     (DateValue = LAST_DAY(DateValue, 'QUARTER')) AS IsLastDayOfQuarter,
     (DateValue = LAST_DAY(DateValue, 'YEAR')) AS IsLastDayOfYear,
-    SHA2_BINARY(
+    CAST(SHA2_BINARY(
         COALESCE(CAST(DateValue AS VARCHAR), '#@#@#@#@#')
-    , 256) AS Hashbytes,
+    , 256) AS BINARY(32)) AS Hashbytes,
     CAST(0 AS INT) AS EtlBatchId, -- not available in source
     '1900-01-01'::TIMESTAMP_NTZ AS LoadTimestamp
 FROM cteDATE_SPINE

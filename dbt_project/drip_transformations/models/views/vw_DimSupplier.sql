@@ -16,8 +16,8 @@ WITH cteSUPPLIERS AS (
 )
 
 SELECT
-    SHA2_BINARY(COALESCE(CAST(SUPPLIER_ID AS VARCHAR), '#@#@#@#@#'), 256) AS SupplierHashPK,
-    SHA2_BINARY(COALESCE(CAST(SUPPLIER_ID AS VARCHAR), '#@#@#@#@#'), 256) AS SupplierHashBK,
+    CAST(SHA2_BINARY(COALESCE(CAST(SUPPLIER_ID AS VARCHAR), '#@#@#@#@#'), 256) AS BINARY(32)) AS SupplierHashPK,
+    CAST(SHA2_BINARY(COALESCE(CAST(SUPPLIER_ID AS VARCHAR), '#@#@#@#@#'), 256) AS BINARY(32)) AS SupplierHashBK,
     NAME AS SupplierName,
     CAST(NULL AS VARCHAR(100)) AS SupplierDBAName, -- not available in source
     CONTACT_NAME AS ContactName,
@@ -35,12 +35,12 @@ SELECT
     CAST(NULL AS DECIMAL(19,4)) AS MinimumOrderAmount, -- not available in source
     CAST(NULL AS BOOLEAN) AS IsActive, -- not available in source
     CAST(NULL AS BOOLEAN) AS IsPreferred, -- not available in source
-    SHA2_BINARY(
+    CAST(SHA2_BINARY(
         COALESCE(CAST(NAME AS VARCHAR), '#@#@#@#@#')
         || '|' || COALESCE(CAST(CONTACT_NAME AS VARCHAR), '#@#@#@#@#')
         || '|' || COALESCE(CAST(EMAIL AS VARCHAR), '#@#@#@#@#')
         || '|' || COALESCE(CAST(PHONE AS VARCHAR), '#@#@#@#@#')
-    , 256) AS Hashbytes,
+    , 256) AS BINARY(32)) AS Hashbytes,
     CAST(0 AS INT) AS EtlBatchId, -- not available in source
     _FIVETRAN_SYNCED AS LoadTimestamp
 FROM cteSUPPLIERS

@@ -32,12 +32,12 @@ ctePURCHASE_ORDERS AS (
 )
 
 SELECT
-    SHA2_BINARY(COALESCE(CAST(ctePURCHASE_ORDER_ITEMS.PO_ID AS VARCHAR), '#@#@#@#@#') || '|' || COALESCE(CAST(PO_ITEM_ID AS VARCHAR), '#@#@#@#@#'), 256) AS PurchaseOrderHashPK,
-    SHA2_BINARY(COALESCE(CAST(PRODUCT_ID AS VARCHAR), '#@#@#@#@#'), 256) AS ProductHashFK,
-    SHA2_BINARY(COALESCE(CAST(SUPPLIER_ID AS VARCHAR), '#@#@#@#@#'), 256) AS SupplierHashFK,
-    SHA2_BINARY(COALESCE(CAST(STORE_ID AS VARCHAR), '#@#@#@#@#'), 256) AS WarehouseHashFK,
-    SHA2_BINARY(COALESCE(CAST(ORDER_DATE AS VARCHAR), '#@#@#@#@#'), 256) AS DateOrderedHashFK,
-    IFF(EXPECTED_DATE IS NULL, NULL, SHA2_BINARY(COALESCE(CAST(EXPECTED_DATE AS VARCHAR), '#@#@#@#@#'), 256)) AS DateExpectedHashFK,
+    CAST(SHA2_BINARY(COALESCE(CAST(ctePURCHASE_ORDER_ITEMS.PO_ID AS VARCHAR), '#@#@#@#@#') || '|' || COALESCE(CAST(PO_ITEM_ID AS VARCHAR), '#@#@#@#@#'), 256) AS BINARY(32)) AS PurchaseOrderHashPK,
+    CAST(SHA2_BINARY(COALESCE(CAST(PRODUCT_ID AS VARCHAR), '#@#@#@#@#'), 256) AS BINARY(32)) AS ProductHashFK,
+    CAST(SHA2_BINARY(COALESCE(CAST(SUPPLIER_ID AS VARCHAR), '#@#@#@#@#'), 256) AS BINARY(32)) AS SupplierHashFK,
+    CAST(SHA2_BINARY(COALESCE(CAST(STORE_ID AS VARCHAR), '#@#@#@#@#'), 256) AS BINARY(32)) AS WarehouseHashFK,
+    CAST(SHA2_BINARY(COALESCE(CAST(ORDER_DATE AS VARCHAR), '#@#@#@#@#'), 256) AS BINARY(32)) AS DateOrderedHashFK,
+    IFF(EXPECTED_DATE IS NULL, NULL, CAST(SHA2_BINARY(COALESCE(CAST(EXPECTED_DATE AS VARCHAR), '#@#@#@#@#'), 256) AS BINARY(32))) AS DateExpectedHashFK,
     CAST(NULL AS BINARY(32)) AS DateShippedHashFK, -- not available in source
     CAST(NULL AS BINARY(32)) AS DateReceivedHashFK, -- not available in source
     CAST(NULL AS BINARY(32)) AS DateInvoicedHashFK, -- not available in source
@@ -58,14 +58,14 @@ SELECT
     CAST(NULL AS INT) AS DaysInTransit, -- not available in source
     CAST(NULL AS INT) AS DaysToReceive, -- not available in source
     CAST(NULL AS INT) AS DaysToInvoice, -- not available in source
-    SHA2_BINARY(
+    CAST(SHA2_BINARY(
         COALESCE(CAST(ctePURCHASE_ORDERS.PO_ID AS VARCHAR), '#@#@#@#@#')
         || '|' || COALESCE(CAST(PO_ITEM_ID AS VARCHAR), '#@#@#@#@#')
         || '|' || COALESCE(CAST(STATUS AS VARCHAR), '#@#@#@#@#')
         || '|' || COALESCE(CAST(QUANTITY AS VARCHAR), '#@#@#@#@#')
         || '|' || COALESCE(CAST(UNIT_COST AS VARCHAR), '#@#@#@#@#')
         || '|' || COALESCE(CAST(QUANTITY * UNIT_COST AS VARCHAR), '#@#@#@#@#')
-    , 256) AS Hashbytes,
+    , 256) AS BINARY(32)) AS Hashbytes,
     CAST(0 AS INT) AS EtlBatchId, -- not available in source
     ctePURCHASE_ORDER_ITEMS._FIVETRAN_SYNCED AS LoadTimestamp
 FROM ctePURCHASE_ORDER_ITEMS

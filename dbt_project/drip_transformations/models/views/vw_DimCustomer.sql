@@ -25,14 +25,14 @@ cte_prep_hash AS (
 
     SELECT
         *,
-        SHA2_BINARY(
+        CAST(SHA2_BINARY(
                IFNULL(CAST(CREATED_AT AS VARCHAR), '#@#@#@#@#') || '|'
             || IFNULL(CAST(EMAIL      AS VARCHAR), '#@#@#@#@#') || '|'
             || IFNULL(CAST(FIRST_NAME AS VARCHAR), '#@#@#@#@#') || '|'
             || IFNULL(CAST(LAST_NAME  AS VARCHAR), '#@#@#@#@#') || '|'
             || IFNULL(CAST(PHONE      AS VARCHAR), '#@#@#@#@#')
             , 256
-        ) AS Hashbytes
+        ) AS BINARY(32)) AS Hashbytes
     FROM cte_prep
 
 ),
@@ -69,15 +69,15 @@ cte_row_reduce AS (
 fin AS (
 
     SELECT
-        SHA2_BINARY(
+        CAST(SHA2_BINARY(
             COALESCE(CAST(CUSTOMER_ID AS VARCHAR), '#@#@#@#@#')
             || '|' || COALESCE(CAST(SourceSystemCode AS VARCHAR), '#@#@#@#@#')
-        , 256) AS CustomerHashPK,
+        , 256) AS BINARY(32)) AS CustomerHashPK,
 
-        SHA2_BINARY(
+        CAST(SHA2_BINARY(
             COALESCE(CAST(CUSTOMER_ID AS VARCHAR), '#@#@#@#@#')
             || '|' || COALESCE(CAST(SourceSystemCode AS VARCHAR), '#@#@#@#@#')
-        , 256) AS CustomerHashBK,
+        , 256) AS BINARY(32)) AS CustomerHashBK,
 
         CAST(NULL AS VARCHAR(50))          AS AcquisitionChannel, -- not available in source
         CAST(CREATED_AT AS DATE)           AS AcquisitionDate,

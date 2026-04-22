@@ -23,7 +23,7 @@ WITH cte_prep AS (
 cte_prep_hash AS (
     SELECT
         *,
-        SHA2_BINARY(
+        CAST(SHA2_BINARY(
                IFNULL(CAST(ACTIVE              AS VARCHAR), '#@#@#@#@#') || '|'
             || IFNULL(CAST(CATEGORY            AS VARCHAR), '#@#@#@#@#') || '|'
             || IFNULL(CAST(COST_PRICE          AS VARCHAR), '#@#@#@#@#') || '|'
@@ -31,7 +31,7 @@ cte_prep_hash AS (
             || IFNULL(CAST(PRODUCT_DESCRIPTION AS VARCHAR), '#@#@#@#@#') || '|'
             || IFNULL(CAST(UNIT_PRICE          AS VARCHAR), '#@#@#@#@#')
             , 256
-        ) AS Hashbytes
+        ) AS BINARY(32)) AS Hashbytes
     FROM cte_prep
 ),
 
@@ -61,14 +61,14 @@ cte_row_reduce AS (
 
 fin AS (
     SELECT
-        SHA2_BINARY(
+        CAST(SHA2_BINARY(
             COALESCE(CAST(PRODUCT_ID AS VARCHAR), '#@#@#@#@#')
             || '|' || COALESCE(CAST(SourceSystemCode AS VARCHAR), '#@#@#@#@#')
-        , 256) AS ProductHashPK,
-        SHA2_BINARY(
+        , 256) AS BINARY(32)) AS ProductHashPK,
+        CAST(SHA2_BINARY(
             COALESCE(CAST(SKU AS VARCHAR), '#@#@#@#@#')
             || '|' || COALESCE(CAST(SourceSystemCode AS VARCHAR), '#@#@#@#@#')
-        , 256) AS ProductHashBK,
+        , 256) AS BINARY(32)) AS ProductHashBK,
         CAST(NULL AS VARCHAR(10)) AS BrandCode, -- not available in source
         CAST(NULL AS VARCHAR(50)) AS BrandName, -- not available in source
         CAST(NULL AS VARCHAR(10)) AS CategoryCode, -- not available in source

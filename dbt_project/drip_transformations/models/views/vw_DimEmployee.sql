@@ -18,8 +18,8 @@ WITH cteEMPLOYEES AS (
 )
 
 SELECT
-    SHA2_BINARY(COALESCE(CAST(EMPLOYEE_ID AS VARCHAR), '#@#@#@#@#'), 256) AS EmployeeHashPK,
-    SHA2_BINARY(COALESCE(CAST(EMPLOYEE_ID AS VARCHAR), '#@#@#@#@#'), 256) AS EmployeeHashBK,
+    CAST(SHA2_BINARY(COALESCE(CAST(EMPLOYEE_ID AS VARCHAR), '#@#@#@#@#'), 256) AS BINARY(32)) AS EmployeeHashPK,
+    CAST(SHA2_BINARY(COALESCE(CAST(EMPLOYEE_ID AS VARCHAR), '#@#@#@#@#'), 256) AS BINARY(32)) AS EmployeeHashBK,
     FIRST_NAME AS FirstName,
     LAST_NAME AS LastName,
     TRIM(FIRST_NAME) || ' ' || TRIM(LAST_NAME) AS FullName,
@@ -29,16 +29,16 @@ SELECT
     HIRE_DATE AS HireDate,
     CAST(NULL AS DATE) AS TerminationDate, -- not available in source
     CAST(NULL AS BINARY(32)) AS ManagerEmployeeHashFK, -- not available in source
-    IFF(STORE_ID IS NULL, NULL, SHA2_BINARY(COALESCE(CAST(STORE_ID AS VARCHAR), '#@#@#@#@#'), 256)) AS HomeStoreHashFK,
+    IFF(STORE_ID IS NULL, NULL, CAST(SHA2_BINARY(COALESCE(CAST(STORE_ID AS VARCHAR), '#@#@#@#@#'), 256) AS BINARY(32))) AS HomeStoreHashFK,
     CAST(NULL AS BOOLEAN) AS IsActive, -- not available in source
-    SHA2_BINARY(
+    CAST(SHA2_BINARY(
         COALESCE(CAST(FIRST_NAME AS VARCHAR), '#@#@#@#@#')
         || '|' || COALESCE(CAST(LAST_NAME AS VARCHAR), '#@#@#@#@#')
         || '|' || COALESCE(CAST(EMAIL AS VARCHAR), '#@#@#@#@#')
         || '|' || COALESCE(CAST("ROLE" AS VARCHAR), '#@#@#@#@#')
         || '|' || COALESCE(CAST(HIRE_DATE AS VARCHAR), '#@#@#@#@#')
         || '|' || COALESCE(CAST(STORE_ID AS VARCHAR), '#@#@#@#@#')
-    , 256) AS Hashbytes,
+    , 256) AS BINARY(32)) AS Hashbytes,
     CAST(0 AS INT) AS EtlBatchId, -- not available in source
     _FIVETRAN_SYNCED AS LoadTimestamp
 FROM cteEMPLOYEES

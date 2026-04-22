@@ -9,8 +9,8 @@ WITH cteWAREHOUSE_SEED AS (
 )
 
 SELECT
-    CAST(SHA2_BINARY(COALESCE(CAST(warehouse_code AS VARCHAR), '#@#@#@#@#'), 256) AS BINARY(32)) AS WarehouseHashPK,
-    CAST(SHA2_BINARY(COALESCE(CAST(warehouse_code AS VARCHAR), '#@#@#@#@#'), 256) AS BINARY(32)) AS WarehouseHashBK,
+    HASH(COALESCE(CAST(warehouse_code AS VARCHAR), '#@#@#@#@#')) AS WarehouseHashPK,
+    HASH(COALESCE(CAST(warehouse_code AS VARCHAR), '#@#@#@#@#')) AS WarehouseHashBK,
     CAST(NULL AS VARCHAR(100)) AS WarehouseName, -- not available in source
     CAST(NULL AS VARCHAR(20)) AS WarehouseType, -- not available in source
     CAST(NULL AS VARCHAR(200)) AS StreetAddress, -- not available in source

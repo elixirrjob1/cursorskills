@@ -62,8 +62,8 @@ Definitions are included only when they are present in the analyzer JSON.
 ## 7. Field-Level Mapping Matrix
 | Target Table | Target Column | Data Type | Field Type | Source System | Source Table | Source Column(s) | Transformation / Business Rule | Nullable? | Default / Fallback | Description |
 |--------------|---------------|-----------|------------|---------------|--------------|------------------|--------------------------------|-----------|--------------------|-------------|
-| DimWarehouse | WarehouseHashPK | INT | Primary Key | Snowflake |  |  | CAST(SHA2_BINARY(COALESCE(CAST({SOURCE_COL} AS VARCHAR), '#@#@#@#@#'), 256) AS BINARY(32)) | NO |  | Surrogate primary key for warehouse dimension |
-| DimWarehouse | WarehouseHashBK | VARCHAR(10) | Business Key | Snowflake |  |  | CAST(SHA2_BINARY(COALESCE(CAST({SOURCE_COL} AS VARCHAR), '#@#@#@#@#'), 256) AS BINARY(32)) | NO |  | Natural business key (warehouse code) |
+| DimWarehouse | WarehouseHashPK | NUMBER(19,0) | Primary Key | Snowflake |  |  | HASH(COALESCE(CAST({SOURCE_COL} AS VARCHAR), '#@#@#@#@#')) | NO |  | Surrogate primary key for warehouse dimension |
+| DimWarehouse | WarehouseHashBK | NUMBER(19,0) | Business Key | Snowflake |  |  | HASH(COALESCE(CAST({SOURCE_COL} AS VARCHAR), '#@#@#@#@#')) | NO |  | Natural business key (warehouse code) |
 | DimWarehouse | WarehouseName | VARCHAR(100) | Attribute | Snowflake |  |  |  | NO |  | Warehouse display name |
 | DimWarehouse | WarehouseType | VARCHAR(20) | Attribute | Snowflake |  |  |  | NO |  | Type of warehouse (Distribution Center, Regional, Local) |
 | DimWarehouse | StreetAddress | VARCHAR(200) | Attribute | Snowflake |  |  |  | NO |  | Warehouse street address |

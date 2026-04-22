@@ -271,9 +271,13 @@ def _to_snowflake_type(data_type: str, column_name: str = "") -> str:
         return data_type
     raw = data_type.strip()
     upper = raw.upper()
-    # Hash columns use SHA2_BINARY(..., 256) -> BINARY(32) (raw 32-byte digest).
-    if column_name.endswith(("HashPK", "HashBK", "HashFK", "Hashbytes")):
+    # Hash keys use Snowflake's native HASH() which returns a 64-bit signed integer
+    # declared as NUMBER(19,0) — picked for join performance and partition pruning.
+    # Hashbytes stays BINARY(32) via SHA2_BINARY(..., 256) for strong change-detection collision guarantees.
+    if column_name.endswith("Hashbytes"):
         return "BINARY(32)"
+    if column_name.endswith(("HashPK", "HashBK", "HashFK")):
+        return "NUMBER(19,0)"
     if upper == "BIGINT":
         return "NUMBER(38,0)"
     if upper == "VARBINARY" or upper.startswith("VARBINARY("):
@@ -293,14 +297,14 @@ def _column_transformation_logic(column: ColumnDef, table: TableDef) -> str:
     data_type = column.data_type
 
     if name.endswith("HashPK"):
-        return "CAST(SHA2_BINARY(COALESCE(CAST({SOURCE_COL} AS VARCHAR), '#@#@#@#@#'), 256) AS BINARY(32))"
+        return "HASH(COALESCE(CAST({SOURCE_COL} AS VARCHAR), '#@#@#@#@#'))"
     if name.endswith("HashBK"):
-        return "CAST(SHA2_BINARY(COALESCE(CAST({SOURCE_COL} AS VARCHAR), '#@#@#@#@#'), 256) AS BINARY(32))"
+        return "HASH(COALESCE(CAST({SOURCE_COL} AS VARCHAR), '#@#@#@#@#'))"
     if name.endswith("HashFK"):
         nullable = column.nullable.upper() == "YES"
         if nullable:
-            return "IFF({SOURCE_COL} IS NULL, NULL, CAST(SHA2_BINARY(COALESCE(CAST({SOURCE_COL} AS VARCHAR), '#@#@#@#@#'), 256) AS BINARY(32)))"
-        return "CAST(SHA2_BINARY(COALESCE(CAST({SOURCE_COL} AS VARCHAR), '#@#@#@#@#'), 256) AS BINARY(32))"
+            return "IFF({SOURCE_COL} IS NULL, NULL, HASH(COALESCE(CAST({SOURCE_COL} AS VARCHAR), '#@#@#@#@#')))"
+        return "HASH(COALESCE(CAST({SOURCE_COL} AS VARCHAR), '#@#@#@#@#'))"
 
     if "scd type 2 row effective start date" in lower:
         return "CAST({SOURCE_COL} AS DATE)"
@@ -313,7 +317,7 @@ def _column_transformation_logic(column: ColumnDef, table: TableDef) -> str:
         return f"CAST({{SOURCE_COL}} AS {data_type})"
 
     if "foreign key to" in lower:
-        return "CAST(SHA2_BINARY(COALESCE(CAST({SOURCE_COL} AS VARCHAR), '#@#@#@#@#'), 256) AS BINARY(32))"
+        return "HASH(COALESCE(CAST({SOURCE_COL} AS VARCHAR), '#@#@#@#@#'))"
 
     normalized = desc.replace(" ", "").lower()
     if "calculated billable amount" in lower and "billablehours*billrate" in normalized:

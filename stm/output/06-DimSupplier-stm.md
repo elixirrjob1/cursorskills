@@ -88,8 +88,8 @@ Definitions are included only when they are present in the analyzer JSON.
 ## 7. Field-Level Mapping Matrix
 | Target Table | Target Column | Data Type | Field Type | Source System | Source Table | Source Column(s) | Transformation / Business Rule | Nullable? | Default / Fallback | Description |
 |--------------|---------------|-----------|------------|---------------|--------------|------------------|--------------------------------|-----------|--------------------|-------------|
-| DimSupplier | SupplierHashPK | INT | Primary Key | Snowflake | SUPPLIERS | SUPPLIER_ID | CAST(SHA2_BINARY(COALESCE(CAST(SUPPLIER_ID AS VARCHAR), '#@#@#@#@#'), 256) AS BINARY(32)) | NO |  | Surrogate primary key for supplier dimension |
-| DimSupplier | SupplierHashBK | VARCHAR(20) | Business Key | Snowflake | SUPPLIERS | SUPPLIER_ID | CAST(SHA2_BINARY(COALESCE(CAST(SUPPLIER_ID AS VARCHAR), '#@#@#@#@#'), 256) AS BINARY(32)) | NO |  | Natural business key (supplier ID from procurement system) |
+| DimSupplier | SupplierHashPK | NUMBER(19,0) | Primary Key | Snowflake | SUPPLIERS | SUPPLIER_ID | HASH(COALESCE(CAST(SUPPLIER_ID AS VARCHAR), '#@#@#@#@#')) | NO |  | Surrogate primary key for supplier dimension |
+| DimSupplier | SupplierHashBK | NUMBER(19,0) | Business Key | Snowflake | SUPPLIERS | SUPPLIER_ID | HASH(COALESCE(CAST(SUPPLIER_ID AS VARCHAR), '#@#@#@#@#')) | NO |  | Natural business key (supplier ID from procurement system) |
 | DimSupplier | SupplierName | VARCHAR(100) | Attribute | Snowflake | SUPPLIERS | NAME |  | NO |  | Legal supplier name |
 | DimSupplier | SupplierDBAName | VARCHAR(100) | Attribute | Snowflake |  |  |  | YES |  | Supplier doing-business-as name |
 | DimSupplier | ContactName | VARCHAR(100) | Attribute | Snowflake | SUPPLIERS | CONTACT_NAME |  | YES |  | Primary contact person name |

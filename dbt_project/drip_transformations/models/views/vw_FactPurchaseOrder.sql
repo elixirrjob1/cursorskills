@@ -32,15 +32,15 @@ ctePURCHASE_ORDERS AS (
 )
 
 SELECT
-    CAST(SHA2_BINARY(COALESCE(CAST(ctePURCHASE_ORDER_ITEMS.PO_ID AS VARCHAR), '#@#@#@#@#') || '|' || COALESCE(CAST(PO_ITEM_ID AS VARCHAR), '#@#@#@#@#'), 256) AS BINARY(32)) AS PurchaseOrderHashPK,
-    CAST(SHA2_BINARY(COALESCE(CAST(PRODUCT_ID AS VARCHAR), '#@#@#@#@#'), 256) AS BINARY(32)) AS ProductHashFK,
-    CAST(SHA2_BINARY(COALESCE(CAST(SUPPLIER_ID AS VARCHAR), '#@#@#@#@#'), 256) AS BINARY(32)) AS SupplierHashFK,
-    CAST(SHA2_BINARY(COALESCE(CAST(STORE_ID AS VARCHAR), '#@#@#@#@#'), 256) AS BINARY(32)) AS WarehouseHashFK,
-    CAST(SHA2_BINARY(COALESCE(CAST(ORDER_DATE AS VARCHAR), '#@#@#@#@#'), 256) AS BINARY(32)) AS DateOrderedHashFK,
-    IFF(EXPECTED_DATE IS NULL, NULL, CAST(SHA2_BINARY(COALESCE(CAST(EXPECTED_DATE AS VARCHAR), '#@#@#@#@#'), 256) AS BINARY(32))) AS DateExpectedHashFK,
-    CAST(NULL AS BINARY(32)) AS DateShippedHashFK, -- not available in source
-    CAST(NULL AS BINARY(32)) AS DateReceivedHashFK, -- not available in source
-    CAST(NULL AS BINARY(32)) AS DateInvoicedHashFK, -- not available in source
+    HASH(COALESCE(CAST(ctePURCHASE_ORDER_ITEMS.PO_ID AS VARCHAR), '#@#@#@#@#') || '|' || COALESCE(CAST(PO_ITEM_ID AS VARCHAR), '#@#@#@#@#')) AS PurchaseOrderHashPK,
+    HASH(COALESCE(CAST(PRODUCT_ID AS VARCHAR), '#@#@#@#@#')) AS ProductHashFK,
+    HASH(COALESCE(CAST(SUPPLIER_ID AS VARCHAR), '#@#@#@#@#')) AS SupplierHashFK,
+    HASH(COALESCE(CAST(STORE_ID AS VARCHAR), '#@#@#@#@#')) AS WarehouseHashFK,
+    HASH(COALESCE(CAST(ORDER_DATE AS VARCHAR), '#@#@#@#@#')) AS DateOrderedHashFK,
+    IFF(EXPECTED_DATE IS NULL, NULL, HASH(COALESCE(CAST(EXPECTED_DATE AS VARCHAR), '#@#@#@#@#'))) AS DateExpectedHashFK,
+    CAST(NULL AS NUMBER(19,0)) AS DateShippedHashFK, -- not available in source
+    CAST(NULL AS NUMBER(19,0)) AS DateReceivedHashFK, -- not available in source
+    CAST(NULL AS NUMBER(19,0)) AS DateInvoicedHashFK, -- not available in source
     CAST(ctePURCHASE_ORDERS.PO_ID AS VARCHAR(20)) AS PurchaseOrderNumber,
     PO_ITEM_ID AS PurchaseOrderLineNumber,
     STATUS AS OrderStatus,

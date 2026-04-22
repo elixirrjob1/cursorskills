@@ -106,9 +106,12 @@ For each row in the markdown table under "## 7. Field-Level Mapping":
 
    | Pattern | SQL Expression |
    |---------|---------------|
-   | Hash surrogate key | `CAST(SHA2_BINARY(COALESCE(CAST(CUSTOMER_ID AS VARCHAR), '#@#@#@#@#'), 256) AS BINARY(32))` |
-   | Hash FK lookup | `CAST(SHA2_BINARY(COALESCE(CAST(ORDER_DATE AS VARCHAR), '#@#@#@#@#'), 256) AS BINARY(32))` |
-   | Nullable FK | `IFF(CUSTOMER_ID IS NULL, NULL, CAST(SHA2_BINARY(COALESCE(CAST(CUSTOMER_ID AS VARCHAR), '#@#@#@#@#'), 256) AS BINARY(32)))` |
+   | Hash surrogate key (HashPK / HashBK) | `HASH(COALESCE(CAST(CUSTOMER_ID AS VARCHAR), '#@#@#@#@#'))` → `NUMBER(19,0)` |
+   | Hash FK lookup (non-nullable) | `HASH(COALESCE(CAST(ORDER_DATE AS VARCHAR), '#@#@#@#@#'))` → `NUMBER(19,0)` |
+   | Nullable HashFK | `IFF(CUSTOMER_ID IS NULL, NULL, HASH(COALESCE(CAST(CUSTOMER_ID AS VARCHAR), '#@#@#@#@#')))` → `NUMBER(19,0)` |
+   | Hashbytes (change detection) | `CAST(SHA2_BINARY(COALESCE(CAST(col1 AS VARCHAR), '#@#@#@#@#') || '|' || COALESCE(CAST(col2 AS VARCHAR), '#@#@#@#@#'), 256) AS BINARY(32))` → `BINARY(32)` |
+
+   **Important:** keys (`HashPK`, `HashBK`, `HashFK`) use `HASH()` → `NUMBER(19,0)` for join performance. Only `Hashbytes` stays on `SHA2_BINARY` → `BINARY(32)` for its stronger collision guarantee during change detection.
    | Type cast | `CAST(UNIT_PRICE AS DECIMAL(19,4))` |
    | Concatenation | `FIRST_NAME \|\| ' ' \|\| LAST_NAME` |
    | Computed measure | `CAST(QUANTITY * UNIT_PRICE AS DECIMAL(19,4))` |

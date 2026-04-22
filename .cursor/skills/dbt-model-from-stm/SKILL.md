@@ -78,9 +78,9 @@ Before writing SQL, determine whether this is an SCD Type 2 STM. It IS Type 2 if
 - Section 7 target columns include all of `EffectiveStartDateTime`, `EffectiveEndDateTime`, `CurrentFlagYN`.
 - Section 8 lists rule `BR12 — Type 2 Metadata`.
 
-If Type 2 → follow the **SCD Type 2 Handling (Ajay Kalyan multi-CTE pattern)** section of SKILL.md. Use the 5-CTE pipeline (`cte_prep` → `cte_prep_hash` → `cte_prep_hash_lag` → `cte_row_reduce` → `fin`), `SHA2_BINARY()` for keys and Hashbytes (→ BINARY(32)), Fivetran history-mode columns for Type 2 windowing, and `materialized='table'` for the enriched model.
+If Type 2 → follow the **SCD Type 2 Handling (Ajay Kalyan multi-CTE pattern)** section of SKILL.md. Use the 5-CTE pipeline (`cte_prep` → `cte_prep_hash` → `cte_prep_hash_lag` → `cte_row_reduce` → `fin`), `HASH()` for keys (→ NUMBER(19,0)), `SHA2_BINARY()` for Hashbytes (→ BINARY(32)), Fivetran history-mode columns for Type 2 windowing, and `materialized='table'` for the enriched model.
 
-Otherwise (Type 1 / non-SCD) → follow the Type 1 pattern described below in this prompt (single `cte<TABLE>` with QUALIFY, `SHA2_BINARY` BINARY(32) keys, `materialized='incremental'` on `LoadTimestamp`).
+Otherwise (Type 1 / non-SCD) → follow the Type 1 pattern described below in this prompt (single `cte<TABLE>` with QUALIFY, `HASH()` NUMBER(19,0) keys, `SHA2_BINARY` BINARY(32) Hashbytes, `materialized='incremental'` on `LoadTimestamp`).
 
 You must produce TWO files:
 
@@ -121,18 +121,18 @@ Rules for the view (Type 1 — use the Type 2 section of SKILL.md if Step 0 dete
 - Do NOT add a separate LatestRank column + WHERE LatestRank = 1 filter. QUALIFY replaces that pattern entirely.
 - If no ordering column exists, omit QUALIFY and add a `-- NOTE: no deduplication column available` comment.
 
-**Hash key generation (SHA2_BINARY + COALESCE sentinel, wrapped in CAST AS BINARY(32)):**
-- All HashPK, HashBK, HashFK columns use `SHA2_BINARY(..., 256)` wrapped in an **explicit `CAST(... AS BINARY(32))`**. Without the cast Snowflake declares the column as `BINARY(64)` (the function's signature covers SHA-512); the explicit cast forces the catalog to show `BINARY(32)`, which matches the actual 32-byte SHA-256 digest:
-    CAST(SHA2_BINARY(COALESCE(CAST(col AS VARCHAR), '#@#@#@#@#'), 256) AS BINARY(32))
-- For composite keys, concatenate with '|' delimiters inside the SHA2_BINARY call:
-    CAST(SHA2_BINARY(COALESCE(CAST(col1 AS VARCHAR), '#@#@#@#@#') || '|' || COALESCE(CAST(col2 AS VARCHAR), '#@#@#@#@#'), 256) AS BINARY(32))
-- Nullable FKs: wrap in IFF(col IS NULL, NULL, CAST(SHA2_BINARY(...) AS BINARY(32)))
-- Do NOT use MD5 or plain `SHA2` (hex VARCHAR). Always use `SHA2_BINARY` with digest size 256, always wrapped in `CAST(... AS BINARY(32))`.
-- `SHA2_BINARY` is a dedicated Snowflake function (not a session-format cast), so `CAST(SHA2_BINARY(...) AS BINARY(32))` is NOT affected by the `BINARY_INPUT_FORMAT` session parameter — it's a size narrowing on an already-binary value.
+**Hash key generation (HASH + COALESCE sentinel → NUMBER(19,0)):**
+- All HashPK, HashBK, HashFK columns use Snowflake's native **`HASH()`** function. It returns a signed 64-bit integer (`NUMBER(19,0)`), which is ~4× narrower than BINARY(32) and gives better join performance and micro-partition pruning:
+    HASH(COALESCE(CAST(col AS VARCHAR), '#@#@#@#@#'))
+- For composite keys, pass each column as a separate argument to HASH (or concatenate with '|' delimiters — either works; separate args is cleaner):
+    HASH(COALESCE(CAST(col1 AS VARCHAR), '#@#@#@#@#'), COALESCE(CAST(col2 AS VARCHAR), '#@#@#@#@#'))
+- Nullable FKs: wrap in IFF(col IS NULL, NULL, HASH(...))
+- Do NOT use MD5, plain `SHA2`, or `SHA2_BINARY` for keys — those produce wider columns and slower joins.
+- Collision bound: `HASH()` is 64-bit; safe below ~1B rows per table. Above that, switch the specific large table back to `SHA2_BINARY` → BINARY(32).
 
 **Hashbytes change detection column:**
 - Add a `Hashbytes` column as the last column before any audit/metadata fields.
-- It must be `CAST(SHA2_BINARY(..., 256) AS BINARY(32))` of sourced attribute columns concatenated with '|' and COALESCE sentinel.
+- **Hashbytes is different from keys — it uses `CAST(SHA2_BINARY(..., 256) AS BINARY(32))`** of sourced attribute columns concatenated with '|' and COALESCE sentinel. Stronger collision guarantee matters for change detection (we compare hashes to decide whether a row changed), while join performance does not apply.
 - Include ONLY columns that have a real source mapping (Source Table + Source Column in the STM).
 - EXCLUDE unmapped columns (hardcoded defaults, NULLs with no source) — they never change so add no detection value.
 - EXCLUDE HashPK, HashBK, HashFK, and audit/metadata fields.
@@ -142,7 +142,7 @@ Rules for the view (Type 1 — use the Type 2 section of SKILL.md if Step 0 dete
   Use them directly — columns are referenced WITHOUT a table/CTE prefix since there's only one CTE per dimension.
   For example, if Transformation = "CAST(QUANTITY * UNIT_PRICE AS DECIMAL(19,4))",
   write: CAST(QUANTITY * UNIT_PRICE AS DECIMAL(19,4)).
-  HOWEVER: if the STM transformation uses MD5() or plain SHA2(), replace it with the SHA2_BINARY pattern above.
+  HOWEVER: if the STM transformation uses MD5(), plain SHA2(), or SHA2_BINARY() for a **key** (HashPK/HashBK/HashFK), replace it with the HASH() pattern above. For Hashbytes keep SHA2_BINARY.
 - **Output aliases must match the STM's `Target Column` EXACTLY — PascalCase, verbatim.**
   Examples: `AS EmployeeHashPK`, `AS FirstName`, `AS HomeStoreHashFK`, `AS LoadTimestamp`, `AS Hashbytes`.
   DO NOT snake_case the alias (no `employee_hash_pk`, no `first_name`). Copy the STM column name as-is.
@@ -306,14 +306,14 @@ fin AS (
     -- 5. Project final Type 2 row with Ajay's standard column ordering:
     --    keys -> business attributes -> Type 2 metadata -> audit -> source -> Hashbytes -> DataCondition.
     SELECT
-        CAST(SHA2_BINARY(
-            COALESCE(CAST(<BUSINESS_KEY> AS VARCHAR), '#@#@#@#@#')
-            || '|' || COALESCE(CAST(SourceSystemCode AS VARCHAR), '#@#@#@#@#')
-        , 256) AS BINARY(32)) AS <Entity>HashPK,
-        CAST(SHA2_BINARY(
-            COALESCE(CAST(<NATURAL_KEY> AS VARCHAR), '#@#@#@#@#')
-            || '|' || COALESCE(CAST(SourceSystemCode AS VARCHAR), '#@#@#@#@#')
-        , 256) AS BINARY(32)) AS <Entity>HashBK,
+        HASH(
+            COALESCE(CAST(<BUSINESS_KEY> AS VARCHAR), '#@#@#@#@#'),
+            COALESCE(CAST(SourceSystemCode AS VARCHAR), '#@#@#@#@#')
+        ) AS <Entity>HashPK,
+        HASH(
+            COALESCE(CAST(<NATURAL_KEY> AS VARCHAR), '#@#@#@#@#'),
+            COALESCE(CAST(SourceSystemCode AS VARCHAR), '#@#@#@#@#')
+        ) AS <Entity>HashBK,
         <business attribute SELECTs, mirroring the STM Final section>,
         CAST(EffectiveStartDateTimeUTC AS TIMESTAMP_TZ) AS EffectiveStartDateTime,
         CAST(COALESCE(LeadEffectiveStartDateTimeUTC, EffectiveEndDateTimeRaw) AS TIMESTAMP_TZ)
@@ -343,14 +343,16 @@ Type 1 and Type 2 models now share the same hashing convention:
 
 | Column class | Both Type 1 and Type 2 |
 |---|---|
-| `*HashPK`, `*HashBK`, `*HashFK` | `SHA2_BINARY(..., 256)` → `BINARY(32)` |
+| `*HashPK`, `*HashBK`, `*HashFK` | `HASH(...)` → `NUMBER(19,0)` |
 | `Hashbytes` (change detection) | `SHA2_BINARY(..., 256)` → `BINARY(32)` |
 
-`SHA2_BINARY()` is a dedicated Snowflake function (not a cast) and is not affected by the session `BINARY_INPUT_FORMAT` warning that applies to `CAST(...AS BINARY)`. Always use it with digest size `256`.
+`HASH()` is Snowflake's native 64-bit non-cryptographic hash — it returns a signed integer stored as `NUMBER(19,0)`, which is ~4× narrower than `BINARY(32)` and gives faster join / filter performance plus better micro-partition pruning on keyed queries. Accept the 64-bit collision bound (~1B-row safe per table); above that switch to `SHA2_BINARY` for the affected table.
 
-Composite keys concatenate inputs with `'|'` delimiters, each wrapped in `COALESCE(..., '#@#@#@#@#')`.
+`SHA2_BINARY()` (BINARY(32)) is kept specifically for `Hashbytes` because change detection needs the stronger collision guarantee when we compare two hashes to decide "did this row change".
 
-Nullable FKs wrap the expression in `IFF(col IS NULL, NULL, SHA2_BINARY(...))`.
+For composite keys, pass each component as a separate argument to `HASH`: `HASH(col1, col2, SourceSystemCode)`. Each component should be `COALESCE(CAST(... AS VARCHAR), '#@#@#@#@#')`.
+
+Nullable FKs wrap the expression in `IFF(col IS NULL, NULL, HASH(...))`.
 
 ### Fivetran history-mode awareness
 
@@ -417,29 +419,31 @@ These rules apply to every view model generated by subagents.
 
 ### Hash Key Pattern (Snowflake)
 
-All hash-based keys use **`SHA2_BINARY`** with digest size 256 and COALESCE sentinel values for NULL safety, wrapped in an **explicit `CAST(... AS BINARY(32))`** so the Snowflake column type is declared as `BINARY(32)` (Snowflake's default `SHA2_BINARY` return type is `BINARY(64)` to cover SHA-512):
+All hash-based **keys** (`HashPK`, `HashBK`, `HashFK`) use Snowflake's native **`HASH()`** function with COALESCE sentinel values for NULL safety. `HASH()` returns a signed 64-bit integer typed as `NUMBER(19,0)`, which is ~4× narrower than `BINARY(32)` and gives much faster join performance and better micro-partition pruning:
 
 ```sql
-CAST(
-    SHA2_BINARY(
-        COALESCE(CAST(source_col AS VARCHAR), '#@#@#@#@#')
-        || '|' || COALESCE(CAST(source_system_code AS VARCHAR), '#@#@#@#@#')
-    , 256)
-AS BINARY(32))
+HASH(
+    COALESCE(CAST(source_col AS VARCHAR), '#@#@#@#@#'),
+    COALESCE(CAST(source_system_code AS VARCHAR), '#@#@#@#@#')
+)
 ```
 
-> `SHA2_BINARY` is a dedicated Snowflake function, and `CAST(... AS BINARY(32))` of an already-binary value is just a size narrowing — it is NOT affected by the `BINARY_INPUT_FORMAT` session parameter (which only applies when casting `VARCHAR` → `BINARY`). Do NOT use plain `SHA2` (hex VARCHAR) or `MD5`.
+> `HASH()` is non-cryptographic; its collision bound is 2^63 ≈ 9.2 × 10^18. Safe below ~1B rows per table. For any single table expected to exceed that, switch that specific table back to `SHA2_BINARY(..., 256)` → `BINARY(32)`.
+>
+> Do NOT use plain `SHA2` (hex VARCHAR), `MD5`, or `SHA2_BINARY` for keys — those produce wider columns and slower joins.
 
-When a hash key is derived from multiple columns, concatenate them with `'|'` delimiters, each wrapped in `COALESCE(..., '#@#@#@#@#')`.
+For composite keys pass each component as a separate argument to `HASH` (cleanest) — pipe-delimited concatenation with a single HASH arg is also accepted.
 
 ### Key Types
 
-| Key suffix | Purpose | Derivation |
-|---|---|---|
-| `HashPK` | Surrogate primary key | `CAST(SHA2_BINARY(..., 256) AS BINARY(32))` of source business key column(s) + source system code |
-| `HashBK` | Business key | `CAST(SHA2_BINARY(..., 256) AS BINARY(32))` of source natural key + source system code |
-| `HashFK` | Foreign key | Same derivation as the referenced dimension's HashPK. Wrap in `IFF(col IS NULL, NULL, CAST(SHA2_BINARY(...) AS BINARY(32)))` when nullable. |
-| `Hashbytes` | Change detection | `CAST(SHA2_BINARY(..., 256) AS BINARY(32))` of **sourced descriptive/attribute columns** concatenated. Used for SCD and incremental change comparison. |
+| Key suffix | Purpose | Derivation | Snowflake type |
+|---|---|---|---|
+| `HashPK` | Surrogate primary key | `HASH(<business_key>, <source_system_code>)` | `NUMBER(19,0)` |
+| `HashBK` | Business key | `HASH(<natural_key>, <source_system_code>)` | `NUMBER(19,0)` |
+| `HashFK` | Foreign key | Same derivation as the referenced dimension's HashPK. Wrap in `IFF(col IS NULL, NULL, HASH(...))` when nullable. | `NUMBER(19,0)` |
+| `Hashbytes` | Change detection | `CAST(SHA2_BINARY(..., 256) AS BINARY(32))` of **sourced descriptive/attribute columns** concatenated with `'|'`. | `BINARY(32)` |
+
+> **Why Hashbytes differs from keys:** Hashbytes is used to detect whether a row's business attributes changed between loads (Type 2 SCD boundary detection and Type 1 change comparison). We compare two hashes and a collision would cause a silent miss, so the cryptographic strength of SHA-256 matters. Keys are only used for equality joins, where the 64-bit `HASH()` bound is more than sufficient for realistic row counts and the performance gain is real.
 
 ### Hashbytes Change Detection Column
 

@@ -114,8 +114,8 @@ Definitions are included only when they are present in the analyzer JSON.
 ### Final
 | Target Table | Target Column | Data Type | Field Type | Source System | Source Table | Source Column(s) | Transformation / Business Rule | Nullable? | Default / Fallback | Description |
 |--------------|---------------|-----------|------------|---------------|--------------|------------------|--------------------------------|-----------|--------------------|-------------|
-| GOLD.DimCustomer | CustomerHashPK | NUMBER(38,0) | Primary Key | Derived from Data Condition 1 | Derived from Data Condition 1 | CUSTOMER_ID | `HASH(COALESCE(CAST(CUSTOMER_ID AS VARCHAR), '#@#@#@#@#'), 'ERP')` (TX1) | NO |  | Surrogate primary key for customer dimension. |
-| GOLD.DimCustomer | CustomerHashBK | NUMBER(38,0) | Business Key | Derived from Data Condition 1 | Derived from Data Condition 1 | CUSTOMER_ID | `HASH(COALESCE(CAST(CUSTOMER_ID AS VARCHAR), '#@#@#@#@#'), 'ERP')` (TX1) | NO |  | Natural business key (customer ID from CRM). Note: CRM uses CUSTOMER_ID as both PK and BK. |
+| GOLD.DimCustomer | CustomerHashPK | NUMBER(19,0) | Primary Key | Derived from Data Condition 1 | Derived from Data Condition 1 | CUSTOMER_ID | `HASH(COALESCE(CAST(CUSTOMER_ID AS VARCHAR), '#@#@#@#@#'), 'ERP')` (TX1) | NO |  | Surrogate primary key for customer dimension. |
+| GOLD.DimCustomer | CustomerHashBK | NUMBER(19,0) | Business Key | Derived from Data Condition 1 | Derived from Data Condition 1 | CUSTOMER_ID | `HASH(COALESCE(CAST(CUSTOMER_ID AS VARCHAR), '#@#@#@#@#'), 'ERP')` (TX1) | NO |  | Natural business key (customer ID from CRM). Note: CRM uses CUSTOMER_ID as both PK and BK. |
 | GOLD.DimCustomer | AcquisitionChannel | VARCHAR(50) | Attribute |  |  |  | Not available in source — set to NULL. | YES |  | How customer was acquired (Online, Store, Referral, Advertising). |
 | GOLD.DimCustomer | AcquisitionDate | DATE | Attribute | ERP | CUSTOMERS | CREATED_AT | `CAST(CREATED_AT AS DATE)` | YES |  | Date customer was first acquired. |
 | GOLD.DimCustomer | City | VARCHAR(50) | Attribute |  |  |  | Not available in source — set to NULL. | YES |  | Customer city. |

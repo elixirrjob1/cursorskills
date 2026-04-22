@@ -7,7 +7,7 @@ WITH cteDATE_SPINE AS (
 )
 
 SELECT
-    CAST(SHA2_BINARY(COALESCE(CAST(DateValue AS VARCHAR), '#@#@#@#@#'), 256) AS BINARY(32)) AS DateHashPK,
+    HASH(COALESCE(CAST(DateValue AS VARCHAR), '#@#@#@#@#')) AS DateHashPK,
     DateValue AS DateValue,
     CAST(TO_CHAR(DateValue, 'YYYYMMDD') AS INT) AS DateKey,
     MOD(DAYOFWEEKISO(DateValue), 7) + 1 AS DayOfWeek,

@@ -86,8 +86,8 @@ Definitions are included only when they are present in the analyzer JSON.
 ## 7. Field-Level Mapping Matrix
 | Target Table | Target Column | Data Type | Field Type | Source System | Source Table | Source Column(s) | Transformation / Business Rule | Nullable? | Default / Fallback | Description |
 |--------------|---------------|-----------|------------|---------------|--------------|------------------|--------------------------------|-----------|--------------------|-------------|
-| DimStore | StoreHashPK | INT | Primary Key | Snowflake | STORES | STORE_ID | CAST(SHA2_BINARY(COALESCE(CAST(STORE_ID AS VARCHAR), '#@#@#@#@#'), 256) AS BINARY(32)) | NO |  | Surrogate primary key for store dimension |
-| DimStore | StoreHashBK | VARCHAR(10) | Business Key | Snowflake | STORES | CODE | CAST(SHA2_BINARY(COALESCE(CAST(CODE AS VARCHAR), '#@#@#@#@#'), 256) AS BINARY(32)) | NO |  | Natural business key (store number) |
+| DimStore | StoreHashPK | NUMBER(19,0) | Primary Key | Snowflake | STORES | STORE_ID | HASH(COALESCE(CAST(STORE_ID AS VARCHAR), '#@#@#@#@#')) | NO |  | Surrogate primary key for store dimension |
+| DimStore | StoreHashBK | NUMBER(19,0) | Business Key | Snowflake | STORES | CODE | HASH(COALESCE(CAST(CODE AS VARCHAR), '#@#@#@#@#')) | NO |  | Natural business key (store number) |
 | DimStore | StoreName | VARCHAR(100) | Attribute | Snowflake | STORES | NAME |  | NO |  | Store display name |
 | DimStore | StoreType | VARCHAR(20) | Attribute | Snowflake |  |  |  | NO |  | Type of store (Flagship, Standard, Outlet, Express) |
 | DimStore | StreetAddress | VARCHAR(200) | Attribute | Snowflake | STORES | ADDRESS |  | NO |  | Store street address |

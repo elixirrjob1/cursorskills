@@ -89,14 +89,15 @@ When the target data model specifies a data type that is not natively supported 
 
 | Source Type (in target model) | Snowflake Type |
 |---|---|
-| `BIGINT` | `NUMBER(38,0)` |
+| `BIGINT` | `NUMBER(19,0)` |
 | `VARBINARY`, `VARBINARY(n)` | `BINARY` |
-| Hash columns (`HashPK`, `HashBK`, `HashFK`, `Hashbytes`) | `BINARY(32)` (stores 32-byte SHA-256 digest from `CAST(SHA2_BINARY(..., 256) AS BINARY(32))`) |
+| Hash **keys** (`HashPK`, `HashBK`, `HashFK`) | `NUMBER(19,0)` (from Snowflake's native `HASH(...)` — 64-bit non-cryptographic, picked for join performance and micro-partition pruning) |
+| `Hashbytes` (change detection) | `BINARY(32)` (stores 32-byte SHA-256 digest from `CAST(SHA2_BINARY(..., 256) AS BINARY(32))` — SHA-256 collision strength is required because we compare Hashbytes to detect row changes) |
 
 Notes:
-- Hash columns use `CAST(SHA2_BINARY(..., 256) AS BINARY(32))`. The explicit `CAST(... AS BINARY(32))` is required because Snowflake's `SHA2_BINARY` function signature returns `BINARY(64)` by default (to cover up to SHA-512) — without the cast the column shows as `BINARY(64)` in the catalog even though the stored bytes are only 32.
-- `CAST(SHA2_BINARY(...) AS BINARY(32))` is a size narrowing on an already-binary value, so it is NOT affected by the session `BINARY_INPUT_FORMAT` (which only applies to `VARCHAR → BINARY` casts).
-- Do NOT use `VARCHAR(64)`/hex or `MD5`. The team standard is `CAST(SHA2_BINARY(..., 256) AS BINARY(32))`.
+- Hash **keys** (`HashPK`, `HashBK`, `HashFK`) use Snowflake's native `HASH(...)` function which returns a `NUMBER(19,0)` (signed 64-bit integer). Picked over `SHA2_BINARY` for keys because a 64-bit NUMBER is ~4× narrower than `BINARY(32)`, gives faster equality joins, and prunes micro-partitions better on keyed lookups. Collision bound is 2^63 ≈ 9.2 × 10^18 — safe below ~1B rows per table.
+- `Hashbytes` uses `CAST(SHA2_BINARY(..., 256) AS BINARY(32))`. The explicit cast to `BINARY(32)` is required because Snowflake's `SHA2_BINARY` signature returns `BINARY(64)` by default (to cover SHA-512); the cast narrows the declared type to match the 32-byte SHA-256 digest we actually store. SHA-256's cryptographic collision strength is required here because we compare Hashbytes values to detect row changes.
+- Do NOT use `VARCHAR(64)`/hex or `MD5` for either keys or Hashbytes. Do NOT use `SHA2_BINARY` for keys (too wide, slower joins). Do NOT use `HASH()` for Hashbytes (insufficient collision strength for change detection).
 - Leave already-supported Snowflake types unchanged (`NUMBER(p,s)`, `VARCHAR(n)`, `DATE`, `TIMESTAMP_*`, `BOOLEAN`, etc.).
 - Add new source→Snowflake mappings to this table as new source systems are onboarded; do not guess.
 

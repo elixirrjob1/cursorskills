@@ -123,8 +123,8 @@ Definitions are included only when they are present in the analyzer JSON.
 ### Final
 | Target Table | Target Column | Data Type | Field Type | Source System | Source Table | Source Column(s) | Transformation / Business Rule | Nullable? | Default / Fallback | Description |
 |--------------|---------------|-----------|------------|---------------|--------------|------------------|--------------------------------|-----------|--------------------|-------------|
-| GOLD.DimProduct | ProductHashPK | NUMBER(38,0) | Primary Key | Derived from Data Condition 1 | Derived from Data Condition 1 | PRODUCT_ID | `HASH(COALESCE(CAST(PRODUCT_ID AS VARCHAR), '#@#@#@#@#'), 'ERP')` (TX1) | NO |  | Surrogate primary key for product dimension. |
-| GOLD.DimProduct | ProductHashBK | NUMBER(38,0) | Business Key | Derived from Data Condition 1 | Derived from Data Condition 1 | SKU | `HASH(COALESCE(CAST(SKU AS VARCHAR), '#@#@#@#@#'), 'ERP')` (TX1) | NO |  | Natural business key from source system (SKU). |
+| GOLD.DimProduct | ProductHashPK | NUMBER(19,0) | Primary Key | Derived from Data Condition 1 | Derived from Data Condition 1 | PRODUCT_ID | `HASH(COALESCE(CAST(PRODUCT_ID AS VARCHAR), '#@#@#@#@#'), 'ERP')` (TX1) | NO |  | Surrogate primary key for product dimension. |
+| GOLD.DimProduct | ProductHashBK | NUMBER(19,0) | Business Key | Derived from Data Condition 1 | Derived from Data Condition 1 | SKU | `HASH(COALESCE(CAST(SKU AS VARCHAR), '#@#@#@#@#'), 'ERP')` (TX1) | NO |  | Natural business key from source system (SKU). |
 | GOLD.DimProduct | BrandCode | VARCHAR(10) | Attribute |  |  |  | Not available in source — set to NULL. | YES |  | Brand identifier code. |
 | GOLD.DimProduct | BrandName | VARCHAR(50) | Attribute |  |  |  | Not available in source — set to NULL. | YES |  | Brand display name (third level of hierarchy). |
 | GOLD.DimProduct | CategoryCode | VARCHAR(10) | Attribute |  |  |  | Not available in source — set to NULL. | YES |  | Product category code. |

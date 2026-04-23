@@ -54,7 +54,6 @@
 | Table |  | QualityTrust.SystemOfRecord | QualityTrust |
 | Table |  | Retention.FinancialStatutory | Retention |
 | Table |  | Tier.Tier1 | Tier |
-| Column | ProductHashPK | Architecture.Raw | Architecture |
 | Column | ProductHashPK | Criticality.TransactionalCore | Criticality |
 | Column | ProductHashPK | PII.None | PII |
 | Column | ProductHashPK | QualityTrust.SystemOfRecord | QualityTrust |
@@ -79,6 +78,165 @@
 | Column | UnitCost | Privacy.AnonymousAggregate | Privacy |
 | Column | UnitCost | QualityTrust.SystemOfRecord | QualityTrust |
 | Column | UnitCost | Retention.FinancialStatutory | Retention |
+| Column | ProductHashPK | Architecture.Enriched | Architecture |
+| Column | ProductHashPK | Certification.Gold | Certification |
+| Column | ProductHashPK | Lifecycle.Active | Lifecycle |
+| Column | ProductHashPK | Privacy.AnonymousAggregate | Privacy |
+| Column | ProductHashPK | Tier.Tier1 | Tier |
+| Column | ProductHashBK | Architecture.Enriched | Architecture |
+| Column | ProductHashBK | Certification.Gold | Certification |
+| Column | ProductHashBK | Lifecycle.Active | Lifecycle |
+| Column | ProductHashBK | Privacy.AnonymousAggregate | Privacy |
+| Column | ProductHashBK | Tier.Tier1 | Tier |
+| Column | BrandCode | Architecture.Enriched | Architecture |
+| Column | BrandCode | Certification.Gold | Certification |
+| Column | BrandCode | Criticality.Analytical | Criticality |
+| Column | BrandCode | PII.None | PII |
+| Column | BrandCode | Privacy.AnonymousAggregate | Privacy |
+| Column | BrandCode | QualityTrust.SystemOfRecord | QualityTrust |
+| Column | BrandName | Architecture.Enriched | Architecture |
+| Column | BrandName | Certification.Gold | Certification |
+| Column | BrandName | Criticality.Analytical | Criticality |
+| Column | BrandName | PII.None | PII |
+| Column | BrandName | Privacy.AnonymousAggregate | Privacy |
+| Column | BrandName | QualityTrust.SystemOfRecord | QualityTrust |
+| Column | CategoryCode | Architecture.Enriched | Architecture |
+| Column | CategoryCode | Certification.Gold | Certification |
+| Column | CategoryCode | Criticality.Analytical | Criticality |
+| Column | CategoryCode | PII.None | PII |
+| Column | CategoryCode | Privacy.AnonymousAggregate | Privacy |
+| Column | CategoryCode | QualityTrust.SystemOfRecord | QualityTrust |
+| Column | CategoryName | Architecture.Enriched | Architecture |
+| Column | CategoryName | Certification.Gold | Certification |
+| Column | CategoryName | Privacy.AnonymousAggregate | Privacy |
+| Column | CategoryName | QualityTrust.SystemOfRecord | QualityTrust |
+| Column | IsActive | Architecture.Enriched | Architecture |
+| Column | IsActive | Certification.Gold | Certification |
+| Column | IsActive | Criticality.TransactionalCore | Criticality |
+| Column | IsActive | Lifecycle.Active | Lifecycle |
+| Column | IsActive | PII.None | PII |
+| Column | IsActive | Privacy.AnonymousAggregate | Privacy |
+| Column | IsActive | QualityTrust.SystemOfRecord | QualityTrust |
+| Column | IsDiscontinued | Architecture.Enriched | Architecture |
+| Column | IsDiscontinued | Certification.Gold | Certification |
+| Column | IsDiscontinued | Privacy.AnonymousAggregate | Privacy |
+| Column | IsDiscontinued | QualityTrust.SystemOfRecord | QualityTrust |
+| Column | PackSize | Architecture.Enriched | Architecture |
+| Column | PackSize | Certification.Gold | Certification |
+| Column | PackSize | Criticality.Analytical | Criticality |
+| Column | PackSize | PII.None | PII |
+| Column | PackSize | Privacy.AnonymousAggregate | Privacy |
+| Column | PackSize | QualityTrust.SystemOfRecord | QualityTrust |
+| Column | ProductDescription | Architecture.Enriched | Architecture |
+| Column | ProductDescription | Certification.Gold | Certification |
+| Column | ProductDescription | Criticality.Analytical | Criticality |
+| Column | ProductDescription | PII.None | PII |
+| Column | ProductDescription | Privacy.AnonymousAggregate | Privacy |
+| Column | ProductDescription | QualityTrust.SystemOfRecord | QualityTrust |
+| Column | ProductName | Architecture.Enriched | Architecture |
+| Column | ProductName | Certification.Gold | Certification |
+| Column | ProductName | Criticality.TransactionalCore | Criticality |
+| Column | ProductName | PII.None | PII |
+| Column | ProductName | Privacy.AnonymousAggregate | Privacy |
+| Column | ProductName | QualityTrust.SystemOfRecord | QualityTrust |
+| Column | SubcategoryCode | Architecture.Enriched | Architecture |
+| Column | SubcategoryCode | Certification.Gold | Certification |
+| Column | SubcategoryCode | Criticality.Analytical | Criticality |
+| Column | SubcategoryCode | PII.None | PII |
+| Column | SubcategoryCode | Privacy.AnonymousAggregate | Privacy |
+| Column | SubcategoryCode | QualityTrust.SystemOfRecord | QualityTrust |
+| Column | SubcategoryName | Architecture.Enriched | Architecture |
+| Column | SubcategoryName | Certification.Gold | Certification |
+| Column | SubcategoryName | Criticality.Analytical | Criticality |
+| Column | SubcategoryName | PII.None | PII |
+| Column | SubcategoryName | Privacy.AnonymousAggregate | Privacy |
+| Column | SubcategoryName | QualityTrust.SystemOfRecord | QualityTrust |
+| Column | UnitCost | Architecture.Enriched | Architecture |
+| Column | UnitCost | Certification.Gold | Certification |
+| Column | UnitCost | Tier.Tier2 | Tier |
+| Column | UnitListPrice | Architecture.Enriched | Architecture |
+| Column | UnitListPrice | Certification.Gold | Certification |
+| Column | UnitOfMeasure | Architecture.Enriched | Architecture |
+| Column | UnitOfMeasure | Certification.Gold | Certification |
+| Column | UnitOfMeasure | Criticality.Analytical | Criticality |
+| Column | UnitOfMeasure | PII.None | PII |
+| Column | UnitOfMeasure | Privacy.AnonymousAggregate | Privacy |
+| Column | UnitOfMeasure | QualityTrust.SystemOfRecord | QualityTrust |
+| Column | EffectiveStartDateTime | Architecture.Enriched | Architecture |
+| Column | EffectiveStartDateTime | Certification.Gold | Certification |
+| Column | EffectiveStartDateTime | Criticality.TransactionalCore | Criticality |
+| Column | EffectiveStartDateTime | Lifecycle.Active | Lifecycle |
+| Column | EffectiveStartDateTime | PII.None | PII |
+| Column | EffectiveStartDateTime | Privacy.AnonymousAggregate | Privacy |
+| Column | EffectiveStartDateTime | QualityTrust.SystemOfRecord | QualityTrust |
+| Column | EffectiveEndDateTime | Architecture.Enriched | Architecture |
+| Column | EffectiveEndDateTime | Certification.Gold | Certification |
+| Column | EffectiveEndDateTime | Criticality.TransactionalCore | Criticality |
+| Column | EffectiveEndDateTime | Lifecycle.Active | Lifecycle |
+| Column | EffectiveEndDateTime | PII.None | PII |
+| Column | EffectiveEndDateTime | Privacy.AnonymousAggregate | Privacy |
+| Column | EffectiveEndDateTime | QualityTrust.SystemOfRecord | QualityTrust |
+| Column | CurrentFlagYN | Architecture.Enriched | Architecture |
+| Column | CurrentFlagYN | Certification.Gold | Certification |
+| Column | CurrentFlagYN | Criticality.TransactionalCore | Criticality |
+| Column | CurrentFlagYN | Lifecycle.Active | Lifecycle |
+| Column | CurrentFlagYN | PII.None | PII |
+| Column | CurrentFlagYN | Privacy.AnonymousAggregate | Privacy |
+| Column | CurrentFlagYN | QualityTrust.SystemOfRecord | QualityTrust |
+| Column | CreatedDateTime | Architecture.Enriched | Architecture |
+| Column | CreatedDateTime | Certification.Gold | Certification |
+| Column | CreatedDateTime | Criticality.Operational | Criticality |
+| Column | CreatedDateTime | PII.None | PII |
+| Column | CreatedDateTime | Privacy.AnonymousAggregate | Privacy |
+| Column | CreatedDateTime | QualityTrust.SystemOfRecord | QualityTrust |
+| Column | ModifiedDateTime | Architecture.Enriched | Architecture |
+| Column | ModifiedDateTime | Certification.Gold | Certification |
+| Column | ModifiedDateTime | Criticality.Operational | Criticality |
+| Column | ModifiedDateTime | PII.None | PII |
+| Column | ModifiedDateTime | Privacy.AnonymousAggregate | Privacy |
+| Column | ModifiedDateTime | QualityTrust.SystemOfRecord | QualityTrust |
+| Column | SourceSystemCode | Architecture.Enriched | Architecture |
+| Column | SourceSystemCode | Certification.Gold | Certification |
+| Column | SourceSystemCode | Criticality.Reference | Criticality |
+| Column | SourceSystemCode | PII.None | PII |
+| Column | SourceSystemCode | Privacy.AnonymousAggregate | Privacy |
+| Column | SourceSystemCode | QualityTrust.SystemOfRecord | QualityTrust |
+| Column | SourceProductPK | Architecture.Enriched | Architecture |
+| Column | SourceProductPK | Certification.Gold | Certification |
+| Column | SourceProductPK | Criticality.TransactionalCore | Criticality |
+| Column | SourceProductPK | PII.None | PII |
+| Column | SourceProductPK | Privacy.AnonymousAggregate | Privacy |
+| Column | SourceProductPK | QualityTrust.SystemOfRecord | QualityTrust |
+| Column | SourceProductBK | Architecture.Enriched | Architecture |
+| Column | SourceProductBK | Certification.Gold | Certification |
+| Column | SourceProductBK | Criticality.TransactionalCore | Criticality |
+| Column | SourceProductBK | PII.None | PII |
+| Column | SourceProductBK | Privacy.AnonymousAggregate | Privacy |
+| Column | SourceProductBK | QualityTrust.SystemOfRecord | QualityTrust |
+| Column | FileName | Architecture.Enriched | Architecture |
+| Column | FileName | Certification.Gold | Certification |
+| Column | FileName | Criticality.Operational | Criticality |
+| Column | FileName | PII.None | PII |
+| Column | FileName | Privacy.AnonymousAggregate | Privacy |
+| Column | FileName | QualityTrust.SystemOfRecord | QualityTrust |
+| Column | StageInsertedDateTimeUTC | Architecture.Enriched | Architecture |
+| Column | StageInsertedDateTimeUTC | Certification.Gold | Certification |
+| Column | StageInsertedDateTimeUTC | Criticality.Operational | Criticality |
+| Column | StageInsertedDateTimeUTC | PII.None | PII |
+| Column | StageInsertedDateTimeUTC | Privacy.AnonymousAggregate | Privacy |
+| Column | StageInsertedDateTimeUTC | QualityTrust.SystemOfRecord | QualityTrust |
+| Column | Hashbytes | Architecture.Enriched | Architecture |
+| Column | Hashbytes | Certification.Gold | Certification |
+| Column | Hashbytes | Criticality.Operational | Criticality |
+| Column | Hashbytes | PII.None | PII |
+| Column | Hashbytes | Privacy.AnonymousAggregate | Privacy |
+| Column | Hashbytes | QualityTrust.SystemOfRecord | QualityTrust |
+| Column | DataCondition | Architecture.Enriched | Architecture |
+| Column | DataCondition | Certification.Gold | Certification |
+| Column | DataCondition | Criticality.Operational | Criticality |
+| Column | DataCondition | PII.None | PII |
+| Column | DataCondition | Privacy.AnonymousAggregate | Privacy |
+| Column | DataCondition | QualityTrust.SystemOfRecord | QualityTrust |
 
 ---
 
@@ -92,6 +250,17 @@ Definitions are included only when they are present in the analyzer JSON.
 | Column | CategoryName | RetailDomainGlossary.ProductCategory | Product category | A grouping of related products used to organise the range for merchandising, reporting, and buying. |
 | Column | ProductHashBK | RetailDomainGlossary.Barcode | Barcode | A machine-readable code (e.g. EAN, UPC) printed on a product or shelf label that uniquely identifies a SKU at point of sale and in logistics. |
 | Column | UnitCost | RetailDomainGlossary.CostPrice | Cost price | The amount the retailer pays the supplier per unit, before any rebates, allowances, or landed-cost adjustments. |
+| Column | ProductHashPK | RetailDomainGlossary.Product | Product | A sellable item or SKU identified for catalog, pricing, and inventory purposes. |
+| Column | BrandCode | RetailDomainGlossary.Brand | Brand | The manufacturer or label identity associated with a product, influencing customer perception and vendor negotiations. |
+| Column | BrandName | RetailDomainGlossary.Brand | Brand | The manufacturer or label identity associated with a product, influencing customer perception and vendor negotiations. |
+| Column | CategoryCode | RetailDomainGlossary.ProductCategory | Product category | A grouping of related products used to organise the range for merchandising, reporting, and buying. |
+| Column | ProductDescription | RetailDomainGlossary.Product | Product | A sellable item or SKU identified for catalog, pricing, and inventory purposes. |
+| Column | ProductName | RetailDomainGlossary.Product | Product | A sellable item or SKU identified for catalog, pricing, and inventory purposes. |
+| Column | SubcategoryCode | RetailDomainGlossary.ProductHierarchy | Product hierarchy | The multi-level classification tree (e.g. division > department > category > sub-category > SKU) that structures the product range. |
+| Column | SubcategoryName | RetailDomainGlossary.ProductHierarchy | Product hierarchy | The multi-level classification tree (e.g. division > department > category > sub-category > SKU) that structures the product range. |
+| Column | UnitOfMeasure | RetailDomainGlossary.UnitOfMeasure | Unit of measure | The standard quantity designation for a product (e.g. each, pack, kilogram, litre) used in ordering, selling, and inventory. |
+| Column | SourceProductPK | RetailDomainGlossary.Product | Product | A sellable item or SKU identified for catalog, pricing, and inventory purposes. |
+| Column | SourceProductBK | RetailDomainGlossary.Barcode | Barcode | A machine-readable code (e.g. EAN, UPC) printed on a product or shelf label that uniquely identifies a SKU at point of sale and in logistics. |
 
 ---
 

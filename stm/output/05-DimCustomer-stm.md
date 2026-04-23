@@ -76,6 +76,168 @@
 | Column | EmailAddress | ComplianceLegal.GDPRCCPA | ComplianceLegal |
 | Column | EmailAddress | PII.Sensitive | PII |
 | Column | EmailAddress | PersonalData.Personal | PersonalData |
+| Column | CustomerHashPK | Architecture.Enriched | Architecture |
+| Column | CustomerHashPK | Certification.Gold | Certification |
+| Column | CustomerHashPK | Criticality.TransactionalCore | Criticality |
+| Column | CustomerHashPK | PII.None | PII |
+| Column | CustomerHashPK | QualityTrust.SystemOfRecord | QualityTrust |
+| Column | CustomerHashBK | Architecture.Enriched | Architecture |
+| Column | CustomerHashBK | Certification.Gold | Certification |
+| Column | AcquisitionChannel | Architecture.Enriched | Architecture |
+| Column | AcquisitionChannel | Certification.Gold | Certification |
+| Column | AcquisitionChannel | ComplianceLegal.GDPRCCPA | ComplianceLegal |
+| Column | AcquisitionChannel | Criticality.TransactionalCore | Criticality |
+| Column | AcquisitionChannel | PII.NonSensitive | PII |
+| Column | AcquisitionChannel | PersonalData.Personal | PersonalData |
+| Column | AcquisitionChannel | Privacy.IdentifiedLoyaltyMember | Privacy |
+| Column | AcquisitionDate | Architecture.Enriched | Architecture |
+| Column | AcquisitionDate | Certification.Gold | Certification |
+| Column | City | Architecture.Enriched | Architecture |
+| Column | City | Certification.Gold | Certification |
+| Column | City | ComplianceLegal.GDPRCCPA | ComplianceLegal |
+| Column | City | Criticality.TransactionalCore | Criticality |
+| Column | City | PII.NonSensitive | PII |
+| Column | City | PersonalData.Personal | PersonalData |
+| Column | City | Privacy.IdentifiedLoyaltyMember | Privacy |
+| Column | Country | Architecture.Enriched | Architecture |
+| Column | Country | Certification.Gold | Certification |
+| Column | Country | ComplianceLegal.GDPRCCPA | ComplianceLegal |
+| Column | Country | Criticality.TransactionalCore | Criticality |
+| Column | Country | PII.NonSensitive | PII |
+| Column | Country | PersonalData.Personal | PersonalData |
+| Column | Country | Privacy.IdentifiedLoyaltyMember | Privacy |
+| Column | CustomerType | Architecture.Enriched | Architecture |
+| Column | CustomerType | Certification.Gold | Certification |
+| Column | CustomerType | Criticality.TransactionalCore | Criticality |
+| Column | CustomerType | PII.NonSensitive | PII |
+| Column | EmailAddress | Architecture.Enriched | Architecture |
+| Column | EmailAddress | Certification.Gold | Certification |
+| Column | EmailAddress | Criticality.TransactionalCore | Criticality |
+| Column | EmailAddress | Privacy.IdentifiedLoyaltyMember | Privacy |
+| Column | FirstName | Architecture.Enriched | Architecture |
+| Column | FirstName | Certification.Gold | Certification |
+| Column | FirstName | Privacy.IdentifiedLoyaltyMember | Privacy |
+| Column | FullName | Architecture.Enriched | Architecture |
+| Column | FullName | Certification.Gold | Certification |
+| Column | FullName | ComplianceLegal.GDPRCCPA | ComplianceLegal |
+| Column | FullName | Criticality.TransactionalCore | Criticality |
+| Column | FullName | PII.Sensitive | PII |
+| Column | FullName | PersonalData.Personal | PersonalData |
+| Column | FullName | Privacy.IdentifiedLoyaltyMember | Privacy |
+| Column | IsActive | Architecture.Enriched | Architecture |
+| Column | IsActive | Certification.Gold | Certification |
+| Column | IsActive | Criticality.TransactionalCore | Criticality |
+| Column | IsActive | PII.None | PII |
+| Column | LastName | Architecture.Enriched | Architecture |
+| Column | LastName | Certification.Gold | Certification |
+| Column | LastName | ComplianceLegal.GDPRCCPA | ComplianceLegal |
+| Column | LastName | Privacy.IdentifiedLoyaltyMember | Privacy |
+| Column | LoyaltyJoinDate | Architecture.Enriched | Architecture |
+| Column | LoyaltyJoinDate | Certification.Gold | Certification |
+| Column | LoyaltyJoinDate | ComplianceLegal.GDPRCCPA | ComplianceLegal |
+| Column | LoyaltyJoinDate | Criticality.TransactionalCore | Criticality |
+| Column | LoyaltyJoinDate | PII.NonSensitive | PII |
+| Column | LoyaltyJoinDate | PersonalData.Personal | PersonalData |
+| Column | LoyaltyJoinDate | Privacy.IdentifiedLoyaltyMember | Privacy |
+| Column | LoyaltyJoinDate | Retention.CustomerProgrammeWindow | Retention |
+| Column | LoyaltyPoints | Architecture.Enriched | Architecture |
+| Column | LoyaltyPoints | Certification.Gold | Certification |
+| Column | LoyaltyPoints | ComplianceLegal.GDPRCCPA | ComplianceLegal |
+| Column | LoyaltyPoints | Criticality.TransactionalCore | Criticality |
+| Column | LoyaltyPoints | PII.NonSensitive | PII |
+| Column | LoyaltyPoints | PersonalData.Personal | PersonalData |
+| Column | LoyaltyPoints | Privacy.IdentifiedLoyaltyMember | Privacy |
+| Column | LoyaltyPoints | Retention.CustomerProgrammeWindow | Retention |
+| Column | LoyaltyTier | Architecture.Enriched | Architecture |
+| Column | LoyaltyTier | Certification.Gold | Certification |
+| Column | LoyaltyTier | ComplianceLegal.GDPRCCPA | ComplianceLegal |
+| Column | LoyaltyTier | Criticality.TransactionalCore | Criticality |
+| Column | LoyaltyTier | PII.NonSensitive | PII |
+| Column | LoyaltyTier | PersonalData.Personal | PersonalData |
+| Column | LoyaltyTier | Privacy.IdentifiedLoyaltyMember | Privacy |
+| Column | LoyaltyTier | Retention.CustomerProgrammeWindow | Retention |
+| Column | PhoneNumber | Architecture.Enriched | Architecture |
+| Column | PhoneNumber | Certification.Gold | Certification |
+| Column | PhoneNumber | Criticality.TransactionalCore | Criticality |
+| Column | PhoneNumber | Privacy.IdentifiedLoyaltyMember | Privacy |
+| Column | PostalCode | Architecture.Enriched | Architecture |
+| Column | PostalCode | Certification.Gold | Certification |
+| Column | PostalCode | ComplianceLegal.GDPRCCPA | ComplianceLegal |
+| Column | PostalCode | Criticality.TransactionalCore | Criticality |
+| Column | PostalCode | PII.NonSensitive | PII |
+| Column | PostalCode | PersonalData.Personal | PersonalData |
+| Column | PostalCode | Privacy.IdentifiedLoyaltyMember | Privacy |
+| Column | StateProvince | Architecture.Enriched | Architecture |
+| Column | StateProvince | Certification.Gold | Certification |
+| Column | StateProvince | ComplianceLegal.GDPRCCPA | ComplianceLegal |
+| Column | StateProvince | Criticality.TransactionalCore | Criticality |
+| Column | StateProvince | PII.NonSensitive | PII |
+| Column | StateProvince | PersonalData.Personal | PersonalData |
+| Column | StateProvince | Privacy.IdentifiedLoyaltyMember | Privacy |
+| Column | StreetAddress | Architecture.Enriched | Architecture |
+| Column | StreetAddress | Certification.Gold | Certification |
+| Column | StreetAddress | ComplianceLegal.GDPRCCPA | ComplianceLegal |
+| Column | StreetAddress | Criticality.TransactionalCore | Criticality |
+| Column | StreetAddress | PII.Sensitive | PII |
+| Column | StreetAddress | PersonalData.Personal | PersonalData |
+| Column | StreetAddress | Privacy.IdentifiedLoyaltyMember | Privacy |
+| Column | EffectiveStartDateTime | Architecture.Enriched | Architecture |
+| Column | EffectiveStartDateTime | Certification.Gold | Certification |
+| Column | EffectiveStartDateTime | Criticality.TransactionalCore | Criticality |
+| Column | EffectiveStartDateTime | PII.None | PII |
+| Column | EffectiveStartDateTime | QualityTrust.SystemOfRecord | QualityTrust |
+| Column | EffectiveEndDateTime | Architecture.Enriched | Architecture |
+| Column | EffectiveEndDateTime | Certification.Gold | Certification |
+| Column | EffectiveEndDateTime | Criticality.TransactionalCore | Criticality |
+| Column | EffectiveEndDateTime | PII.None | PII |
+| Column | EffectiveEndDateTime | QualityTrust.SystemOfRecord | QualityTrust |
+| Column | CurrentFlagYN | Architecture.Enriched | Architecture |
+| Column | CurrentFlagYN | Certification.Gold | Certification |
+| Column | CurrentFlagYN | Criticality.TransactionalCore | Criticality |
+| Column | CurrentFlagYN | PII.None | PII |
+| Column | CurrentFlagYN | QualityTrust.SystemOfRecord | QualityTrust |
+| Column | CreatedDateTime | Architecture.Enriched | Architecture |
+| Column | CreatedDateTime | Certification.Gold | Certification |
+| Column | CreatedDateTime | Criticality.Operational | Criticality |
+| Column | CreatedDateTime | PII.None | PII |
+| Column | CreatedDateTime | Retention.TransientOperational | Retention |
+| Column | ModifiedDateTime | Architecture.Enriched | Architecture |
+| Column | ModifiedDateTime | Certification.Gold | Certification |
+| Column | ModifiedDateTime | Criticality.Operational | Criticality |
+| Column | ModifiedDateTime | PII.None | PII |
+| Column | ModifiedDateTime | Retention.TransientOperational | Retention |
+| Column | SourceSystemCode | Architecture.Enriched | Architecture |
+| Column | SourceSystemCode | Certification.Gold | Certification |
+| Column | SourceSystemCode | Criticality.Operational | Criticality |
+| Column | SourceSystemCode | PII.None | PII |
+| Column | SourceCustomerPK | Architecture.Enriched | Architecture |
+| Column | SourceCustomerPK | Certification.Gold | Certification |
+| Column | SourceCustomerPK | Criticality.TransactionalCore | Criticality |
+| Column | SourceCustomerPK | PII.NonSensitive | PII |
+| Column | SourceCustomerPK | QualityTrust.SystemOfRecord | QualityTrust |
+| Column | SourceCustomerBK | Architecture.Enriched | Architecture |
+| Column | SourceCustomerBK | Certification.Gold | Certification |
+| Column | SourceCustomerBK | Criticality.TransactionalCore | Criticality |
+| Column | SourceCustomerBK | PII.NonSensitive | PII |
+| Column | SourceCustomerBK | QualityTrust.SystemOfRecord | QualityTrust |
+| Column | FileName | Architecture.Enriched | Architecture |
+| Column | FileName | Certification.Gold | Certification |
+| Column | FileName | Criticality.Operational | Criticality |
+| Column | FileName | PII.None | PII |
+| Column | FileName | Retention.TransientOperational | Retention |
+| Column | StageInsertedDateTimeUTC | Architecture.Enriched | Architecture |
+| Column | StageInsertedDateTimeUTC | Certification.Gold | Certification |
+| Column | StageInsertedDateTimeUTC | Criticality.Operational | Criticality |
+| Column | StageInsertedDateTimeUTC | PII.None | PII |
+| Column | StageInsertedDateTimeUTC | Retention.TransientOperational | Retention |
+| Column | Hashbytes | Architecture.Enriched | Architecture |
+| Column | Hashbytes | Certification.Gold | Certification |
+| Column | Hashbytes | Criticality.Operational | Criticality |
+| Column | Hashbytes | PII.None | PII |
+| Column | DataCondition | Architecture.Enriched | Architecture |
+| Column | DataCondition | Certification.Gold | Certification |
+| Column | DataCondition | Criticality.Operational | Criticality |
+| Column | DataCondition | PII.None | PII |
 
 ---
 
@@ -86,6 +248,13 @@ Definitions are included only when they are present in the analyzer JSON.
 |-------|--------|----------|-----------|------------|
 | Table |  | RetailDomainGlossary.Customer | Customer | The buyer of goods in a retail context, whether identified through a loyalty programme or anonymous at the point of sale. |
 | Column | CustomerHashBK | RetailDomainGlossary.CustomerIdentifier | Customer identifier | A unique key assigned to a known customer, often linked to a loyalty card or account registration. |
+| Column | CustomerHashPK | RetailDomainGlossary.CustomerIdentifier | Customer identifier | A unique key assigned to a known customer, often linked to a loyalty card or account registration. |
+| Column | CustomerType | RetailDomainGlossary.CustomerSegment | Customer segment | A grouping of customers by shared characteristics such as spending level, frequency, geography, or demographics. |
+| Column | LoyaltyJoinDate | RetailDomainGlossary.LoyaltyProgramme | Loyalty programme | A scheme that rewards repeat customers with points, discounts, or benefits in exchange for identified purchasing behaviour. |
+| Column | LoyaltyPoints | RetailDomainGlossary.LoyaltyProgramme | Loyalty programme | A scheme that rewards repeat customers with points, discounts, or benefits in exchange for identified purchasing behaviour. |
+| Column | LoyaltyTier | RetailDomainGlossary.LoyaltyProgramme | Loyalty programme | A scheme that rewards repeat customers with points, discounts, or benefits in exchange for identified purchasing behaviour. |
+| Column | SourceCustomerPK | RetailDomainGlossary.CustomerIdentifier | Customer identifier | A unique key assigned to a known customer, often linked to a loyalty card or account registration. |
+| Column | SourceCustomerBK | RetailDomainGlossary.CustomerIdentifier | Customer identifier | A unique key assigned to a known customer, often linked to a loyalty card or account registration. |
 
 ---
 

@@ -55,7 +55,7 @@
 | Table |  | QualityTrust.SystemOfRecord | QualityTrust |
 | Table |  | Retention.TransientOperational | Retention |
 | Table |  | Tier.Tier1 | Tier |
-| Column | InventorySnapshotHashPK | Architecture.Raw | Architecture |
+| Column | InventorySnapshotHashPK | Architecture.Enriched | Architecture |
 | Column | InventorySnapshotHashPK | Criticality.TransactionalCore | Criticality |
 | Column | InventorySnapshotHashPK | PII.None | PII |
 | Column | InventorySnapshotHashPK | QualityTrust.SystemOfRecord | QualityTrust |
@@ -69,7 +69,7 @@
 | Column | DateHashFK | Retention.TransientOperational | Retention |
 | Column | ProductHashFK | Criticality.TransactionalCore | Criticality |
 | Column | ProductHashFK | PII.None | PII |
-| Column | QuantityOnHand | Architecture.Raw | Architecture |
+| Column | QuantityOnHand | Architecture.Enriched | Architecture |
 | Column | QuantityOnHand | Criticality.StockReplenishment | Criticality |
 | Column | QuantityOnHand | PII.None | PII |
 | Column | QuantityOnHand | QualityTrust.SystemOfRecord | QualityTrust |
@@ -82,6 +82,47 @@
 | Column | UnitCost | Privacy.AnonymousAggregate | Privacy |
 | Column | UnitCost | QualityTrust.SystemOfRecord | QualityTrust |
 | Column | UnitCost | Retention.FinancialStatutory | Retention |
+| Column | QuantityReserved | Architecture.Enriched | Architecture |
+| Column | QuantityReserved | Certification.Gold | Certification |
+| Column | QuantityReserved | Criticality.StockReplenishment | Criticality |
+| Column | QuantityReserved | PII.None | PII |
+| Column | QuantityReserved | Tier.Tier2 | Tier |
+| Column | QuantityAvailable | Architecture.Enriched | Architecture |
+| Column | QuantityAvailable | Certification.Gold | Certification |
+| Column | QuantityAvailable | Criticality.StockReplenishment | Criticality |
+| Column | QuantityAvailable | PII.None | PII |
+| Column | QuantityAvailable | Tier.Tier2 | Tier |
+| Column | QuantityOnOrder | Architecture.Enriched | Architecture |
+| Column | QuantityOnOrder | Certification.Gold | Certification |
+| Column | QuantityOnOrder | Criticality.StockReplenishment | Criticality |
+| Column | QuantityOnOrder | PII.None | PII |
+| Column | QuantityOnOrder | Tier.Tier2 | Tier |
+| Column | QuantityInTransit | Architecture.Enriched | Architecture |
+| Column | QuantityInTransit | Certification.Gold | Certification |
+| Column | QuantityInTransit | Criticality.StockReplenishment | Criticality |
+| Column | QuantityInTransit | PII.None | PII |
+| Column | QuantityInTransit | Tier.Tier2 | Tier |
+| Column | SafetyStockLevel | Architecture.Enriched | Architecture |
+| Column | SafetyStockLevel | Certification.Gold | Certification |
+| Column | SafetyStockLevel | Criticality.StockReplenishment | Criticality |
+| Column | SafetyStockLevel | PII.None | PII |
+| Column | SafetyStockLevel | Tier.Tier2 | Tier |
+| Column | DaysOfSupply | Architecture.Enriched | Architecture |
+| Column | DaysOfSupply | Certification.Gold | Certification |
+| Column | DaysOfSupply | Criticality.StockReplenishment | Criticality |
+| Column | DaysOfSupply | PII.None | PII |
+| Column | DaysOfSupply | QualityTrust.Estimated | QualityTrust |
+| Column | DaysOfSupply | Tier.Tier2 | Tier |
+| Column | EtlBatchId | Architecture.Enriched | Architecture |
+| Column | EtlBatchId | Criticality.Operational | Criticality |
+| Column | EtlBatchId | PII.None | PII |
+| Column | EtlBatchId | Retention.TransientOperational | Retention |
+| Column | EtlBatchId | Tier.Tier4 | Tier |
+| Column | LoadTimestamp | Architecture.Enriched | Architecture |
+| Column | LoadTimestamp | Criticality.Operational | Criticality |
+| Column | LoadTimestamp | PII.None | PII |
+| Column | LoadTimestamp | Retention.TransientOperational | Retention |
+| Column | LoadTimestamp | Tier.Tier4 | Tier |
 
 ---
 
@@ -97,6 +138,12 @@ Definitions are included only when they are present in the analyzer JSON.
 | Column | QuantityOnHand | RetailDomainGlossary.LocationLevelInventory | Location-level inventory | Stock quantities and values attributed to a specific site, enabling store-specific availability and replenishment decisions. |
 | Table |  | RetailDomainGlossary.Product | Product | A sellable item or SKU identified for catalog, pricing, and inventory purposes. |
 | Column | UnitCost | RetailDomainGlossary.CostPrice | Cost price | The amount the retailer pays the supplier per unit, before any rebates, allowances, or landed-cost adjustments. |
+| Column | QuantityReserved | RetailDomainGlossary.InventoryStatus | Inventory status | A qualifier on stock indicating its availability—available, reserved, in transit, damaged, or quarantined. |
+| Column | QuantityAvailable | RetailDomainGlossary.InventoryStatus | Inventory status | A qualifier on stock indicating its availability—available, reserved, in transit, damaged, or quarantined. |
+| Column | QuantityOnOrder | RetailDomainGlossary.Replenishment | Replenishment | The process of restocking a location by triggering purchase orders to suppliers or transfers from other sites when inventory falls below threshold. |
+| Column | QuantityInTransit | RetailDomainGlossary.InventoryTracking | Inventory tracking | The ongoing recording and reconciliation of stock quantities and movements across locations and products. |
+| Column | SafetyStockLevel | RetailDomainGlossary.SafetyStock | Safety stock | Buffer inventory held above expected demand to absorb variability in supply lead time or sales velocity. |
+| Column | DaysOfSupply | RetailDomainGlossary.DaysOfSupply | Days of supply | The estimated number of days current inventory will last at the prevailing rate of sale. |
 
 ---
 

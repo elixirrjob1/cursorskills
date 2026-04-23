@@ -55,14 +55,14 @@
 | Table |  | Retention.FinancialStatutory | Retention |
 | Table |  | Tier.Tier2 | Tier |
 | Table |  | Privacy.PseudonymisedTransactional | Privacy |
-| Column | PurchaseOrderLineNumber | Architecture.Raw | Architecture |
+| Column | PurchaseOrderLineNumber | Architecture.Enriched | Architecture |
 | Column | PurchaseOrderLineNumber | Criticality.TransactionalCore | Criticality |
 | Column | PurchaseOrderLineNumber | PII.None | PII |
 | Column | PurchaseOrderLineNumber | QualityTrust.SystemOfRecord | QualityTrust |
-| Column | QuantityOrdered | Architecture.Raw | Architecture |
+| Column | QuantityOrdered | Architecture.Enriched | Architecture |
 | Column | QuantityOrdered | Criticality.TransactionalCore | Criticality |
 | Column | QuantityOrdered | PII.None | PII |
-| Column | ProductHashFK | Architecture.Raw | Architecture |
+| Column | ProductHashFK | Architecture.Enriched | Architecture |
 | Column | ProductHashFK | Criticality.TransactionalCore | Criticality |
 | Column | ProductHashFK | PII.None | PII |
 | Column | UnitCost | ComplianceLegal.TaxVAT | ComplianceLegal |
@@ -85,6 +85,82 @@
 | Column | SupplierHashFK | QualityTrust.SystemOfRecord | QualityTrust |
 | Column | OrderStatus | Criticality.TransactionalCore | Criticality |
 | Column | OrderStatus | PII.None | PII |
+| Column | DateShippedHashFK | Architecture.Enriched | Architecture |
+| Column | DateShippedHashFK | Certification.Gold | Certification |
+| Column | DateShippedHashFK | Criticality.Operational | Criticality |
+| Column | DateShippedHashFK | PII.None | PII |
+| Column | DateReceivedHashFK | Architecture.Enriched | Architecture |
+| Column | DateReceivedHashFK | Certification.Gold | Certification |
+| Column | DateReceivedHashFK | Criticality.Operational | Criticality |
+| Column | DateReceivedHashFK | PII.None | PII |
+| Column | DateInvoicedHashFK | Architecture.Enriched | Architecture |
+| Column | DateInvoicedHashFK | Certification.Gold | Certification |
+| Column | DateInvoicedHashFK | Criticality.Operational | Criticality |
+| Column | DateInvoicedHashFK | PII.None | PII |
+| Column | QuantityShipped | Architecture.Enriched | Architecture |
+| Column | QuantityShipped | Certification.Gold | Certification |
+| Column | QuantityShipped | Criticality.StockReplenishment | Criticality |
+| Column | QuantityShipped | PII.None | PII |
+| Column | QuantityReceived | Architecture.Enriched | Architecture |
+| Column | QuantityReceived | Certification.Gold | Certification |
+| Column | QuantityReceived | Criticality.StockReplenishment | Criticality |
+| Column | QuantityReceived | PII.None | PII |
+| Column | QuantityAccepted | Architecture.Enriched | Architecture |
+| Column | QuantityAccepted | Certification.Gold | Certification |
+| Column | QuantityAccepted | Criticality.StockReplenishment | Criticality |
+| Column | QuantityAccepted | PII.None | PII |
+| Column | QuantityRejected | Architecture.Enriched | Architecture |
+| Column | QuantityRejected | Certification.Gold | Certification |
+| Column | QuantityRejected | Criticality.StockReplenishment | Criticality |
+| Column | QuantityRejected | PII.None | PII |
+| Column | ShippedAmount | Architecture.Enriched | Architecture |
+| Column | ShippedAmount | Certification.Gold | Certification |
+| Column | ShippedAmount | Criticality.TransactionalCore | Criticality |
+| Column | ShippedAmount | ComplianceLegal.SOX | ComplianceLegal |
+| Column | ShippedAmount | Retention.FinancialStatutory | Retention |
+| Column | ShippedAmount | Tier.Tier1 | Tier |
+| Column | ShippedAmount | PII.None | PII |
+| Column | ReceivedAmount | Architecture.Enriched | Architecture |
+| Column | ReceivedAmount | Certification.Gold | Certification |
+| Column | ReceivedAmount | Criticality.TransactionalCore | Criticality |
+| Column | ReceivedAmount | ComplianceLegal.SOX | ComplianceLegal |
+| Column | ReceivedAmount | Retention.FinancialStatutory | Retention |
+| Column | ReceivedAmount | Tier.Tier1 | Tier |
+| Column | ReceivedAmount | PII.None | PII |
+| Column | InvoicedAmount | Architecture.Enriched | Architecture |
+| Column | InvoicedAmount | Certification.Gold | Certification |
+| Column | InvoicedAmount | Criticality.TransactionalCore | Criticality |
+| Column | InvoicedAmount | ComplianceLegal.SOX | ComplianceLegal |
+| Column | InvoicedAmount | ComplianceLegal.TaxVAT | ComplianceLegal |
+| Column | InvoicedAmount | Retention.FinancialStatutory | Retention |
+| Column | InvoicedAmount | Tier.Tier1 | Tier |
+| Column | InvoicedAmount | PII.None | PII |
+| Column | DaysToShip | Architecture.Enriched | Architecture |
+| Column | DaysToShip | Certification.Gold | Certification |
+| Column | DaysToShip | Criticality.Analytical | Criticality |
+| Column | DaysToShip | PII.None | PII |
+| Column | DaysInTransit | Architecture.Enriched | Architecture |
+| Column | DaysInTransit | Certification.Gold | Certification |
+| Column | DaysInTransit | Criticality.Analytical | Criticality |
+| Column | DaysInTransit | PII.None | PII |
+| Column | DaysToReceive | Architecture.Enriched | Architecture |
+| Column | DaysToReceive | Certification.Gold | Certification |
+| Column | DaysToReceive | Criticality.Analytical | Criticality |
+| Column | DaysToReceive | PII.None | PII |
+| Column | DaysToInvoice | Architecture.Enriched | Architecture |
+| Column | DaysToInvoice | Certification.Gold | Certification |
+| Column | DaysToInvoice | Criticality.Analytical | Criticality |
+| Column | DaysToInvoice | PII.None | PII |
+| Column | EtlBatchId | Architecture.Enriched | Architecture |
+| Column | EtlBatchId | Certification.Gold | Certification |
+| Column | EtlBatchId | Criticality.Operational | Criticality |
+| Column | EtlBatchId | Retention.OperationalTransient | Retention |
+| Column | EtlBatchId | PII.None | PII |
+| Column | LoadTimestamp | Architecture.Enriched | Architecture |
+| Column | LoadTimestamp | Certification.Gold | Certification |
+| Column | LoadTimestamp | Criticality.Operational | Criticality |
+| Column | LoadTimestamp | Retention.OperationalTransient | Retention |
+| Column | LoadTimestamp | PII.None | PII |
 
 ---
 
@@ -100,6 +176,16 @@ Definitions are included only when they are present in the analyzer JSON.
 | Column | WarehouseHashFK | RetailDomainGlossary.StoreLocation | Store location | A distinct site used to scope inventory, sales, and operational activity within the retail network. |
 | Column | SupplierHashFK | RetailDomainGlossary.Supplier | Supplier | An external party that provides goods to the retailer, typically under negotiated commercial terms. |
 | Column | OrderStatus | RetailDomainGlossary.OrderStatus | Order status | The current state of an order in its lifecycle—placed, confirmed, picking, shipped, delivered, returned, or cancelled. |
+| Column | DateReceivedHashFK | RetailDomainGlossary.GoodsReceipt | Goods receipt | The event of accepting inbound goods against a purchase order or transfer, updating inventory and triggering payables workflows. |
+| Column | DateInvoicedHashFK | RetailDomainGlossary.Invoice | Invoice | A document from a supplier requesting payment for goods delivered, matched against purchase orders and goods receipts. |
+| Column | QuantityReceived | RetailDomainGlossary.GoodsReceipt | Goods receipt | The event of accepting inbound goods against a purchase order or transfer, updating inventory and triggering payables workflows. |
+| Column | QuantityAccepted | RetailDomainGlossary.ThreeWayMatch | Three-way match | Verification that the purchase order, goods receipt, and supplier invoice agree on quantities and values before approving payment. |
+| Column | QuantityRejected | RetailDomainGlossary.ThreeWayMatch | Three-way match | Verification that the purchase order, goods receipt, and supplier invoice agree on quantities and values before approving payment. |
+| Column | ReceivedAmount | RetailDomainGlossary.GoodsReceipt | Goods receipt | The event of accepting inbound goods against a purchase order or transfer, updating inventory and triggering payables workflows. |
+| Column | InvoicedAmount | RetailDomainGlossary.Invoice | Invoice | A document from a supplier requesting payment for goods delivered, matched against purchase orders and goods receipts. |
+| Column | DaysToShip | RetailDomainGlossary.SupplierLeadTime | Supplier lead time | The elapsed time between placing a purchase order and receiving the goods at the designated location. |
+| Column | DaysInTransit | RetailDomainGlossary.SupplierLeadTime | Supplier lead time | The elapsed time between placing a purchase order and receiving the goods at the designated location. |
+| Column | DaysToReceive | RetailDomainGlossary.SupplierLeadTime | Supplier lead time | The elapsed time between placing a purchase order and receiving the goods at the designated location. |
 
 ---
 

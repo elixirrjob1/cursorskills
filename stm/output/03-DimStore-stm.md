@@ -69,6 +69,68 @@
 | Column | StoreName | PersonalData.Personal | PersonalData |
 | Column | PostalCode | ComplianceLegal.TaxVAT | ComplianceLegal |
 | Column | PostalCode | PII.NonSensitive | PII |
+| Column | StoreType | Architecture.Enriched | Architecture |
+| Column | StoreType | Certification.Gold | Certification |
+| Column | StoreType | Criticality.Operational | Criticality |
+| Column | StoreType | PII.None | PII |
+| Column | Country | Architecture.Enriched | Architecture |
+| Column | Country | Certification.Gold | Certification |
+| Column | Country | Criticality.Operational | Criticality |
+| Column | Country | PII.None | PII |
+| Column | Latitude | Architecture.Enriched | Architecture |
+| Column | Latitude | Certification.Gold | Certification |
+| Column | Latitude | Criticality.Operational | Criticality |
+| Column | Latitude | PII.None | PII |
+| Column | Longitude | Architecture.Enriched | Architecture |
+| Column | Longitude | Certification.Gold | Certification |
+| Column | Longitude | Criticality.Operational | Criticality |
+| Column | Longitude | PII.None | PII |
+| Column | DistrictCode | Architecture.Enriched | Architecture |
+| Column | DistrictCode | Certification.Gold | Certification |
+| Column | DistrictCode | Criticality.Operational | Criticality |
+| Column | DistrictCode | PII.None | PII |
+| Column | DistrictName | Architecture.Enriched | Architecture |
+| Column | DistrictName | Certification.Gold | Certification |
+| Column | DistrictName | Criticality.Operational | Criticality |
+| Column | DistrictName | PII.None | PII |
+| Column | RegionCode | Architecture.Enriched | Architecture |
+| Column | RegionCode | Certification.Gold | Certification |
+| Column | RegionCode | Criticality.Operational | Criticality |
+| Column | RegionCode | PII.None | PII |
+| Column | RegionName | Architecture.Enriched | Architecture |
+| Column | RegionName | Certification.Gold | Certification |
+| Column | RegionName | Criticality.Operational | Criticality |
+| Column | RegionName | PII.None | PII |
+| Column | StoreManager | Architecture.Enriched | Architecture |
+| Column | StoreManager | Certification.Gold | Certification |
+| Column | StoreManager | ComplianceLegal.GDPRCCPA | ComplianceLegal |
+| Column | StoreManager | Criticality.Operational | Criticality |
+| Column | StoreManager | PII.NonSensitive | PII |
+| Column | StoreManager | PersonalData.Personal | PersonalData |
+| Column | OpenDate | Architecture.Enriched | Architecture |
+| Column | OpenDate | Certification.Gold | Certification |
+| Column | OpenDate | Criticality.Operational | Criticality |
+| Column | OpenDate | PII.None | PII |
+| Column | CloseDate | Architecture.Enriched | Architecture |
+| Column | CloseDate | Certification.Gold | Certification |
+| Column | CloseDate | Criticality.Operational | Criticality |
+| Column | CloseDate | PII.None | PII |
+| Column | SquareFootage | Architecture.Enriched | Architecture |
+| Column | SquareFootage | Certification.Gold | Certification |
+| Column | SquareFootage | Criticality.Operational | Criticality |
+| Column | SquareFootage | PII.None | PII |
+| Column | IsActive | Architecture.Enriched | Architecture |
+| Column | IsActive | Certification.Gold | Certification |
+| Column | IsActive | Criticality.Operational | Criticality |
+| Column | IsActive | PII.None | PII |
+| Column | EtlBatchId | Architecture.Enriched | Architecture |
+| Column | EtlBatchId | Certification.Gold | Certification |
+| Column | EtlBatchId | Criticality.Operational | Criticality |
+| Column | EtlBatchId | PII.None | PII |
+| Column | LoadTimestamp | Architecture.Enriched | Architecture |
+| Column | LoadTimestamp | Certification.Gold | Certification |
+| Column | LoadTimestamp | Criticality.Operational | Criticality |
+| Column | LoadTimestamp | PII.None | PII |
 
 ---
 
@@ -80,6 +142,14 @@ Definitions are included only when they are present in the analyzer JSON.
 | Table |  | RetailDomainGlossary.PhysicalStore | Physical store | A brick-and-mortar location where customers browse and purchase goods and where local inventory and staff are managed. |
 | Column | StoreHashPK | RetailDomainGlossary.StoreLocation | Store location | A distinct site used to scope inventory, sales, and operational activity within the retail network. |
 | Column | StoreHashBK | RetailDomainGlossary.StoreCode | Store code | A unique short identifier assigned to each store location for use in systems, reporting, and logistics addressing. |
+| Column | StoreType | RetailDomainGlossary.StoreFormat | Store format | The classification of a store by size, layout, or trade area focus, such as superstore, convenience, or neighbourhood format. |
+| Column | Country | RetailDomainGlossary.StoreLocation | Store location | A distinct site used to scope inventory, sales, and operational activity within the retail network. |
+| Column | Latitude | RetailDomainGlossary.StoreLocation | Store location | A distinct site used to scope inventory, sales, and operational activity within the retail network. |
+| Column | Longitude | RetailDomainGlossary.StoreLocation | Store location | A distinct site used to scope inventory, sales, and operational activity within the retail network. |
+| Column | DistrictCode | RetailDomainGlossary.StoreLocation | Store location | A distinct site used to scope inventory, sales, and operational activity within the retail network. |
+| Column | DistrictName | RetailDomainGlossary.StoreLocation | Store location | A distinct site used to scope inventory, sales, and operational activity within the retail network. |
+| Column | RegionCode | RetailDomainGlossary.StoreLocation | Store location | A distinct site used to scope inventory, sales, and operational activity within the retail network. |
+| Column | RegionName | RetailDomainGlossary.StoreLocation | Store location | A distinct site used to scope inventory, sales, and operational activity within the retail network. |
 
 ---
 

@@ -157,11 +157,135 @@ If the Load Strategy table has an empty first data row:
 - Return a brief summary: how many rows matched, which source tables used, any tables skipped.
 ```
 
-### Step 4 — Post-enrich: classification tags & glossary terms
+### Step 4a — Post-enrich: propagate bronze tags & glossary terms
 
-After all subagents complete, run the deterministic post-enrichment script.
+After all subagents from Step 3 complete, run the deterministic post-enrichment script.
 This reads each STM's Section 7 to find matched source pairs, fetches tags and glossary
-term assignments from OpenMetadata once per unique source table, and fills Sections 5 and 6.
+term assignments from OpenMetadata once per unique source table, and fills Sections 5 and 6
+with bronze-derived classifications.
+
+Layer-derived classifications (`Architecture.*`, `Certification.*`) are
+rewritten to match the target schema detected from Section 4 — e.g. a bronze
+column carrying `Architecture.Raw` becomes `Architecture.Enriched` on a
+`DBT_PROD_ENRICHED` target. This prevents mutual-exclusion conflicts in
+OpenMetadata when the LLM step later assigns `Architecture.Enriched` to
+dbt-invented columns on the same table.
+
+At the end, it also:
+
+- scans each STM for **dbt-invented target columns** — rows in Section 7 that
+  have no bronze source mapping and no column-scoped tag in Section 5 (e.g.
+  `*HashPK`, `*HashBK`, `*HashFK`, `Hashbytes`, audit metadata, SCD2 columns),
+- fetches the full OpenMetadata classification + glossary vocabulary once, and
+- writes a work file at `stm/output/_dbt_column_classification_work.json`
+  containing the vocabulary plus every unclassified column with its name,
+  data type, field type, and description.
+
+If no dbt-invented columns are found the work file is not emitted and Step 4b
+can be skipped.
+
+### Step 4b — Cursor subagents classify dbt-invented columns
+
+The work file from Step 4a lists columns that exist in the dbt target tables
+but were never classified in bronze. The parent Cursor agent launches **one
+Task subagent per STM entry in the work file** (max 4 in parallel, same
+guardrail as Step 3). There is no external API call here — the subagents are
+Cursor Task agents reasoning over the work file and the STM. No `openai` /
+Azure dependency is required.
+
+Each subagent:
+- reads `stm/output/_dbt_column_classification_work.json` (the work file) to
+  get the OM vocabulary and its slice of `items[i].unclassified_columns`,
+- reads the STM at `items[i].stm_file` for business context (Section 2
+  purpose, Section 4 target model, Section 7 Final mapping),
+- returns its result as a fenced JSON block in its final chat message —
+  it does **not** write the work file (parent merges all results in one pass
+  to avoid concurrent writes on the same JSON).
+
+#### Subagent prompt template
+
+```
+You are classifying dbt-introduced columns against OpenMetadata's published
+vocabulary. These columns do not exist in the bronze layer, so they cannot
+be enriched by source-tag propagation.
+
+WORK FILE:     {WORK_FILE_PATH}
+ITEM INDEX:    {ITEM_INDEX}           # 0-based into work.items[]
+TARGET TABLE:  {TARGET_TABLE}
+STM FILE:      {STM_FILE_PATH}
+
+INPUTS (from the work file):
+- om_vocabulary.classifications: every enabled classification, each with
+  name, description, mutually_exclusive, and options: [{fqn, name, description}]
+- om_vocabulary.glossary_terms:  every published glossary term as
+  [{fqn, name, display_name, description}]
+- items[i].unclassified_columns: [{column, data_type, field_type, description}]
+
+READ the STM at STM FILE to recover business context (Section 2 purpose,
+Section 4 target model, Section 7 Final mapping for transformations).
+
+For EACH column in unclassified_columns, pick:
+1. classification_tags — zero or more tag FQNs from om_vocabulary.classifications,
+   one per relevant classification. Never invent an FQN. Prefer the most
+   specific tag supported by the column's name + description + field type.
+   For mutually_exclusive=true classifications, pick at most one option.
+2. glossary_terms — zero or more term FQNs from om_vocabulary.glossary_terms.
+   Only assign a term when the column's meaning maps to a published term.
+
+RULES
+- Output FQNs only; never free text.
+- If no tag applies, emit an empty list for classification_tags (never "N/A").
+- Hash surrogate keys (*HashPK/HashBK/HashFK) carry the business criticality
+  of the entity they identify, not of the hash itself.
+- Audit/metadata columns (EtlBatchId, LoadTimestamp, StageInsertedDateTimeUTC)
+  are operational / low-criticality and never PII.
+- SCD2 effective-dating columns (EffectiveStartDateTime, EffectiveEndDateTime,
+  CurrentFlagYN) carry the SCD semantics of the table.
+- Ignore clinical/HIPAA tags unless the column description clearly indicates
+  healthcare PHI.
+
+OUTPUT — end your message with a single fenced JSON block (no other JSON
+elsewhere in the reply):
+
+```json
+{
+  "item_index": {ITEM_INDEX},
+  "target_table": "{TARGET_TABLE}",
+  "classified_columns": [
+    {"column": "<exact name>", "classification_tags": ["<FQN>", ...], "glossary_terms": ["<FQN>", ...]},
+    ...
+  ]
+}
+```
+
+Also include a brief markdown summary above the JSON block: how many tags /
+terms per column, and any column you deliberately left unclassified with a
+one-line reason.
+```
+
+The parent agent parses each subagent's JSON block and writes the merged
+result back to the work file before running Step 4c.
+
+### Step 4c — Merge subagent output back into the STMs
+
+After every subagent has written its `classified_columns` into the work file,
+run:
+
+```bash
+python3 .cursor/skills/stm-catalogue-enricher/scripts/apply_dbt_column_classifications.py \
+  --work-file stm/output/_dbt_column_classification_work.json
+```
+
+The script appends the produced rows to each STM's Section 5 (and Section 6
+for glossary) without touching existing rows. It is idempotent — re-running
+is a no-op unless the subagent added new FQNs.
+
+Why this split between 4a / 4b / 4c exists:
+- 4a is purely mechanical and benefits from Python's fast deduping + caching.
+- 4b requires reasoning over the business meaning of each new column against
+  the live OpenMetadata vocabulary — that's the LLM's job.
+- 4c is a deterministic merge: preserves any hand-tuned existing rows and
+  lets you diff the subagent's output before it touches the STMs.
 
 ```bash
 set -a && source .env && set +a
@@ -175,11 +299,14 @@ pairs (already written by the subagents) plus a small number of deduplicated API
 
 ### Step 5 — Confirm results
 
-After the post-enrichment script completes, report to the user:
-- How many STMs were enriched vs skipped
+After 4a / 4b / 4c have completed, report to the user:
+- How many STMs were enriched vs skipped in 4a
 - Which source tables were mapped to which target tables
-- Classification tags and glossary terms populated
+- Classification tags and glossary terms populated from bronze propagation
+- How many dbt-invented columns went through the LLM pass in 4b, and how
+  many tag/term FQNs the subagents assigned per column (from 4c's stdout)
 - Any STMs that could not be enriched (e.g. DimDate with no source table)
+- Any columns the subagents deliberately left unclassified with their reasons
 
 ## Population rules
 

@@ -72,6 +72,83 @@
 | Column | ContactEmail | Criticality.Operational | Criticality |
 | Column | ContactEmail | PII.Sensitive | PII |
 | Column | ContactEmail | PersonalData.Personal | PersonalData |
+| Column | SupplierDBAName | Architecture.Enriched | Architecture |
+| Column | SupplierDBAName | Certification.Gold | Certification |
+| Column | SupplierDBAName | PII.None | PII |
+| Column | SupplierDBAName | Privacy.Non-Personal | Privacy |
+| Column | SupplierDBAName | Criticality.Operational | Criticality |
+| Column | SupplierDBAName | QualityTrust.SupplierProvided | QualityTrust |
+| Column | StreetAddress | Architecture.Enriched | Architecture |
+| Column | StreetAddress | Certification.Gold | Certification |
+| Column | StreetAddress | PII.None | PII |
+| Column | StreetAddress | Privacy.Non-Personal | Privacy |
+| Column | StreetAddress | Criticality.Operational | Criticality |
+| Column | StreetAddress | QualityTrust.SupplierProvided | QualityTrust |
+| Column | City | Architecture.Enriched | Architecture |
+| Column | City | Certification.Gold | Certification |
+| Column | City | PII.None | PII |
+| Column | City | Privacy.Non-Personal | Privacy |
+| Column | City | Criticality.Operational | Criticality |
+| Column | City | QualityTrust.SupplierProvided | QualityTrust |
+| Column | StateProvince | Architecture.Enriched | Architecture |
+| Column | StateProvince | Certification.Gold | Certification |
+| Column | StateProvince | PII.None | PII |
+| Column | StateProvince | Privacy.Non-Personal | Privacy |
+| Column | StateProvince | Criticality.Operational | Criticality |
+| Column | StateProvince | QualityTrust.SupplierProvided | QualityTrust |
+| Column | PostalCode | Architecture.Enriched | Architecture |
+| Column | PostalCode | Certification.Gold | Certification |
+| Column | PostalCode | PII.None | PII |
+| Column | PostalCode | Privacy.Non-Personal | Privacy |
+| Column | PostalCode | Criticality.Operational | Criticality |
+| Column | PostalCode | QualityTrust.SupplierProvided | QualityTrust |
+| Column | Country | Architecture.Enriched | Architecture |
+| Column | Country | Certification.Gold | Certification |
+| Column | Country | PII.None | PII |
+| Column | Country | Privacy.Non-Personal | Privacy |
+| Column | Country | Criticality.Operational | Criticality |
+| Column | Country | QualityTrust.SupplierProvided | QualityTrust |
+| Column | PaymentTermsCode | Architecture.Enriched | Architecture |
+| Column | PaymentTermsCode | Certification.Gold | Certification |
+| Column | PaymentTermsCode | PII.None | PII |
+| Column | PaymentTermsCode | Criticality.Operational | Criticality |
+| Column | PaymentTermsCode | QualityTrust.SupplierProvided | QualityTrust |
+| Column | PaymentTermsDescription | Architecture.Enriched | Architecture |
+| Column | PaymentTermsDescription | Certification.Gold | Certification |
+| Column | PaymentTermsDescription | PII.None | PII |
+| Column | PaymentTermsDescription | Criticality.Operational | Criticality |
+| Column | PaymentTermsDescription | QualityTrust.SupplierProvided | QualityTrust |
+| Column | PaymentTermsDays | Architecture.Enriched | Architecture |
+| Column | PaymentTermsDays | Certification.Gold | Certification |
+| Column | PaymentTermsDays | PII.None | PII |
+| Column | PaymentTermsDays | Criticality.Operational | Criticality |
+| Column | PaymentTermsDays | QualityTrust.SupplierProvided | QualityTrust |
+| Column | LeadTimeDays | Architecture.Enriched | Architecture |
+| Column | LeadTimeDays | Certification.Gold | Certification |
+| Column | LeadTimeDays | PII.None | PII |
+| Column | LeadTimeDays | Criticality.Operational | Criticality |
+| Column | LeadTimeDays | QualityTrust.SupplierProvided | QualityTrust |
+| Column | MinimumOrderAmount | Architecture.Enriched | Architecture |
+| Column | MinimumOrderAmount | Certification.Gold | Certification |
+| Column | MinimumOrderAmount | PII.None | PII |
+| Column | MinimumOrderAmount | Criticality.Operational | Criticality |
+| Column | MinimumOrderAmount | QualityTrust.SupplierProvided | QualityTrust |
+| Column | IsActive | Architecture.Enriched | Architecture |
+| Column | IsActive | Certification.Gold | Certification |
+| Column | IsActive | PII.None | PII |
+| Column | IsActive | Criticality.Operational | Criticality |
+| Column | IsPreferred | Architecture.Enriched | Architecture |
+| Column | IsPreferred | Certification.Gold | Certification |
+| Column | IsPreferred | PII.None | PII |
+| Column | IsPreferred | Criticality.Operational | Criticality |
+| Column | EtlBatchId | Architecture.Enriched | Architecture |
+| Column | EtlBatchId | Certification.Gold | Certification |
+| Column | EtlBatchId | PII.None | PII |
+| Column | EtlBatchId | Criticality.Operational | Criticality |
+| Column | LoadTimestamp | Architecture.Enriched | Architecture |
+| Column | LoadTimestamp | Certification.Gold | Certification |
+| Column | LoadTimestamp | PII.None | PII |
+| Column | LoadTimestamp | Criticality.Operational | Criticality |
 
 ---
 
@@ -82,6 +159,7 @@ Definitions are included only when they are present in the analyzer JSON.
 |-------|--------|----------|-----------|------------|
 | Table |  | RetailDomainGlossary.Supplier | Supplier | An external party that provides goods to the retailer, typically under negotiated commercial terms. |
 | Column | SupplierHashBK | RetailDomainGlossary.SupplierCode | Supplier code | A unique identifier assigned to each supplier in the retailer's master data. |
+| Column | LeadTimeDays | RetailDomainGlossary.SupplierLeadTime | Supplier lead time | The elapsed time between placing a purchase order and receiving the goods at the designated location. |
 
 ---
 

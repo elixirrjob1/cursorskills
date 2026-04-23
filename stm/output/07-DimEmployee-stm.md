@@ -73,6 +73,31 @@
 | Column | EmailAddress | ComplianceLegal.GDPRCCPA | ComplianceLegal |
 | Column | EmailAddress | PII.Sensitive | PII |
 | Column | EmailAddress | PersonalData.Personal | PersonalData |
+| Column | Department | Architecture.Enriched | Architecture |
+| Column | Department | Certification.Gold | Certification |
+| Column | Department | Criticality.Operational | Criticality |
+| Column | Department | PII.None | PII |
+| Column | TerminationDate | Architecture.Enriched | Architecture |
+| Column | TerminationDate | Certification.Gold | Certification |
+| Column | TerminationDate | Criticality.Operational | Criticality |
+| Column | TerminationDate | PII.None | PII |
+| Column | TerminationDate | QualityTrust.SystemOfRecord | QualityTrust |
+| Column | ManagerEmployeeHashFK | Architecture.Enriched | Architecture |
+| Column | ManagerEmployeeHashFK | Certification.Gold | Certification |
+| Column | ManagerEmployeeHashFK | Criticality.Operational | Criticality |
+| Column | ManagerEmployeeHashFK | PII.None | PII |
+| Column | IsActive | Architecture.Enriched | Architecture |
+| Column | IsActive | Certification.Gold | Certification |
+| Column | IsActive | Criticality.Operational | Criticality |
+| Column | IsActive | PII.None | PII |
+| Column | EtlBatchId | Architecture.Enriched | Architecture |
+| Column | EtlBatchId | Certification.Gold | Certification |
+| Column | EtlBatchId | Criticality.Operational | Criticality |
+| Column | EtlBatchId | PII.None | PII |
+| Column | LoadTimestamp | Architecture.Enriched | Architecture |
+| Column | LoadTimestamp | Certification.Gold | Certification |
+| Column | LoadTimestamp | Criticality.Operational | Criticality |
+| Column | LoadTimestamp | PII.None | PII |
 
 ---
 

@@ -60,7 +60,7 @@
 | Column | TransactionLineNumber | Criticality.TransactionalCore | Criticality |
 | Column | TransactionLineNumber | PII.None | PII |
 | Column | TransactionLineNumber | QualityTrust.SystemOfRecord | QualityTrust |
-| Column | Quantity | Architecture.Raw | Architecture |
+| Column | Quantity | Architecture.Enriched | Architecture |
 | Column | Quantity | Criticality.TransactionalCore | Criticality |
 | Column | Quantity | PII.None | PII |
 | Column | ProductHashFK | Criticality.TransactionalCore | Criticality |
@@ -76,7 +76,7 @@
 | Column | TransactionNumber | QualityTrust.SystemOfRecord | QualityTrust |
 | Column | StoreHashFK | Criticality.TransactionalCore | Criticality |
 | Column | StoreHashFK | PII.None | PII |
-| Column | DateHashFK | Architecture.Raw | Architecture |
+| Column | DateHashFK | Architecture.Enriched | Architecture |
 | Column | DateHashFK | Criticality.TransactionalCore | Criticality |
 | Column | DateHashFK | Lifecycle.Active | Lifecycle |
 | Column | DateHashFK | PII.None | PII |
@@ -94,6 +94,103 @@
 | Column | UnitCost | Privacy.AnonymousAggregate | Privacy |
 | Column | UnitCost | QualityTrust.SystemOfRecord | QualityTrust |
 | Column | UnitCost | Retention.FinancialStatutory | Retention |
+| Column | TransactionType | Architecture.Enriched | Architecture |
+| Column | TransactionType | Certification.Gold | Certification |
+| Column | TransactionType | Criticality.TransactionalCore | Criticality |
+| Column | TransactionType | Lifecycle.Active | Lifecycle |
+| Column | TransactionType | PII.None | PII |
+| Column | TransactionType | Privacy.AnonymousAggregate | Privacy |
+| Column | TransactionType | QualityTrust.SystemOfRecord | QualityTrust |
+| Column | TransactionType | Retention.FinancialStatutory | Retention |
+| Column | TransactionType | Tier.Tier1 | Tier |
+| Column | DiscountAmount | Architecture.Enriched | Architecture |
+| Column | DiscountAmount | Certification.Gold | Certification |
+| Column | DiscountAmount | ComplianceLegal.SOX | ComplianceLegal |
+| Column | DiscountAmount | Criticality.TransactionalCore | Criticality |
+| Column | DiscountAmount | Lifecycle.Active | Lifecycle |
+| Column | DiscountAmount | PII.None | PII |
+| Column | DiscountAmount | Privacy.AnonymousAggregate | Privacy |
+| Column | DiscountAmount | QualityTrust.SystemOfRecord | QualityTrust |
+| Column | DiscountAmount | Retention.FinancialStatutory | Retention |
+| Column | DiscountAmount | Tier.Tier1 | Tier |
+| Column | TaxAmount | Architecture.Enriched | Architecture |
+| Column | TaxAmount | Certification.Gold | Certification |
+| Column | TaxAmount | ComplianceLegal.SOX | ComplianceLegal |
+| Column | TaxAmount | ComplianceLegal.TaxVAT | ComplianceLegal |
+| Column | TaxAmount | Criticality.TransactionalCore | Criticality |
+| Column | TaxAmount | Lifecycle.Active | Lifecycle |
+| Column | TaxAmount | PII.None | PII |
+| Column | TaxAmount | Privacy.AnonymousAggregate | Privacy |
+| Column | TaxAmount | QualityTrust.SystemOfRecord | QualityTrust |
+| Column | TaxAmount | Retention.FinancialStatutory | Retention |
+| Column | TaxAmount | Tier.Tier1 | Tier |
+| Column | NetAmount | Architecture.Enriched | Architecture |
+| Column | NetAmount | Certification.Gold | Certification |
+| Column | NetAmount | ComplianceLegal.SOX | ComplianceLegal |
+| Column | NetAmount | ComplianceLegal.TaxVAT | ComplianceLegal |
+| Column | NetAmount | Criticality.TransactionalCore | Criticality |
+| Column | NetAmount | Lifecycle.Active | Lifecycle |
+| Column | NetAmount | PII.None | PII |
+| Column | NetAmount | Privacy.AnonymousAggregate | Privacy |
+| Column | NetAmount | QualityTrust.SystemOfRecord | QualityTrust |
+| Column | NetAmount | Retention.FinancialStatutory | Retention |
+| Column | NetAmount | Tier.Tier1 | Tier |
+| Column | ProfitAmount | Architecture.Enriched | Architecture |
+| Column | ProfitAmount | Certification.Gold | Certification |
+| Column | ProfitAmount | ComplianceLegal.SOX | ComplianceLegal |
+| Column | ProfitAmount | Criticality.TransactionalCore | Criticality |
+| Column | ProfitAmount | Lifecycle.Active | Lifecycle |
+| Column | ProfitAmount | PII.None | PII |
+| Column | ProfitAmount | Privacy.AnonymousAggregate | Privacy |
+| Column | ProfitAmount | QualityTrust.SystemOfRecord | QualityTrust |
+| Column | ProfitAmount | Retention.FinancialStatutory | Retention |
+| Column | ProfitAmount | Tier.Tier1 | Tier |
+| Column | IsPromotion | Architecture.Enriched | Architecture |
+| Column | IsPromotion | Certification.Gold | Certification |
+| Column | IsPromotion | Criticality.TransactionalCore | Criticality |
+| Column | IsPromotion | Lifecycle.Active | Lifecycle |
+| Column | IsPromotion | PII.None | PII |
+| Column | IsPromotion | Privacy.AnonymousAggregate | Privacy |
+| Column | IsPromotion | QualityTrust.SystemOfRecord | QualityTrust |
+| Column | IsPromotion | Retention.FinancialStatutory | Retention |
+| Column | IsPromotion | Tier.Tier2 | Tier |
+| Column | PromotionCode | Architecture.Enriched | Architecture |
+| Column | PromotionCode | Certification.Gold | Certification |
+| Column | PromotionCode | Criticality.TransactionalCore | Criticality |
+| Column | PromotionCode | Lifecycle.Active | Lifecycle |
+| Column | PromotionCode | PII.None | PII |
+| Column | PromotionCode | Privacy.AnonymousAggregate | Privacy |
+| Column | PromotionCode | QualityTrust.SystemOfRecord | QualityTrust |
+| Column | PromotionCode | Retention.FinancialStatutory | Retention |
+| Column | PromotionCode | Tier.Tier2 | Tier |
+| Column | PaymentMethod | Architecture.Enriched | Architecture |
+| Column | PaymentMethod | Certification.Gold | Certification |
+| Column | PaymentMethod | ComplianceLegal.PCIDSS | ComplianceLegal |
+| Column | PaymentMethod | Criticality.TransactionalCore | Criticality |
+| Column | PaymentMethod | Lifecycle.Active | Lifecycle |
+| Column | PaymentMethod | PII.None | PII |
+| Column | PaymentMethod | Privacy.AnonymousAggregate | Privacy |
+| Column | PaymentMethod | QualityTrust.SystemOfRecord | QualityTrust |
+| Column | PaymentMethod | Retention.FinancialStatutory | Retention |
+| Column | PaymentMethod | Tier.Tier1 | Tier |
+| Column | EtlBatchId | Architecture.Enriched | Architecture |
+| Column | EtlBatchId | Certification.Gold | Certification |
+| Column | EtlBatchId | Criticality.Operational | Criticality |
+| Column | EtlBatchId | Lifecycle.Active | Lifecycle |
+| Column | EtlBatchId | PII.None | PII |
+| Column | EtlBatchId | Privacy.AnonymousAggregate | Privacy |
+| Column | EtlBatchId | QualityTrust.SystemOfRecord | QualityTrust |
+| Column | EtlBatchId | Retention.OperationalTransient | Retention |
+| Column | EtlBatchId | Tier.Tier5 | Tier |
+| Column | LoadTimestamp | Architecture.Enriched | Architecture |
+| Column | LoadTimestamp | Certification.Gold | Certification |
+| Column | LoadTimestamp | Criticality.Operational | Criticality |
+| Column | LoadTimestamp | Lifecycle.Active | Lifecycle |
+| Column | LoadTimestamp | PII.None | PII |
+| Column | LoadTimestamp | Privacy.AnonymousAggregate | Privacy |
+| Column | LoadTimestamp | QualityTrust.SystemOfRecord | QualityTrust |
+| Column | LoadTimestamp | Retention.OperationalTransient | Retention |
+| Column | LoadTimestamp | Tier.Tier5 | Tier |
 
 ---
 
@@ -110,6 +207,15 @@ Definitions are included only when they are present in the analyzer JSON.
 | Column | CustomerHashFK | RetailDomainGlossary.CustomerOrderRelationship | Customer-order relationship | The association between a customer and their orders, enabling purchase history, loyalty accrual, and service enquiries. |
 | Table |  | RetailDomainGlossary.Product | Product | A sellable item or SKU identified for catalog, pricing, and inventory purposes. |
 | Column | UnitCost | RetailDomainGlossary.CostPrice | Cost price | The amount the retailer pays the supplier per unit, before any rebates, allowances, or landed-cost adjustments. |
+| Column | TransactionType | RetailDomainGlossary.Sale | Sale | The transfer of goods to a customer in exchange for payment, typically recorded at the line-item level. |
+| Column | TransactionType | RetailDomainGlossary.Return | Return | The process of accepting goods back from a customer or returning goods to a supplier, often tied to refunds, exchanges, or credit notes. |
+| Column | TransactionType | RetailDomainGlossary.Exchange | Exchange | Replacing a returned item with a different product or variant rather than issuing a refund. |
+| Column | DiscountAmount | RetailDomainGlossary.Promotion | Promotion | A time-bound commercial offer—such as a discount, multi-buy, or loyalty bonus—designed to stimulate demand for specific products. |
+| Column | NetAmount | RetailDomainGlossary.NetSales | Net sales | Total sales revenue after deducting returns, refunds, and allowances. |
+| Column | ProfitAmount | RetailDomainGlossary.GrossMargin | Gross margin | Revenue from sales minus cost of goods sold, expressed as a value or percentage. |
+| Column | IsPromotion | RetailDomainGlossary.Promotion | Promotion | A time-bound commercial offer—such as a discount, multi-buy, or loyalty bonus—designed to stimulate demand for specific products. |
+| Column | PromotionCode | RetailDomainGlossary.Promotion | Promotion | A time-bound commercial offer—such as a discount, multi-buy, or loyalty bonus—designed to stimulate demand for specific products. |
+| Column | PaymentMethod | RetailDomainGlossary.PaymentMethod | Payment method | The instrument used to effect payment, such as cash, credit card, debit card, mobile wallet, or gift card. |
 
 ---
 

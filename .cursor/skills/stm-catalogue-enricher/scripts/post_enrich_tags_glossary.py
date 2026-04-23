@@ -328,23 +328,127 @@ def _extract_target_schema(stm_path: Path) -> str:
     return cells[idx].strip().upper() if idx < len(cells) else ""
 
 
+def _parse_all_tables_in_section(lines: list[str], section_prefix: str) -> list[list[list[str]]]:
+    """Return every markdown table (as rows of cells) found inside *section_prefix*.
+
+    Unlike ``_parse_table_rows`` (which stops at the first table), this walks
+    the whole section and collects every pipe-table it finds. Tables are
+    separated from each other by any non-pipe line (heading, blank, prose).
+    """
+    in_section = False
+    current: list[list[str]] = []
+    out: list[list[list[str]]] = []
+
+    for line in lines:
+        stripped = line.strip()
+        if stripped.startswith(section_prefix):
+            in_section = True
+            continue
+        if in_section and stripped.startswith("## "):
+            break
+        if not in_section:
+            continue
+        if stripped.startswith("|"):
+            cells = [c.strip() for c in stripped.split("|")[1:-1]]
+            if all(set(c) <= {"-", " ", ":"} for c in cells):
+                continue
+            current.append(cells)
+        elif current:
+            out.append(current)
+            current = []
+    if current:
+        out.append(current)
+    return out
+
+
+def _pick_column_mapping_table(tables: list[list[list[str]]]) -> list[list[str]]:
+    """Pick the Section 7 table whose header has both ``target column`` and
+    ``description`` — that's the Field-Level Mapping (or the "Final" sub-table
+    in Type-2 STMs). Falls back to the first table if nothing matches."""
+    for tbl in tables:
+        if not tbl:
+            continue
+        hdr = " ".join(c.lower() for c in tbl[0])
+        if "target column" in hdr and "description" in hdr:
+            return tbl
+    return tables[0] if tables else []
+
+
+def _collect_unclassified_dbt_columns(
+    stm_path: Path,
+    existing_col_classification_keys: set[tuple[str, str]],
+    source_mapped_columns: set[str],
+) -> list[dict[str, str]]:
+    """Return the Section 7 rows whose target column has NO column-scoped
+    classification tag in Section 5 and is NOT mapped to a bronze source
+    column. These are the dbt-invented columns that need LLM-driven
+    classification against the OpenMetadata vocabulary."""
+    lines = stm_path.read_text().splitlines()
+    tables = _parse_all_tables_in_section(lines, "## 7.")
+    tbl = _pick_column_mapping_table(tables)
+    if len(tbl) < 2:
+        return []
+
+    hdr_lower = [c.lower() for c in tbl[0]]
+
+    def _find(name: str) -> int:
+        try:
+            return hdr_lower.index(name)
+        except ValueError:
+            return -1
+
+    idx_col = _find("target column")
+    if idx_col < 0:
+        return []
+    idx_dt = _find("data type")
+    idx_ft = _find("field type")
+    idx_desc = _find("description")
+
+    already_tagged_cols = {col for col, _cls in existing_col_classification_keys}
+
+    out: list[dict[str, str]] = []
+    for cells in tbl[1:]:
+        col = cells[idx_col].strip() if idx_col < len(cells) else ""
+        if not col:
+            continue
+        if col.upper() in already_tagged_cols:
+            continue
+        if col.upper() in {c.upper() for c in source_mapped_columns}:
+            continue
+        out.append({
+            "column": col,
+            "data_type": cells[idx_dt].strip() if 0 <= idx_dt < len(cells) else "",
+            "field_type": cells[idx_ft].strip() if 0 <= idx_ft < len(cells) else "",
+            "description": cells[idx_desc].strip() if 0 <= idx_desc < len(cells) else "",
+        })
+    return out
+
+
 def _apply_layer_overrides(
     rows: list[dict[str, str]], target_schema: str,
 ) -> list[dict[str, str]]:
-    """Override layer-derived tags (Architecture, Certification) to match the target schema."""
+    """Override layer-derived tags (Architecture, Certification) to match the
+    target schema. Applies at both Table and Column scope because the target
+    layer is authoritative: a bronze column mapping propagating
+    ``Architecture.Raw`` onto an enriched-layer column would violate
+    OpenMetadata's mutual-exclusion constraint once the LLM step assigns
+    ``Architecture.Enriched``."""
     overrides = _TARGET_SCHEMA_LAYER_OVERRIDES.get(target_schema)
     if not overrides:
         return rows
 
     result: list[dict[str, str]] = []
     for row in rows:
-        if row["scope"] == "Table" and row["classification"] in overrides:
+        if row["classification"] in overrides:
             result.append({**row, "tag_fqn": overrides[row["classification"]]})
         else:
             result.append(row)
 
     for classification, tag_fqn in overrides.items():
-        if not any(r["classification"] == classification for r in result):
+        if not any(
+            r["scope"] == "Table" and r["classification"] == classification
+            for r in result
+        ):
             result.insert(0, {
                 "scope": "Table", "column": "", "tag_fqn": tag_fqn, "classification": classification,
             })
@@ -359,8 +463,14 @@ def _process_stm(
 ) -> dict[str, Any]:
     mappings = _extract_source_mappings(stm_path)
     if not mappings:
+        # No bronze propagation possible, but Section 7 target columns still
+        # need LLM classification against the OM vocabulary in step 4b.
+        unclassified_no_src = _collect_unclassified_dbt_columns(
+            stm_path, existing_col_classification_keys=set(), source_mapped_columns=set(),
+        )
         return {"file": stm_path.name, "status": "skipped", "reason": "no source mappings",
-                "tags": 0, "terms": 0}
+                "tags": 0, "terms": 0,
+                "unclassified_dbt_columns": unclassified_no_src}
 
     table_cols: dict[str, set[str]] = {}
     target_to_source: dict[str, tuple[str, str]] = {}
@@ -396,6 +506,18 @@ def _process_stm(
     target_schema = _extract_target_schema(stm_path)
     all_class = _apply_layer_overrides(all_class, target_schema)
 
+    # Identify dbt-invented columns (no bronze match, no column-scoped tag yet).
+    # These are emitted to the work file for the LLM classification step (4b).
+    tagged_col_keys: set[tuple[str, str]] = {
+        (r["column"].upper(), r["classification"])
+        for r in all_class
+        if r["scope"] == "Column" and r["column"]
+    }
+    source_mapped_cols = {m["target_column"] for m in mappings}
+    unclassified = _collect_unclassified_dbt_columns(
+        stm_path, tagged_col_keys, source_mapped_cols,
+    )
+
     glossary_rows: list[dict[str, str]] = []
     for ref in all_gloss_refs:
         tfqn = ref["term_fqn"]
@@ -430,6 +552,7 @@ def _process_stm(
 
     return {"file": stm_path.name, "status": "enriched",
             "tags": len(all_class), "terms": len(glossary_rows),
+            "unclassified_dbt_columns": unclassified,
             "source_tables": unique_source_tables}
 
 
@@ -437,12 +560,71 @@ def _process_stm(
 # Main
 # ---------------------------------------------------------------------------
 
+def _fetch_om_vocabulary() -> dict[str, Any]:
+    """Fetch every non-disabled OM classification tag + glossary term so the
+    LLM classification subagent can pick from a bounded, authoritative list."""
+    try:
+        classifications_page = _get("classifications", params={"limit": 200})
+    except Exception as exc:
+        print(f"    ⚠ could not fetch classifications: {exc}")
+        return {"classifications": [], "glossary_terms": []}
+
+    classifications: list[dict[str, Any]] = []
+    for cls in classifications_page.get("data", []):
+        if cls.get("disabled"):
+            continue
+        name = cls.get("name") or cls.get("fullyQualifiedName", "")
+        try:
+            tags_page = _get("tags", params={"parent": name, "limit": 200})
+        except Exception as exc:
+            print(f"    ⚠ could not fetch tags under {name}: {exc}")
+            continue
+        options = []
+        for tag in tags_page.get("data", []):
+            if tag.get("disabled"):
+                continue
+            options.append({
+                "fqn": tag.get("fullyQualifiedName", ""),
+                "name": tag.get("name", ""),
+                "description": (tag.get("description") or "").strip(),
+            })
+        classifications.append({
+            "name": name,
+            "description": (cls.get("description") or "").strip(),
+            "mutually_exclusive": cls.get("mutuallyExclusive", False),
+            "options": options,
+        })
+
+    glossary_terms: list[dict[str, Any]] = []
+    try:
+        terms_page = _get("glossaryTerms", params={"limit": 500})
+    except Exception as exc:
+        print(f"    ⚠ could not fetch glossary terms: {exc}")
+        terms_page = {"data": []}
+    for term in terms_page.get("data", []):
+        glossary_terms.append({
+            "fqn": term.get("fullyQualifiedName", ""),
+            "name": term.get("name", ""),
+            "display_name": term.get("displayName", ""),
+            "description": (term.get("description") or "").strip(),
+        })
+
+    return {"classifications": classifications, "glossary_terms": glossary_terms}
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(
         description="Post-enrich STMs with classification tags and glossary terms from OpenMetadata",
     )
     parser.add_argument("--schema-fqn", default=DEFAULT_SCHEMA_FQN)
     parser.add_argument("--stm-dir", type=Path, default=DEFAULT_STM_DIR)
+    parser.add_argument(
+        "--work-file",
+        type=Path,
+        default=None,
+        help="Where to write the LLM classification work file "
+             "(default: <stm-dir>/_dbt_column_classification_work.json)",
+    )
     args = parser.parse_args()
 
     stm_files = sorted(args.stm_dir.glob("*-stm.md"))
@@ -460,16 +642,54 @@ def main() -> None:
         print(f"  {stm.name} …")
         r = _process_stm(stm, args.schema_fqn, table_cache, term_cache)
         results.append(r)
-        print(f"    → {r['status']}: {r['tags']} tags, {r['terms']} glossary terms")
+        unclassified_n = len(r.get("unclassified_dbt_columns", []))
+        extra = f" ({unclassified_n} unclassified dbt cols)" if unclassified_n else ""
+        print(f"    → {r['status']}: {r['tags']} tags, {r['terms']} glossary terms{extra}")
 
     enriched = sum(1 for r in results if r["status"] == "enriched")
     skipped = len(results) - enriched
     total_tags = sum(r["tags"] for r in results)
     total_terms = sum(r["terms"] for r in results)
+    total_unclassified = sum(len(r.get("unclassified_dbt_columns", [])) for r in results)
 
     print(f"\nDone: {enriched} enriched, {skipped} skipped")
     print(f"Totals: {total_tags} classification tags, {total_terms} glossary terms")
     print(f"API calls: {len(table_cache)} table fetches, {len(term_cache)} glossary term fetches")
+
+    if total_unclassified == 0:
+        print("No unclassified dbt-invented columns — skipping work-file emit.")
+        return
+
+    import json
+
+    print(f"\nFetching OM vocabulary for {total_unclassified} unclassified dbt columns …")
+    vocab = _fetch_om_vocabulary()
+    print(
+        f"  → {len(vocab['classifications'])} classifications, "
+        f"{sum(len(c['options']) for c in vocab['classifications'])} tags, "
+        f"{len(vocab['glossary_terms'])} glossary terms"
+    )
+
+    work = {
+        "schema_fqn": args.schema_fqn,
+        "om_vocabulary": vocab,
+        "items": [
+            {
+                "stm_file": str((args.stm_dir / r["file"]).resolve()),
+                "target_table": r["file"].replace("-stm.md", ""),
+                "unclassified_columns": r["unclassified_dbt_columns"],
+            }
+            for r in results
+            if r.get("unclassified_dbt_columns")
+        ],
+    }
+    work_file = args.work_file or (args.stm_dir / "_dbt_column_classification_work.json")
+    work_file.write_text(json.dumps(work, indent=2))
+    print(f"\nWork file written: {work_file}")
+    print(
+        "Next: launch the LLM classification subagent per step 4b of "
+        "stm-catalogue-enricher/SKILL.md."
+    )
 
 
 if __name__ == "__main__":

@@ -9,6 +9,8 @@ models:
         tests:
           - unique
           - not_null
+          - source_not_in_target:
+              target_model: "{{ ref('DimDate') }}"
       - name: DateValue
         description: "Actual calendar date value"
         tests:
@@ -110,6 +112,8 @@ models:
         description: "Surrogate primary key for product dimension version (HASH(PRODUCT_ID + SourceSystemCode) -> NUMBER(19,0))."
         tests:
           - not_null
+          - source_not_in_target:
+              target_model: "{{ ref('DimProduct') }}"
       - name: ProductHashBK
         description: "Natural business key from source system, hashed (HASH(SKU + SourceSystemCode) -> NUMBER(19,0))."
         tests:
@@ -202,6 +206,8 @@ models:
         tests:
           - unique
           - not_null
+          - source_not_in_target:
+              target_model: "{{ ref('DimStore') }}"
       - name: StoreHashBK
         description: "Natural business key (store number)"
         tests:
@@ -284,6 +290,8 @@ models:
         tests:
           - unique
           - not_null
+          - source_not_in_target:
+              target_model: "{{ ref('DimWarehouse') }}"
       - name: WarehouseHashBK
         description: "Natural business key (warehouse code)"
         tests:
@@ -353,6 +361,8 @@ models:
         description: "Surrogate primary key for customer dimension version (HASH(CUSTOMER_ID + SourceSystemCode) -> NUMBER(19,0))."
         tests:
           - not_null
+          - source_not_in_target:
+              target_model: "{{ ref('DimCustomer') }}"
       - name: CustomerHashBK
         description: "Natural business key (customer ID from CRM), hashed."
         tests:
@@ -451,6 +461,8 @@ models:
         tests:
           - unique
           - not_null
+          - source_not_in_target:
+              target_model: "{{ ref('DimSupplier') }}"
       - name: SupplierHashBK
         description: "Natural business key (supplier ID from procurement system)"
         tests:
@@ -529,6 +541,8 @@ models:
         tests:
           - unique
           - not_null
+          - source_not_in_target:
+              target_model: "{{ ref('DimEmployee') }}"
       - name: EmployeeHashBK
         description: "Natural business key (employee ID from HR system)"
         tests:
@@ -585,6 +599,8 @@ models:
         tests:
           - unique
           - not_null
+          - source_not_in_target:
+              target_model: "{{ ref('FactSales') }}"
       - name: DateHashFK
         description: "Foreign key to date dimension (transaction date)"
         tests:
@@ -675,6 +691,8 @@ models:
         tests:
           - unique
           - not_null
+          - source_not_in_target:
+              target_model: "{{ ref('FactInventorySnapshot') }}"
       - name: DateHashFK
         description: "Foreign key to date dimension (snapshot date)"
         tests:
@@ -741,6 +759,8 @@ models:
         tests:
           - unique
           - not_null
+          - source_not_in_target:
+              target_model: "{{ ref('FactPurchaseOrder') }}"
       - name: ProductHashFK
         description: "Foreign key to product dimension"
         tests:

@@ -24,7 +24,8 @@
             - name: SupplierHashPK
               tests:
                 - source_not_in_target:
-                    target_model: "{{ ref('DimSupplier') }}"
+                    arguments:
+                      target_model: "{{ ref('DimSupplier') }}"
 
     Notes
     -----

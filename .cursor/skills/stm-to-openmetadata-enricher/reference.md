@@ -44,15 +44,15 @@ The subagent should always run `get_table` first and use the exact strings OM re
 
 ## Schemas to include
 
-The dbt Cloud prod env writes to `DBT_PROD` (views) and `DBT_PROD_ENRICHED` (enriched tables). The local dev profile writes to `DBT_DEV` / `DBT_DEV_ENRICHED`.
+The dbt Cloud prod env writes to `DBT_PROD` (views) and `DBT_PROD_ENRICHED` (materialized tables). The local dev profile writes to `DBT_DEV` / `DBT_DEV_ENRICHED`.
 
-| dbt source | Include in pipeline filter |
+| dbt source | Include in Snowflake **metadata** pipeline filter |
 |---|---|
-| dbt Cloud prod job | `DBT_PROD`, `DBT_PROD_ENRICHED` |
-| Local `dbt run` | `DBT_DEV`, `DBT_DEV_ENRICHED` |
-| Both | All four |
+| dbt Cloud prod | `DBT_PROD_ENRICHED` only (not `DBT_PROD` — views are not catalogued) |
+| Local `dbt run` | `DBT_DEV_ENRICHED` only (not `DBT_DEV`) |
+| Bronze sources | e.g. `BRONZE_ERP__DBO` as needed |
 
-Views are typically skipped for tagging (tags belong on the materialized tables). But including them in the ingestion filter is fine — the enricher only writes to the STM-referenced tables.
+Tagging and STMs always target the enriched schema; the view layer is omitted from OpenMetadata so the catalog does not duplicate dim/fact assets.
 
 ## Subagent concurrency limits
 

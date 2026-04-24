@@ -5,7 +5,7 @@ opaque 400 errors.
 
 Usage:
     python patch_pipeline_filter.py --pipeline-id <uuid> \
-        --include-schemas DBT_PROD,DBT_PROD_ENRICHED \
+        --include-schemas BRONZE_ERP__DBO,DBT_PROD_ENRICHED \
         --include-databases DRIP_DATA_INTELLIGENCE
 
 Omit --include-databases to leave the database filter untouched.

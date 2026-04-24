@@ -45,7 +45,7 @@ flags (STM column not found in OM, unknown tag/glossary FQN, failed PATCH).
 1. List STM files (default glob: `stm/output/*.md`, skip `README.md`).
 2. For each STM, extract from Section 4 the target schema name (e.g. `DBT_PROD_ENRICHED`) and target table (e.g. `DimCustomer`).
 3. Ask the user if the dbt run targeted **prod** (`DBT_PROD*`) or **dev** (`DBT_DEV*`). The dev profile writes to `DBT_DEV` / `DBT_DEV_ENRICHED`; dbt Cloud prod writes to `DBT_PROD` / `DBT_PROD_ENRICHED`. Do not guess.
-4. Compute the schema set to ingest: `{<layer views schema>, <enriched tables schema>}` e.g. `{DBT_PROD, DBT_PROD_ENRICHED}`, plus any existing included schemas the pipeline already has (to preserve prior catalog coverage).
+4. Compute the schema set to ingest: **bronze + enriched physical models only** — e.g. `BRONZE_ERP__DBO` and `DBT_PROD_ENRICHED` (prod) or `DBT_DEV_ENRICHED` (dev). **Do not** add the dbt *views* schema (`DBT_PROD` / `DBT_DEV`) to the metadata pipeline: those are thin pass-throughs; governance and STMs target the materialized tables in `DBT_PROD_ENRICHED` / `DBT_DEV_ENRICHED` only. Union with any other non-dbt includes the pipeline already has (e.g. bronze) to avoid dropping coverage.
 
 ### Step 2 — Widen ingestion pipeline filter
 
@@ -54,7 +54,7 @@ The MCP `update_metadata_ingestion_pipeline` tool frequently returns opaque 400 
 ```bash
 python scripts/patch_pipeline_filter.py \
   --pipeline-id <uuid> \
-  --include-schemas BRONZE_ERP__DBO,DBT_PROD,DBT_PROD_ENRICHED \
+  --include-schemas BRONZE_ERP__DBO,DBT_PROD_ENRICHED \
   --include-databases DRIP_DATA_INTELLIGENCE
 ```
 
@@ -187,7 +187,7 @@ All scripts load credentials from `.env` (`OPENMETADATA_BASE_URL`, `OPENMETADATA
 
 ## Guardrails
 
-- Do not drop existing schemas from the pipeline filter — always union with current includes.
+- Do not drop existing schemas from the pipeline filter — always union with current includes, **except** do not re-add the dbt views schema (`DBT_PROD` / `DBT_DEV`); it is intentionally omitted from metadata ingestion.
 - Do not pick `DBT_DEV*` schemas when the user's dbt run was in prod (and vice versa). Ask if unsure.
 - Do not launch more than 4 enrichment subagents in parallel.
 - Do not create classifications or glossary terms that are missing in OpenMetadata — surface them for review instead. Creation is the job of `governance-vocab-generator` / `openmetadata-vocab-publisher`.

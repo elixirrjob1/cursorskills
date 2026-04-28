@@ -2,3 +2,12 @@
 target/
 dbt_packages/
 logs/
+
+# dbt MCP OAuth token cache — contains live access/refresh tokens
+mcp.yml
+
+# machine-local dbt Cloud user state
+.user.yml
+
+# local credentials — copy .env.example → .env and fill in values
+.env

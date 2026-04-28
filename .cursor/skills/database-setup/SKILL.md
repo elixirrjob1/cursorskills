@@ -1,6 +1,6 @@
 ---
-name: snowflake-setup
-description: Provisions Snowflake objects for a Fivetran destination using the repo's PAT-based setup scripts, with strict required env or Key Vault-backed values and no business-value defaults. Use when the user wants Cursor to set up the Snowflake user, password, role, warehouse, database, and schema, validate the result, and output the exact values needed for downstream Fivetran destination configuration.
+name: database-setup
+description: Provisions database/warehouse objects (users, roles, schemas, warehouses) for an ingestion destination using the repo's PAT-based setup scripts, with strict required env or Key Vault-backed values and no business-value defaults. Currently supports Snowflake for Fivetran; designed to extend to Databricks, Redshift, Fabric, and other warehouse destinations. Use when the user wants Cursor to set up a destination warehouse and output the exact values needed for downstream ingestion configuration.
 ---
 
 # Snowflake Setup
@@ -32,7 +32,7 @@ Optional for downstream handoff:
 1. Run the skill wrapper in check mode first:
 
 ```bash
-python3 .cursor/skills/snowflake-setup/scripts/run_snowflake_setup.py --check-only
+python3 .cursor/skills/database-setup/scripts/run_snowflake_setup.py --check-only
 ```
 
 2. If any required value is missing, ask the user to add it to `.env` or the configured Key Vault. Do not proceed until the missing values are present.
@@ -40,7 +40,7 @@ python3 .cursor/skills/snowflake-setup/scripts/run_snowflake_setup.py --check-on
 3. Run the Snowflake setup:
 
 ```bash
-python3 .cursor/skills/snowflake-setup/scripts/run_snowflake_setup.py
+python3 .cursor/skills/database-setup/scripts/run_snowflake_setup.py
 ```
 
 4. Report the handoff values for downstream Fivetran destination setup:

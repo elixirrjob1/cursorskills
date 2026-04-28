@@ -1,6 +1,6 @@
 ---
-name: fivetran-from-analyzer
-description: Reads source-system-analyzer schema.json output and produces Fivetran connection recommendations across destination, connector, schema/table/column, and operations—including a full parameter checklist with json/heuristic/user sourcing. Use when the user has analyzer JSON and wants Fivetran setup guidance, ingestion parameters, or a review checklist before creating connections.
+name: ingestion-from-analyzer
+
 ---
 
 # Fivetran setup from analyzer JSON

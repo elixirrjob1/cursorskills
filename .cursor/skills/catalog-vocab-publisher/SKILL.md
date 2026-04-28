@@ -1,5 +1,5 @@
 ---
-name: openmetadata-vocab-publisher
+name: catalog-vocab-publisher
 description: >-
   Publish a generated governance vocabulary Markdown file to OpenMetadata's Classifications
   and Tags API (Govern section). Use when asked to publish, push, sync, or upload a
@@ -27,7 +27,7 @@ anything already in sync; updates descriptions that have changed.
 2. From the repository root, run:
 
 ```bash
-python .cursor/skills/openmetadata-vocab-publisher/scripts/publish_vocab.py \
+python .cursor/skills/catalog-vocab-publisher/scripts/publish_vocab.py \
   --file governance-vocabularies/<domain-slug>-governance-vocab.md \
   --base-url https://<your-openmetadata-host> \
   --username you@example.com \

@@ -1,5 +1,5 @@
 ---
-name: stm-to-openmetadata-enricher
+name: stm-to-catalog-enricher
 description: End-to-end enrichment of dbt-produced Snowflake tables in OpenMetadata from STM markdown files. Ingests the dbt target schemas into the catalog, then applies table/column descriptions, classification tags, and glossary term assignments derived from each STM. Use after a dbt run lands new dim/fact tables in Snowflake and the STMs in `stm/output/` are the source of truth for governance.
 ---
 
@@ -7,7 +7,7 @@ description: End-to-end enrichment of dbt-produced Snowflake tables in OpenMetad
 
 Runs the full "catalog + enrich" flow for a set of dbt-produced dim/fact tables, using the corresponding STM markdown files as the authoritative source for descriptions, classification tags, and glossary terms.
 
-This skill orchestrates existing primitives — `openmetadata-sync` for ingestion, `openmetadata-glossary-tagger` for term assignment — and adds the STM-driven enrichment loop and concurrency-safe subagent pattern.
+This skill orchestrates existing primitives — `catalog-sync` for ingestion, `catalog-glossary-tagger` for term assignment — and adds the STM-driven enrichment loop and concurrency-safe subagent pattern.
 
 ## When to use
 
@@ -19,7 +19,7 @@ This skill orchestrates existing primitives — `openmetadata-sync` for ingestio
 
 - OpenMetadata MCP server registered as `user-openmetadata`.
 - `.env` contains `OPENMETADATA_BASE_URL`, `OPENMETADATA_EMAIL`, `OPENMETADATA_PASSWORD`.
-- A Snowflake database service already exists in OpenMetadata with working credentials. If not, run `openmetadata-sync` first to create it.
+- A Snowflake database service already exists in OpenMetadata with working credentials. If not, run `catalog-sync` first to create it.
 - STM files follow the layout produced by `stm-from-data-model` (Sections 2, 5, 6, 7 Final present).
 
 ## Workflow
@@ -138,7 +138,7 @@ Use CallMcpTool on server `user-openmetadata`:
 - get_table to confirm actual OM column names
 - assign_tags_to_column / assign_glossary_term_to_column / update_column_description
 - If the tag or glossary FQN truly does not exist in OM, STOP and report it
-  so governance-vocab-generator / openmetadata-vocab-publisher can add it.
+  so governance-vocab-generator / catalog-vocab-publisher can add it.
 
 Make MCP calls sequentially. Report what you fixed vs what you escalated.
 ```
@@ -190,12 +190,12 @@ All scripts load credentials from `.env` (`OPENMETADATA_BASE_URL`, `OPENMETADATA
 - Do not drop existing schemas from the pipeline filter — always union with current includes, **except** do not re-add the dbt views schema (`DBT_PROD` / `DBT_DEV`); it is intentionally omitted from metadata ingestion.
 - Do not pick `DBT_DEV*` schemas when the user's dbt run was in prod (and vice versa). Ask if unsure.
 - Do not launch more than 4 enrichment subagents in parallel.
-- Do not create classifications or glossary terms that are missing in OpenMetadata — surface them for review instead. Creation is the job of `governance-vocab-generator` / `openmetadata-vocab-publisher`.
+- Do not create classifications or glossary terms that are missing in OpenMetadata — surface them for review instead. Creation is the job of `governance-vocab-generator` / `catalog-vocab-publisher`.
 - Do not remove prior tags or descriptions. All operations are additive/overwrite-on-same-field.
 
 ## Additional resources
 
 - STM format contract: `.cursor/skills/stm-from-data-model/SKILL.md`
-- Generic catalog sync primitives: `.cursor/skills/openmetadata-sync/SKILL.md`
-- Glossary term matching rules: `.cursor/skills/openmetadata-glossary-tagger/SKILL.md`
+- Generic catalog sync primitives: `.cursor/skills/catalog-sync/SKILL.md`
+- Glossary term matching rules: `.cursor/skills/catalog-glossary-tagger/SKILL.md`
 - Detailed troubleshooting for MCP + REST fallback: [reference.md](reference.md)

@@ -1,6 +1,6 @@
 ---
-name: openmetadata-glossary-tagger
-description: Read glossary terms and imported table metadata from the OpenMetadata MCP server, inspect full table payloads including columns and descriptions, decide glossary-term matches, and assign glossary labels back to tables or columns in OpenMetadata. Use when the user wants Cursor to map business glossary terms onto cataloged database assets through OpenMetadata.
+name: catalog-glossary-tagger
+description: Read glossary terms and imported table metadata from a data catalog MCP server, inspect full table payloads including columns and descriptions, decide glossary-term matches, and assign glossary labels back to tables or columns. Currently supports OpenMetadata; designed to extend to Azure Purview, Databricks Unity Catalog, and others. Use when the user wants Cursor to map business glossary terms onto cataloged database assets.
 ---
 
 # OpenMetadata Glossary Tagger

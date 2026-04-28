@@ -1,6 +1,6 @@
 ---
-name: openmetadata-sync
-description: Configure any supported database service in OpenMetadata, run metadata sync, inspect imported databases/schemas/tables/columns, and assign glossary terms or classification tags through the OpenMetadata MCP server. Use when the user wants Cursor to orchestrate catalog sync and metadata tagging in OpenMetadata instead of doing those steps manually.
+name: catalog-sync
+description: Configure any supported database service in a data catalog, run metadata sync, inspect imported databases/schemas/tables/columns, and assign glossary terms or classification tags. Currently supports OpenMetadata; designed to extend to Azure Purview, Databricks Unity Catalog, and others. Use when the user wants Cursor to orchestrate catalog sync and metadata tagging instead of doing those steps manually.
 ---
 
 # OpenMetadata Sync

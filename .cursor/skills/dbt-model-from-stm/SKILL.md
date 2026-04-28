@@ -28,7 +28,7 @@ Every target table (dimension or fact) produces **two** dbt models:
 
 **Type 1 vs Type 2 materialization:**
 - Type 1 (SCD Type 1 or non-SCD): enriched model is `incremental` with `unique_key=<HashPK>` and a `WHERE LoadTimestamp > MAX(LoadTimestamp)` filter.
-- Type 2: enriched model is `table` (full refresh). Incremental materialization is **unsafe** for Type 2 because a new version of an existing row rewrites the end-date (`EffectiveEndDateTime`, `CurrentFlagYN`) of the previous version, which `unique_key` would silently overwrite. Full refresh from the view is the only correct pattern when the view computes `LEAD(EffectiveStartDateTime)` over the partition.
+- Type 2: enriched model is `table` (full refresh). Incremental materialization is **unsafe** for Type 2 because a new version of an existing row rewrites the end-date (`EffectiveEndDateTime`, `CurrentFlagYN`, `DeletedFlagYN`) of the previous version, which `unique_key` would silently overwrite. Full refresh from the view is the only correct pattern when the view computes `LEAD(EffectiveStartDateTime)` over the partition.
 
 **View naming convention:** `vw_<Entity>` where `<Entity>` is the STM's `Target Table` **verbatim PascalCase**. Example: `vw_DimEmployee`, `vw_FactSales`.
 
@@ -321,9 +321,16 @@ fin AS (
         CAST(COALESCE(LeadEffectiveStartDateTimeUTC, EffectiveEndDateTimeRaw) AS TIMESTAMP_TZ)
             AS EffectiveEndDateTime,
         CASE
-            WHEN LeadEffectiveStartDateTimeUTC IS NULL AND IsFivetranActive THEN 'Y'
+            WHEN LeadEffectiveStartDateTimeUTC IS NULL THEN 'Y'
             ELSE 'N'
         END AS CurrentFlagYN,
+        CASE
+            WHEN LeadEffectiveStartDateTimeUTC IS NULL AND NOT IsFivetranActive THEN 'Y'
+            ELSE 'N'
+        END AS DeletedFlagYN,
+        -- If the source table has an explicit source-level active/status field (e.g. ACTIVE, IS_DELETED),
+        -- also add SoftDeletedFlagYN:
+        --   CASE WHEN LeadEffectiveStartDateTimeUTC IS NULL AND NOT <SOURCE_ACTIVE_COL> AND IsFivetranActive THEN 'Y' ELSE 'N' END AS SoftDeletedFlagYN,
         CAST(EffectiveStartDateTimeUTC AS TIMESTAMP_TZ) AS CreatedDateTime,
         CAST(InsertedDateTimeUTC       AS TIMESTAMP_TZ) AS ModifiedDateTime,
         SourceSystemCode,
@@ -361,7 +368,7 @@ Nullable FKs wrap the expression in `IFF(col IS NULL, NULL, HASH(...))`.
 When the STM says the source is in **Fivetran history mode** (Section 3 "Notes" mentions `_FIVETRAN_START` / `_FIVETRAN_END` / `_FIVETRAN_ACTIVE`), the Type 2 windowing logic comes FROM THE SOURCE — do NOT generate synthetic version windows. The view's job is simply to:
 1. Pass `_FIVETRAN_START` through as `EffectiveStartDateTime`.
 2. Close each version via `LEAD(_FIVETRAN_START) - 1 microsecond`, falling back to `_FIVETRAN_END` for the current/open version.
-3. Derive `CurrentFlagYN` from `_FIVETRAN_ACTIVE` + absence of a LEAD row.
+3. Derive flags independently — `CurrentFlagYN` from absence of a LEAD row alone (latest version regardless of deletion), `DeletedFlagYN` from `NOT IsFivetranActive AND LeadEffectiveStartDateTimeUTC IS NULL` (gone from source). If the source has an explicit active/status column, also add `SoftDeletedFlagYN` for source-marked-inactive records still present in Fivetran.
 4. Collapse no-op updates via the `Hashbytes <> LagHash` filter.
 
 If the STM explicitly lists "Data Condition 2" for hard deletes or similar, union an additional source-reading CTE into `cte_prep` before hashing. Most Fivetran history-mode sources do NOT need Data Condition 2 because `_FIVETRAN_END ≠ '9999-12-31 23:59:59.999'` already marks closed/deleted rows.
@@ -386,8 +393,9 @@ SELECT * FROM {{ ref('vw_<Entity>') }}
 
 - The PK has a `not_null` test but **NOT** a `unique` test — the same `<Entity>HashPK` legitimately appears once per version.
 - The model's documented grain is composite: `(<Entity>HashPK, EffectiveStartDateTime)`.
-- `CurrentFlagYN` gets `accepted_values: ['Y', 'N']`.
-- `EffectiveStartDateTime`, `EffectiveEndDateTime`, `CurrentFlagYN`, `SourceSystemCode` all get `not_null`.
+- `CurrentFlagYN` and `DeletedFlagYN` both get `accepted_values: ['Y', 'N']` and `not_null`. If `SoftDeletedFlagYN` is present, apply the same tests.
+- `EffectiveStartDateTime`, `EffectiveEndDateTime`, `CurrentFlagYN`, `DeletedFlagYN`, `SourceSystemCode` all get `not_null`.
+- Flag semantics to document in schema descriptions: `CurrentFlagYN='Y' AND DeletedFlagYN='N'` → active current record; `CurrentFlagYN='Y' AND DeletedFlagYN='Y'` → latest version removed from source; `CurrentFlagYN='N'` → historical, superseded by a later change.
 - Remove legacy Type 1 columns (`EtlBatchId`, `LoadTimestamp`, `IsCurrent`) from the Type 2 schema.yml entry — they are replaced by the Type 2 metadata + audit columns listed in the STM's Final section.
 - Do not add `dbt_utils.unique_combination_of_columns` tests unless `dbt_utils` is declared in `packages.yml`. Document the composite grain in the model description instead.
 

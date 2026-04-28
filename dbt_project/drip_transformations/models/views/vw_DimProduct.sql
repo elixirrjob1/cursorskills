@@ -62,38 +62,38 @@ cte_row_reduce AS (
 fin AS (
     SELECT
         HASH(COALESCE(CAST(PRODUCT_ID AS VARCHAR), '#@#@#@#@#')
-            || '|' || COALESCE(CAST(SourceSystemCode AS VARCHAR), '#@#@#@#@#')) AS ProductHashPK,
+            || '|' || COALESCE(CAST(SourceSystemCode AS VARCHAR), '#@#@#@#@#')) AS "ProductHashPK",
         HASH(COALESCE(CAST(SKU AS VARCHAR), '#@#@#@#@#')
-            || '|' || COALESCE(CAST(SourceSystemCode AS VARCHAR), '#@#@#@#@#')) AS ProductHashBK,
-        CAST(NULL AS VARCHAR(10)) AS BrandCode, -- not available in source
-        CAST(NULL AS VARCHAR(50)) AS BrandName, -- not available in source
-        CAST(NULL AS VARCHAR(10)) AS CategoryCode, -- not available in source
-        TRIM(CATEGORY) AS CategoryName,
-        ACTIVE AS IsActive,
-        IFF(ACTIVE, FALSE, TRUE) AS IsDiscontinued,
-        CAST(NULL AS VARCHAR(20)) AS PackSize, -- not available in source
-        TRIM(PRODUCT_DESCRIPTION) AS ProductDescription,
-        TRIM(NAME) AS ProductName,
-        CAST(NULL AS VARCHAR(10)) AS SubcategoryCode, -- not available in source
-        CAST(NULL AS VARCHAR(50)) AS SubcategoryName, -- not available in source
-        CAST(COST_PRICE AS NUMBER(19,4)) AS UnitCost,
-        CAST(UNIT_PRICE AS NUMBER(19,4)) AS UnitListPrice,
-        CAST(NULL AS VARCHAR(20)) AS UnitOfMeasure, -- not available in source
-        CAST(EffectiveStartDateTimeUTC AS TIMESTAMP_TZ) AS EffectiveStartDateTime,
-        CAST(COALESCE(LeadEffectiveStartDateTimeUTC, EffectiveEndDateTimeRaw) AS TIMESTAMP_TZ) AS EffectiveEndDateTime,
+            || '|' || COALESCE(CAST(SourceSystemCode AS VARCHAR), '#@#@#@#@#')) AS "ProductHashBK",
+        CAST(NULL AS VARCHAR(10)) AS "BrandCode", -- not available in source
+        CAST(NULL AS VARCHAR(50)) AS "BrandName", -- not available in source
+        CAST(NULL AS VARCHAR(10)) AS "CategoryCode", -- not available in source
+        TRIM(CATEGORY) AS "CategoryName",
+        ACTIVE AS "IsActive",
+        IFF(ACTIVE, FALSE, TRUE) AS "IsDiscontinued",
+        CAST(NULL AS VARCHAR(20)) AS "PackSize", -- not available in source
+        TRIM(PRODUCT_DESCRIPTION) AS "ProductDescription",
+        TRIM(NAME) AS "ProductName",
+        CAST(NULL AS VARCHAR(10)) AS "SubcategoryCode", -- not available in source
+        CAST(NULL AS VARCHAR(50)) AS "SubcategoryName", -- not available in source
+        CAST(COST_PRICE AS NUMBER(19,4)) AS "UnitCost",
+        CAST(UNIT_PRICE AS NUMBER(19,4)) AS "UnitListPrice",
+        CAST(NULL AS VARCHAR(20)) AS "UnitOfMeasure", -- not available in source
+        CAST(EffectiveStartDateTimeUTC AS TIMESTAMP_TZ) AS "EffectiveStartDateTime",
+        CAST(COALESCE(LeadEffectiveStartDateTimeUTC, EffectiveEndDateTimeRaw) AS TIMESTAMP_TZ) AS "EffectiveEndDateTime",
         CASE
             WHEN LeadEffectiveStartDateTimeUTC IS NULL AND IsFivetranActive THEN 'Y'
             ELSE 'N'
-        END AS CurrentFlagYN,
-        CAST(EffectiveStartDateTimeUTC AS TIMESTAMP_TZ) AS CreatedDateTime,
-        CAST(InsertedDateTimeUTC       AS TIMESTAMP_TZ) AS ModifiedDateTime,
-        SourceSystemCode,
-        CAST(PRODUCT_ID AS VARCHAR(40))  AS SourceProductPK,
-        CAST(SKU        AS VARCHAR(100)) AS SourceProductBK,
-        FileName,
-        CAST(StageInsertedDateTimeUTC AS TIMESTAMP_TZ) AS StageInsertedDateTimeUTC,
-        Hashbytes,
-        DataCondition
+        END AS "CurrentFlagYN",
+        CAST(EffectiveStartDateTimeUTC AS TIMESTAMP_TZ) AS "CreatedDateTime",
+        CAST(InsertedDateTimeUTC       AS TIMESTAMP_TZ) AS "ModifiedDateTime",
+        SourceSystemCode AS "SourceSystemCode",
+        CAST(PRODUCT_ID AS VARCHAR(40))  AS "SourceProductPK",
+        CAST(SKU        AS VARCHAR(100)) AS "SourceProductBK",
+        FileName AS "FileName",
+        CAST(StageInsertedDateTimeUTC AS TIMESTAMP_TZ) AS "StageInsertedDateTimeUTC",
+        Hashbytes AS "Hashbytes",
+        DataCondition AS "DataCondition"
     FROM cte_row_reduce
 )
 

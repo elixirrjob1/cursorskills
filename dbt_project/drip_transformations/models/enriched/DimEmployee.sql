@@ -1,10 +1,10 @@
 {{ config(
     materialized='incremental',
-    unique_key='EmployeeHashPK'
+    unique_key='"EmployeeHashPK"'
 ) }}
 
 SELECT * FROM {{ ref('vw_DimEmployee') }}
 
 {% if is_incremental() %}
-WHERE LoadTimestamp > (SELECT MAX(LoadTimestamp) FROM {{ this }})
+WHERE "LoadTimestamp" > (SELECT MAX("LoadTimestamp") FROM {{ this }})
 {% endif %}

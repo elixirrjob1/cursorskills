@@ -70,84 +70,52 @@ fin AS (
 
     SELECT
         HASH(COALESCE(CAST(CUSTOMER_ID AS VARCHAR), '#@#@#@#@#')
-            || '|' || COALESCE(CAST(SourceSystemCode AS VARCHAR), '#@#@#@#@#')) AS CustomerHashPK,
+            || '|' || COALESCE(CAST(SourceSystemCode AS VARCHAR), '#@#@#@#@#')) AS "CustomerHashPK",
 
         HASH(COALESCE(CAST(CUSTOMER_ID AS VARCHAR), '#@#@#@#@#')
-            || '|' || COALESCE(CAST(SourceSystemCode AS VARCHAR), '#@#@#@#@#')) AS CustomerHashBK,
+            || '|' || COALESCE(CAST(SourceSystemCode AS VARCHAR), '#@#@#@#@#')) AS "CustomerHashBK",
 
-        CAST(NULL AS VARCHAR(50))          AS AcquisitionChannel, -- not available in source
-        CAST(CREATED_AT AS DATE)           AS AcquisitionDate,
-        CAST(NULL AS VARCHAR(50))          AS City,               -- not available in source
-        CAST(NULL AS VARCHAR(50))          AS Country,            -- not available in source
-        CAST(NULL AS VARCHAR(20))          AS CustomerType,       -- not available in source
-        EMAIL                              AS EmailAddress,
-        FIRST_NAME                         AS FirstName,
-        TRIM(COALESCE(FIRST_NAME, '')) || ' ' || TRIM(COALESCE(LAST_NAME, '')) AS FullName,
-        TRUE                               AS IsActive,           -- not available in source
-        LAST_NAME                          AS LastName,
-        CAST(NULL AS DATE)                 AS LoyaltyJoinDate,    -- not available in source
-        CAST(NULL AS INT)                  AS LoyaltyPoints,      -- not available in source
-        CAST(NULL AS VARCHAR(20))          AS LoyaltyTier,        -- not available in source
-        PHONE                              AS PhoneNumber,
-        CAST(NULL AS VARCHAR(20))          AS PostalCode,         -- not available in source
-        CAST(NULL AS VARCHAR(50))          AS StateProvince,      -- not available in source
-        CAST(NULL AS VARCHAR(200))         AS StreetAddress,      -- not available in source
+        CAST(NULL AS VARCHAR(50))          AS "AcquisitionChannel", -- not available in source
+        CAST(CREATED_AT AS DATE)           AS "AcquisitionDate",
+        CAST(NULL AS VARCHAR(50))          AS "City",               -- not available in source
+        CAST(NULL AS VARCHAR(50))          AS "Country",            -- not available in source
+        CAST(NULL AS VARCHAR(20))          AS "CustomerType",       -- not available in source
+        EMAIL                              AS "EmailAddress",
+        FIRST_NAME                         AS "FirstName",
+        TRIM(COALESCE(FIRST_NAME, '')) || ' ' || TRIM(COALESCE(LAST_NAME, '')) AS "FullName",
+        TRUE                               AS "IsActive",           -- not available in source
+        LAST_NAME                          AS "LastName",
+        CAST(NULL AS DATE)                 AS "LoyaltyJoinDate",    -- not available in source
+        CAST(NULL AS INT)                  AS "LoyaltyPoints",      -- not available in source
+        CAST(NULL AS VARCHAR(20))          AS "LoyaltyTier",        -- not available in source
+        PHONE                              AS "PhoneNumber",
+        CAST(NULL AS VARCHAR(20))          AS "PostalCode",         -- not available in source
+        CAST(NULL AS VARCHAR(50))          AS "StateProvince",      -- not available in source
+        CAST(NULL AS VARCHAR(200))         AS "StreetAddress",      -- not available in source
 
-        CAST(EffectiveStartDateTimeUTC AS TIMESTAMP_TZ) AS EffectiveStartDateTime,
+        CAST(EffectiveStartDateTimeUTC AS TIMESTAMP_TZ) AS "EffectiveStartDateTime",
         CAST(
             COALESCE(LeadEffectiveStartDateTimeUTC, EffectiveEndDateTimeRaw)
             AS TIMESTAMP_TZ
-        ) AS EffectiveEndDateTime,
+        ) AS "EffectiveEndDateTime",
         CASE
             WHEN LeadEffectiveStartDateTimeUTC IS NULL AND IsFivetranActive THEN 'Y'
             ELSE 'N'
-        END AS CurrentFlagYN,
+        END AS "CurrentFlagYN",
 
-        CAST(EffectiveStartDateTimeUTC AS TIMESTAMP_TZ) AS CreatedDateTime,
-        CAST(InsertedDateTimeUTC       AS TIMESTAMP_TZ) AS ModifiedDateTime,
-        SourceSystemCode,
+        CAST(EffectiveStartDateTimeUTC AS TIMESTAMP_TZ) AS "CreatedDateTime",
+        CAST(InsertedDateTimeUTC       AS TIMESTAMP_TZ) AS "ModifiedDateTime",
+        SourceSystemCode AS "SourceSystemCode",
 
-        CAST(CUSTOMER_ID AS VARCHAR(40))   AS SourceCustomerPK,
-        CAST(CUSTOMER_ID AS VARCHAR(40))   AS SourceCustomerBK,
+        CAST(CUSTOMER_ID AS VARCHAR(40))   AS "SourceCustomerPK",
+        CAST(CUSTOMER_ID AS VARCHAR(40))   AS "SourceCustomerBK",
 
-        FileName,
-        CAST(StageInsertedDateTimeUTC AS TIMESTAMP_TZ) AS StageInsertedDateTimeUTC,
-        Hashbytes,
-        DataCondition
+        FileName AS "FileName",
+        CAST(StageInsertedDateTimeUTC AS TIMESTAMP_TZ) AS "StageInsertedDateTimeUTC",
+        Hashbytes AS "Hashbytes",
+        DataCondition AS "DataCondition"
     FROM cte_row_reduce
 
 )
 
-SELECT
-    CustomerHashPK,
-    CustomerHashBK,
-    AcquisitionChannel,
-    AcquisitionDate,
-    City,
-    Country,
-    CustomerType,
-    EmailAddress,
-    FirstName,
-    FullName,
-    IsActive,
-    LastName,
-    LoyaltyJoinDate,
-    LoyaltyPoints,
-    LoyaltyTier,
-    PhoneNumber,
-    PostalCode,
-    StateProvince,
-    StreetAddress,
-    EffectiveStartDateTime,
-    EffectiveEndDateTime,
-    CurrentFlagYN,
-    CreatedDateTime,
-    ModifiedDateTime,
-    SourceSystemCode,
-    SourceCustomerPK,
-    SourceCustomerBK,
-    FileName,
-    StageInsertedDateTimeUTC,
-    Hashbytes,
-    DataCondition
-FROM fin
+SELECT * FROM fin

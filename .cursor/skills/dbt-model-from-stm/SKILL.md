@@ -143,9 +143,11 @@ Rules for the view (Type 1 — use the Type 2 section of SKILL.md if Step 0 dete
   For example, if Transformation = "CAST(QUANTITY * UNIT_PRICE AS DECIMAL(19,4))",
   write: CAST(QUANTITY * UNIT_PRICE AS DECIMAL(19,4)).
   HOWEVER: if the STM transformation uses MD5(), plain SHA2(), or SHA2_BINARY() for a **key** (HashPK/HashBK/HashFK), replace it with the HASH() pattern above. For Hashbytes keep SHA2_BINARY.
-- **Output aliases must match the STM's `Target Column` EXACTLY — PascalCase, verbatim.**
-  Examples: `AS EmployeeHashPK`, `AS FirstName`, `AS HomeStoreHashFK`, `AS LoadTimestamp`, `AS Hashbytes`.
-  DO NOT snake_case the alias (no `employee_hash_pk`, no `first_name`). Copy the STM column name as-is.
+- **Output aliases must match the STM's `Target Column` EXACTLY — PascalCase, verbatim, wrapped in double-quotes.**
+  Snowflake folds all unquoted identifiers to uppercase. Double-quoting preserves PascalCase in the physical table.
+  Examples: `AS "EmployeeHashPK"`, `AS "FirstName"`, `AS "HomeStoreHashFK"`, `AS "LoadTimestamp"`, `AS "Hashbytes"`.
+  DO NOT snake_case the alias (no `employee_hash_pk`, no `first_name`). Copy the STM column name as-is, wrapped in `"`.
+  Pass-through columns with no expression must also be explicitly aliased: `SourceSystemCode AS "SourceSystemCode"`.
 - For fact tables with multiple source CTEs joined together, qualify column names with the CTE name
   ONLY when the same column name exists in multiple CTEs. Otherwise keep columns unqualified.
 - If Transformation is empty and Source Table/Column are filled, it's a direct passthrough —
@@ -176,13 +178,13 @@ The filename `{Entity}` is the STM's `Target Table` verbatim PascalCase (e.g. `D
 
 {{ config(
     materialized='incremental',
-    unique_key='<PK_COLUMN_VERBATIM_FROM_STM>'
+    unique_key='"<PK_COLUMN_VERBATIM_FROM_STM>"'
 ) }}
 
 SELECT * FROM {{ ref('vw_<Entity>') }}
 
 {{% if is_incremental() %}}
-WHERE LoadTimestamp > (SELECT MAX(LoadTimestamp) FROM {{ this }})
+WHERE "LoadTimestamp" > (SELECT MAX("LoadTimestamp") FROM {{ this }})
 {{% endif %}}
 
 **If Step 0 detected Type 2 — write a full-refresh table model (no incremental, no unique_key):**
@@ -408,7 +410,7 @@ This applies to Type 2 exactly as it does to Type 1. A Type 2 view must not sile
 - **Unmapped columns (applies to Type 1 AND Type 2):** every column with empty Source Table + Source Column in the STM's mapping must emit `CAST(NULL AS <type>)` (or the STM default) with an inline `-- not available in source` comment on the same line. This rule is non-negotiable — reviewers rely on it to see at a glance which target attributes are genuine data gaps vs real source-backed data.
 - **Model/file naming — STM-verbatim (PascalCase):** file names and dbt model names use the STM `Target Table` verbatim — e.g. `DimEmployee.sql`, `vw_DimEmployee.sql`, `FactSales.sql`, `vw_FactSales.sql`. NEVER snake_case. The only lowercase piece is the literal `vw_` prefix on view models.
 - **CTE naming:** `cte<TABLE_NAME>` (e.g. `cteEMPLOYEES`, `cteSALES_ORDER_ITEMS`)
-- **Column naming — STM-verbatim (PascalCase):** target-column aliases and schema.yml entries MUST match the STM's `Target Column` exactly (e.g. `EmployeeHashPK`, `FirstName`, `HomeStoreHashFK`, `LoadTimestamp`, `Hashbytes`). Do NOT snake_case them.
+- **Column naming — STM-verbatim (PascalCase), double-quoted:** every `AS alias` in view SQL MUST use double-quotes to preserve PascalCase in Snowflake (e.g. `AS "EmployeeHashPK"`, `AS "FirstName"`, `AS "HomeStoreHashFK"`, `AS "LoadTimestamp"`, `AS "Hashbytes"`). Do NOT snake_case. Do NOT omit the double-quotes — Snowflake uppercases all unquoted identifiers. Schema.yml `name:` entries use PascalCase without quotes (YAML, not SQL).
 - **Column references:** unqualified (no table/CTE prefix) unless needed to disambiguate in multi-CTE joins
 - **Deduplication:** Snowflake `QUALIFY ROW_NUMBER() OVER (PARTITION BY ... ORDER BY ... DESC) = 1` inside the source CTE — no separate LatestRank column
 - **load_timestamp:** sourced from `_FIVETRAN_SYNCED`, NEVER from `CURRENT_TIMESTAMP()` (breaks incremental logic)
@@ -519,6 +521,6 @@ Every output column alias in the view and every `name:` entry in the schema YAML
 
 Examples:
 
-- STM `EmployeeHashPK` → `AS EmployeeHashPK` in SQL, `- name: EmployeeHashPK` in YAML, `unique_key='EmployeeHashPK'` in the incremental config.
-- STM `HomeStoreHashFK` → `AS HomeStoreHashFK`.
-- STM `LoadTimestamp` → `AS LoadTimestamp`; the incremental `WHERE` clause uses `LoadTimestamp > (SELECT MAX(LoadTimestamp) FROM {{ this }})`.
+- STM `EmployeeHashPK` → `AS "EmployeeHashPK"` in SQL, `- name: EmployeeHashPK` in YAML, `unique_key='"EmployeeHashPK"'` in the incremental config.
+- STM `HomeStoreHashFK` → `AS "HomeStoreHashFK"`.
+- STM `LoadTimestamp` → `AS "LoadTimestamp"`; the incremental `WHERE` clause uses `"LoadTimestamp" > (SELECT MAX("LoadTimestamp") FROM {{ this }})`.

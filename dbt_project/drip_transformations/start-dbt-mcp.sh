@@ -34,6 +34,11 @@ if [[ -n "${DBT_PAT:-}" ]]; then
   export DBT_TOKEN="$DBT_PAT"
 fi
 
+# User ID — required by dbt MCP; set DBT_USER_ID in .env
+if [[ -n "${DBT_USER_ID:-}" ]]; then
+  export DBT_USER_ID
+fi
+
 # Advanced features — disabled until env IDs are configured
 export DISABLE_ADMIN_API="${DISABLE_ADMIN_API:-false}"
 export DISABLE_DISCOVERY="${DISABLE_DISCOVERY:-${DBT_PROD_ENV_ID:+false}}"

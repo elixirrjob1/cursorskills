@@ -99,9 +99,13 @@ fin AS (
             AS TIMESTAMP_TZ
         ) AS "EffectiveEndDateTime",
         CASE
-            WHEN LeadEffectiveStartDateTimeUTC IS NULL AND IsFivetranActive THEN 'Y'
+            WHEN LeadEffectiveStartDateTimeUTC IS NULL THEN 'Y'
             ELSE 'N'
         END AS "CurrentFlagYN",
+        CASE
+            WHEN LeadEffectiveStartDateTimeUTC IS NULL AND NOT IsFivetranActive THEN 'Y'
+            ELSE 'N'
+        END AS "DeletedFlagYN",
 
         CAST(EffectiveStartDateTimeUTC AS TIMESTAMP_TZ) AS "CreatedDateTime",
         CAST(InsertedDateTimeUTC       AS TIMESTAMP_TZ) AS "ModifiedDateTime",

@@ -82,9 +82,17 @@ fin AS (
         CAST(EffectiveStartDateTimeUTC AS TIMESTAMP_TZ) AS "EffectiveStartDateTime",
         CAST(COALESCE(LeadEffectiveStartDateTimeUTC, EffectiveEndDateTimeRaw) AS TIMESTAMP_TZ) AS "EffectiveEndDateTime",
         CASE
-            WHEN LeadEffectiveStartDateTimeUTC IS NULL AND IsFivetranActive THEN 'Y'
+            WHEN LeadEffectiveStartDateTimeUTC IS NULL THEN 'Y'
             ELSE 'N'
         END AS "CurrentFlagYN",
+        CASE
+            WHEN LeadEffectiveStartDateTimeUTC IS NULL AND NOT ACTIVE AND IsFivetranActive THEN 'Y'
+            ELSE 'N'
+        END AS "SoftDeletedFlagYN",
+        CASE
+            WHEN LeadEffectiveStartDateTimeUTC IS NULL AND NOT IsFivetranActive THEN 'Y'
+            ELSE 'N'
+        END AS "DeletedFlagYN",
         CAST(EffectiveStartDateTimeUTC AS TIMESTAMP_TZ) AS "CreatedDateTime",
         CAST(InsertedDateTimeUTC       AS TIMESTAMP_TZ) AS "ModifiedDateTime",
         SourceSystemCode AS "SourceSystemCode",

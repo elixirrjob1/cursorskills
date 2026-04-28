@@ -161,7 +161,21 @@ models:
         tests:
           - not_null
       - name: CurrentFlagYN
-        description: "Type 2 SCD: 'Y' if current version, 'N' if historical."
+        description: "Type 2 SCD: 'Y' if this is the most recent row for this key (regardless of deletion status), 'N' if superseded."
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['Y', 'N']
+      - name: SoftDeletedFlagYN
+        description: "Type 2 SCD: 'Y' if this is the latest row and the source explicitly marked the record inactive (ACTIVE = false) while the record still exists in the source system."
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['Y', 'N']
+      - name: DeletedFlagYN
+        description: "Type 2 SCD: 'Y' if this is the latest row and the record has been removed from the source system (_FIVETRAN_ACTIVE = false)."
         tests:
           - not_null
           - accepted_values:
@@ -417,7 +431,14 @@ models:
         tests:
           - not_null
       - name: CurrentFlagYN
-        description: "Type 2 SCD: 'Y' if current version, 'N' if historical."
+        description: "Type 2 SCD: 'Y' if this is the most recent row for this key (regardless of deletion status), 'N' if superseded."
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['Y', 'N']
+      - name: DeletedFlagYN
+        description: "Type 2 SCD: 'Y' if this is the latest row and the record has been removed from the source system (_FIVETRAN_ACTIVE = false)."
         tests:
           - not_null
           - accepted_values:

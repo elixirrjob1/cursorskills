@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Push dbt_project/drip_transformations/ as a subtree to the secondary dbt repo.
+# Push dbt_project/drip_transformations/ as a standalone repo to the secondary
+# dbt repository, with the subdirectory promoted to the repo root.
 # Auth comes from PAT2 / PAT2_USER in .env (never hardcoded).
 #
 # Usage:
@@ -8,9 +9,10 @@
 #
 # Called automatically by .git/hooks/post-push after every git push.
 #
-# If the secondary repo has commits we don't have (someone pushed there
-# directly), this script will pull those changes back into the main repo's
-# subtree first, then push — so nothing is ever silently overwritten.
+# Strategy: clone the main repo into a temp directory, run git filter-repo to
+# promote the subdirectory to the root (rewriting full history), then push.
+# This is more reliable than git subtree split which can leave an extra path
+# prefix in the output depending on commit history.
 
 set -euo pipefail
 
@@ -29,72 +31,69 @@ fi
 PAT="${PAT2:-}"
 PAT_USER="${PAT2_USER:-}"
 REMOTE_LABEL="responsum-team/dbtproject"
+AUTHED_URL="https://${PAT_USER}:${PAT}@github.com/responsum-team/dbtproject"
 PREFIX="dbt_project/drip_transformations"
 TARGET_BRANCH="${1:-main}"
-SPLIT_BRANCH="_dbt-remote-split"
-FETCH_REF="refs/remotes/_dbt-remote/${TARGET_BRANCH}"
+WORK_DIR="$(mktemp -d)"
 
 if [[ -z "$PAT" || -z "$PAT_USER" ]]; then
   echo "[dbt-remote] ERROR: PAT2 and PAT2_USER must be set in .env" >&2
   exit 1
 fi
 
-AUTHED_URL="https://${PAT_USER}:${PAT}@github.com/responsum-team/dbtproject"
+if ! command -v git-filter-repo &>/dev/null; then
+  echo "[dbt-remote] ERROR: git-filter-repo not found. Install with:" >&2
+  echo "  pip install git-filter-repo --break-system-packages" >&2
+  exit 1
+fi
 
-echo "[dbt-remote] Syncing ${PREFIX}/ ↔ ${REMOTE_LABEL} (${TARGET_BRANCH}) ..."
-cd "$REPO_ROOT"
+cleanup() { rm -rf "$WORK_DIR"; }
+trap cleanup EXIT
 
-# ── 1. Fetch latest state of the secondary repo ──────────────────────────────
-git fetch --quiet "$AUTHED_URL" "${TARGET_BRANCH}:${FETCH_REF}" 2>/dev/null || {
-  echo "[dbt-remote] WARNING: could not fetch from ${REMOTE_LABEL} — skipping sync." >&2
-  exit 0
-}
+echo "[dbt-remote] Syncing ${PREFIX}/ → ${REMOTE_LABEL} (${TARGET_BRANCH}) ..."
 
-REMOTE_SHA=$(git rev-parse "$FETCH_REF")
+# ── 1. Clone main repo locally (no-local to get a real independent clone) ────
+git clone --quiet "$REPO_ROOT" "$WORK_DIR/split" --no-local
+cd "$WORK_DIR/split"
 
-# ── 2. Build our local subtree split ─────────────────────────────────────────
-git subtree split --prefix="$PREFIX" -b "$SPLIT_BRANCH" > /dev/null
-LOCAL_SHA=$(git rev-parse "$SPLIT_BRANCH")
+# ── 2. Rewrite history: promote subdirectory to repo root ────────────────────
+git filter-repo --subdirectory-filter "$PREFIX" --force --quiet
 
-# ── 3. Check relationship between local and remote ───────────────────────────
-if git merge-base --is-ancestor "$REMOTE_SHA" "$LOCAL_SHA"; then
-  # Remote is at or behind our split — simple fast-forward push
-  echo "[dbt-remote] Remote is up to date or behind. Pushing ..."
-  git push "$AUTHED_URL" "${SPLIT_BRANCH}:${TARGET_BRANCH}"
+# ── 3. Fetch current state of secondary repo ─────────────────────────────────
+git remote add secondary "$AUTHED_URL"
+git fetch --quiet secondary "${TARGET_BRANCH}" 2>/dev/null || true
+REMOTE_SHA=$(git rev-parse "refs/remotes/secondary/${TARGET_BRANCH}" 2>/dev/null || echo "")
 
-else
-  # Remote has commits we don't have — pull them into the main repo first
-  echo "[dbt-remote] Remote has new commits. Pulling changes into ${PREFIX}/ ..."
-  git branch -D "$SPLIT_BRANCH" > /dev/null 2>&1 || true   # clean up before pull
+LOCAL_SHA=$(git rev-parse HEAD)
 
-  if git subtree pull --prefix="$PREFIX" "$AUTHED_URL" "$TARGET_BRANCH" \
-       --squash -m "chore: merge changes from ${REMOTE_LABEL}"; then
+# ── 4. Check if remote has commits we don't have ─────────────────────────────
+if [[ -n "$REMOTE_SHA" ]] && ! git merge-base --is-ancestor "$REMOTE_SHA" "$LOCAL_SHA"; then
+  echo "[dbt-remote] Remote has new commits — merging back into ${PREFIX}/ ..."
 
-    echo "[dbt-remote] Merged successfully. Pushing combined result ..."
-    # Re-split after the merge and push
-    git subtree split --prefix="$PREFIX" -b "$SPLIT_BRANCH" > /dev/null
-    git push "$AUTHED_URL" "${SPLIT_BRANCH}:${TARGET_BRANCH}"
-
-  else
+  # Bring the remote commit into main repo as a subtree pull
+  cd "$REPO_ROOT"
+  if ! git subtree pull --prefix="$PREFIX" "$AUTHED_URL" "$TARGET_BRANCH" \
+       --squash -m "chore: merge changes from ${REMOTE_LABEL}" 2>/dev/null; then
     echo "" >&2
-    echo "[dbt-remote] ──────────────────────────────────────────────────────" >&2
-    echo "[dbt-remote] MERGE CONFLICT: changes in ${REMOTE_LABEL} conflict"   >&2
-    echo "[dbt-remote] with local changes in ${PREFIX}/."                     >&2
-    echo ""                                                                    >&2
-    echo "  Resolve manually:"                                                 >&2
-    echo "    1. Fix the conflicts shown above"                                >&2
-    echo "    2. git add <resolved files>"                                     >&2
-    echo "    3. git commit"                                                   >&2
-    echo "    4. git push  (the hook will re-run and push both repos)"        >&2
-    echo "[dbt-remote] ──────────────────────────────────────────────────────" >&2
+    echo "[dbt-remote] ─────────────────────────────────────────────────────" >&2
+    echo "[dbt-remote] MERGE CONFLICT — resolve manually then re-push:"     >&2
+    echo "    1. Fix conflicts in ${PREFIX}/"                                >&2
+    echo "    2. git add <resolved files>"                                   >&2
+    echo "    3. git commit && git push"                                     >&2
+    echo "[dbt-remote] ─────────────────────────────────────────────────────" >&2
     git merge --abort 2>/dev/null || true
     exit 1
   fi
+
+  # Re-run split after merge
+  rm -rf "$WORK_DIR/split"
+  git clone --quiet "$REPO_ROOT" "$WORK_DIR/split" --no-local
+  cd "$WORK_DIR/split"
+  git filter-repo --subdirectory-filter "$PREFIX" --force --quiet
+  git remote add secondary "$AUTHED_URL"
 fi
 
-# ── 4. Clean up ──────────────────────────────────────────────────────────────
-git branch -D "$SPLIT_BRANCH"        > /dev/null 2>&1 || true
-git branch -D "_dbt-remote-split"    > /dev/null 2>&1 || true
-git update-ref -d "$FETCH_REF"       > /dev/null 2>&1 || true
-
+# ── 5. Push ──────────────────────────────────────────────────────────────────
+echo "[dbt-remote] Pushing ..."
+git push --force secondary "HEAD:${TARGET_BRANCH}"
 echo "[dbt-remote] Done."

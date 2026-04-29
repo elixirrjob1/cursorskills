@@ -74,11 +74,11 @@ Read the skill file: .cursor/skills/dbt-model-from-stm/SKILL.md
 
 Before writing SQL, determine whether this is an SCD Type 2 STM. It IS Type 2 if ANY of:
 - Section 4 (Target Schema Definition) lists `SCD Type = Type 2`.
-- Section 7 (Field-Level Mapping Matrix) uses the Ajay format: one or more `### Data Condition N` blocks followed by a `### Final` block.
+- Section 7 (Field-Level Mapping Matrix) uses the multi-condition format: one or more `### Data Condition N` blocks followed by a `### Final` block.
 - Section 7 target columns include all of `EffectiveStartDateTime`, `EffectiveEndDateTime`, `CurrentFlagYN`.
 - Section 8 lists rule `BR12 — Type 2 Metadata`.
 
-If Type 2 → follow the **SCD Type 2 Handling (Ajay Kalyan multi-CTE pattern)** section of SKILL.md. Use the 5-CTE pipeline (`cte_prep` → `cte_prep_hash` → `cte_prep_hash_lag` → `cte_row_reduce` → `fin`), `HASH()` for keys (→ NUMBER(19,0)), `SHA2_BINARY()` for Hashbytes (→ BINARY(32)), Fivetran history-mode columns for Type 2 windowing, and `materialized='table'` for the enriched model.
+If Type 2 → follow the **SCD Type 2 Handling (multi-CTE pattern)** section of SKILL.md. Use the 5-CTE pipeline (`cte_prep` → `cte_prep_hash` → `cte_prep_hash_lag` → `cte_row_reduce` → `fin`), `HASH()` for keys (→ NUMBER(19,0)), `SHA2_BINARY()` for Hashbytes (→ BINARY(32)), Fivetran history-mode columns for Type 2 windowing, and `materialized='table'` for the enriched model.
 
 Otherwise (Type 1 / non-SCD) → follow the Type 1 pattern described below in this prompt (single `cte<TABLE>` with QUALIFY, `HASH()` NUMBER(19,0) keys, `SHA2_BINARY` BINARY(32) Hashbytes, `materialized='incremental'` on `LoadTimestamp`).
 
@@ -222,13 +222,13 @@ After all subagents complete, run:
 2. `list` via dbt MCP — confirm all models registered
 3. `get_lineage_dev` on a sample model — confirm dependency graph is correct (source -> views/_v -> enriched/incremental)
 
-## SCD Type 2 Handling (Ajay Kalyan multi-CTE pattern)
+## SCD Type 2 Handling (multi-CTE pattern)
 
 ### How to detect Type 2 from the STM
 
 An STM is Type 2 when **any** of these are true:
 - Section 4 (Target Schema Definition) says `SCD Type = Type 2`.
-- Section 7 (Field-Level Mapping Matrix) uses the Ajay format: multiple `### Data Condition N` blocks followed by a `### Final` block.
+- Section 7 (Field-Level Mapping Matrix) uses the multi-condition format: multiple `### Data Condition N` blocks followed by a `### Final` block.
 - Section 7 has target columns `EffectiveStartDateTime`, `EffectiveEndDateTime`, `CurrentFlagYN` (with `Field Type = Type 2 Metadata`).
 - Section 8 lists rule `BR12 — Type 2 Metadata` requiring the three Type 2 columns.
 
@@ -305,7 +305,7 @@ cte_row_reduce AS (
 ),
 
 fin AS (
-    -- 5. Project final Type 2 row with Ajay's standard column ordering:
+    -- 5. Project final Type 2 row with standard column ordering:
     --    keys -> business attributes -> Type 2 metadata -> audit -> source -> Hashbytes -> DataCondition.
     SELECT
         HASH(

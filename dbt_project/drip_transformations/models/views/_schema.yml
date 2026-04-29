@@ -12,6 +12,11 @@ models:
           - source_not_in_target:
               arguments:
                 target_model: "{{ ref('DimDate') }}"
+          - source_hashdiff_matches_target:
+              arguments:
+                target_model: "{{ ref('DimDate') }}"
+                source_hashdiff_column: Hashbytes
+                target_hashdiff_column: Hashbytes
       - name: DateValue
         description: "Actual calendar date value"
         tests:
@@ -116,6 +121,11 @@ models:
           - source_not_in_target:
               arguments:
                 target_model: "{{ ref('DimProduct') }}"
+          - source_hashdiff_matches_target:
+              arguments:
+                target_model: "{{ ref('DimProduct') }}"
+                source_hashdiff_column: Hashbytes
+                target_hashdiff_column: Hashbytes
       - name: ProductHashBK
         description: "Natural business key from source system, hashed (HASH(SKU + SourceSystemCode) -> NUMBER(19,0))."
         tests:
@@ -225,6 +235,11 @@ models:
           - source_not_in_target:
               arguments:
                 target_model: "{{ ref('DimStore') }}"
+          - source_hashdiff_matches_target:
+              arguments:
+                target_model: "{{ ref('DimStore') }}"
+                source_hashdiff_column: Hashbytes
+                target_hashdiff_column: Hashbytes
       - name: StoreHashBK
         description: "Natural business key (store number)"
         tests:
@@ -310,6 +325,11 @@ models:
           - source_not_in_target:
               arguments:
                 target_model: "{{ ref('DimWarehouse') }}"
+          - source_hashdiff_matches_target:
+              arguments:
+                target_model: "{{ ref('DimWarehouse') }}"
+                source_hashdiff_column: Hashbytes
+                target_hashdiff_column: Hashbytes
       - name: WarehouseHashBK
         description: "Natural business key (warehouse code)"
         tests:
@@ -382,6 +402,11 @@ models:
           - source_not_in_target:
               arguments:
                 target_model: "{{ ref('DimCustomer') }}"
+          - source_hashdiff_matches_target:
+              arguments:
+                target_model: "{{ ref('DimCustomer') }}"
+                source_hashdiff_column: Hashbytes
+                target_hashdiff_column: Hashbytes
       - name: CustomerHashBK
         description: "Natural business key (customer ID from CRM), hashed."
         tests:
@@ -490,6 +515,11 @@ models:
           - source_not_in_target:
               arguments:
                 target_model: "{{ ref('DimSupplier') }}"
+          - source_hashdiff_matches_target:
+              arguments:
+                target_model: "{{ ref('DimSupplier') }}"
+                source_hashdiff_column: Hashbytes
+                target_hashdiff_column: Hashbytes
       - name: SupplierHashBK
         description: "Natural business key (supplier ID from procurement system)"
         tests:
@@ -571,6 +601,11 @@ models:
           - source_not_in_target:
               arguments:
                 target_model: "{{ ref('DimEmployee') }}"
+          - source_hashdiff_matches_target:
+              arguments:
+                target_model: "{{ ref('DimEmployee') }}"
+                source_hashdiff_column: Hashbytes
+                target_hashdiff_column: Hashbytes
       - name: EmployeeHashBK
         description: "Natural business key (employee ID from HR system)"
         tests:
@@ -630,6 +665,11 @@ models:
           - source_not_in_target:
               arguments:
                 target_model: "{{ ref('FactSales') }}"
+          - source_hashdiff_matches_target:
+              arguments:
+                target_model: "{{ ref('FactSales') }}"
+                source_hashdiff_column: Hashbytes
+                target_hashdiff_column: Hashbytes
       - name: DateHashFK
         description: "Foreign key to date dimension (transaction date)"
         tests:
@@ -723,6 +763,11 @@ models:
           - source_not_in_target:
               arguments:
                 target_model: "{{ ref('FactInventorySnapshot') }}"
+          - source_hashdiff_matches_target:
+              arguments:
+                target_model: "{{ ref('FactInventorySnapshot') }}"
+                source_hashdiff_column: Hashbytes
+                target_hashdiff_column: Hashbytes
       - name: DateHashFK
         description: "Foreign key to date dimension (snapshot date)"
         tests:
@@ -792,6 +837,11 @@ models:
           - source_not_in_target:
               arguments:
                 target_model: "{{ ref('FactPurchaseOrder') }}"
+          - source_hashdiff_matches_target:
+              arguments:
+                target_model: "{{ ref('FactPurchaseOrder') }}"
+                source_hashdiff_column: Hashbytes
+                target_hashdiff_column: Hashbytes
       - name: ProductHashFK
         description: "Foreign key to product dimension"
         tests:

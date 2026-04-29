@@ -3,6 +3,9 @@
     "dbt": {
       "command": "/home/fillip/projec/cursorskills/dbt_project/start-dbt-mcp.sh",
       "args": []
+    },
+    "snowflake": {
+      "command": "/home/fillip/projec/cursorskills/tools/snowflake_mcp/run.sh"
     }
   }
 }

@@ -1,0 +1,18 @@
+other_services:
+  object_manager: True   # CREATE / DROP / DESCRIBE / SHOW for common Snowflake objects
+  query_manager: True    # LLM-generated SQL execution
+
+sql_statement_permissions:
+  - Select: True
+  - Describe: True
+  - Show: True
+  - Create: True
+  - Alter: True
+  - Drop: True
+  - Insert: True
+  - Update: True
+  - Delete: True
+  - TruncateTable: True
+  - Use: True
+  - Comment: True
+  - Unknown: False

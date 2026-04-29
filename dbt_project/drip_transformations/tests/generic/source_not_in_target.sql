@@ -39,12 +39,14 @@
 {% test source_not_in_target(model, column_name, target_model, target_column=none) %}
 
     {%- set tgt_col = target_column if target_column is not none else column_name -%}
+    {%- set src_col_q = adapter.quote(column_name) -%}
+    {%- set tgt_col_q = adapter.quote(tgt_col) -%}
 
     select
-        src.{{ column_name }} as missing_pk
+        src.{{ src_col_q }} as missing_pk
     from {{ model }} as src
     left join {{ target_model }} as tgt
-        on src.{{ column_name }} = tgt.{{ tgt_col }}
-    where tgt.{{ tgt_col }} is null
+        on src.{{ src_col_q }} = tgt.{{ tgt_col_q }}
+    where tgt.{{ tgt_col_q }} is null
 
 {% endtest %}

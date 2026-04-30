@@ -463,8 +463,18 @@ For composite keys pass each component as a separate argument to `HASH` (cleanes
 |---|---|---|---|
 | `HashPK` | Surrogate primary key | `HASH(<business_key>, <source_system_code>)` | `NUMBER(19,0)` |
 | `HashBK` | Business key | `HASH(<natural_key>, <source_system_code>)` | `NUMBER(19,0)` |
-| `HashFK` | Foreign key | Same derivation as the referenced dimension's HashPK. Wrap in `IFF(col IS NULL, NULL, HASH(...))` when nullable. | `NUMBER(19,0)` |
+| `HashFK` | Foreign key | **Must use the exact same formula as the referenced dimension's `HashPK`** — including `SourceSystemCode`. Wrap in `IFF(col IS NULL, NULL, HASH(...))` when nullable. | `NUMBER(19,0)` |
 | `Hashbytes` | Change detection | `CAST(SHA2_BINARY(..., 256) AS BINARY(32))` of **sourced descriptive/attribute columns** concatenated with `'|'`. | `BINARY(32)` |
+
+> **HashFK must exactly mirror the referenced dim's HashPK formula.** If a dim computes its PK as `HASH(id, SourceSystemCode)`, the fact FK pointing to it must also be `HASH(id, SourceSystemCode)` — not `HASH(id)` alone. A mismatch causes all FK joins to return NULL silently (no error at build time).
+>
+> Example — DimCustomer uses `HASH(CAST(CUSTOMER_ID AS VARCHAR) || '|' || 'ERP')`, so FactSales must match:
+> ```sql
+> IFF(CUSTOMER_ID IS NULL, NULL,
+>     HASH(COALESCE(CAST(CUSTOMER_ID AS VARCHAR), '#@#@#@#@#') || '|' || 'ERP')
+> ) AS "CustomerHashFK"
+> ```
+> Before writing a fact view, always read the referenced dim view to confirm the exact HashPK formula.
 
 > **Why Hashbytes differs from keys:** Hashbytes is used to detect whether a row's business attributes changed between loads (Type 2 SCD boundary detection and Type 1 change comparison). We compare two hashes and a collision would cause a silent miss, so the cryptographic strength of SHA-256 matters. Keys are only used for equality joins, where the 64-bit `HASH()` bound is more than sufficient for realistic row counts and the performance gain is real.
 

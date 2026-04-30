@@ -17,8 +17,8 @@ source .env   # loads PAT2
 rm -rf /tmp/dbt-sync-target
 git clone "https://${PAT2}@github.com/responsum-team/dbtproject.git" /tmp/dbt-sync-target
 
-# 2. Overwrite with latest dbt project content from main repo
-rsync -av --delete \
+# 2. Copy latest dbt project content on top — never delete what is already there
+rsync -av \
   --exclude='.git' \
   /home/fillip/projec/cursorskills/dbt_project/drip_transformations/ \
   /tmp/dbt-sync-target/

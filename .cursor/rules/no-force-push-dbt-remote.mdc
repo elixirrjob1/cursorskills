@@ -1,24 +1,37 @@
 ---
-description: Never force push directly to responsum-team/dbtproject — always use the temp-clone sync process
+description: Never force push to responsum-team/dbtproject — sync by copy-and-commit only
 alwaysApply: true
 ---
 
-# No Direct Force Push to responsum-team/dbtproject
+# No Force Push to responsum-team/dbtproject
 
-NEVER run `git push --force` (or `git push -f`) directly to `responsum-team/dbtproject` from the main repo (`elixirrjob1/cursorskills`).
+NEVER use `git push --force` (or `-f`) to `responsum-team/dbtproject` under any circumstances.
+The secondary repo must always preserve its own history. Use the copy-and-commit sync below.
 
-The only approved way to update `responsum-team/dbtproject` is through the temp-clone sync process:
+## Approved sync process (no force, no filter-repo)
 
 ```bash
-source .env
-rm -rf /tmp/dbt-push-tmp
-git clone https://github.com/elixirrjob1/cursorskills.git /tmp/dbt-push-tmp
-cd /tmp/dbt-push-tmp
-git filter-repo --subdirectory-filter dbt_project/drip_transformations --force
-git remote add dbt-remote "https://${PAT2}@github.com/responsum-team/dbtproject.git"
-git push dbt-remote main:main --force
+source .env   # loads PAT2
+
+# 1. Clone the secondary repo (keeps its own history)
+rm -rf /tmp/dbt-sync-target
+git clone "https://${PAT2}@github.com/responsum-team/dbtproject.git" /tmp/dbt-sync-target
+
+# 2. Overwrite with latest dbt project content from main repo
+rsync -av --delete \
+  --exclude='.git' \
+  /home/fillip/projec/cursorskills/dbt_project/drip_transformations/ \
+  /tmp/dbt-sync-target/
+
+# 3. Commit and push normally (no --force)
+cd /tmp/dbt-sync-target
+git add -A
+git diff --cached --quiet || git commit -m "sync: update from elixirrjob1/cursorskills main"
+git push
 ```
 
-This ensures `dbt_project.yml` lands at the root of the secondary repo (required by dbt Cloud).
+## What NOT to do
 
-A direct force push from the main repo would push the full `elixirrjob1/cursorskills` tree — overwriting the secondary repo with unrelated files (skills, scripts, .env, etc.).
+- `git push --force` to responsum-team/dbtproject — forbidden
+- `git filter-repo` on the main repo then push — forbidden (rewrites history, requires force)
+- Direct pushes from `elixirrjob1/cursorskills` to `responsum-team/dbtproject` — forbidden

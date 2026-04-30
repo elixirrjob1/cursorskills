@@ -13,27 +13,31 @@ Pushing to main is not enough — you must also sync to the secondary repo or db
 
 After any commit that touches `dbt_project/drip_transformations/` — models, macros, schema YAML, sources.
 
-## How to sync (correct method)
+## How to sync (correct method — no force push)
 
-Always use a **temporary clone + subdirectory-filter** so `dbt_project.yml` ends up at the root of `responsum-team/dbtproject`. Never run `git filter-repo` directly on the main repo — it removes the `origin` remote and destroys local history.
+Clone the secondary repo, overwrite its contents with the dbt project files, and push normally. Never force push.
 
 ```bash
 source .env   # loads PAT2
 
-rm -rf /tmp/dbt-push-tmp
-git clone https://github.com/elixirrjob1/cursorskills.git /tmp/dbt-push-tmp
-cd /tmp/dbt-push-tmp
-git filter-repo --subdirectory-filter dbt_project/drip_transformations --force
-git remote add dbt-remote "https://${PAT2}@github.com/responsum-team/dbtproject.git"
-git push dbt-remote main:main --force
+rm -rf /tmp/dbt-sync-target
+git clone "https://${PAT2}@github.com/responsum-team/dbtproject.git" /tmp/dbt-sync-target
+rsync -av --delete --exclude='.git' \
+  /home/fillip/projec/cursorskills/dbt_project/drip_transformations/ \
+  /tmp/dbt-sync-target/
+cd /tmp/dbt-sync-target
+git add -A
+git diff --cached --quiet || git commit -m "sync: update from elixirrjob1/cursorskills main"
+git push
 ```
 
-After pushing, verify `dbt_project.yml` is at root — if not, dbt Cloud will error with "valid dbt project was not found".
+After syncing, verify `dbt_project.yml` is at root of the secondary repo — if not, dbt Cloud will error with "valid dbt project was not found".
 
 ## Common mistakes
 
-- Running `git filter-repo --path dbt_project/drip_transformations/` on the main repo — this keeps the full path prefix, so `dbt_project.yml` ends up at `dbt_project/drip_transformations/dbt_project.yml` (wrong).
-- Using `scripts/push-dbt-remote.sh` — it attempts a merge pull which causes conflicts. Use the clone method above instead.
+- Using `git push --force` to responsum-team/dbtproject — forbidden, always use the rsync + normal push above.
+- Running `git filter-repo` on the main repo — it removes the `origin` remote and destroys local history.
+- Using `scripts/push-dbt-remote.sh` — it attempts a merge pull which causes conflicts. Use the rsync method above instead.
 - Triggering a dbt Cloud job immediately after pushing to `elixirrjob1/cursorskills` without syncing — the job will run against old code.
 
 ## Hash key consistency rule

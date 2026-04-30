@@ -78,7 +78,7 @@ Before writing SQL, determine whether this is an SCD Type 2 STM. It IS Type 2 if
 - Section 7 target columns include all of `EffectiveStartDateTime`, `EffectiveEndDateTime`, `CurrentFlagYN`.
 - Section 8 lists rule `BR12 — Type 2 Metadata`.
 
-If Type 2 → follow the **SCD Type 2 Handling (multi-CTE pattern)** section of SKILL.md. Use the 5-CTE pipeline (`cte_prep` → `cte_prep_hash` → `cte_prep_hash_lag` → `cte_row_reduce` → `fin`), `HASH()` for keys (→ NUMBER(19,0)), `SHA2_BINARY()` for Hashbytes (→ BINARY(32)), Fivetran history-mode columns for Type 2 windowing, and `materialized='table'` for the enriched model.
+If Type 2 → follow the **SCD Type 2 Handling (multi-CTE pattern)** section of SKILL.md. Use the 6-CTE pipeline (`cte_prep` → `cte_prep_hash` → `cte_prep_hash_lag` → `cte_row_reduce` → `cte_with_lead` → `fin`), `HASH()` for keys (→ NUMBER(19,0)), `SHA2_BINARY()` for Hashbytes (→ BINARY(32)), Fivetran history-mode columns for Type 2 windowing, and `materialized='table'` for the enriched model. CRITICAL: LEAD() must be in `cte_with_lead` (after dedup), NOT in `cte_prep_hash_lag` — computing LEAD before dedup causes CurrentFlagYN='N' for all rows.
 
 Otherwise (Type 1 / non-SCD) → follow the Type 1 pattern described below in this prompt (single `cte<TABLE>` with QUALIFY, `HASH()` NUMBER(19,0) keys, `SHA2_BINARY` BINARY(32) Hashbytes, `materialized='incremental'` on `LoadTimestamp`).
 
@@ -274,22 +274,19 @@ cte_prep_hash AS (
 ),
 
 cte_prep_hash_lag AS (
-    -- 3. For every business key, compute LAG(Hashbytes) to see the previous version's hash,
-    --    and LEAD(EffectiveStartDateTimeUTC) - 1 microsecond to derive the real
-    --    EffectiveEndDateTime of this version from the next version's start.
+    -- 3. Compute LAG(Hashbytes) only — needed to identify real change boundaries in the next step.
+    --    IMPORTANT: do NOT compute LEAD() here. LEAD() must be computed AFTER cte_row_reduce
+    --    (see cte_with_lead below). Computing it before dedup causes CurrentFlagYN = 'N' for all
+    --    rows: Fivetran often appends rows with the same business attributes but a new
+    --    _FIVETRAN_START (no-op syncs). The dedup step removes these, but if LEAD() was already
+    --    evaluated over the full pre-dedup partition, the surviving row already has a non-null
+    --    LeadEffectiveStartDateTimeUTC from a now-removed row → CurrentFlagYN is always 'N'.
     SELECT
         *,
         LAG(Hashbytes) OVER (
             PARTITION BY <BUSINESS_KEY>
             ORDER BY EffectiveStartDateTimeUTC
         ) AS LagHash,
-        DATEADD(
-            MICROSECOND, -1,
-            LEAD(EffectiveStartDateTimeUTC) OVER (
-                PARTITION BY <BUSINESS_KEY>
-                ORDER BY EffectiveStartDateTimeUTC
-            )
-        ) AS LeadEffectiveStartDateTimeUTC,
         InsertedDateTimeUTC AS StageInsertedDateTimeUTC
     FROM cte_prep_hash
 ),
@@ -304,8 +301,24 @@ cte_row_reduce AS (
     WHERE Hashbytes <> LagHash OR LagHash IS NULL
 ),
 
+cte_with_lead AS (
+    -- 5. Compute LEAD() over the DEDUPLICATED set.
+    --    Now that no-op rows are removed, LEAD() correctly returns NULL for the latest
+    --    version of each entity → CurrentFlagYN = 'Y' for the current row as intended.
+    SELECT
+        *,
+        DATEADD(
+            MICROSECOND, -1,
+            LEAD(EffectiveStartDateTimeUTC) OVER (
+                PARTITION BY <BUSINESS_KEY>
+                ORDER BY EffectiveStartDateTimeUTC
+            )
+        ) AS LeadEffectiveStartDateTimeUTC
+    FROM cte_row_reduce
+),
+
 fin AS (
-    -- 5. Project final Type 2 row with standard column ordering:
+    -- 6. Project final Type 2 row with standard column ordering:
     --    keys -> business attributes -> Type 2 metadata -> audit -> source -> Hashbytes -> DataCondition.
     SELECT
         HASH(
@@ -340,7 +353,7 @@ fin AS (
         CAST(StageInsertedDateTimeUTC AS TIMESTAMP_TZ) AS StageInsertedDateTimeUTC,
         Hashbytes,
         DataCondition
-    FROM cte_row_reduce
+    FROM cte_with_lead
 )
 
 SELECT * FROM fin

@@ -1,0 +1,24 @@
+---
+description: Never force push directly to responsum-team/dbtproject — always use the temp-clone sync process
+alwaysApply: true
+---
+
+# No Direct Force Push to responsum-team/dbtproject
+
+NEVER run `git push --force` (or `git push -f`) directly to `responsum-team/dbtproject` from the main repo (`elixirrjob1/cursorskills`).
+
+The only approved way to update `responsum-team/dbtproject` is through the temp-clone sync process:
+
+```bash
+source .env
+rm -rf /tmp/dbt-push-tmp
+git clone https://github.com/elixirrjob1/cursorskills.git /tmp/dbt-push-tmp
+cd /tmp/dbt-push-tmp
+git filter-repo --subdirectory-filter dbt_project/drip_transformations --force
+git remote add dbt-remote "https://${PAT2}@github.com/responsum-team/dbtproject.git"
+git push dbt-remote main:main --force
+```
+
+This ensures `dbt_project.yml` lands at the root of the secondary repo (required by dbt Cloud).
+
+A direct force push from the main repo would push the full `elixirrjob1/cursorskills` tree — overwriting the secondary repo with unrelated files (skills, scripts, .env, etc.).

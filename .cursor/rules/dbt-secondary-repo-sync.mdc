@@ -1,0 +1,54 @@
+---
+description: How to sync dbt project changes to responsum-team/dbtproject (the repo dbt Cloud reads)
+alwaysApply: false
+globs: dbt_project/**/*.sql,dbt_project/**/*.yml,dbt_project/**/*.yaml
+---
+
+# dbt Secondary Repo Sync
+
+dbt Cloud reads from `responsum-team/dbtproject`, NOT from `elixirrjob1/cursorskills`.
+Pushing to main is not enough — you must also sync to the secondary repo or dbt Cloud will run old code.
+
+## When to sync
+
+After any commit that touches `dbt_project/drip_transformations/` — models, macros, schema YAML, sources.
+
+## How to sync (correct method)
+
+Always use a **temporary clone + subdirectory-filter** so `dbt_project.yml` ends up at the root of `responsum-team/dbtproject`. Never run `git filter-repo` directly on the main repo — it removes the `origin` remote and destroys local history.
+
+```bash
+source .env   # loads PAT2
+
+rm -rf /tmp/dbt-push-tmp
+git clone https://github.com/elixirrjob1/cursorskills.git /tmp/dbt-push-tmp
+cd /tmp/dbt-push-tmp
+git filter-repo --subdirectory-filter dbt_project/drip_transformations --force
+git remote add dbt-remote "https://${PAT2}@github.com/responsum-team/dbtproject.git"
+git push dbt-remote main:main --force
+```
+
+After pushing, verify `dbt_project.yml` is at root — if not, dbt Cloud will error with "valid dbt project was not found".
+
+## Common mistakes
+
+- Running `git filter-repo --path dbt_project/drip_transformations/` on the main repo — this keeps the full path prefix, so `dbt_project.yml` ends up at `dbt_project/drip_transformations/dbt_project.yml` (wrong).
+- Using `scripts/push-dbt-remote.sh` — it attempts a merge pull which causes conflicts. Use the clone method above instead.
+- Triggering a dbt Cloud job immediately after pushing to `elixirrjob1/cursorskills` without syncing — the job will run against old code.
+
+## Hash key consistency rule
+
+All FK hashes in fact views must use the same formula as their target dim PK hashes.
+
+DimCustomer and DimProduct PKs are computed as:
+```sql
+HASH(CAST(id AS VARCHAR) || '|' || 'ERP')
+```
+
+FactSales FKs must match:
+```sql
+HASH(COALESCE(CAST(CUSTOMER_ID AS VARCHAR), '#@#@#@#@#') || '|' || 'ERP') AS "CustomerHashFK"
+HASH(COALESCE(CAST(PRODUCT_ID AS VARCHAR), '#@#@#@#@#') || '|' || 'ERP') AS "ProductHashFK"
+```
+
+If a FK mismatch is reported, check the hash formula in both the fact view and the dim view before triggering a reload.

@@ -37,6 +37,7 @@ cte_prep_hash AS (
 
 ),
 
+-- LAG only (needed for dedup filter) — LEAD intentionally excluded here
 cte_prep_hash_lag AS (
 
     SELECT
@@ -45,6 +46,25 @@ cte_prep_hash_lag AS (
             PARTITION BY CUSTOMER_ID
             ORDER BY EffectiveStartDateTimeUTC
         ) AS LagHash,
+        InsertedDateTimeUTC AS StageInsertedDateTimeUTC
+    FROM cte_prep_hash
+
+),
+
+-- Dedup: keep first version per PK and any version where business data changed
+cte_row_reduce AS (
+
+    SELECT *
+    FROM cte_prep_hash_lag
+    WHERE Hashbytes <> LagHash OR LagHash IS NULL
+
+),
+
+-- LEAD computed after dedup so CurrentFlagYN reflects the reduced set correctly
+cte_with_lead AS (
+
+    SELECT
+        *,
         DATEADD(
             MICROSECOND,
             -1,
@@ -52,17 +72,8 @@ cte_prep_hash_lag AS (
                 PARTITION BY CUSTOMER_ID
                 ORDER BY EffectiveStartDateTimeUTC
             )
-        ) AS LeadEffectiveStartDateTimeUTC,
-        InsertedDateTimeUTC AS StageInsertedDateTimeUTC
-    FROM cte_prep_hash
-
-),
-
-cte_row_reduce AS (
-
-    SELECT *
-    FROM cte_prep_hash_lag
-    WHERE Hashbytes <> LagHash OR LagHash IS NULL
+        ) AS LeadEffectiveStartDateTimeUTC
+    FROM cte_row_reduce
 
 ),
 
@@ -118,7 +129,7 @@ fin AS (
         CAST(StageInsertedDateTimeUTC AS TIMESTAMP_TZ) AS "StageInsertedDateTimeUTC",
         Hashbytes AS "Hashbytes",
         DataCondition AS "DataCondition"
-    FROM cte_row_reduce
+    FROM cte_with_lead
 
 )
 

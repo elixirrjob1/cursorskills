@@ -33,7 +33,8 @@ ctePURCHASE_ORDERS AS (
 
 SELECT
     HASH(COALESCE(CAST(ctePURCHASE_ORDER_ITEMS.PO_ID AS VARCHAR), '#@#@#@#@#') || '|' || COALESCE(CAST(PO_ITEM_ID AS VARCHAR), '#@#@#@#@#')) AS "PurchaseOrderHashPK",
-    HASH(COALESCE(CAST(PRODUCT_ID AS VARCHAR), '#@#@#@#@#')) AS "ProductHashFK",
+    HASH(COALESCE(CAST(PRODUCT_ID AS VARCHAR), '#@#@#@#@#')
+        || '|' || 'ERP') AS "ProductHashFK",
     HASH(COALESCE(CAST(SUPPLIER_ID AS VARCHAR), '#@#@#@#@#')) AS "SupplierHashFK",
     HASH(COALESCE(CAST(STORE_ID AS VARCHAR), '#@#@#@#@#')) AS "WarehouseHashFK",
     HASH(COALESCE(CAST(ORDER_DATE AS VARCHAR), '#@#@#@#@#')) AS "DateOrderedHashFK",

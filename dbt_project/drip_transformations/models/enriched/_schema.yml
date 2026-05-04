@@ -3,6 +3,8 @@ version: 2
 models:
   - name: DimDate
     description: "Standard date dimension with fiscal calendar support. Used as a role-playing dimension across all fact tables. Incrementally materialized from vw_DimDate."
+    time_spine:
+      standard_granularity_column: DateValue
     columns:
       - name: DateHashPK
         description: "Surrogate primary key for date dimension"
@@ -11,6 +13,7 @@ models:
           - not_null
       - name: DateValue
         description: "Actual calendar date value"
+        granularity: day
         tests:
           - not_null
       - name: DateKey
@@ -712,3 +715,132 @@ models:
         description: "Timestamp when record was last updated"
         tests:
           - not_null
+
+semantic_models:
+  - name: fact_sales
+    description: "Semantic model for FactSales metrics and dimensions."
+    model: ref('FactSales')
+    defaults:
+      agg_time_dimension: load_timestamp
+    entities:
+      - name: sale
+        type: primary
+        expr: SalesHashPK
+      - name: date
+        type: foreign
+        expr: DateHashFK
+      - name: product
+        type: foreign
+        expr: ProductHashFK
+      - name: store
+        type: foreign
+        expr: StoreHashFK
+      - name: customer
+        type: foreign
+        expr: CustomerHashFK
+      - name: employee
+        type: foreign
+        expr: EmployeeHashFK
+    dimensions:
+      - name: load_timestamp
+        type: time
+        expr: LoadTimestamp
+        type_params:
+          time_granularity: day
+      - name: transaction_type
+        type: categorical
+        expr: TransactionType
+      - name: is_promotion
+        type: categorical
+        expr: IsPromotion
+      - name: payment_method
+        type: categorical
+        expr: PaymentMethod
+    measures:
+      - name: sales_row_count_measure
+        agg: sum
+        expr: 1
+      - name: gross_sales_amount_measure
+        agg: sum
+        expr: GrossAmount
+      - name: net_sales_amount_measure
+        agg: sum
+        expr: NetAmount
+      - name: total_profit_amount_measure
+        agg: sum
+        expr: ProfitAmount
+      - name: total_units_sold_measure
+        agg: sum
+        expr: Quantity
+
+  - name: dim_date
+    description: "Semantic model for date dimensions."
+    model: ref('DimDate')
+    defaults:
+      agg_time_dimension: date_value
+    entities:
+      - name: date
+        type: primary
+        expr: DateHashPK
+    dimensions:
+      - name: date_value
+        type: time
+        expr: DateValue
+        type_params:
+          time_granularity: day
+      - name: day_name
+        type: categorical
+        expr: DayName
+      - name: month_name
+        type: categorical
+        expr: MonthName
+      - name: quarter_name
+        type: categorical
+        expr: QuarterName
+      - name: year_number
+        type: categorical
+        expr: YearNumber
+
+metrics:
+  - name: sales_row_count
+    description: "Count of sales fact rows."
+    type: simple
+    label: Sales Row Count
+    type_params:
+      measure: sales_row_count_measure
+
+  - name: gross_sales_amount
+    description: "Total gross sales before discounts and taxes."
+    type: simple
+    label: Gross Sales Amount
+    type_params:
+      measure: gross_sales_amount_measure
+
+  - name: net_sales_amount
+    description: "Total net sales after discounts and taxes."
+    type: simple
+    label: Net Sales Amount
+    type_params:
+      measure: net_sales_amount_measure
+
+  - name: total_profit_amount
+    description: "Total profit across sales lines."
+    type: simple
+    label: Total Profit Amount
+    type_params:
+      measure: total_profit_amount_measure
+
+  - name: total_units_sold
+    description: "Total units sold, including negative quantities for returns."
+    type: simple
+    label: Total Units Sold
+    type_params:
+      measure: total_units_sold_measure
+
+  - name: profit_margin_ratio
+    description: "Profit margin ratio as total profit divided by net sales."
+    type: ratio
+    label: Profit Margin Ratio
+    type_params:
+      numerator: total_profit_amount
+      denominator: net_sales_amount

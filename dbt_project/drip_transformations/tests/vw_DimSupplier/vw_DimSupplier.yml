@@ -1,0 +1,67 @@
+# Unit tests for vw_DimSupplier.
+#
+# Simple latest-sync dedup via QUALIFY ROW_NUMBER() + projection.
+# Source: SUPPLIERS. Key logic: latest _FIVETRAN_SYNCED wins, pass-through columns.
+
+version: 2
+
+unit_tests:
+
+  - name: test_dim_supplier__latest_sync_wins
+    description: >
+      Scenario: two source rows share SUPPLIER_ID=301. The row with the latest
+      _FIVETRAN_SYNCED should survive the QUALIFY ROW_NUMBER() filter.
+    model: vw_DimSupplier
+    given:
+      - input: source('bronze_erp__dbo', 'SUPPLIERS')
+        rows:
+          - SUPPLIER_ID: 301
+            NAME: 'Acme Corp'
+            CONTACT_NAME: 'John Doe'
+            EMAIL: 'john@acme.com'
+            PHONE: '555-1000'
+            _FIVETRAN_SYNCED: '2024-01-01 00:00:00 +00:00'
+          - SUPPLIER_ID: 301
+            NAME: 'Acme Corporation'
+            CONTACT_NAME: 'Jane Smith'
+            EMAIL: 'jane@acme.com'
+            PHONE: '555-2000'
+            _FIVETRAN_SYNCED: '2024-06-01 00:00:00 +00:00'
+    expect:
+      rows:
+        - SupplierName: 'Acme Corporation'
+          ContactName: 'Jane Smith'
+          ContactEmail: 'jane@acme.com'
+          ContactPhone: '555-2000'
+          LoadTimestamp: '2024-06-01 00:00:00 +00:00'
+          EtlBatchId: 0
+
+  - name: test_dim_supplier__null_columns_are_hardcoded
+    description: >
+      Scenario: verify that columns not available in source (StreetAddress,
+      City, StateProvince, PaymentTerms*, IsActive, IsPreferred, etc.) are NULL.
+    model: vw_DimSupplier
+    given:
+      - input: source('bronze_erp__dbo', 'SUPPLIERS')
+        rows:
+          - SUPPLIER_ID: 401
+            NAME: 'Global Parts Inc'
+            CONTACT_NAME: 'Bob Builder'
+            EMAIL: 'bob@globalparts.com'
+            PHONE: '555-3000'
+            _FIVETRAN_SYNCED: '2024-04-01 00:00:00 +00:00'
+    expect:
+      rows:
+        - SupplierName: 'Global Parts Inc'
+          StreetAddress: null
+          City: null
+          StateProvince: null
+          PostalCode: null
+          Country: null
+          PaymentTermsCode: null
+          PaymentTermsDescription: null
+          PaymentTermsDays: null
+          LeadTimeDays: null
+          MinimumOrderAmount: null
+          IsActive: null
+          IsPreferred: null

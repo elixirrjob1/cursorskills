@@ -1,5 +1,26 @@
 account_id: 70471823557094
-decoded_access_token: null
+decoded_access_token:
+  access_token_response:
+    access_token: eyJhbGciOiJSUzI1NiIsImtpZCI6ImY1ZTJlYWJiY2I3MDBlMTdiOTkxODE3ZjBkN2JjMTM2ZWRmZmUwMTkiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL2tkMzI5LnVzMS5kYnQuY29tLyIsImF1ZCI6Imh0dHBzOi8va2QzMjkudXMxLmRidC5jb20vIiwiZXhwIjoxNzc3ODgyMDE4LCJzdWIiOiI3MDQ3MTgyMzU1MDI1MSIsImNsaWVudF9pZCI6IjM0ZWM2MWU4MzRjZGZmZDlkZDkwYTMyMjMxOTM3ODIxIiwiaWF0IjoxNzc3ODc4NDE4LCJqdGkiOiJiZjczMWRjMi1mZjBkLTQ2NTYtODAzNi1lMDI5NWY5N2FiNGUiLCJzY29wZSI6InVzZXJfYWNjZXNzIG9mZmxpbmVfYWNjZXNzIiwiaHR0cHM6Ly9kYnQuY29tL2VtYWlsIjoiZm1hcmljNzdAZ21haWwuY29tIiwiaHR0cHM6Ly9kYnQuY29tL2FjY291bnRfaWQiOjcwNDcxODIzNTU3MDk0LCJodHRwczovL2RidC5jb20vYWNjb3VudF9pZGVudGlmaWVyIjoiYWN0XzNENG1zaVRqWTU2T0JwT0dTU25NUDhuZDY3NyIsImh0dHBzOi8vZGJ0LmNvbS9mYW1pbHkiOiItR1duYl9ER3hQWDBEV29RS21seDdnIiwiaHR0cHM6Ly9kYnQuY29tL3NjaGVtYV92ZXJzaW9uIjoxfQ.en0uW7VuVqqYTyi61-JfT36SGRdjmpgpDkiWBABX7WR05zSLJA3x1I4821g-HiI1pCOpeg08rMjGNP-t588mCtrenvXSf3qsKO2Z0B5g5tlZFkUnzXzbRcdhHT9XZgCcsepti2UwUlVMaS1lNhwHGYuDa7WJxTo7WPXJdyjyfgE12spwvUFV2QTPnGY9YQNaoG5kWxjZj1uYyNga76tD6yP_y-J2ElCD87Tf5A0tC5_51SUasFk35AD0w80J2TFN6PslQl7We-wbAzWE166VrES8neZP219UI-00HF8uEZO1WNz7Bi5fLVwPrFaHklfd1_CY_mqItxXGkng4XcG6WWw_UJH2zn8jzXI3i_C5FnyLxkcHwKhN-mj75JAfSSGTLx329QBc84LDEuqhwFFZP9D31Q1gS5Q8RWAfuhcPPVYgqanVyrwk3BIfykG4pYiViqjPuLTHrPh2Cu1dCu4dRAV1MhvRGUGdNtD4lLJMBbA2cr73UGnNodiIoAg8v3-Two7d5mG4vyd88-Xz8WKn5lepwK0EQ6sZZRaX5yjAge5jdGiY5F1mUVU8WKGEYq1d676qBsSWlmMRjQMVMAsC3LQ8GfO-f_UpIYY4APP3jwEYly1NVSZ6_F-HOJ_xPJKCH_QR5BAnelf4Xco6ePCJnZHiBAjCEwDwnP9QfB8whiA
+    expires_at: 1777882018
+    expires_in: 3600
+    refresh_token: oTLtu98BbnNUlRx44Ga7l64Y5ctYPZB-9X5-rOFTE1c
+    scope: user_access offline_access
+    token_type: bearer
+  decoded_claims:
+    aud: https://kd329.us1.dbt.com/
+    client_id: 34ec61e834cdffd9dd90a32231937821
+    exp: 1777882018
+    https://dbt.com/account_id: 70471823557094
+    https://dbt.com/account_identifier: act_3D4msiTjY56OBpOGSSnMP8nd677
+    https://dbt.com/email: fmaric77@gmail.com
+    https://dbt.com/family: -GWnb_DGxPX0DWoQKmlx7g
+    https://dbt.com/schema_version: 1
+    iat: 1777878418
+    iss: https://kd329.us1.dbt.com/
+    jti: bf731dc2-ff0d-4656-8036-e0295f97ab4e
+    scope: user_access offline_access
+    sub: '70471823550251'
 dev_environment: null
 host_prefix: kd329
 prod_environment:

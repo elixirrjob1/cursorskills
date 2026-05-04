@@ -1,0 +1,190 @@
+# Unit tests for vw_DimProduct.
+#
+# SCD2 pattern identical to vw_DimCustomer (cte_prep → _hash → _hash_lag → _row_reduce → fin)
+# but with an additional SoftDeletedFlagYN column and IsDiscontinued derived from ACTIVE.
+#
+# Key logic to test:
+#   1. SCD2 dedup via LAG(Hashbytes) + LEAD before row-reduce
+#   2. CurrentFlagYN / DeletedFlagYN / SoftDeletedFlagYN flag combinations
+#   3. IsDiscontinued = IFF(ACTIVE, FALSE, TRUE)
+#   4. OrderAmount-style casts on UnitCost / UnitListPrice
+
+version: 2
+
+unit_tests:
+
+  - name: test_dim_product__scd2_dedup_and_current_flag
+    description: >
+      Scenario: Product has 3 source rows. Middle row is a no-op (same hashable
+      attributes), so SCD2 dedup collapses it. Third row changes UNIT_PRICE.
+      LEAD is computed after dedup, so surviving v1 row's EffectiveEndDateTime
+      is (next surviving row's start - 1µs). CurrentFlagYN = 'Y' only on last row.
+    model: vw_DimProduct
+    given:
+      - input: source('bronze_erp__dbo', 'PRODUCTS')
+        rows:
+          - PRODUCT_ID: 501
+            SKU: 'SKU-A'
+            NAME: 'Widget Alpha'
+            PRODUCT_DESCRIPTION: 'A standard widget'
+            CATEGORY: 'Widgets'
+            COST_PRICE: 10.00
+            UNIT_PRICE: 25.00
+            ACTIVE: true
+            _FIVETRAN_SYNCED: '2024-01-01 00:00:00 +00:00'
+            _FIVETRAN_START: '2024-01-01 00:00:00 +00:00'
+            _FIVETRAN_END: '9999-12-31 23:59:59 +00:00'
+            _FIVETRAN_ACTIVE: false
+          - PRODUCT_ID: 501
+            SKU: 'SKU-A'
+            NAME: 'Widget Alpha'
+            PRODUCT_DESCRIPTION: 'A standard widget'
+            CATEGORY: 'Widgets'
+            COST_PRICE: 10.00
+            UNIT_PRICE: 25.00
+            ACTIVE: true
+            _FIVETRAN_SYNCED: '2024-02-01 00:00:00 +00:00'
+            _FIVETRAN_START: '2024-02-01 00:00:00 +00:00'
+            _FIVETRAN_END: '9999-12-31 23:59:59 +00:00'
+            _FIVETRAN_ACTIVE: false
+          - PRODUCT_ID: 501
+            SKU: 'SKU-A'
+            NAME: 'Widget Alpha'
+            PRODUCT_DESCRIPTION: 'A standard widget'
+            CATEGORY: 'Widgets'
+            COST_PRICE: 10.00
+            UNIT_PRICE: 30.00
+            ACTIVE: true
+            _FIVETRAN_SYNCED: '2024-03-01 00:00:00 +00:00'
+            _FIVETRAN_START: '2024-03-01 00:00:00 +00:00'
+            _FIVETRAN_END: '9999-12-31 23:59:59 +00:00'
+            _FIVETRAN_ACTIVE: true
+    expect:
+      rows:
+        - SourceProductPK: '501'
+          SourceProductBK: 'SKU-A'
+          ProductName: 'Widget Alpha'
+          CategoryName: 'Widgets'
+          UnitCost: 10.0000
+          UnitListPrice: 25.0000
+          IsActive: true
+          IsDiscontinued: false
+          EffectiveStartDateTime: '2024-01-01 00:00:00 +00:00'
+          EffectiveEndDateTime: '2024-02-29 23:59:59 +00:00'
+          CurrentFlagYN: 'N'
+          SoftDeletedFlagYN: 'N'
+          DeletedFlagYN: 'N'
+          SourceSystemCode: 'ERP'
+          DataCondition: 'Data Condition 1'
+        - SourceProductPK: '501'
+          SourceProductBK: 'SKU-A'
+          ProductName: 'Widget Alpha'
+          CategoryName: 'Widgets'
+          UnitCost: 10.0000
+          UnitListPrice: 30.0000
+          IsActive: true
+          IsDiscontinued: false
+          EffectiveStartDateTime: '2024-03-01 00:00:00 +00:00'
+          EffectiveEndDateTime: '1816-03-30 05:56:08 +00:00'
+          CurrentFlagYN: 'Y'
+          SoftDeletedFlagYN: 'N'
+          DeletedFlagYN: 'N'
+          SourceSystemCode: 'ERP'
+          DataCondition: 'Data Condition 1'
+
+  - name: test_dim_product__soft_deleted_vs_hard_deleted
+    description: >
+      Scenario: Two products, each a single row (no lead).
+      Product A: ACTIVE=false, _FIVETRAN_ACTIVE=true → SoftDeletedFlagYN='Y', DeletedFlagYN='N'
+        (source system soft-deleted it but Fivetran still sees the row)
+      Product B: ACTIVE=true, _FIVETRAN_ACTIVE=false → SoftDeletedFlagYN='N', DeletedFlagYN='Y'
+        (source system didn't soft-delete but Fivetran marked it removed)
+    model: vw_DimProduct
+    given:
+      - input: source('bronze_erp__dbo', 'PRODUCTS')
+        rows:
+          - PRODUCT_ID: 601
+            SKU: 'SKU-SOFT'
+            NAME: 'Soft Deleted Product'
+            PRODUCT_DESCRIPTION: 'Was deactivated in source'
+            CATEGORY: 'Gadgets'
+            COST_PRICE: 5.00
+            UNIT_PRICE: 15.00
+            ACTIVE: false
+            _FIVETRAN_SYNCED: '2024-06-01 00:00:00 +00:00'
+            _FIVETRAN_START: '2024-06-01 00:00:00 +00:00'
+            _FIVETRAN_END: '9999-12-31 23:59:59 +00:00'
+            _FIVETRAN_ACTIVE: true
+          - PRODUCT_ID: 602
+            SKU: 'SKU-HARD'
+            NAME: 'Hard Deleted Product'
+            PRODUCT_DESCRIPTION: 'Was removed from source entirely'
+            CATEGORY: 'Gadgets'
+            COST_PRICE: 8.00
+            UNIT_PRICE: 20.00
+            ACTIVE: true
+            _FIVETRAN_SYNCED: '2024-06-01 00:00:00 +00:00'
+            _FIVETRAN_START: '2024-06-01 00:00:00 +00:00'
+            _FIVETRAN_END: '2024-09-01 00:00:00 +00:00'
+            _FIVETRAN_ACTIVE: false
+    expect:
+      rows:
+        - SourceProductPK: '601'
+          IsActive: false
+          IsDiscontinued: true
+          CurrentFlagYN: 'Y'
+          SoftDeletedFlagYN: 'Y'
+          DeletedFlagYN: 'N'
+        - SourceProductPK: '602'
+          IsActive: true
+          IsDiscontinued: false
+          CurrentFlagYN: 'Y'
+          SoftDeletedFlagYN: 'N'
+          DeletedFlagYN: 'Y'
+
+  - name: test_dim_product__is_discontinued_reflects_active_flag
+    description: >
+      Scenario: ACTIVE=true → IsDiscontinued=false, ACTIVE=false → IsDiscontinued=true.
+      Simple projection test with two single-row products.
+    model: vw_DimProduct
+    given:
+      - input: source('bronze_erp__dbo', 'PRODUCTS')
+        rows:
+          - PRODUCT_ID: 701
+            SKU: 'SKU-ACT'
+            NAME: 'Active Prod'
+            PRODUCT_DESCRIPTION: 'Still selling'
+            CATEGORY: 'Tools'
+            COST_PRICE: 12.50
+            UNIT_PRICE: 29.99
+            ACTIVE: true
+            _FIVETRAN_SYNCED: '2024-01-01 00:00:00 +00:00'
+            _FIVETRAN_START: '2024-01-01 00:00:00 +00:00'
+            _FIVETRAN_END: '9999-12-31 23:59:59 +00:00'
+            _FIVETRAN_ACTIVE: true
+          - PRODUCT_ID: 702
+            SKU: 'SKU-DISC'
+            NAME: 'Discontinued Prod'
+            PRODUCT_DESCRIPTION: 'No longer sold'
+            CATEGORY: 'Tools'
+            COST_PRICE: 8.00
+            UNIT_PRICE: 19.99
+            ACTIVE: false
+            _FIVETRAN_SYNCED: '2024-01-01 00:00:00 +00:00'
+            _FIVETRAN_START: '2024-01-01 00:00:00 +00:00'
+            _FIVETRAN_END: '9999-12-31 23:59:59 +00:00'
+            _FIVETRAN_ACTIVE: true
+    expect:
+      rows:
+        - SourceProductPK: '701'
+          ProductName: 'Active Prod'
+          IsActive: true
+          IsDiscontinued: false
+          UnitCost: 12.5000
+          UnitListPrice: 29.9900
+        - SourceProductPK: '702'
+          ProductName: 'Discontinued Prod'
+          IsActive: false
+          IsDiscontinued: true
+          UnitCost: 8.0000
+          UnitListPrice: 19.9900

@@ -1,0 +1,75 @@
+# Unit tests for vw_DimStore.
+#
+# Simple latest-sync dedup via QUALIFY ROW_NUMBER() + projection.
+# Source: STORES. Key logic: latest _FIVETRAN_SYNCED wins, pass-through columns.
+
+version: 2
+
+unit_tests:
+
+  - name: test_dim_store__latest_sync_wins
+    description: >
+      Scenario: two source rows share STORE_ID=10. The row with the latest
+      _FIVETRAN_SYNCED should survive the QUALIFY ROW_NUMBER() filter.
+    model: vw_DimStore
+    given:
+      - input: source('bronze_erp__dbo', 'STORES')
+        rows:
+          - STORE_ID: 10
+            CODE: 'S010'
+            NAME: 'Downtown Store'
+            ADDRESS: '100 Main St'
+            CITY: 'Springfield'
+            STATE: 'IL'
+            POSTAL_CODE: '62701'
+            _FIVETRAN_SYNCED: '2024-01-01 00:00:00 +00:00'
+          - STORE_ID: 10
+            CODE: 'S010'
+            NAME: 'Downtown Store Renovated'
+            ADDRESS: '100 Main St'
+            CITY: 'Springfield'
+            STATE: 'IL'
+            POSTAL_CODE: '62701'
+            _FIVETRAN_SYNCED: '2024-06-01 00:00:00 +00:00'
+    expect:
+      rows:
+        - StoreName: 'Downtown Store Renovated'
+          StreetAddress: '100 Main St'
+          City: 'Springfield'
+          StateProvince: 'IL'
+          PostalCode: '62701'
+          LoadTimestamp: '2024-06-01 00:00:00 +00:00'
+          EtlBatchId: 0
+
+  - name: test_dim_store__null_columns_are_hardcoded
+    description: >
+      Scenario: verify that columns not available in source (StoreType,
+      Country, Latitude, Longitude, DistrictCode, etc.) are consistently NULL.
+    model: vw_DimStore
+    given:
+      - input: source('bronze_erp__dbo', 'STORES')
+        rows:
+          - STORE_ID: 20
+            CODE: 'S020'
+            NAME: 'Outlet Mall'
+            ADDRESS: '200 Oak Ave'
+            CITY: 'Chicago'
+            STATE: 'IL'
+            POSTAL_CODE: '60601'
+            _FIVETRAN_SYNCED: '2024-03-15 12:00:00 +00:00'
+    expect:
+      rows:
+        - StoreName: 'Outlet Mall'
+          StoreType: null
+          Country: null
+          Latitude: null
+          Longitude: null
+          DistrictCode: null
+          DistrictName: null
+          RegionCode: null
+          RegionName: null
+          StoreManager: null
+          OpenDate: null
+          CloseDate: null
+          SquareFootage: null
+          IsActive: null

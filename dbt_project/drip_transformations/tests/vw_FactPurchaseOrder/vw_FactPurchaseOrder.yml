@@ -1,0 +1,148 @@
+# Unit tests for vw_FactPurchaseOrder.
+#
+# Joins PURCHASE_ORDER_ITEMS (deduped) JOIN PURCHASE_ORDERS (deduped) on PO_ID.
+# Key logic: INNER JOIN, OrderAmount = QUANTITY * UNIT_COST,
+# DateExpectedHashFK is NULL when EXPECTED_DATE is NULL, pass-through columns.
+
+version: 2
+
+unit_tests:
+
+  - name: test_fact_po__join_and_order_amount
+    description: >
+      Scenario: One PO item with a matching PO header.
+      OrderAmount should be QUANTITY * UNIT_COST = 10 * 25.50 = 255.0000.
+    model: vw_FactPurchaseOrder
+    given:
+      - input: source('bronze_erp__dbo', 'PURCHASE_ORDER_ITEMS')
+        rows:
+          - PO_ITEM_ID: 1
+            PO_ID: 100
+            PRODUCT_ID: 50
+            QUANTITY: 10
+            UNIT_COST: 25.50
+            _FIVETRAN_SYNCED: '2024-03-01 00:00:00 +00:00'
+      - input: source('bronze_erp__dbo', 'PURCHASE_ORDERS')
+        rows:
+          - PO_ID: 100
+            SUPPLIER_ID: 299
+            STORE_ID: 9
+            ORDER_DATE: '2024-02-28'
+            EXPECTED_DATE: '2024-03-10'
+            STATUS: 'Draft'
+            _FIVETRAN_SYNCED: '2024-02-28 00:00:00 +00:00'
+          - PO_ID: 100
+            SUPPLIER_ID: 300
+            STORE_ID: 10
+            ORDER_DATE: '2024-03-01'
+            EXPECTED_DATE: '2024-03-15'
+            STATUS: 'Ordered'
+            _FIVETRAN_SYNCED: '2024-03-01 00:00:00 +00:00'
+    expect:
+      rows:
+        - PurchaseOrderNumber: '100'
+          PurchaseOrderLineNumber: 1
+          OrderStatus: 'Ordered'
+          QuantityOrdered: 10
+          UnitCost: 25.50
+          OrderAmount: 255.0000
+          QuantityShipped: null
+          QuantityReceived: null
+          QuantityAccepted: null
+          QuantityRejected: null
+          EtlBatchId: 0
+
+  - name: test_fact_po__null_expected_date_yields_null_hash
+    description: >
+      Scenario: EXPECTED_DATE is NULL. DateExpectedHashFK should be NULL
+      (the IFF guard returns NULL when EXPECTED_DATE IS NULL).
+    model: vw_FactPurchaseOrder
+    given:
+      - input: source('bronze_erp__dbo', 'PURCHASE_ORDER_ITEMS')
+        rows:
+          - PO_ITEM_ID: 2
+            PO_ID: 200
+            PRODUCT_ID: 60
+            QUANTITY: 5
+            UNIT_COST: 10.00
+            _FIVETRAN_SYNCED: '2024-04-01 00:00:00 +00:00'
+      - input: source('bronze_erp__dbo', 'PURCHASE_ORDERS')
+        rows:
+          - PO_ID: 200
+            SUPPLIER_ID: 400
+            STORE_ID: 20
+            ORDER_DATE: '2024-04-01'
+            EXPECTED_DATE: null
+            STATUS: 'Pending'
+            _FIVETRAN_SYNCED: '2024-04-01 00:00:00 +00:00'
+    expect:
+      rows:
+        - PurchaseOrderNumber: '200'
+          DateExpectedHashFK: null
+          OrderStatus: 'Pending'
+          QuantityOrdered: 5
+          UnitCost: 10.00
+          OrderAmount: 50.0000
+
+  - name: test_fact_po__dedup_latest_sync
+    description: >
+      Scenario: Two PO_ITEM rows with the same PO_ITEM_ID. Only the latest
+      _FIVETRAN_SYNCED should survive.
+    model: vw_FactPurchaseOrder
+    given:
+      - input: source('bronze_erp__dbo', 'PURCHASE_ORDER_ITEMS')
+        rows:
+          - PO_ITEM_ID: 3
+            PO_ID: 300
+            PRODUCT_ID: 70
+            QUANTITY: 20
+            UNIT_COST: 5.00
+            _FIVETRAN_SYNCED: '2024-01-01 00:00:00 +00:00'
+          - PO_ITEM_ID: 3
+            PO_ID: 300
+            PRODUCT_ID: 70
+            QUANTITY: 25
+            UNIT_COST: 5.00
+            _FIVETRAN_SYNCED: '2024-02-01 00:00:00 +00:00'
+      - input: source('bronze_erp__dbo', 'PURCHASE_ORDERS')
+        rows:
+          - PO_ID: 300
+            SUPPLIER_ID: 499
+            STORE_ID: 29
+            ORDER_DATE: '2023-12-01'
+            EXPECTED_DATE: '2023-12-15'
+            STATUS: 'Ordered'
+            _FIVETRAN_SYNCED: '2024-01-01 00:00:00 +00:00'
+          - PO_ID: 300
+            SUPPLIER_ID: 500
+            STORE_ID: 30
+            ORDER_DATE: '2024-01-01'
+            EXPECTED_DATE: '2024-01-15'
+            STATUS: 'Received'
+            _FIVETRAN_SYNCED: '2024-02-01 00:00:00 +00:00'
+    expect:
+      rows:
+        - PurchaseOrderNumber: '300'
+          PurchaseOrderLineNumber: 3
+          QuantityOrdered: 25
+          UnitCost: 5.00
+          OrderAmount: 125.0000
+
+  - name: test_fact_po__orphan_item_dropped_by_inner_join
+    description: >
+      Scenario: PO item exists but there is no matching PURCHASE_ORDERS header.
+      Because the model uses INNER JOIN, no row should be returned.
+    model: vw_FactPurchaseOrder
+    given:
+      - input: source('bronze_erp__dbo', 'PURCHASE_ORDER_ITEMS')
+        rows:
+          - PO_ITEM_ID: 9
+            PO_ID: 9999
+            PRODUCT_ID: 70
+            QUANTITY: 2
+            UNIT_COST: 11.00
+            _FIVETRAN_SYNCED: '2024-07-01 00:00:00 +00:00'
+      - input: source('bronze_erp__dbo', 'PURCHASE_ORDERS')
+        rows: []
+    expect:
+      rows: []

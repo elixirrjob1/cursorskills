@@ -6,7 +6,75 @@ sources:
     schema: BRONZE_ERP__DBO
     tables:
       - name: CUSTOMERS
+        # OpenMetadata FQN: snowflake_fivetran.DRIP_DATA_INTELLIGENCE.BRONZE_ERP__DBO.CUSTOMERS
+        columns:
+          - name: CUSTOMER_ID
+            data_type: number(38,0)
+            description: Unique identifier for each customer in the retail operations system.
+          - name: UPDATED_AT
+            data_type: timestamp_ntz
+            description: Most recent update timestamp for the customer record.
+          - name: PHONE
+            data_type: text(256)
+            description: Nullable customer phone number.
+          - name: LAST_NAME
+            data_type: text(256)
+            description: Customer family name.
+          - name: CREATED_AT
+            data_type: timestamp_ntz
+            description: Timestamp when the customer record was created.
+          - name: FIRST_NAME
+            data_type: text(256)
+            description: Customer given name.
+          - name: EMAIL
+            data_type: text(900)
+            description: Customer email address.
+          - name: _FIVETRAN_SYNCED
+            data_type: timestamp_tz
+          - name: _FIVETRAN_START
+            data_type: timestamp_tz
+          - name: _FIVETRAN_END
+            data_type: timestamp_tz
+          - name: _FIVETRAN_ACTIVE
+            data_type: boolean
       - name: EMPLOYEES
+        # OpenMetadata FQN: snowflake_fivetran.DRIP_DATA_INTELLIGENCE.BRONZE_ERP__DBO.EMPLOYEES
+        columns:
+          - name: EMPLOYEE_ID
+            data_type: number(38,0)
+            description: Unique identifier for each employee in the retail operations system.
+          - name: STORE_ID
+            data_type: number(38,0)
+            description: Store where the employee is assigned.
+          - name: ROLE
+            data_type: text(256)
+            description: Employee job position or function.
+          - name: UPDATED_AT
+            data_type: timestamp_ntz
+            description: Most recent update timestamp for the employee record.
+          - name: CREATED_AT
+            data_type: timestamp_ntz
+            description: Timestamp when the employee record was created.
+          - name: LAST_NAME
+            data_type: text(256)
+            description: Employee family name.
+          - name: HIRE_DATE
+            data_type: date
+            description: Date the employee was hired.
+          - name: FIRST_NAME
+            data_type: text(256)
+            description: Employee given name.
+          - name: EMAIL
+            data_type: text(900)
+            description: Employee email address.
+          - name: _FIVETRAN_SYNCED
+            data_type: timestamp_tz
+          - name: _FIVETRAN_START
+            data_type: timestamp_tz
+          - name: _FIVETRAN_END
+            data_type: timestamp_tz
+          - name: _FIVETRAN_ACTIVE
+            data_type: boolean
       - name: INVENTORY
       - name: PRODUCTS
       - name: PURCHASE_ORDERS

@@ -1,0 +1,156 @@
+# Unit tests for vw_FactInventorySnapshot.
+#
+# Joins INVENTORY (deduped) LEFT JOIN PRODUCTS (deduped) on PRODUCT_ID.
+# Key logic: latest-sync dedup on each source, LEFT JOIN means missing product → NULL UnitCost,
+# pass-through of QuantityOnHand, ReorderPoint, StockValue (InventoryValue).
+
+version: 2
+
+unit_tests:
+
+  - name: test_fact_inventory__join_and_pass_through
+    description: >
+      Scenario: One inventory row with a matching product row.
+      Verifies: dedup on both sides, join produces UnitCost from PRODUCTS,
+      pass-through of QuantityOnHand, ReorderPoint, InventoryValue (StockValue).
+    model: vw_FactInventorySnapshot
+    given:
+      - input: source('bronze_erp__dbo', 'INVENTORY')
+        rows:
+          - INVENTORY_ID: 1001
+            PRODUCT_ID: 50
+            STORE_ID: 10
+            QUANTITY_ON_HAND: 200
+            REORDER_LEVEL: 50
+            STOCK_VALUE: 2000.00
+            UPDATED_AT: '2024-03-15 10:00:00'
+            _FIVETRAN_SYNCED: '2024-03-15 12:00:00 +00:00'
+      - input: source('bronze_erp__dbo', 'PRODUCTS')
+        rows:
+          - PRODUCT_ID: 50
+            COST_PRICE: 8.00
+            _FIVETRAN_SYNCED: '2024-01-15 12:00:00 +00:00'
+          - PRODUCT_ID: 50
+            COST_PRICE: 10.00
+            _FIVETRAN_SYNCED: '2024-03-15 12:00:00 +00:00'
+    expect:
+      rows:
+        - QuantityOnHand: 200
+          ReorderPoint: 50
+          UnitCost: 10.00
+          InventoryValue: 2000.00
+          QuantityReserved: null
+          QuantityAvailable: null
+          QuantityOnOrder: null
+          QuantityInTransit: null
+          SafetyStockLevel: null
+          DaysOfSupply: null
+          EtlBatchId: 0
+
+  - name: test_fact_inventory__missing_product_yields_null_cost
+    description: >
+      Scenario: Inventory row references a PRODUCT_ID that does not exist in
+      PRODUCTS. The LEFT JOIN means UnitCost should be NULL.
+    model: vw_FactInventorySnapshot
+    given:
+      - input: source('bronze_erp__dbo', 'INVENTORY')
+        rows:
+          - INVENTORY_ID: 2001
+            PRODUCT_ID: 999
+            STORE_ID: 20
+            QUANTITY_ON_HAND: 50
+            REORDER_LEVEL: 10
+            STOCK_VALUE: 500.00
+            UPDATED_AT: '2024-04-01 08:00:00'
+            _FIVETRAN_SYNCED: '2024-04-01 10:00:00 +00:00'
+      - input: source('bronze_erp__dbo', 'PRODUCTS')
+        rows:
+          - PRODUCT_ID: 1
+            COST_PRICE: 5.00
+            _FIVETRAN_SYNCED: '2024-04-01 10:00:00 +00:00'
+    expect:
+      rows:
+        - QuantityOnHand: 50
+          ReorderPoint: 10
+          UnitCost: null
+          InventoryValue: 500.00
+          EtlBatchId: 0
+
+  - name: test_fact_inventory__dedup_latest_sync
+    description: >
+      Scenario: Two INVENTORY rows with the same INVENTORY_ID. Only the one
+      with the latest _FIVETRAN_SYNCED should survive.
+    model: vw_FactInventorySnapshot
+    given:
+      - input: source('bronze_erp__dbo', 'INVENTORY')
+        rows:
+          - INVENTORY_ID: 3001
+            PRODUCT_ID: 60
+            STORE_ID: 30
+            QUANTITY_ON_HAND: 100
+            REORDER_LEVEL: 25
+            STOCK_VALUE: 1000.00
+            UPDATED_AT: '2024-01-01 00:00:00'
+            _FIVETRAN_SYNCED: '2024-01-01 00:00:00 +00:00'
+          - INVENTORY_ID: 3001
+            PRODUCT_ID: 60
+            STORE_ID: 30
+            QUANTITY_ON_HAND: 150
+            REORDER_LEVEL: 25
+            STOCK_VALUE: 1500.00
+            UPDATED_AT: '2024-02-01 00:00:00'
+            _FIVETRAN_SYNCED: '2024-02-01 00:00:00 +00:00'
+      - input: source('bronze_erp__dbo', 'PRODUCTS')
+        rows:
+          - PRODUCT_ID: 60
+            COST_PRICE: 8.00
+            _FIVETRAN_SYNCED: '2024-01-01 00:00:00 +00:00'
+          - PRODUCT_ID: 60
+            COST_PRICE: 10.00
+            _FIVETRAN_SYNCED: '2024-02-01 00:00:00 +00:00'
+    expect:
+      rows:
+        - QuantityOnHand: 150
+          ReorderPoint: 25
+          UnitCost: 10.00
+          InventoryValue: 1500.00
+
+  - name: test_fact_inventory__dedup_tied_sync_identical_rows
+    description: >
+      Scenario: duplicate INVENTORY and PRODUCTS rows have identical
+      _FIVETRAN_SYNCED and identical business values. Output should remain
+      stable with a single logical row.
+    model: vw_FactInventorySnapshot
+    given:
+      - input: source('bronze_erp__dbo', 'INVENTORY')
+        rows:
+          - INVENTORY_ID: 4001
+            PRODUCT_ID: 80
+            STORE_ID: 40
+            QUANTITY_ON_HAND: 75
+            REORDER_LEVEL: 15
+            STOCK_VALUE: 750.00
+            UPDATED_AT: '2024-06-01 00:00:00'
+            _FIVETRAN_SYNCED: '2024-06-01 00:00:00 +00:00'
+          - INVENTORY_ID: 4001
+            PRODUCT_ID: 80
+            STORE_ID: 40
+            QUANTITY_ON_HAND: 75
+            REORDER_LEVEL: 15
+            STOCK_VALUE: 750.00
+            UPDATED_AT: '2024-06-01 00:00:00'
+            _FIVETRAN_SYNCED: '2024-06-01 00:00:00 +00:00'
+      - input: source('bronze_erp__dbo', 'PRODUCTS')
+        rows:
+          - PRODUCT_ID: 80
+            COST_PRICE: 10.00
+            _FIVETRAN_SYNCED: '2024-06-01 00:00:00 +00:00'
+          - PRODUCT_ID: 80
+            COST_PRICE: 10.00
+            _FIVETRAN_SYNCED: '2024-06-01 00:00:00 +00:00'
+    expect:
+      rows:
+        - QuantityOnHand: 75
+          ReorderPoint: 15
+          UnitCost: 10.00
+          InventoryValue: 750.00

@@ -1,0 +1,180 @@
+# Unit tests for vw_FactSales.
+#
+# Three-way join: SALES_ORDER_ITEMS (deduped) LEFT JOIN SALES_ORDERS (deduped)
+# LEFT JOIN PRODUCTS (deduped). Key logic:
+#   GrossAmount = QUANTITY * UNIT_PRICE
+#   CostAmount = QUANTITY * COST_PRICE
+#   CustomerHashFK / EmployeeHashFK = NULL when source IDs are NULL
+
+version: 2
+
+unit_tests:
+
+  - name: test_fact_sales__join_and_calculated_amounts
+    description: >
+      Scenario: One sales order item with matching order header and product.
+      GrossAmount = 3 * 49.99 = 149.9700, CostAmount = 3 * 20.00 = 60.0000.
+    model: vw_FactSales
+    given:
+      - input: source('bronze_erp__dbo', 'SALES_ORDER_ITEMS')
+        rows:
+          - SALES_ORDER_ID: 1000
+            SALES_ORDER_ITEM_ID: 1
+            PRODUCT_ID: 50
+            QUANTITY: 3
+            UNIT_PRICE: 49.99
+            _FIVETRAN_SYNCED: '2024-03-15 12:00:00 +00:00'
+      - input: source('bronze_erp__dbo', 'SALES_ORDERS')
+        rows:
+          - SALES_ORDER_ID: 1000
+            ORDER_DATE: '2024-03-15'
+            STORE_ID: 10
+            CUSTOMER_ID: 100
+            EMPLOYEE_ID: 200
+            _FIVETRAN_SYNCED: '2024-03-15 12:00:00 +00:00'
+      - input: source('bronze_erp__dbo', 'PRODUCTS')
+        rows:
+          - PRODUCT_ID: 50
+            COST_PRICE: 20.00
+            _FIVETRAN_SYNCED: '2024-03-15 12:00:00 +00:00'
+    expect:
+      rows:
+        - TransactionNumber: '1000'
+          TransactionLineNumber: 1
+          Quantity: 3
+          UnitPrice: 49.99
+          UnitCost: 20.00
+          GrossAmount: 149.9700
+          CostAmount: 60.0000
+          EtlBatchId: 0
+
+  - name: test_fact_sales__dedup_latest_sync
+    description: >
+      Scenario: SALES_ORDER_ITEMS, SALES_ORDERS, and PRODUCTS each contain two
+      rows for the same grain. The latest _FIVETRAN_SYNCED row should survive
+      in each CTE before the joins and amount calculations.
+    model: vw_FactSales
+    given:
+      - input: source('bronze_erp__dbo', 'SALES_ORDER_ITEMS')
+        rows:
+          - SALES_ORDER_ID: 4000
+            SALES_ORDER_ITEM_ID: 1
+            PRODUCT_ID: 70
+            QUANTITY: 2
+            UNIT_PRICE: 35.00
+            _FIVETRAN_SYNCED: '2024-01-01 00:00:00 +00:00'
+          - SALES_ORDER_ID: 4000
+            SALES_ORDER_ITEM_ID: 1
+            PRODUCT_ID: 70
+            QUANTITY: 4
+            UNIT_PRICE: 40.00
+            _FIVETRAN_SYNCED: '2024-02-01 00:00:00 +00:00'
+      - input: source('bronze_erp__dbo', 'SALES_ORDERS')
+        rows:
+          - SALES_ORDER_ID: 4000
+            ORDER_DATE: '2024-01-01'
+            STORE_ID: 10
+            CUSTOMER_ID: 100
+            EMPLOYEE_ID: 200
+            _FIVETRAN_SYNCED: '2024-01-01 00:00:00 +00:00'
+          - SALES_ORDER_ID: 4000
+            ORDER_DATE: '2024-02-01'
+            STORE_ID: 20
+            CUSTOMER_ID: null
+            EMPLOYEE_ID: null
+            _FIVETRAN_SYNCED: '2024-02-01 00:00:00 +00:00'
+      - input: source('bronze_erp__dbo', 'PRODUCTS')
+        rows:
+          - PRODUCT_ID: 70
+            COST_PRICE: 15.00
+            _FIVETRAN_SYNCED: '2024-01-01 00:00:00 +00:00'
+          - PRODUCT_ID: 70
+            COST_PRICE: 18.00
+            _FIVETRAN_SYNCED: '2024-02-01 00:00:00 +00:00'
+    expect:
+      rows:
+        - TransactionNumber: '4000'
+          TransactionLineNumber: 1
+          Quantity: 4
+          UnitPrice: 40.00
+          UnitCost: 18.00
+          CustomerHashFK: null
+          EmployeeHashFK: null
+          GrossAmount: 160.0000
+          CostAmount: 72.0000
+          LoadTimestamp: '2024-02-01 00:00:00 +00:00'
+
+  - name: test_fact_sales__null_customer_and_employee
+    description: >
+      Scenario: Sales order with NULL CUSTOMER_ID and NULL EMPLOYEE_ID
+      (anonymous walk-in sale). CustomerHashFK and EmployeeHashFK should
+      both be NULL (the IFF guard returns NULL).
+    model: vw_FactSales
+    given:
+      - input: source('bronze_erp__dbo', 'SALES_ORDER_ITEMS')
+        rows:
+          - SALES_ORDER_ID: 2000
+            SALES_ORDER_ITEM_ID: 1
+            PRODUCT_ID: 60
+            QUANTITY: 1
+            UNIT_PRICE: 25.00
+            _FIVETRAN_SYNCED: '2024-04-01 10:00:00 +00:00'
+      - input: source('bronze_erp__dbo', 'SALES_ORDERS')
+        rows:
+          - SALES_ORDER_ID: 2000
+            ORDER_DATE: '2024-04-01'
+            STORE_ID: 20
+            CUSTOMER_ID: null
+            EMPLOYEE_ID: null
+            _FIVETRAN_SYNCED: '2024-04-01 10:00:00 +00:00'
+      - input: source('bronze_erp__dbo', 'PRODUCTS')
+        rows:
+          - PRODUCT_ID: 60
+            COST_PRICE: 12.00
+            _FIVETRAN_SYNCED: '2024-04-01 10:00:00 +00:00'
+    expect:
+      rows:
+        - TransactionNumber: '2000'
+          CustomerHashFK: null
+          EmployeeHashFK: null
+          Quantity: 1
+          UnitPrice: 25.00
+          UnitCost: 12.00
+          GrossAmount: 25.0000
+          CostAmount: 12.0000
+
+  - name: test_fact_sales__missing_product_yields_null_cost
+    description: >
+      Scenario: Sales order item references a PRODUCT_ID not in PRODUCTS.
+      LEFT JOIN means UnitCost is NULL, and CostAmount is also NULL.
+    model: vw_FactSales
+    given:
+      - input: source('bronze_erp__dbo', 'SALES_ORDER_ITEMS')
+        rows:
+          - SALES_ORDER_ID: 3000
+            SALES_ORDER_ITEM_ID: 1
+            PRODUCT_ID: 999
+            QUANTITY: 2
+            UNIT_PRICE: 30.00
+            _FIVETRAN_SYNCED: '2024-05-01 10:00:00 +00:00'
+      - input: source('bronze_erp__dbo', 'SALES_ORDERS')
+        rows:
+          - SALES_ORDER_ID: 3000
+            ORDER_DATE: '2024-05-01'
+            STORE_ID: 30
+            CUSTOMER_ID: 500
+            EMPLOYEE_ID: 600
+            _FIVETRAN_SYNCED: '2024-05-01 10:00:00 +00:00'
+      - input: source('bronze_erp__dbo', 'PRODUCTS')
+        rows:
+          - PRODUCT_ID: 1
+            COST_PRICE: 5.00
+            _FIVETRAN_SYNCED: '2024-05-01 10:00:00 +00:00'
+    expect:
+      rows:
+        - TransactionNumber: '3000'
+          Quantity: 2
+          UnitPrice: 30.00
+          UnitCost: null
+          GrossAmount: 60.0000
+          CostAmount: null

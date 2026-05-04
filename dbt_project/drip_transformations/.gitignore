@@ -11,3 +11,4 @@ mcp.yml
 
 # local credentials — copy .env.example → .env and fill in values
 .env
+dbt_internal_packages/

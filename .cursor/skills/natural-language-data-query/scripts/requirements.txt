@@ -1,0 +1,17 @@
+# Core integrations
+requests>=2.31.0
+snowflake-connector-python>=3.5.0
+python-dotenv>=1.0.0
+
+# Azure Key Vault (production — azure-keyvault provider)
+# Can be omitted in dev if using direct args or env vars
+azure-keyvault-secrets>=4.7.0
+azure-identity>=1.15.0
+
+# AWS Secrets Manager (production — aws-secrets-manager provider)
+# Can be omitted in dev if using direct args or env vars
+boto3>=1.34.0
+
+# HashiCorp Vault (production — hashicorp-vault provider)
+# Can be omitted in dev if using direct args or env vars
+hvac>=2.1.0

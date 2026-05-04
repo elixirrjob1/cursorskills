@@ -1,0 +1,6 @@
+# Secrets — never expose to Cursor AI context
+.env
+.envrc
+*.env
+.env.*
+

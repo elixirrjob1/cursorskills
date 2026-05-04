@@ -1,0 +1,27 @@
+---
+description: Jira write policy — never create, update, transition, or comment on tickets unless explicitly instructed
+alwaysApply: true
+---
+
+# Jira Write Policy
+
+The agent may **read** Jira tickets at any time (search, get issue, list projects).
+
+The agent must **never** write to Jira unless the user explicitly asks:
+
+## Forbidden without explicit instruction
+- Transitioning issue status (`jira_transition_issue`)
+- Adding or editing comments (`jira_add_comment`, `jira_edit_comment`)
+- Creating or updating issues (`jira_create_issue`, `jira_update_issue`, `jira_batch_create_issues`)
+- Linking, watching, logging work (`jira_create_issue_link`, `jira_add_worklog`, `jira_add_watcher`)
+
+## What counts as explicit instruction
+- "Update PA-115 to Done"
+- "Add a comment to the ticket"
+- "Close this Jira"
+- "Mark it in progress"
+
+## What does NOT count
+- Completing the underlying task the ticket describes
+- Summarising a ticket's contents
+- Suggesting what status a ticket should move to

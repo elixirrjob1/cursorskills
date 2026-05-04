@@ -1,3 +1,9 @@
 # Skills are read-only; agent should use them but not modify
 # See .cursor/rules/skills-readonly.mdc
 #.cursor/skills/
+
+# Secrets — never expose to Cursor AI context
+.env
+.envrc
+*.env
+.env.*

@@ -674,14 +674,26 @@ models:
         description: "Foreign key to date dimension (transaction date)"
         tests:
           - not_null
+          - source_not_in_target:
+              arguments:
+                target_model: "{{ ref('DimDate') }}"
+                target_column: DateHashPK
       - name: ProductHashFK
         description: "Foreign key to product dimension"
         tests:
           - not_null
+          - source_not_in_target:
+              arguments:
+                target_model: "{{ ref('DimProduct') }}"
+                target_column: ProductHashPK
       - name: StoreHashFK
         description: "Foreign key to store dimension"
         tests:
           - not_null
+          - source_not_in_target:
+              arguments:
+                target_model: "{{ ref('DimStore') }}"
+                target_column: StoreHashPK
       - name: CustomerHashFK
         description: "Foreign key to customer dimension (NULL for anonymous sales)"
       - name: EmployeeHashFK
@@ -769,17 +781,31 @@ models:
                 source_hashdiff_column: Hashbytes
                 target_hashdiff_column: Hashbytes
       - name: DateHashFK
-        description: "Foreign key to date dimension (snapshot date)"
+        description: "Foreign key to date dimension (snapshot date — derived from UPDATED_AT cast to DATE)"
         tests:
           - not_null
+          - source_not_in_target:
+              arguments:
+                target_model: "{{ ref('DimDate') }}"
+                target_column: DateHashPK
       - name: ProductHashFK
         description: "Foreign key to product dimension"
         tests:
           - not_null
-      - name: WarehouseHashFK
-        description: "Foreign key to warehouse dimension"
+          - source_not_in_target:
+              arguments:
+                target_model: "{{ ref('DimProduct') }}"
+                target_column: ProductHashPK
+      - name: StoreHashFK
+        description: "Foreign key to store dimension (store receiving/holding inventory)"
         tests:
           - not_null
+          - source_not_in_target:
+              arguments:
+                target_model: "{{ ref('DimStore') }}"
+                target_column: StoreHashPK
+      - name: WarehouseHashFK
+        description: "Foreign key to warehouse dimension — not available in source; always NULL"
       - name: QuantityOnHand
         description: "Total quantity physically in warehouse"
         tests:
@@ -846,18 +872,36 @@ models:
         description: "Foreign key to product dimension"
         tests:
           - not_null
+          - source_not_in_target:
+              arguments:
+                target_model: "{{ ref('DimProduct') }}"
+                target_column: ProductHashPK
       - name: SupplierHashFK
         description: "Foreign key to supplier dimension"
         tests:
           - not_null
-      - name: WarehouseHashFK
-        description: "Foreign key to receiving warehouse dimension"
+          - source_not_in_target:
+              arguments:
+                target_model: "{{ ref('DimSupplier') }}"
+                target_column: SupplierHashPK
+      - name: StoreHashFK
+        description: "Foreign key to store dimension (store receiving the purchase order)"
         tests:
           - not_null
+          - source_not_in_target:
+              arguments:
+                target_model: "{{ ref('DimStore') }}"
+                target_column: StoreHashPK
+      - name: WarehouseHashFK
+        description: "Foreign key to warehouse dimension — not available in source; always NULL"
       - name: DateOrderedHashFK
         description: "Foreign key to date dimension (order placed date)"
         tests:
           - not_null
+          - source_not_in_target:
+              arguments:
+                target_model: "{{ ref('DimDate') }}"
+                target_column: DateHashPK
       - name: DateExpectedHashFK
         description: "Foreign key to date dimension (expected delivery date)"
       - name: DateShippedHashFK

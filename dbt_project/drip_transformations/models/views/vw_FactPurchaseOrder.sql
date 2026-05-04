@@ -36,9 +36,10 @@ SELECT
     HASH(COALESCE(CAST(PRODUCT_ID AS VARCHAR), '#@#@#@#@#')
         || '|' || 'ERP') AS "ProductHashFK",
     HASH(COALESCE(CAST(SUPPLIER_ID AS VARCHAR), '#@#@#@#@#')) AS "SupplierHashFK",
-    HASH(COALESCE(CAST(STORE_ID AS VARCHAR), '#@#@#@#@#')) AS "WarehouseHashFK",
-    HASH(COALESCE(CAST(ORDER_DATE AS VARCHAR), '#@#@#@#@#')) AS "DateOrderedHashFK",
-    IFF(EXPECTED_DATE IS NULL, NULL, HASH(COALESCE(CAST(EXPECTED_DATE AS VARCHAR), '#@#@#@#@#'))) AS "DateExpectedHashFK",
+    HASH(COALESCE(CAST(STORE_ID AS VARCHAR), '#@#@#@#@#')) AS "StoreHashFK",
+    CAST(NULL AS NUMBER(19,0)) AS "WarehouseHashFK", -- not available in source; DimWarehouse has no real records
+    HASH(COALESCE(CAST(CAST(ORDER_DATE AS DATE) AS VARCHAR), '#@#@#@#@#')) AS "DateOrderedHashFK",
+    IFF(EXPECTED_DATE IS NULL, NULL, HASH(COALESCE(CAST(CAST(EXPECTED_DATE AS DATE) AS VARCHAR), '#@#@#@#@#'))) AS "DateExpectedHashFK",
     CAST(NULL AS NUMBER(19,0)) AS "DateShippedHashFK", -- not available in source
     CAST(NULL AS NUMBER(19,0)) AS "DateReceivedHashFK", -- not available in source
     CAST(NULL AS NUMBER(19,0)) AS "DateInvoicedHashFK", -- not available in source

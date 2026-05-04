@@ -30,10 +30,11 @@ ctePRODUCTS AS (
 
 SELECT
     HASH(COALESCE(CAST(cteINVENTORY.INVENTORY_ID AS VARCHAR), '#@#@#@#@#')) AS "InventorySnapshotHashPK",
-    HASH(COALESCE(CAST(cteINVENTORY.UPDATED_AT AS VARCHAR), '#@#@#@#@#')) AS "DateHashFK",
+    HASH(COALESCE(CAST(CAST(cteINVENTORY.UPDATED_AT AS DATE) AS VARCHAR), '#@#@#@#@#')) AS "DateHashFK",
     HASH(COALESCE(CAST(cteINVENTORY.PRODUCT_ID AS VARCHAR), '#@#@#@#@#')
         || '|' || 'ERP') AS "ProductHashFK",
-    HASH(COALESCE(CAST(cteINVENTORY.STORE_ID AS VARCHAR), '#@#@#@#@#')) AS "WarehouseHashFK",
+    HASH(COALESCE(CAST(cteINVENTORY.STORE_ID AS VARCHAR), '#@#@#@#@#')) AS "StoreHashFK",
+    CAST(NULL AS NUMBER(19,0)) AS "WarehouseHashFK", -- not available in source; DimWarehouse has no real records
     cteINVENTORY.QUANTITY_ON_HAND AS "QuantityOnHand",
     CAST(NULL AS INT) AS "QuantityReserved", -- not available in source
     CAST(NULL AS INT) AS "QuantityAvailable", -- not available in source

@@ -4,9 +4,10 @@ drip_transformations:
     dev:
       type: snowflake
       account: "{{ env_var('SNOWFLAKE_ACCOUNT', 'PLACEHOLDER') }}"
-      user: "{{ env_var('SNOWFLAKE_USER', 'PLACEHOLDER') }}"
-      password: "{{ env_var('SNOWFLAKE_FIVETRAN_PASSWORD', 'PLACEHOLDER') }}"
+      user: "{{ env_var('SNOWFLAKE_DBT_USER', 'DBT_DRIP_USER') }}"
+      password: "{{ env_var('SNOWFLAKE_DBT_PASSWORD', 'PLACEHOLDER') }}"
+      role: "{{ env_var('SNOWFLAKE_DBT_ROLE', 'DBT_DRIP_ROLE') }}"
       database: "{{ env_var('SNOWFLAKE_DATABASE', 'DRIP_DATA_INTELLIGENCE') }}"
-      warehouse: "{{ env_var('SNOWFLAKE_WAREHOUSE', 'FIVETRAN_DRIP_WH') }}"
+      warehouse: "{{ env_var('SNOWFLAKE_DBT_WAREHOUSE', 'DBT_DRIP_WH') }}"
       schema: DBT_DEV
       threads: 4

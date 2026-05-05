@@ -805,7 +805,13 @@ models:
                 target_model: "{{ ref('DimStore') }}"
                 target_column: StoreHashPK
       - name: WarehouseHashFK
-        description: "Foreign key to warehouse dimension — not available in source; always NULL"
+        description: "Foreign key to warehouse dimension — hardcoded to HASH('UNKNOWN') to match the single DimWarehouse record"
+        tests:
+          - not_null
+          - source_not_in_target:
+              arguments:
+                target_model: "{{ ref('DimWarehouse') }}"
+                target_column: WarehouseHashPK
       - name: QuantityOnHand
         description: "Total quantity physically in warehouse"
         tests:
@@ -893,7 +899,13 @@ models:
                 target_model: "{{ ref('DimStore') }}"
                 target_column: StoreHashPK
       - name: WarehouseHashFK
-        description: "Foreign key to warehouse dimension — not available in source; always NULL"
+        description: "Foreign key to warehouse dimension — hardcoded to HASH('UNKNOWN') to match the single DimWarehouse record"
+        tests:
+          - not_null
+          - source_not_in_target:
+              arguments:
+                target_model: "{{ ref('DimWarehouse') }}"
+                target_column: WarehouseHashPK
       - name: DateOrderedHashFK
         description: "Foreign key to date dimension (order placed date)"
         tests:

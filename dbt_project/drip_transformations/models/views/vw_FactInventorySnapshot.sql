@@ -34,7 +34,7 @@ SELECT
     HASH(COALESCE(CAST(cteINVENTORY.PRODUCT_ID AS VARCHAR), '#@#@#@#@#')
         || '|' || 'ERP') AS "ProductHashFK",
     HASH(COALESCE(CAST(cteINVENTORY.STORE_ID AS VARCHAR), '#@#@#@#@#')) AS "StoreHashFK",
-    CAST(NULL AS NUMBER(19,0)) AS "WarehouseHashFK", -- not available in source; DimWarehouse has no real records
+    HASH(COALESCE(CAST('UNKNOWN' AS VARCHAR), '#@#@#@#@#')) AS "WarehouseHashFK", -- all inventory mapped to the single UNKNOWN warehouse record
     cteINVENTORY.QUANTITY_ON_HAND AS "QuantityOnHand",
     CAST(NULL AS INT) AS "QuantityReserved", -- not available in source
     CAST(NULL AS INT) AS "QuantityAvailable", -- not available in source

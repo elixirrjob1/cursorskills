@@ -1,0 +1,58 @@
+---
+description: Skill secondary repos — each .cursor/skills/<name> folder mirrors to its own responsum-team/skill-<name> repo via PAT2
+alwaysApply: false
+globs: .cursor/skills/**
+---
+
+# Skill Secondary Repos
+
+Every skill under `.cursor/skills/` has its own standalone GitHub repo in the `responsum-team` org, authenticated via `PAT2`.
+
+**When a skill file is modified, push to both:**
+1. `elixirrjob1/cursorskills` (main repo) — `git push origin main`
+2. The skill's own secondary repo — rsync + push (see sync method below)
+
+## Sync method
+
+```bash
+source .env
+
+SKILL=<skill-folder-name>   # e.g. dbt-model-from-stm
+REPO=<repo-name>             # look up in table below
+
+rm -rf /tmp/skill-sync-target
+git clone "https://${PAT2_USER}:${PAT2}@github.com/responsum-team/${REPO}.git" /tmp/skill-sync-target
+rsync -av --exclude='.git' .cursor/skills/${SKILL}/ /tmp/skill-sync-target/
+cd /tmp/skill-sync-target
+git add -A
+git diff --cached --quiet || git commit -m "sync: update from elixirrjob1/cursorskills main"
+git push
+```
+
+## Skill → repo mapping
+
+| Local folder (`.cursor/skills/`) | Secondary repo (`responsum-team/`) |
+|---|---|
+| `azure-keyvault-deployer` | `skill-azure-keyvault-deployer` |
+| `catalog-glossary-tagger` | `skill-catalog-glossary-tagger` |
+| `catalog-sync` | `skill-catalog-sync` |
+| `catalog-vocab-publisher` | `skill-catalog-vocab-publisher` |
+| `database-setup` | `skill-database-setup` |
+| `dbt-cloud-log-extractor` | `skill-dbt-cloud-log-extractor` |
+| `dbt-model-from-stm` | `skill-dbt-model-from-stm` |
+| `governance-vocab-generator` | `skill-governance-vocab-generator-v2` |
+| `ingestion-from-analyzer` | `skill-ingestion-from-analyzer` |
+| `json-to-excel-export` | `skill-json-to-excel-export` |
+| `meetingintroskill` | `skill-meetingintroskill` |
+| `natural-language-data-query` | `skill-natural-language-data-query` |
+| `schema-glossary-generator` | `skill-schema-glossary-generator` |
+| `source-system-analyser` | `skill-source-system-analyser-v2` |
+| `stm-catalogue-enricher` | `skill-stm-catalogue-enricher-v2` |
+| `stm-from-data-model` | `skill-stm-from-data-model-v2` |
+| `stm-to-catalog-enricher` | `skill-stm-to-catalog-enricher` |
+
+## Rules
+
+- Never force-push to any secondary skill repo.
+- Only sync the specific skill(s) that were modified — do not bulk-sync all skills.
+- After any skill edit, check this table and push to the matching repo before closing the task.

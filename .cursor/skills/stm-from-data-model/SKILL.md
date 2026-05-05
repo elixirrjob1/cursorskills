@@ -83,6 +83,22 @@ Hardcode these warehouse conventions in every generated STM:
   - explicit grain statements
   - explicit measure notes
 
+### WarehouseHashFK — UNKNOWN fallback pattern
+
+When a fact table target column is `WarehouseHashFK` and the source system provides no warehouse identifier, populate the STM's **Transformation / Business Rule** cell with:
+
+```
+HASH(COALESCE(CAST('UNKNOWN' AS VARCHAR), '#@#@#@#@#'))
+```
+
+and set the **Notes** cell to:
+
+```
+No warehouse granularity in source. Hardcoded to match DimWarehouse.WarehouseHashPK for the single UNKNOWN fallback record. Do NOT leave NULL — a NULL FK silently breaks all joins to DimWarehouse.
+```
+
+Do NOT leave Source Table / Source Column blank and Transformation blank in this case — that would cause the dbt model generator to emit `CAST(NULL AS NUMBER(19,0))`, which breaks the FK join.
+
 ## Snowflake Data Type Conversion
 
 When the target data model specifies a data type that is not natively supported by Snowflake, convert it to the Snowflake equivalent when writing the STM's `Data Type` column. Apply this mapping everywhere a target-column data type is emitted (Field-Level Mapping Matrix and any later sections).

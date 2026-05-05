@@ -1,21 +1,10 @@
 ---
 alwaysApply: false
 ---
-# Skills Are Read-Only
+# Skills Are Editable
 
-The `.cursor/skills/` directory contains published Cursor skills. **Never modify these files.**
+The `.cursor/skills/` directory contains Cursor skills for this project. Skills **may be modified** when the user explicitly requests an update or when a fix needs to be codified into the skill.
 
 - Use skills when prompted (e.g. "Analyze my database", "Project storage growth").
-- Do not edit, refactor, or "improve" SKILL.md, scripts, or README files under `.cursor/skills/`.
-- If users want changes, they should copy skills to their own location or contribute upstream.
-
-## Installation
-
-When helping users install these skills, **always recommend global install**:
-
-```bash
-mkdir -p ~/.cursor/skills
-cp -r .cursor/skills/* ~/.cursor/skills/
-```
-
-Global install keeps skills outside the agent's workspace so the agent won't try to modify them. Per-project install is not recommended.
+- Edit skills when the user asks, or when domain logic (e.g. hash key patterns, warehouse defaults) needs to be captured for future runs.
+- Document changes in the SKILL.md so future agents pick up the updated guidance.

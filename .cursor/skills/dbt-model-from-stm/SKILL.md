@@ -476,6 +476,29 @@ For composite keys pass each component as a separate argument to `HASH` (cleanes
 > ```
 > Before writing a fact view, always read the referenced dim view to confirm the exact HashPK formula.
 
+### WarehouseHashFK — fallback to UNKNOWN when no warehouse source exists
+
+`DimWarehouse` in this project is a static fallback dimension with a single record keyed on `warehouse_code = 'UNKNOWN'`. Its `WarehouseHashPK` is:
+
+```sql
+HASH(COALESCE(CAST(warehouse_code AS VARCHAR), '#@#@#@#@#'))
+-- evaluates to HASH('UNKNOWN') because warehouse_code is never NULL
+```
+
+When a fact table (e.g. `FactInventorySnapshot`, `FactPurchaseOrder`) has a `WarehouseHashFK` column but the source system carries no warehouse identifier, **do NOT emit NULL**. Instead hardcode the matching hash:
+
+```sql
+HASH(COALESCE(CAST('UNKNOWN' AS VARCHAR), '#@#@#@#@#')) AS "WarehouseHashFK", -- all rows map to the single UNKNOWN warehouse record
+```
+
+This keeps the FK join to `DimWarehouse` valid for every row. Emitting `NULL` silently breaks every join without a build-time error.
+
+Apply this rule whenever:
+- The STM's `WarehouseHashFK` row has empty Source Table + Source Column, **and**
+- The target project uses the `DimWarehouse` pattern with an `'UNKNOWN'` fallback record.
+
+The schema.yml entry for `WarehouseHashFK` in such a fact view should carry both `not_null` and a `source_not_in_target` test pointing to `DimWarehouse.WarehouseHashPK`.
+
 > **Why Hashbytes differs from keys:** Hashbytes is used to detect whether a row's business attributes changed between loads (Type 2 SCD boundary detection and Type 1 change comparison). We compare two hashes and a collision would cause a silent miss, so the cryptographic strength of SHA-256 matters. Keys are only used for equality joins, where the 64-bit `HASH()` bound is more than sufficient for realistic row counts and the performance gain is real.
 
 ### Hashbytes Change Detection Column

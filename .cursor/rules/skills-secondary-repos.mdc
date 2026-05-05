@@ -49,6 +49,7 @@ git push
 | `source-system-analyser` | `skill-source-system-analyser-v2` |
 | `stm-catalogue-enricher` | `skill-stm-catalogue-enricher-v2` |
 | `stm-from-data-model` | `skill-stm-from-data-model-v2` |
+| `skill-reviewer` | `skill-skill-reviewer` |
 | `stm-to-catalog-enricher` | `skill-stm-to-catalog-enricher` |
 
 ## Rules

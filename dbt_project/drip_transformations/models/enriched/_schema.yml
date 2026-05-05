@@ -718,7 +718,7 @@ models:
 
 semantic_models:
   - name: fact_sales
-    description: "Semantic model for FactSales metrics and dimensions."
+    description: "Business-facing sales semantic layer over retail transaction line items. Supports revenue, volume, and profit analytics across product, store, customer, and employee perspectives. Returns are represented as negative quantities and amounts, so aggregate metrics reflect net business performance."
     model: ref('FactSales')
     defaults:
       agg_time_dimension: load_timestamp
@@ -774,7 +774,7 @@ semantic_models:
         expr: Quantity
 
   - name: dim_date
-    description: "Semantic model for date dimensions."
+    description: "Business calendar semantic layer used to group and filter metrics by day, month, quarter, and year. Provides a consistent time spine and reporting calendar for all fact models joined through the date entity."
     model: ref('DimDate')
     defaults:
       agg_time_dimension: date_value
@@ -803,42 +803,42 @@ semantic_models:
 
 metrics:
   - name: sales_row_count
-    description: "Count of sales fact rows."
+    description: "Counts transaction line items in FactSales at the current filter grain. Includes both sale and return lines; use transaction_type to isolate specific activity types."
     type: simple
     label: Sales Row Count
     type_params:
       measure: sales_row_count_measure
 
   - name: gross_sales_amount
-    description: "Total gross sales before discounts and taxes."
+    description: "Sums pre-discount, pre-tax line amount (GrossAmount) across sales activity at the current filter grain. Returns contribute negative values where present in source transactions."
     type: simple
     label: Gross Sales Amount
     type_params:
       measure: gross_sales_amount_measure
 
   - name: net_sales_amount
-    description: "Total net sales after discounts and taxes."
+    description: "Sums final transactional amount (NetAmount) after discounts and taxes at the current filter grain. This is the primary revenue metric for net performance reporting."
     type: simple
     label: Net Sales Amount
     type_params:
       measure: net_sales_amount_measure
 
   - name: total_profit_amount
-    description: "Total profit across sales lines."
+    description: "Sums line-level profit (ProfitAmount) at the current filter grain. Represents realized gross profit contribution from both sales and returns."
     type: simple
     label: Total Profit Amount
     type_params:
       measure: total_profit_amount_measure
 
   - name: total_units_sold
-    description: "Total units sold, including negative quantities for returns."
+    description: "Sums line quantity (Quantity) at the current filter grain. Returns are represented as negative units, so aggregates reflect net unit movement."
     type: simple
     label: Total Units Sold
     type_params:
       measure: total_units_sold_measure
 
   - name: profit_margin_ratio
-    description: "Profit margin ratio as total profit divided by net sales."
+    description: "Computes net profit margin as total_profit_amount divided by net_sales_amount at query grain. Interpret with care for very small or negative net sales denominators."
     type: ratio
     label: Profit Margin Ratio
     type_params:

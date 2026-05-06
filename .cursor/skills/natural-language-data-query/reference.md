@@ -1,5 +1,15 @@
 # Reference — OpenMetadata MCP & Snowflake Patterns
 
+## Contents
+
+- [OpenMetadata MCP Server](#openmetadata-mcp-server)
+- [Snowflake Connection Patterns](#snowflake-connection-patterns)
+- [Secrets Manager Secret Keys](#secrets-manager-secret-keys)
+- [Provider Setup Guides](#provider-setup-guides)
+  - [Azure Key Vault](#azure-key-vault)
+  - [AWS Secrets Manager](#aws-secrets-manager)
+  - [HashiCorp Vault (KV-v2)](#hashicorp-vault-kv-v2)
+
 ---
 
 ## OpenMetadata MCP Server

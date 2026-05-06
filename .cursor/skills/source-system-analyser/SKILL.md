@@ -1,6 +1,16 @@
 ---
 name: source-system-analyser
-description: Analyze source systems for ingestion readiness and data quality across databases, APIs, and flat files. Use when generating schema metadata, identifying data quality risks, mapping source structures, evaluating delete/late-arrival/timezone behavior, or producing a normalized schema.json contract for downstream ingestion.
+description: Analyze source systems for ingestion readiness and data quality across databases, APIs, and flat files. Use when generating schema metadata, identifying data quality risks, mapping source structures, evaluating delete/late-arrival/timezone behavior, or producing a normalized schema.json contract for downstream ingestion. Triggers: analyze, profile, assess, audit, inspect source, ingestion readiness check, schema contract, data quality risks, source system, database analysis, API analysis, flat file, CSV schema, volume projection, capacity forecast.
+version: 1.0.0
+lifecycle: production
+owner: data-engineering
+dependencies:
+  - scripts/source_system_analyzer.py
+  - scripts/apis/api_reader.py + api_analyzer.py
+  - scripts/flat/tabular_schema_json.py
+  - scripts/volume_projection/collector.py + predictor.py
+last_reviewed: 2026-05-06
+rollback: pin to commit hash; revert via PR
 ---
 
 # Source System Analyser
@@ -67,7 +77,7 @@ python3 scripts/build_description_enrichment_checklist.py schema.json
 3. Work table by table in checklist order.
 4. For each table:
    - complete missing `column_description` items first
-   - query up to 3 sample rows per unresolved column when needed
+   - query up to 3 sample rows per unresolved column when needed  _(3 rows: enough context to infer column meaning without pulling significant data volume)_
    - write generated column descriptions into each checklist item's `proposed_description`
    - only after that table's column descriptions are complete, generate the table's `table_description` from the completed column descriptions for that table
 5. Do not do a separate table-query step unless the column-level context is still insufficient.
@@ -95,6 +105,14 @@ The merged API and tabular flows are now available directly inside this skill:
 - Tabular schema script: `scripts/flat/tabular_schema_json.py`
 - Volume projection collector: `scripts/volume_projection/collector.py`
 - Volume projection predictor: `scripts/volume_projection/predictor.py`
+
+## Common Mistakes
+
+- **Re-asking preflight questions on rerun**: Always check for `db-analysis-config.json` first. If it exists, reuse it silently — do not ask the user about exclusions again.
+- **Leaving blank descriptions in schema.json**: The analysis is not complete until all `table_description` and `column_description` fields are filled. Always run the description enrichment continuation after the analyzer.
+- **Passing database URL with credentials as a CLI argument**: `<database_url>` embeds passwords visible in `ps aux` and shell history. Prefer `--database-url-secret` (reads from Azure Key Vault) in shared or production environments.
+- **Running the full analyzer to fix null classifications**: Use the classification review workflow (one family at a time) — not a full rerun — when improving concept assignments.
+- **Using source_system_analyzer.py for flat files**: CSV/Excel inputs use `tabular_schema_json.py`, not the database analyzer.
 
 ## Fallback Rules
 

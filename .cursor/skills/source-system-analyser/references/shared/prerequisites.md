@@ -18,15 +18,15 @@ Install baseline:
 
 ```bash
 python3 -m venv .venv
-.venv/bin/pip install sqlalchemy psycopg2-binary
-.venv/bin/pip install requests openpyxl
+.venv/bin/pip install "sqlalchemy>=2.0,<3.0" "psycopg2-binary>=2.9,<3.0"
+.venv/bin/pip install "requests>=2.31,<3.0" "openpyxl>=3.1,<4.0"
 ```
 
 Add optional drivers based on source:
 
 ```bash
-.venv/bin/pip install pyodbc
-.venv/bin/pip install cx_Oracle
+.venv/bin/pip install "pyodbc>=5.0,<6.0"
+.venv/bin/pip install "cx_Oracle>=8.3,<9.0"
 ```
 
 ## Secret Handling

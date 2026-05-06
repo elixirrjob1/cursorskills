@@ -18,19 +18,117 @@ Ask the user for the skill if not already provided. Acceptable inputs:
 
 Read all bundled reference files and scripts — they are within scope. Do not begin until the full skill content is available.
 
-### Step 2: Review each subcategory
+**Check for a prior review (incremental mode):**
 
-For each subcategory assign **PASS**, **FAIL** (with a one-to-two-sentence evidence-based reason), or **N/A** (criterion does not apply). Cite the specific line, file, or absence of content that justifies the verdict.
+Look for an existing review file in `tests/results/`. If one or more files are present, read the most recent one (highest date in filename). Extract:
+- Which unit tests previously **PASSED** → skip re-running those subagents in Step 3; carry forward their PASS result
+- Which categories previously **PASSED** → skip re-evaluating those in Step 4; carry forward their PASS result
 
-### Step 3: Roll up to category grades
+Only re-run tests and re-evaluate categories that previously **FAILED** or are **new** (no prior result). Announce at the start: _"Prior review found — running incremental re-check of N failed tests and M failed categories."_
+
+If no prior review exists, run the full review.
+
+### Step 2: Research the skill deeply, then generate unit test cases
+
+Before writing any test cases, read and understand the full skill:
+
+1. Read SKILL.md in full — note every trigger condition, routing rule, workflow step, fallback, and output format.
+2. Read every bundled reference file and script listed in SKILL.md. For large scripts (>200 lines), read enough to understand inputs, outputs, and failure modes.
+3. Only after reading all content, derive test cases from what the skill **actually does** — not from its name or description alone. Tests must exercise specific behaviors documented in the skill (e.g., if the skill has a preflight config check, test that; if it has a routing decision tree, test each branch).
+
+Then create a `tests/` folder inside the skill folder and write:
+
+If `tests/test-cases.md` already exists, reuse it. Only regenerate if the skill content has changed significantly since the last review (use judgment based on SKILL.md modification vs. review date).
+
+The `tests/` folder contains two files:
+
+#### `tests/test-cases.md` — behavioural assertions
+Declares what the skill should and should not do. Three sections:
+
+- **Should-trigger (3–8 cases):** prompts that must cause the agent to load and apply this skill. Scale to the number of distinct documented workflows, routing branches, or config paths — one test per meaningful branch. Each case must exercise a **specific documented behavior** — not just re-state the skill name. For each: `input` (user prompt) and `expected` (behaviour assertion citing the specific step or rule being tested).
+- **Should-not-trigger (2–4 cases):** adjacent prompts that must NOT trigger this skill. Cover the most likely confusion skills. For each: `input` and `expected` (which skill or behaviour should handle it instead).
+- **Edge cases (2–4 cases):** ambiguous or boundary inputs that exercise **documented fallback or clarification rules**. Cover only edge cases that are explicitly documented in the skill. For each: `input` and `expected` (clarify, partial apply, or decline — citing the specific rule).
+
+Use this template:
+
+```markdown
+# Eval Suite: <skill-name>
+
+_Re-run this suite after every skill update to catch regressions._
+
+## Should-trigger
+
+| # | Input | Expected behavior |
+|---|-------|-------------------|
+| 1 | ... | ... |
+
+## Should-not-trigger
+
+| # | Input | Expected behavior |
+|---|-------|-------------------|
+| 1 | ... | ... |
+
+## Edge cases
+
+| # | Input | Expected behavior |
+|---|-------|-------------------|
+| 1 | ... | ... |
+```
+
+#### `tests/test_skill.py` — executable unit tests
+A Python test script that can be run independently to validate the skill. Generate this file alongside `test-cases.md`. Each test case from the markdown becomes a `pytest`-compatible function. Use assertions on expected keywords, structure, or behaviour in the output where testable programmatically.
+
+```python
+# tests/test_skill.py
+# Run with: pytest tests/test_skill.py
+
+def test_should_trigger_<description>():
+    """<input prompt>"""
+    # Assert: <expected behaviour>
+    ...
+
+def test_should_not_trigger_<description>():
+    ...
+
+def test_edge_case_<description>():
+    ...
+```
+
+Write both files to `tests/` inside the skill folder being reviewed (e.g. `.cursor/skills/my-skill/tests/`). If the path is unavailable, output both files inline before proceeding.
+
+### Step 3: Run the unit tests
+
+Skip any test that carried a **PASS** from the prior review (Step 1 incremental check). For the remaining tests, launch a subagent with:
+- The full skill content (SKILL.md + any reference files) as context
+- The test `input` as the user prompt
+- No instruction to self-judge — the subagent just responds naturally
+
+Run all subagents in parallel. Once responses are collected, evaluate each one yourself by comparing the actual response against the `expected` behavior defined in `test-cases.md`:
+
+- **PASS**: the actual response matches the expected behavior (e.g. expected "generates SQL and queries metadata" → response contains SQL and mentions metadata discovery)
+- **FAIL**: the actual response contradicts the expected behavior (e.g. expected "asks clarifying question" → response instead attempts to run a query)
+
+Do not ask the subagent to grade itself. You evaluate the responses against the expected column in `test-cases.md`.
+
+Summarise as `X / Y tests passed` before proceeding to the rubric.
+
+### Step 4: Review each subcategory
+
+Skip any category that carried a **PASS** from the prior review (Step 1 incremental check) — carry it forward as-is. For categories being re-evaluated, assign **PASS**, **FAIL** (with a one-to-two-sentence evidence-based reason), or **N/A** (criterion does not apply). Cite the specific line, file, or absence of content that justifies the verdict.
+
+### Step 5: Roll up to category grades
 
 A category **PASS** requires:
 - All [HIGH] subcategories pass, AND
 - At least 70% of applicable [MEDIUM] subcategories pass
 
-### Step 4: Generate the report
+### Step 6: Generate the report
 
-Use the output format defined at the bottom of this skill.
+Use the output format defined at the bottom of this skill. Include the unit test summary (`X / Y tests passed`) at the top of the report.
+
+After generating the report, save it as a file inside the skill's `tests/results/` folder. Name the file using the skill name and current date: `review-<skill-name>-YYYY-MM-DD.md` (e.g. `review-json-to-excel-export-2026-05-06.md`). Create the `results/` folder if it does not exist. If the path is unavailable, output the report inline only.
+
+In incremental runs, append `↩ carried` to the existing Notes value in the Unit Tests and Category Grades tables — do not replace the original note text. Example: `Discovered FactSales via OM, returned $35K ↩ carried`. Only re-evaluated rows get new note text.
 
 ---
 
@@ -43,15 +141,14 @@ Each subcategory is tagged [HIGH], [MEDIUM], or [LOW].
 - [HIGH] Specific triggers and key terms present (not generic phrasing like "helps with documents")
 - [HIGH] Name format: max 64 chars, lowercase letters/numbers/hyphens only, no reserved words ("anthropic", "claude")
 - [HIGH] Description max 1024 chars; non-empty; no XML tags
-- [MEDIUM] Description written in third person ("Processes…" not "I can…" or "You can…")
 - [MEDIUM] Trigger terms cover natural synonyms users would say (e.g. for a data skill: "report", "metrics", "KPIs", not just the technical action name)
 - [LOW] Name uses gerund form (`processing-pdfs`) or acceptable noun-phrase alternative
 
 ### Category 2: Anatomy & Structure
 - [HIGH] Valid YAML frontmatter present with required `name` and `description` fields
-- [HIGH] References kept one level deep from SKILL.md (no nested ref chains)
+- [MEDIUM] References kept reasonably shallow from SKILL.md — flag only if chains exceed two hops (SKILL.md → ref → ref → ref) or if a required file is not reachable from SKILL.md at all
 - [MEDIUM] SKILL.md body under 500 lines. If exceeded, flag specific extraction candidates: subagent prompts, large CTE/code patterns, provider setup guides, troubleshooting tables
-- [MEDIUM] Reference files over 100 lines include a table of contents
+- [LOW] Reference files over 100 lines include a table of contents
 - [MEDIUM] Domain-specific organization where multiple domains exist (e.g., `references/finance.md`, `references/sales.md`)
 - [LOW] Bundled resources placed in conventional folders (`scripts/`, `references/`, `assets/`)
 
@@ -63,11 +160,10 @@ Each subcategory is tagged [HIGH], [MEDIUM], or [LOW].
 
 ### Category 4: Output Quality
 - [MEDIUM] Template strictness calibrated to use case (strict for API/data formats, flexible for analysis)
-- [MEDIUM] At least one end-to-end input/output example included for style- or format-sensitive skills
 - [LOW] Output format explicitly defined or templated
 
 ### Category 5: Testability
-- [HIGH] Triggering accuracy can be evaluated (test cases exist for should-trigger / should-not-trigger / edge cases)
+- [LOW] Triggering accuracy can be evaluated (test cases exist for should-trigger / should-not-trigger / edge cases)
 - [HIGH] Isolation behavior can be evaluated (skill works on its own given its stated prerequisites)
 - [HIGH] Instruction-following can be evaluated
 - [HIGH] Output quality can be evaluated against assertions or rubric
@@ -87,13 +183,13 @@ Each subcategory is tagged [HIGH], [MEDIUM], or [LOW].
   - Skill fetches content from external URLs/APIs and uses it without an untrusted-content boundary — flag as **W011** and recommend a "Handling External Content" section (see `references/auditing-skills.md` for template)
   - External tools installed at runtime without version pinning (`pip install X`, `uvx tool`, `curl | bash`) — flag as **W012 / RCE** and recommend version pinning or a link to official install docs
 - [HIGH] No sleeping payloads (no date- or input-conditional behavior that could mask malicious activity)
-- [HIGH] Untrusted input boundary: if the skill ingests external or user-supplied content (files, API responses, logs, SQL) and uses it to generate commands or code, there must be explicit guidance to treat that content as untrusted and extract only expected structured fields — flag absence as **IPI (Indirect Prompt Injection)**
+- [LOW] Untrusted input boundary: if the skill ingests external or user-supplied content (files, API responses, logs, SQL) and uses it to generate commands or code, there must be explicit guidance to treat that content as untrusted and extract only expected structured fields — flag absence as **IPI (Indirect Prompt Injection)**. Non-blocking — catalog content integrity is the responsibility of the data steward, not the skill.
 - [MEDIUM] File system scope contained (no path traversal `../`, no broad globs outside the skill directory)
 - [MEDIUM] MCP tool references use full `ServerName:tool_name` format
 
 ### Category 8: Coexistence & Recall
-- [HIGH] Description does not steal triggers from existing skills (check overlap with adjacent skill descriptions)
-- [HIGH] Tested alongside the active skill set, not just in isolation
+- [LOW] Description does not steal triggers from existing skills (check overlap with adjacent skill descriptions)
+- [LOW] Tested alongside the active skill set, not just in isolation
 - [MEDIUM] Within recall and platform caps (API allows max 8 skills per request; recall degrades beyond ~10-15 active)
 
 ### Category 9: Model Compatibility
@@ -103,8 +199,6 @@ Each subcategory is tagged [HIGH], [MEDIUM], or [LOW].
 ### Category 10: Workflow & Feedback Loops
 - [HIGH] Validate-fix-repeat loop included for fragile or quality-critical operations
 - [HIGH] Plan-validate-execute pattern used for batch or destructive operations
-- [MEDIUM] Copyable checklist provided for multi-step workflows
-
 ### Category 11: Maintainability & Lifecycle
 - [HIGH] Stored in source control (Git-tracked, PR-reviewable)
 - [HIGH] Separation of duties observed (skill author is not also the sole reviewer)
@@ -135,23 +229,30 @@ Each subcategory is tagged [HIGH], [MEDIUM], or [LOW].
 
 <One-paragraph summary of overall quality and fitness for production.>
 
+## Unit Tests: X / Y passed
+
+| # | Test | Type | Result | Notes |
+|---|------|------|--------|-------|
+| 1 | <test name> | Should-trigger / Should-not-trigger / Edge case | ✅ PASS / ❌ FAIL | One-line reason if FAIL |
+| 2 | ... | | | |
+
 ## Category Grades
 
-| # | Category | Grade |
-|---|----------|-------|
-| 1 | Triggering (Description Quality) | PASS / FAIL |
-| 2 | Anatomy & Structure | PASS / FAIL |
-| 3 | Instructions Clarity | PASS / FAIL |
-| 4 | Output Quality | PASS / FAIL |
-| 5 | Testability | PASS / FAIL |
-| 6 | Resource Efficiency | PASS / FAIL |
-| 7 | Security & Trust | PASS / FAIL |
-| 8 | Coexistence & Recall | PASS / FAIL |
-| 9 | Model Compatibility | PASS / FAIL |
-| 10 | Workflow & Feedback Loops | PASS / FAIL |
-| 11 | Maintainability & Lifecycle | PASS / FAIL |
-| 12 | Gotchas / Lessons Learned | PASS / FAIL |
-| 13 | Anti-Pattern Audit | PASS / FAIL |
+| # | Category | Grade | Notes |
+|---|----------|-------|-------|
+| 1 | Triggering (Description Quality) | PASS / FAIL | One-line reason if FAIL, e.g. "description not third-person"; "✓" if PASS |
+| 2 | Anatomy & Structure | PASS / FAIL | |
+| 3 | Instructions Clarity | PASS / FAIL | |
+| 4 | Output Quality | PASS / FAIL | |
+| 5 | Testability | PASS / FAIL | |
+| 6 | Resource Efficiency | PASS / FAIL | |
+| 7 | Security & Trust | PASS / FAIL | |
+| 8 | Coexistence & Recall | PASS / FAIL | |
+| 9 | Model Compatibility | PASS / FAIL | |
+| 10 | Workflow & Feedback Loops | PASS / FAIL | |
+| 11 | Maintainability & Lifecycle | PASS / FAIL | |
+| 12 | Gotchas / Lessons Learned | PASS / FAIL | |
+| 13 | Anti-Pattern Audit | PASS / FAIL | |
 
 ## High-Criticality Failures
 

@@ -801,6 +801,334 @@ semantic_models:
         type: categorical
         expr: YearNumber
 
+  - name: dim_product
+    description: "Business product semantic layer used to slice performance by active status and product lifecycle state. Tracks Type 2 product history with validity windows while preserving consistent joins from fact tables through product keys."
+    model: ref('DimProduct')
+    primary_entity: product
+    entities:
+      - name: product
+        type: natural
+        expr: ProductHashPK
+    dimensions:
+      - name: product_business_key
+        type: categorical
+        expr: ProductHashBK
+      - name: current_flag
+        type: categorical
+        expr: CurrentFlagYN
+      - name: soft_deleted_flag
+        type: categorical
+        expr: SoftDeletedFlagYN
+      - name: deleted_flag
+        type: categorical
+        expr: DeletedFlagYN
+      - name: source_system_code
+        type: categorical
+        expr: SourceSystemCode
+      - name: effective_start_datetime
+        type: time
+        expr: EffectiveStartDateTime
+        type_params:
+          time_granularity: day
+          validity_params:
+            is_start: true
+      - name: effective_end_datetime
+        type: time
+        expr: EffectiveEndDateTime
+        type_params:
+          time_granularity: day
+          validity_params:
+            is_end: true
+
+  - name: dim_store
+    description: "Business store semantic layer for geographic and operational analysis. Enables consistent filtering and grouping of metrics by region, district, store type, and store activity status."
+    model: ref('DimStore')
+    entities:
+      - name: store
+        type: primary
+        expr: StoreHashPK
+    dimensions:
+      - name: store_name
+        type: categorical
+        expr: StoreName
+      - name: store_type
+        type: categorical
+        expr: StoreType
+      - name: city
+        type: categorical
+        expr: City
+      - name: state_province
+        type: categorical
+        expr: StateProvince
+      - name: country
+        type: categorical
+        expr: Country
+      - name: district_name
+        type: categorical
+        expr: DistrictName
+      - name: region_name
+        type: categorical
+        expr: RegionName
+      - name: is_active
+        type: categorical
+        expr: IsActive
+      - name: open_date
+        type: time
+        expr: OpenDate
+        type_params:
+          time_granularity: day
+      - name: load_timestamp
+        type: time
+        expr: LoadTimestamp
+        type_params:
+          time_granularity: day
+
+  - name: dim_warehouse
+    description: "Business warehouse semantic layer for supply-chain and fulfillment analysis. Supports reporting by location hierarchy, warehouse type, and operating status."
+    model: ref('DimWarehouse')
+    entities:
+      - name: warehouse
+        type: primary
+        expr: WarehouseHashPK
+    dimensions:
+      - name: warehouse_name
+        type: categorical
+        expr: WarehouseName
+      - name: warehouse_type
+        type: categorical
+        expr: WarehouseType
+      - name: city
+        type: categorical
+        expr: City
+      - name: state_province
+        type: categorical
+        expr: StateProvince
+      - name: country
+        type: categorical
+        expr: Country
+      - name: district_name
+        type: categorical
+        expr: DistrictName
+      - name: region_name
+        type: categorical
+        expr: RegionName
+      - name: is_active
+        type: categorical
+        expr: IsActive
+      - name: load_timestamp
+        type: time
+        expr: LoadTimestamp
+        type_params:
+          time_granularity: day
+
+  - name: dim_customer
+    description: "Business customer semantic layer for segment and retention analysis across customer history. Tracks Type 2 customer lifecycle state while maintaining consistent fact-to-customer joins."
+    model: ref('DimCustomer')
+    primary_entity: customer
+    entities:
+      - name: customer
+        type: natural
+        expr: CustomerHashPK
+    dimensions:
+      - name: customer_business_key
+        type: categorical
+        expr: CustomerHashBK
+      - name: current_flag
+        type: categorical
+        expr: CurrentFlagYN
+      - name: deleted_flag
+        type: categorical
+        expr: DeletedFlagYN
+      - name: source_system_code
+        type: categorical
+        expr: SourceSystemCode
+      - name: effective_start_datetime
+        type: time
+        expr: EffectiveStartDateTime
+        type_params:
+          time_granularity: day
+          validity_params:
+            is_start: true
+      - name: effective_end_datetime
+        type: time
+        expr: EffectiveEndDateTime
+        type_params:
+          time_granularity: day
+          validity_params:
+            is_end: true
+
+  - name: dim_supplier
+    description: "Business supplier semantic layer for procurement performance analysis. Supports reporting by supplier geography, payment terms, and supplier status."
+    model: ref('DimSupplier')
+    entities:
+      - name: supplier
+        type: primary
+        expr: SupplierHashPK
+    dimensions:
+      - name: supplier_name
+        type: categorical
+        expr: SupplierName
+      - name: city
+        type: categorical
+        expr: City
+      - name: state_province
+        type: categorical
+        expr: StateProvince
+      - name: country
+        type: categorical
+        expr: Country
+      - name: payment_terms_code
+        type: categorical
+        expr: PaymentTermsCode
+      - name: payment_terms_description
+        type: categorical
+        expr: PaymentTermsDescription
+      - name: is_active
+        type: categorical
+        expr: IsActive
+      - name: is_preferred
+        type: categorical
+        expr: IsPreferred
+      - name: load_timestamp
+        type: time
+        expr: LoadTimestamp
+        type_params:
+          time_granularity: day
+
+  - name: dim_employee
+    description: "Business employee semantic layer for workforce and sales-associate analysis. Enables slicing of transactional performance by organization, job role, and employee activity status."
+    model: ref('DimEmployee')
+    entities:
+      - name: employee
+        type: primary
+        expr: EmployeeHashPK
+    dimensions:
+      - name: full_name
+        type: categorical
+        expr: FullName
+      - name: job_title
+        type: categorical
+        expr: JobTitle
+      - name: department
+        type: categorical
+        expr: Department
+      - name: is_active
+        type: categorical
+        expr: IsActive
+      - name: hire_date
+        type: time
+        expr: HireDate
+        type_params:
+          time_granularity: day
+      - name: load_timestamp
+        type: time
+        expr: LoadTimestamp
+        type_params:
+          time_granularity: day
+
+  - name: fact_inventory_snapshot
+    description: "Business inventory snapshot semantic layer for daily stock, availability, and valuation analytics by product and warehouse. Supports on-hand, reserved, available, in-transit, and on-order inventory measures."
+    model: ref('FactInventorySnapshot')
+    defaults:
+      agg_time_dimension: load_timestamp
+    entities:
+      - name: inventory_snapshot
+        type: primary
+        expr: InventorySnapshotHashPK
+      - name: date
+        type: foreign
+        expr: DateHashFK
+      - name: product
+        type: foreign
+        expr: ProductHashFK
+      - name: warehouse
+        type: foreign
+        expr: WarehouseHashFK
+    dimensions:
+      - name: load_timestamp
+        type: time
+        expr: LoadTimestamp
+        type_params:
+          time_granularity: day
+    measures:
+      - name: inventory_snapshot_row_count_measure
+        agg: sum
+        expr: 1
+      - name: quantity_on_hand_measure
+        agg: sum
+        expr: QuantityOnHand
+      - name: quantity_reserved_measure
+        agg: sum
+        expr: QuantityReserved
+      - name: quantity_available_measure
+        agg: sum
+        expr: QuantityAvailable
+      - name: quantity_on_order_measure
+        agg: sum
+        expr: QuantityOnOrder
+      - name: quantity_in_transit_measure
+        agg: sum
+        expr: QuantityInTransit
+      - name: inventory_value_measure
+        agg: sum
+        expr: InventoryValue
+
+  - name: fact_purchase_order
+    description: "Business purchase-order semantic layer for procurement and fulfillment pipeline analytics. Supports visibility into ordered, shipped, received, and invoiced quantities and amounts over the purchase-order lifecycle."
+    model: ref('FactPurchaseOrder')
+    defaults:
+      agg_time_dimension: load_timestamp
+    entities:
+      - name: purchase_order_line
+        type: primary
+        expr: PurchaseOrderHashPK
+      - name: product
+        type: foreign
+        expr: ProductHashFK
+      - name: supplier
+        type: foreign
+        expr: SupplierHashFK
+      - name: warehouse
+        type: foreign
+        expr: WarehouseHashFK
+      - name: date
+        type: foreign
+        expr: DateOrderedHashFK
+    dimensions:
+      - name: load_timestamp
+        type: time
+        expr: LoadTimestamp
+        type_params:
+          time_granularity: day
+      - name: order_status
+        type: categorical
+        expr: OrderStatus
+    measures:
+      - name: purchase_order_line_count_measure
+        agg: sum
+        expr: 1
+      - name: quantity_ordered_measure
+        agg: sum
+        expr: QuantityOrdered
+      - name: quantity_shipped_measure
+        agg: sum
+        expr: QuantityShipped
+      - name: quantity_received_measure
+        agg: sum
+        expr: QuantityReceived
+      - name: order_amount_measure
+        agg: sum
+        expr: OrderAmount
+      - name: shipped_amount_measure
+        agg: sum
+        expr: ShippedAmount
+      - name: received_amount_measure
+        agg: sum
+        expr: ReceivedAmount
+      - name: invoiced_amount_measure
+        agg: sum
+        expr: InvoicedAmount
+
 metrics:
   - name: sales_row_count
     description: "Counts transaction line items in FactSales at the current filter grain. Includes both sale and return lines; use transaction_type to isolate specific activity types."
@@ -844,3 +1172,108 @@ metrics:
     type_params:
       numerator: total_profit_amount
       denominator: net_sales_amount
+
+  - name: inventory_snapshot_row_count
+    description: "Counts daily inventory snapshot records at the current filter grain across product and warehouse combinations."
+    type: simple
+    label: Inventory Snapshot Row Count
+    type_params:
+      measure: inventory_snapshot_row_count_measure
+
+  - name: total_quantity_on_hand
+    description: "Sums quantity physically on hand at the current filter grain. Represents total recorded stock before reservations."
+    type: simple
+    label: Total Quantity On Hand
+    type_params:
+      measure: quantity_on_hand_measure
+
+  - name: total_quantity_reserved
+    description: "Sums quantity reserved for demand at the current filter grain. Represents stock not currently available for new allocations."
+    type: simple
+    label: Total Quantity Reserved
+    type_params:
+      measure: quantity_reserved_measure
+
+  - name: total_quantity_available
+    description: "Sums quantity available for fulfillment at the current filter grain. Reflects net available stock after reservation effects in source data."
+    type: simple
+    label: Total Quantity Available
+    type_params:
+      measure: quantity_available_measure
+
+  - name: total_quantity_on_order
+    description: "Sums inbound quantity on purchase orders at the current filter grain. Indicates replenishment expected but not yet received."
+    type: simple
+    label: Total Quantity On Order
+    type_params:
+      measure: quantity_on_order_measure
+
+  - name: total_quantity_in_transit
+    description: "Sums quantity currently in transit at the current filter grain. Represents inventory between origin and warehouse receipt."
+    type: simple
+    label: Total Quantity In Transit
+    type_params:
+      measure: quantity_in_transit_measure
+
+  - name: total_inventory_value
+    description: "Sums inventory valuation amount at the current filter grain. Used for stock value reporting across products and warehouses."
+    type: simple
+    label: Total Inventory Value
+    type_params:
+      measure: inventory_value_measure
+
+  - name: purchase_order_line_count
+    description: "Counts purchase-order line records at the current filter grain. Reflects order-line activity across suppliers, products, and warehouses."
+    type: simple
+    label: Purchase Order Line Count
+    type_params:
+      measure: purchase_order_line_count_measure
+
+  - name: total_quantity_ordered
+    description: "Sums ordered quantity at the current filter grain for purchase-order lines."
+    type: simple
+    label: Total Quantity Ordered
+    type_params:
+      measure: quantity_ordered_measure
+
+  - name: total_quantity_shipped
+    description: "Sums supplier-shipped quantity at the current filter grain for purchase-order lines."
+    type: simple
+    label: Total Quantity Shipped
+    type_params:
+      measure: quantity_shipped_measure
+
+  - name: total_quantity_received
+    description: "Sums warehouse-received quantity at the current filter grain for purchase-order lines."
+    type: simple
+    label: Total Quantity Received
+    type_params:
+      measure: quantity_received_measure
+
+  - name: total_purchase_order_amount
+    description: "Sums ordered monetary amount at the current filter grain. Represents committed spend based on ordered quantities and unit costs."
+    type: simple
+    label: Total Purchase Order Amount
+    type_params:
+      measure: order_amount_measure
+
+  - name: total_shipped_amount
+    description: "Sums shipped monetary amount at the current filter grain for purchase-order lines."
+    type: simple
+    label: Total Shipped Amount
+    type_params:
+      measure: shipped_amount_measure
+
+  - name: total_received_amount
+    description: "Sums received monetary amount at the current filter grain for purchase-order lines."
+    type: simple
+    label: Total Received Amount
+    type_params:
+      measure: received_amount_measure
+
+  - name: total_invoiced_amount
+    description: "Sums invoiced monetary amount at the current filter grain for purchase-order lines."
+    type: simple
+    label: Total Invoiced Amount
+    type_params:
+      measure: invoiced_amount_measure

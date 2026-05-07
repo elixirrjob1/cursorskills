@@ -12,6 +12,32 @@
       "timing_file": "runs/2026-05-07/timing.json",
       "comparison_file": null,
       "notes": "Self-review + meta-eval of agents/grader.md. Comparator not run (first review)."
+    },
+    {
+      "date": "2026-05-07",
+      "skill_version": "f0f39f0",
+      "unit_tests": { "passed": 10, "total": 10, "pass_rate": 1.0 },
+      "assertions": { "passed": 30, "total": 30, "pass_rate": 1.0 },
+      "categories": { "passed": 9, "total": 13, "pass_rate": 0.69 },
+      "verdict": "FAIL",
+      "high_failures": ["Separation of duties observed (skill author is not also the sole reviewer)"],
+      "review_file": "review-skill-reviewer-2026-05-07.md",
+      "timing_file": "runs/2026-05-07/timing.json",
+      "comparison_file": null,
+      "notes": "Incremental re-check: categories 8,9,11,12 re-evaluated; all evals SKIP (carried PASS); no comparator snapshot."
+    },
+    {
+      "date": "2026-05-07",
+      "skill_version": "f0f39f0",
+      "unit_tests": { "passed": 10, "total": 10, "pass_rate": 1.0 },
+      "assertions": { "passed": 30, "total": 30, "pass_rate": 1.0 },
+      "categories": { "passed": 9, "total": 13, "pass_rate": 0.69 },
+      "verdict": "FAIL",
+      "high_failures": ["Separation of duties observed (skill author is not also the sole reviewer)"],
+      "review_file": "review-skill-reviewer-2026-05-07.md",
+      "timing_file": "runs/2026-05-07/timing.json",
+      "comparison_file": null,
+      "notes": "Live harness: 10 parallel generalPurpose executor subagents on evals.json; grader JSON refreshed from actual responses (30/30 assertions). Comparator N/A (no SKILL.md change vs prior review)."
     }
   ]
 }

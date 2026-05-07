@@ -1,14 +1,129 @@
 <!DOCTYPE html>
-<html lang="en"><head><meta charset="UTF-8"><title>Benchmark: skill-reviewer — 2026-05-07</title>
-<style>body{font-family:system-ui,sans-serif;max-width:900px;margin:24px auto;padding:0 16px;font-size:14px} h1{font-size:20px} table{border-collapse:collapse;width:100%;font-size:13px} th,td{border:1px solid #ccc;padding:8px} th{background:#f3f4f6}.pass{background:#d4edda}.fail{background:#f8d7da}</style></head><body>
-<h1>skill-reviewer — self-review benchmark</h1>
-<p><em>2026-05-07 · Repo 2fd9c5b · Comparator N/A</em></p>
-<table><tr><th>Metric</th><th>Value</th></tr>
-<tr><td>Unit tests</td><td class="pass">10 / 10</td></tr>
-<tr><td>Assertions</td><td class="pass">30 / 30</td></tr>
-<tr><td>Categories</td><td class="fail">9 / 13</td></tr>
-<tr><td>Verdict</td><td class="fail">FAIL</td></tr>
-<tr><td>Grader meta-eval</td><td class="pass">agents/grader.md self-consistent</td></tr>
-</table>
-<p>Full report: <code>review-skill-reviewer-2026-05-07.md</code></p>
-</body></html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Benchmark Report: skill-reviewer</title>
+  <style>
+    body { font-family: system-ui, sans-serif; font-size: 14px; margin: 24px; background: #fff; color: #222; }
+    h1 { font-size: 1.35rem; margin-bottom: 0.25rem; }
+    h2 { font-size: 1.1rem; margin-top: 2rem; margin-bottom: 0.75rem; border-bottom: 1px solid #ccc; padding-bottom: 0.25rem; }
+    .meta { color: #555; margin-bottom: 1.5rem; }
+    table { border-collapse: collapse; width: 100%; margin: 0.5rem 0 1rem; }
+    th, td { border: 1px solid #ccc; padding: 8px 10px; text-align: left; }
+    tr:nth-child(even) { background: #f9f9f9; }
+    th { background: #eee; font-weight: 600; }
+    .pass { background: #d4edda; color: #155724; }
+    .fail { background: #f8d7da; color: #721c24; }
+    .skip { background: #fff3cd; color: #856404; }
+    .bar-track { display: inline-block; width: 120px; height: 10px; background: #e0e0e0; border-radius: 2px; vertical-align: middle; margin-right: 8px; }
+    .bar-fill { height: 100%; background: #28a745; border-radius: 2px; }
+    .note { color: #444; font-style: italic; margin: 0.5rem 0; }
+    code { font-size: 13px; background: #f4f4f4; padding: 1px 4px; border-radius: 2px; }
+  </style>
+</head>
+<body>
+  <h1>Benchmark Report: skill-reviewer</h1>
+  <p class="meta">Generated: 2026-05-07 · live executor harness (third history entry)</p>
+
+  <h2>Summary</h2>
+  <table>
+    <tr><th>Metric</th><th>Value</th></tr>
+    <tr><td>Overall Verdict</td><td class="fail">FAIL</td></tr>
+    <tr><td>Unit Tests</td><td>10 / 10 passed (100%) — live subagents</td></tr>
+    <tr><td>Assertions</td><td>30 / 30 (100%) — graded from transcripts</td></tr>
+    <tr><td>Categories</td><td>9 / 13 passed</td></tr>
+    <tr><td>High Failures</td><td>1</td></tr>
+    <tr><td>Medium Failures</td><td>5 (rolled up)</td></tr>
+    <tr><td>Comparator</td><td class="skip">— (not run; no snapshot)</td></tr>
+  </table>
+
+  <h2>Unit Test Results</h2>
+  <table>
+    <thead>
+      <tr><th>#</th><th>Test</th><th>Type</th><th>Result</th><th>Assertions</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>1</td><td>meetingintroskill full rubric</td><td>should-trigger</td><td class="pass">PASS</td><td>3/3</td></tr>
+      <tr><td>2</td><td>incremental re-check</td><td>should-trigger</td><td class="pass">PASS</td><td>3/3</td></tr>
+      <tr><td>3</td><td>HIGH findings only</td><td>should-trigger</td><td class="pass">PASS</td><td>3/3</td></tr>
+      <tr><td>4</td><td>save tests/results + history</td><td>should-trigger</td><td class="pass">PASS</td><td>3/3</td></tr>
+      <tr><td>5</td><td>blind comparison docs</td><td>should-trigger</td><td class="pass">PASS</td><td>3/3</td></tr>
+      <tr><td>6</td><td>STM → dbt</td><td>should-not-trigger</td><td class="pass">PASS</td><td>3/3</td></tr>
+      <tr><td>7</td><td>Key Vault bootstrap</td><td>should-not-trigger</td><td class="pass">PASS</td><td>3/3</td></tr>
+      <tr><td>8</td><td>Paris trivia</td><td>should-not-trigger</td><td class="pass">PASS</td><td>3/3</td></tr>
+      <tr><td>9</td><td>"Run the skill reviewer"</td><td>edge-case</td><td class="pass">PASS</td><td>3/3</td></tr>
+      <tr><td>10</td><td>grader contract</td><td>edge-case</td><td class="pass">PASS</td><td>3/3</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Assertion Detail</h2>
+  <p class="note">Per-eval JSON: <code>runs/2026-05-07/grading-&lt;n&gt;.json</code> for n = 1…10.</p>
+
+  <h2>Category Grades</h2>
+  <table>
+    <thead>
+      <tr><th>#</th><th>Category</th><th>Grade</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>1</td><td>Triggering</td><td class="pass">PASS</td></tr>
+      <tr><td>2</td><td>Anatomy & Structure</td><td class="pass">PASS</td></tr>
+      <tr><td>3</td><td>Instructions Clarity</td><td class="pass">PASS</td></tr>
+      <tr><td>4</td><td>Output Quality</td><td class="pass">PASS</td></tr>
+      <tr><td>5</td><td>Testability</td><td class="pass">PASS</td></tr>
+      <tr><td>6</td><td>Resource Efficiency</td><td class="pass">PASS</td></tr>
+      <tr><td>7</td><td>Security & Trust</td><td class="pass">PASS</td></tr>
+      <tr><td>8</td><td>Coexistence & Recall</td><td class="fail">FAIL</td></tr>
+      <tr><td>9</td><td>Model Compatibility</td><td class="fail">FAIL</td></tr>
+      <tr><td>10</td><td>Workflow & Feedback Loops</td><td class="pass">PASS</td></tr>
+      <tr><td>11</td><td>Maintainability & Lifecycle</td><td class="fail">FAIL</td></tr>
+      <tr><td>12</td><td>Gotchas / Lessons Learned</td><td class="fail">FAIL</td></tr>
+      <tr><td>13</td><td>Anti-Pattern Audit</td><td class="pass">PASS</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Version Comparison</h2>
+  <p class="note">Comparator not run — no Step 3c snapshot in this session.</p>
+
+  <h2>History (all reviews)</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Date</th>
+        <th>Unit Tests</th>
+        <th>Assertions</th>
+        <th>Categories</th>
+        <th>Verdict</th>
+        <th>Notes</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>2026-05-07</td>
+        <td><span class="bar-track"><span class="bar-fill" style="width:100%"></span></span>100%</td>
+        <td><span class="bar-track"><span class="bar-fill" style="width:100%"></span></span>100%</td>
+        <td><span class="bar-track"><span class="bar-fill" style="width:69%"></span></span>69%</td>
+        <td class="fail">FAIL</td>
+        <td>first (simulated)</td>
+      </tr>
+      <tr>
+        <td>2026-05-07</td>
+        <td><span class="bar-track"><span class="bar-fill" style="width:100%"></span></span>100%</td>
+        <td><span class="bar-track"><span class="bar-fill" style="width:100%"></span></span>100%</td>
+        <td><span class="bar-track"><span class="bar-fill" style="width:69%"></span></span>69%</td>
+        <td class="fail">FAIL</td>
+        <td>incremental SKIP</td>
+      </tr>
+      <tr>
+        <td>2026-05-07</td>
+        <td><span class="bar-track"><span class="bar-fill" style="width:100%"></span></span>100%</td>
+        <td><span class="bar-track"><span class="bar-fill" style="width:100%"></span></span>100%</td>
+        <td><span class="bar-track"><span class="bar-fill" style="width:69%"></span></span>69%</td>
+        <td class="fail">FAIL</td>
+        <td>live subagents</td>
+      </tr>
+    </tbody>
+  </table>
+  <p class="note">Full narrative: <code>review-skill-reviewer-2026-05-07.md</code></p>
+</body>
+</html>

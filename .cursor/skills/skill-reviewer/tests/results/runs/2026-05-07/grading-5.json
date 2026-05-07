@@ -1,1 +1,22 @@
-{"eval_id":5,"prompt_short":"Does our reviewer workflow document blind comparison between skill versions?","overall_result":"PASS","assertions":[{"text":"Response mentions Step 3c OR comparator OR blind comparison","passed":true,"evidence":"Step 3c blind comparison; Comparator in agents/comparator.md."},{"text":"Response mentions snapshot OR old version vs new version OR two skill versions","passed":true,"evidence":"Snapshot to /tmp/skill-snapshot; dual executor runs old vs new."},{"text":"Response does NOT say the skill has no such feature","passed":true,"evidence":"Affirms feature exists when SKILL.md is edited after prior review."}]}
+{
+  "eval_id": 5,
+  "prompt_short": "Does our reviewer workflow document blind comparison between skill versions?",
+  "overall_result": "PASS",
+  "assertions": [
+    {
+      "text": "Response mentions Step 3c OR comparator OR blind comparison",
+      "passed": true,
+      "evidence": "**Step 3c**, **comparator**, and **blind comparison** explained."
+    },
+    {
+      "text": "Response mentions snapshot OR old version vs new version OR two skill versions",
+      "passed": true,
+      "evidence": "**Snapshot**, **current vs snapshot**, and **two skill versions** described."
+    },
+    {
+      "text": "Response does NOT say the skill has no such feature",
+      "passed": true,
+      "evidence": "Confirms the workflow documents this feature rather than denying it."
+    }
+  ]
+}

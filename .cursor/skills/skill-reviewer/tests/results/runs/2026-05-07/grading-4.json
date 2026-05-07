@@ -1,1 +1,22 @@
-{"eval_id":4,"prompt_short":"After you review the skill, save the report to tests/results/ and append history.json.","overall_result":"PASS","assertions":[{"text":"Response mentions tests/results or results folder","passed":true,"evidence":"Step 6 saves under skill's tests/results/."},{"text":"Response mentions history.json or benchmark report","passed":true,"evidence":"Step 7a appends history.json; 7b/7c writes benchmark .md/.html."},{"text":"Response mentions review- prefix filename or dated report pattern","passed":true,"evidence":"Filename pattern review-<skill-name>-YYYY-MM-DD.md."}]}
+{
+  "eval_id": 4,
+  "prompt_short": "After you review the skill, save the report to tests/results/ and append history",
+  "overall_result": "PASS",
+  "assertions": [
+    {
+      "text": "Response mentions tests/results or results folder",
+      "passed": true,
+      "evidence": "**`tests/results/`** and artifact table with full paths."
+    },
+    {
+      "text": "Response mentions history.json or benchmark report",
+      "passed": true,
+      "evidence": "**`history.json`** and **benchmark** `.md`/`.html` called out."
+    },
+    {
+      "text": "Response mentions review- prefix filename or dated report pattern",
+      "passed": true,
+      "evidence": "**`review-<skill>-YYYY-MM-DD.md`** naming pattern documented."
+    }
+  ]
+}

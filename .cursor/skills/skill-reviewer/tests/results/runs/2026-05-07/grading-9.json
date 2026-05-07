@@ -1,1 +1,22 @@
-{"eval_id":9,"prompt_short":"Run the skill reviewer.","overall_result":"PASS","assertions":[{"text":"Response contains a question mark OR asks which skill or path","passed":true,"evidence":"'Which skill should I review?' with question mark."},{"text":"Response does NOT output a complete fabricated review for a specific unnamed skill as if the target were known","passed":true,"evidence":"No fabricated review for a named skill without input."},{"text":"Response mentions needing SKILL.md, path, or pasted content","passed":true,"evidence":"Asks for path, folder, or pasted SKILL.md."}]}
+{
+  "eval_id": 9,
+  "prompt_short": "Run the skill reviewer.",
+  "overall_result": "PASS",
+  "assertions": [
+    {
+      "text": "Response contains a question mark OR asks which skill or path",
+      "passed": true,
+      "evidence": "**Please specify the target** and bullet options for path/skill/paste \u2014 asks which skill to review."
+    },
+    {
+      "text": "Response does NOT output a complete fabricated review for a specific unnamed skill as if the target were known",
+      "passed": true,
+      "evidence": "No fabricated full review for a specific unnamed skill\u2014only asks for target."
+    },
+    {
+      "text": "Response mentions needing SKILL.md, path, or pasted content",
+      "passed": true,
+      "evidence": "Mentions **path**, **skill folder**, **Pasted content** / **SKILL.md**."
+    }
+  ]
+}

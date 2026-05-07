@@ -246,52 +246,56 @@ For `skill_version`, run `git -C <skill-folder> rev-parse --short HEAD 2>/dev/nu
 
 Save to `tests/results/`.
 
+**Reuse the canonical markdown template (preferred):** Read `references/benchmark-report-template.md` from **this skill’s folder** (`skill-reviewer`) — e.g. `.cursor/skills/skill-reviewer/references/benchmark-report-template.md`. Copy to the target’s `tests/results/benchmark-<skill-name>-YYYY-MM-DD.md`, remove the `<!-- … -->` comment block at the top, and **replace every placeholder** (`___NAME___`).
+
+**Summary table (required):** Must contain exactly these **seven** metrics in this order — same as `references/benchmark-report-template.html`:
+
+| Metric | Value (examples) |
+|--------|------------------|
+| Overall Verdict | `PASS` / `FAIL` |
+| Unit Tests | `X / Y passed (Z%)` |
+| Assertions | `A / B (C%)` or `—` if not tracked |
+| Categories | `X / 13 passed` |
+| High Failures | `N` or `—` |
+| Medium Failures | `N` or short rollup text |
+| Comparator | e.g. `— (not run)` or `new_wins` summary |
+
+| Placeholder | Replace with |
+|-------------|----------------|
+| `___SKILL_NAME___` | Target skill display name |
+| `___META_LINE___` | One line, e.g. `_Generated: YYYY-MM-DD · <run note>_` (leading `_` for italics if desired) |
+| `___SUMMARY_VERDICT___` | `PASS` or `FAIL` |
+| `___SUMMARY_UNIT_TESTS___` | e.g. `10 / 10 passed (100%)` |
+| `___SUMMARY_ASSERTIONS___` | e.g. `30 / 30 (100%)` |
+| `___SUMMARY_CATEGORIES___` | e.g. `9 / 13 passed` |
+| `___SUMMARY_HIGH_FAILURES___` | e.g. `1` or `—` |
+| `___SUMMARY_MEDIUM_FAILURES___` | e.g. `5 (rolled up)` or `—` |
+| `___SUMMARY_COMPARATOR___` | e.g. `— (not run; no snapshot)` |
+| `___UNIT_TEST_ROWS___` | Markdown table body rows: `\| # \| label \| type \| ✅ PASS / ❌ FAIL \| a/b \|` |
+| `___ASSERTION_DETAIL_BLOCK___` | Table and/or prose matching Step 3b grading output |
+| `___CATEGORY_ROWS___` | Rows `\| n \| Category \| PASS / FAIL \|` |
+| `___VERSION_COMPARISON_BLOCK___` | Comparator table or italic `_Not run — …_` |
+| `___HISTORY_ROWS___` | One data row per `history.json` entry |
+| `___REVIEW_FILENAME___` | `review-<skill-name>-YYYY-MM-DD.md` for this run |
+
+**Fallback** if the template file cannot be read: write the same sections manually; **Summary must still list all seven metrics in the order above**.
+
+Minimal shape (reference):
+
 ```markdown
-# Benchmark Report: <skill-name>
-_Generated: YYYY-MM-DD_
-
 ## Summary
-
 | Metric | Value |
 |--------|-------|
 | Overall Verdict | PASS / FAIL |
 | Unit Tests | X / Y passed (Z%) |
+| Assertions | A / B (C%) |
 | Categories | X / 13 passed |
 | High Failures | N |
 | Medium Failures | N |
+| Comparator | — |
 
 ## Unit Test Results
-
-| # | Test | Type | Result | Assertions |
-|---|------|------|--------|------------|
-| 1 | ... | should-trigger | ✅ PASS | 3/3 |
-| 2 | ... | edge-case | ❌ FAIL | 1/2 |
-
-## Assertion Detail
-
-| Eval | Assertion | Passed | Evidence |
-|------|-----------|--------|---------|
-| 1 | Response contains 5 strategy labels | ✅ | "Relationship, Purpose, Curiosity..." |
-| 2 | Response does NOT contain clarifying question | ❌ | "Before I write the openers..." |
-
-## Category Grades
-
-| # | Category | Grade |
-|---|----------|-------|
-| 1 | Triggering | PASS |
-...
-
-## Version Comparison (if comparator was run)
-
-| Overall | New Wins | Old Wins | Ties | Eval | Verdict | Reasoning |
-|---------|----------|----------|------|------|---------|-----------|
-| new_wins | N | N | N | 1 | new_wins | New produced all 5 intros; old asked clarifying question |
-
-## History (all reviews)
-
-| Date | Unit Tests | Assertions | Categories | Verdict | Comparison |
-|------|-----------|------------|------------|---------|------------|
-| YYYY-MM-DD | X/Y | X/N | X/13 | PASS | new_wins / — |
+(…)
 ```
 
 #### 7c: Generate `benchmark-<skill-name>-YYYY-MM-DD.html`

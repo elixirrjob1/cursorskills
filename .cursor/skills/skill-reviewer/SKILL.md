@@ -184,6 +184,18 @@ See `agents/grader.md` for grader instructions. Each grader saves its output to 
 
 An eval's `overall_result` is PASS only if all assertions pass. If grading contradicts your earlier PASS/FAIL verdict, trust the grader — update the unit test summary accordingly.
 
+### Step 3c: Blind comparison (incremental runs only)
+
+**Skip this step on first reviews.** Only run when:
+- A prior review exists (Step 1 found one), AND
+- The skill has been edited since that review (SKILL.md mtime is newer than the last review date)
+
+**Setup:** Snapshot the old skill before editing: `cp -r <skill-path> /tmp/skill-snapshot-<skill-name>`. If no snapshot exists for this session, skip Step 3c.
+
+**Run:** For each re-run eval (not SKIP), spawn two executor subagents in parallel — one with the current skill, one with the snapshot — using the same prompt, without labelling which is which. Then spawn one comparator subagent per eval (see `agents/comparator.md`), passing `output_a` and `output_b` unlabelled. Each comparator saves `tests/results/runs/YYYY-MM-DD/comparison-<eval_id>.json` with fields: `eval_id`, `prompt_short`, `verdict` (`a_wins | b_wins | tie`), `reasoning`.
+
+**Aggregate:** After all comparators complete, map `a_wins`/`b_wins` to `new_wins`/`old_wins` (you know which was A vs B — track it). Save `tests/results/runs/YYYY-MM-DD/comparison-summary.json` with fields: `review_date`, `overall` (`new_wins | old_wins | tie | mixed`), `new_wins`, `old_wins`, `ties`, `total_compared`. `overall` is `new_wins` if new > old, `old_wins` if reversed, `tie` if equal, `mixed` if both > 0 but split. Include the summary in the benchmark report (Step 7b/7c) when present.
+
 ### Step 4: Review each subcategory
 
 Skip any category that carried a **PASS** from the prior review (Step 1 incremental check) — carry it forward as-is. For categories being re-evaluated, assign **PASS**, **FAIL** (with a one-to-two-sentence evidence-based reason), or **N/A** (criterion does not apply). Cite the specific line, file, or absence of content that justifies the verdict.
@@ -269,16 +281,22 @@ _Generated: YYYY-MM-DD_
 | 1 | Triggering | PASS |
 ...
 
+## Version Comparison (if comparator was run)
+
+| Overall | New Wins | Old Wins | Ties | Eval | Verdict | Reasoning |
+|---------|----------|----------|------|------|---------|-----------|
+| new_wins | N | N | N | 1 | new_wins | New produced all 5 intros; old asked clarifying question |
+
 ## History (all reviews)
 
-| Date | Unit Tests | Assertions | Categories | Verdict | High Failures |
-|------|-----------|------------|------------|---------|---------------|
-| YYYY-MM-DD | X/Y | X/N | X/13 | PASS | — |
+| Date | Unit Tests | Assertions | Categories | Verdict | Comparison |
+|------|-----------|------------|------------|---------|------------|
+| YYYY-MM-DD | X/Y | X/N | X/13 | PASS | new_wins / — |
 ```
 
 #### 7c: Generate `benchmark-<skill-name>-YYYY-MM-DD.html`
 
-Save alongside the `.md` file. Must be a **fully self-contained** HTML file — no external CDN links, all CSS inline. Include the same sections as the markdown benchmark: Summary, Unit Test Results (with Assertions column), Assertion Detail table, Category Grades, History. Use these style conventions:
+Save alongside the `.md` file. Must be a **fully self-contained** HTML file — no external CDN links, all CSS inline. Include the same sections as the markdown benchmark: Summary, Unit Test Results (with Assertions column), Assertion Detail table, Version Comparison (if comparator was run), Category Grades, History. Use these style conventions:
 - White background, `font-family: system-ui, sans-serif`, `font-size: 14px`
 - Tables: `border-collapse: collapse`, `1px solid #ccc`, alternating row shading (`#f9f9f9`)
 - PASS cells: `background: #d4edda; color: #155724`
@@ -286,28 +304,7 @@ Save alongside the `.md` file. Must be a **fully self-contained** HTML file — 
 - SKIP cells: `background: #fff3cd; color: #856404`
 - History section: render pass rate as an inline progress bar — a `<div>` with a green fill proportional to the pass rate, followed by the percentage text
 
-Minimum HTML skeleton:
-
-```html
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>Benchmark: <skill-name> — YYYY-MM-DD</title>
-  <style>/* all styles inline here */</style>
-</head>
-<body>
-  <h1>Benchmark Report: <skill-name></h1>
-  <p><em>Generated: YYYY-MM-DD</em></p>
-  <!-- Summary table -->
-  <!-- Unit test results table -->
-  <!-- Category grades table -->
-  <!-- History table with progress bars -->
-</body>
-</html>
-```
-
-Generate this file directly — do not require a separate script.
+Generate a self-contained HTML file directly (no separate script). Structure: `<!DOCTYPE html>` with all CSS in a `<style>` block in `<head>`, then `<body>` containing each section as a heading + table.
 
 ---
 

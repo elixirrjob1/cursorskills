@@ -1,0 +1,10 @@
+{
+  "eval_id": 4,
+  "prompt_short": "Convert the Excel workbook back to JSON, applying my edits",
+  "overall_result": "PASS",
+  "assertions": [
+    { "text": "Response runs or describes running excel_to_json.py", "passed": true, "evidence": "Agent ran excel_to_json.py on schema.xlsx" },
+    { "text": "Response does NOT include --no-apply-edits (edits should be applied by default)", "passed": true, "evidence": "Command did not include --no-apply-edits; default mode applies visible edits" },
+    { "text": "Response mentions output JSON file", "passed": true, "evidence": "\"Your edits have been applied and the JSON has been written to schema.json at the workspace root\"" }
+  ]
+}

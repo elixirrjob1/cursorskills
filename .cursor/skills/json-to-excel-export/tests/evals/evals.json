@@ -1,0 +1,127 @@
+{
+  "skill_name": "json-to-excel-export",
+  "generated_date": "2026-05-07",
+  "evals": [
+    {
+      "id": 1,
+      "type": "should-trigger",
+      "prompt": "Export my schema JSON to Excel (schema.json present)",
+      "expected_behavior": "Runs json_to_excel.py with input/output; produces Summary, SourceSystem, DataQualityFindings, per-table tabs.",
+      "assertions": [
+        "Response runs or describes running json_to_excel.py",
+        "Response mentions Summary or per-table worksheet output",
+        "Response does NOT refuse or ask for a different skill"
+      ]
+    },
+    {
+      "id": 2,
+      "type": "should-trigger",
+      "prompt": "Convert schema.json to Excel but skip the OpenMetadata glossary sheet",
+      "expected_behavior": "Runs json_to_excel.py with --no-openmetadata; no DataGovernanceTerms tab.",
+      "assertions": [
+        "Response includes --no-openmetadata flag",
+        "Response does NOT attempt to fetch from OpenMetadata",
+        "Response mentions DataGovernanceTerms sheet being skipped or absent"
+      ]
+    },
+    {
+      "id": 3,
+      "type": "should-trigger",
+      "prompt": "I have a pre-fetched glossary.json file, use that instead of fetching from OpenMetadata",
+      "expected_behavior": "Runs json_to_excel.py with --glossary-json <path>.",
+      "assertions": [
+        "Response includes --glossary-json flag",
+        "Response references the provided glossary file path",
+        "Response does NOT attempt a live OpenMetadata fetch when glossary is pre-fetched"
+      ]
+    },
+    {
+      "id": 4,
+      "type": "should-trigger",
+      "prompt": "Convert the Excel workbook back to JSON, applying my edits",
+      "expected_behavior": "Runs excel_to_json.py with xlsx input and json output; applies visible edits by default.",
+      "assertions": [
+        "Response runs or describes running excel_to_json.py",
+        "Response does NOT include --no-apply-edits (edits should be applied by default)",
+        "Response mentions output JSON file"
+      ]
+    },
+    {
+      "id": 5,
+      "type": "should-trigger",
+      "prompt": "Restore the original JSON from this Excel file, ignoring any edits I made",
+      "expected_behavior": "Runs excel_to_json.py with --no-apply-edits; restores from __rt_* round-trip tabs.",
+      "assertions": [
+        "Response includes --no-apply-edits flag",
+        "Response mentions __rt_ round-trip tabs or original payload restore",
+        "Response uses excel_to_json.py script"
+      ]
+    },
+    {
+      "id": 6,
+      "type": "should-not-trigger",
+      "prompt": "Export a report of top 10 customers from Snowflake to Excel",
+      "expected_behavior": "Routes to natural-language-data-query \u2014 not schema JSON export.",
+      "assertions": [
+        "Response does NOT run json_to_excel.py",
+        "Response declines or redirects \u2014 does not treat as schema conversion",
+        "Response does NOT produce an Excel workbook from a Snowflake query"
+      ]
+    },
+    {
+      "id": 7,
+      "type": "should-not-trigger",
+      "prompt": "Generate a dbt model and export it to Excel",
+      "expected_behavior": "Routes to dbt-model-from-stm \u2014 not schema JSON conversion.",
+      "assertions": [
+        "Response references dbt-model-from-stm or general dbt work",
+        "Response does NOT run json_to_excel.py as the main action",
+        "Response declines or redirects"
+      ]
+    },
+    {
+      "id": 8,
+      "type": "should-not-trigger",
+      "prompt": "Convert my Python script to an Excel file",
+      "expected_behavior": "General task \u2014 not a schema JSON export skill.",
+      "assertions": [
+        "Response does NOT run json_to_excel.py",
+        "Response does not treat Python script as a schema JSON input",
+        "Response declines or answers from general knowledge"
+      ]
+    },
+    {
+      "id": 9,
+      "type": "edge-case",
+      "prompt": "Export schema.json to Excel (no output path specified)",
+      "expected_behavior": "Runs json_to_excel.py without output_xlsx; script writes .xlsx next to input.",
+      "assertions": [
+        "Response runs or describes running json_to_excel.py with only the input argument",
+        "Response mentions output file lands next to input OR uses same base name with .xlsx extension",
+        "Response does NOT error on missing output path"
+      ]
+    },
+    {
+      "id": 10,
+      "type": "edge-case",
+      "prompt": "Export schema.json to Excel but OPENMETADATA_BASE_URL is not set",
+      "expected_behavior": "Runs conversion; OpenMetadata fetch skipped silently; workbook produced without DataGovernanceTerms.",
+      "assertions": [
+        "Response notes OpenMetadata fetch will be skipped or produce no DataGovernanceTerms sheet",
+        "Response does NOT error out \u2014 graceful degradation described",
+        "Response still proceeds with the conversion"
+      ]
+    },
+    {
+      "id": 11,
+      "type": "edge-case",
+      "prompt": "Convert my Excel back to JSON with a legacy-format workbook (no __rt_* tabs)",
+      "expected_behavior": "Runs excel_to_json.py; applies edits from visible tabs; backward-compatible.",
+      "assertions": [
+        "Response runs excel_to_json.py",
+        "Response notes backward compatibility with legacy workbooks OR applies visible tab edits",
+        "Response does NOT refuse or error on missing __rt_* tabs"
+      ]
+    }
+  ]
+}

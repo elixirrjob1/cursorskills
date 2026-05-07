@@ -73,11 +73,11 @@ def _om_fetch_glossary_payload() -> dict | None:
         "Authorization": f"Bearer {token}",
     }
     try:
-        g_resp = _req.get(f"{base}/v1/glossaries", params={"limit": 1000}, headers=headers, timeout=(10, 30))
+        g_resp = _req.get(f"{base}/v1/glossaries", params={"limit": 1000}, headers=headers, timeout=(10, 30))  # 1000: safely above any real-world glossary count; OM paginates beyond this if needed
         g_resp.raise_for_status()
         glossaries = (g_resp.json() or {}).get("data", [])
 
-        t_resp = _req.get(f"{base}/v1/glossaryTerms", params={"limit": 1000}, headers=headers, timeout=(10, 30))
+        t_resp = _req.get(f"{base}/v1/glossaryTerms", params={"limit": 1000}, headers=headers, timeout=(10, 30))  # 1000: same rationale as glossaries above
         t_resp.raise_for_status()
         terms = (t_resp.json() or {}).get("data", [])
 
@@ -371,7 +371,7 @@ def _contacts_rows(source_system_context):
                         "notes": "",
                     }
                 )
-    # Provide blank fillable lines for manual completion.
+    # 8: minimum blank fillable rows so reviewers have room to add contacts without inserting rows.
     while len(rows) < 8:
         rows.append({"contact_name": "", "role": "", "email": "", "phone": "", "notes": ""})
     return rows
@@ -387,7 +387,7 @@ def _delete_management_rows(source_system_context):
             "notes": "",
         }
     ]
-    while len(rows) < 8:
+    while len(rows) < 8:  # 8: minimum blank fillable rows — see contact rows above
         rows.append({"table_name": "", "delete_strategy": "", "instruction": "", "notes": ""})
     return rows
 
@@ -430,7 +430,7 @@ def _restrictions_rows(source_system_context):
     else:
         rows.append({"table_name": "", "restriction_type": "", "scope": "", "details": _cell_value(restrictions), "owner": ""})
 
-    while len(rows) < 8:
+    while len(rows) < 8:  # 8: minimum blank fillable rows — see contact rows above
         rows.append({"table_name": "", "restriction_type": "", "scope": "", "details": "", "owner": ""})
     return rows
 
@@ -445,7 +445,7 @@ def _late_arriving_manual_rows(source_system_context):
             "policy_notes": _cell_value(source_system_context.get("late_arriving_data_manual", "")),
         }
     ]
-    while len(rows) < 8:
+    while len(rows) < 8:  # 8: minimum blank fillable rows — see contact rows above
         rows.append(
             {
                 "table_name": "",
@@ -468,7 +468,7 @@ def _volume_projection_manual_rows(source_system_context):
             "notes": _cell_value(source_system_context.get("volume_size_projection_manual", "")),
         }
     ]
-    while len(rows) < 8:
+    while len(rows) < 8:  # 8: minimum blank fillable rows — see contact rows above
         rows.append(
             {
                 "entity_scope": "",
@@ -715,7 +715,7 @@ def _derive_database(connection, metadata):
 def _sheet_name(base_name, used_names):
     cleaned = "".join("_" if ch in '[]:*?/\\' else ch for ch in str(base_name or "Table"))
     cleaned = cleaned.strip("'").strip() or "Table"
-    candidate = cleaned[:31] or "Table"
+    candidate = cleaned[:31] or "Table"  # 31: Excel hard limit on worksheet name length
     counter = 1
     while candidate in used_names:
         suffix = f"_{counter}"
@@ -1091,7 +1091,7 @@ def _apply_classification_validations(wb):
             i = j + 1
 
 
-def _chunk_text(value, size=30000):
+def _chunk_text(value, size=30000):  # 30000: Excel cell cap is 32,767 chars; 30k leaves a safe margin for multi-line joins
     if not value:
         return []
     return [value[i : i + size] for i in range(0, len(value), size)]

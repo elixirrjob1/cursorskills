@@ -1,0 +1,10 @@
+{
+  "eval_id": 9,
+  "prompt_short": "Export schema.json to Excel (no output path specified)",
+  "overall_result": "PASS",
+  "assertions": [
+    { "text": "Response runs or describes running json_to_excel.py with only the input argument", "passed": true, "evidence": "Command shown: `json_to_excel.py schema.json` with no output_xlsx argument" },
+    { "text": "Response mentions output file lands next to input OR uses same base name with .xlsx extension", "passed": true, "evidence": "\"schema.xlsx will appear next to schema.json\" — output location and naming explicitly confirmed" },
+    { "text": "Response does NOT error on missing output path", "passed": true, "evidence": "Agent confirmed graceful behavior; no error mentioned" }
+  ]
+}

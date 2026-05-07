@@ -51,7 +51,8 @@
             "min": "1",
             "max": "3"
           },
-          "data_category": "discrete"
+          "data_category": "discrete",
+          "column_description": "Unique surrogate identifier for each customer record, auto-incrementing bigint primary key."
         },
         {
           "name": "first_name",
@@ -64,7 +65,8 @@
             "min": "Finn",
             "max": "Noah"
           },
-          "data_category": "nominal"
+          "data_category": "nominal",
+          "column_description": "Customer's given (first) name."
         },
         {
           "name": "last_name",
@@ -77,7 +79,8 @@
             "min": "Oconnor",
             "max": "Walsh"
           },
-          "data_category": "nominal"
+          "data_category": "nominal",
+          "column_description": "Customer's family (last) name."
         },
         {
           "name": "email",
@@ -90,7 +93,8 @@
             "min": "finn.ryan@example.com",
             "max": "noah.oconnor@example.com"
           },
-          "data_category": "nominal"
+          "data_category": "nominal",
+          "column_description": "Customer's email address used for contact and account identification. PII \u2014 treat as sensitive."
         },
         {
           "name": "phone",
@@ -103,7 +107,8 @@
             "min": "+353-1-555-1111",
             "max": "+353-21-555-2222"
           },
-          "data_category": "nominal"
+          "data_category": "nominal",
+          "column_description": "Customer's contact phone number in international format (e.g. +353-1-555-1111). PII \u2014 treat as sensitive."
         },
         {
           "name": "created_at",
@@ -117,7 +122,8 @@
             "min": "2026-02-04 14:48:25.951501+00:00",
             "max": "2026-02-04 14:48:25.951501+00:00"
           },
-          "data_category": "continuous"
+          "data_category": "continuous",
+          "column_description": "UTC timestamp of when the customer record was first inserted into the database."
         },
         {
           "name": "updated_at",
@@ -131,7 +137,8 @@
             "min": "2026-02-04 14:48:25.951501+00:00",
             "max": "2026-02-04 14:48:25.951501+00:00"
           },
-          "data_category": "continuous"
+          "data_category": "continuous",
+          "column_description": "UTC timestamp of the most recent update to the customer record."
         }
       ],
       "primary_keys": [
@@ -166,37 +173,36 @@
       "data_quality": {
         "findings": [
           {
+            "check": "nullable_but_never_null",
+            "severity": "info",
             "column": "email",
-            "check": "nullable_but_never_null",
-            "severity": "info",
             "detail": "Column is nullable but has 0 NULLs across 3 row(s)",
             "recommendation": "Consider adding a NOT NULL constraint if the column should always have a value"
           },
           {
+            "check": "nullable_but_never_null",
+            "severity": "info",
             "column": "phone",
-            "check": "nullable_but_never_null",
-            "severity": "info",
             "detail": "Column is nullable but has 0 NULLs across 3 row(s)",
             "recommendation": "Consider adding a NOT NULL constraint if the column should always have a value"
           },
           {
-            "column": null,
             "check": "delete_management",
             "severity": "warning",
             "detail": "No soft-delete column detected and CDC is not enabled. Table likely uses hard deletes invisible to incremental ingestion.",
             "recommendation": "Consider: (1) Add soft-delete column, (2) Enable CDC via ALTER TABLE \u2026 REPLICA IDENTITY FULL, or (3) Plan periodic full-load syncs.",
             "delete_strategy": "hard_delete",
-            "soft_delete_column": null,
-            "soft_delete_type": null,
             "has_audit_trail": false
           },
           {
-            "column": null,
             "check": "timezone",
             "severity": "info",
             "detail": "All 2 date/time column(s) use timezone 'UTC'.",
             "recommendation": "Treat all timestamps as 'UTC' during ingestion.",
             "server_timezone": "UTC",
+            "distinct_timezones": "UTC",
+            "tz_aware_count": 0,
+            "tz_naive_count": 2,
             "columns": [
               {
                 "column": "created_at",
@@ -210,15 +216,11 @@
                 "effective_timezone": "UTC",
                 "is_tz_aware": false
               }
-            ],
-            "distinct_timezones": [
-              "UTC"
-            ],
-            "tz_aware_count": 0,
-            "tz_naive_count": 2
+            ]
           }
         ]
-      }
+      },
+      "table_description": "Master register of retail customers. Stores personal contact details (name, email, phone) used for loyalty schemes and order attribution. Each row represents one registered customer. Contains PII fields (email, phone) that require restricted access."
     },
     {
       "table": "employees",
@@ -235,7 +237,8 @@
             "min": "1",
             "max": "3"
           },
-          "data_category": "discrete"
+          "data_category": "discrete",
+          "column_description": "Unique surrogate identifier for each employee record, auto-incrementing bigint primary key."
         },
         {
           "name": "store_id",
@@ -248,7 +251,8 @@
             "min": "1",
             "max": "2"
           },
-          "data_category": "discrete"
+          "data_category": "discrete",
+          "column_description": "Foreign key referencing stores.store_id \u2014 the store to which this employee is currently assigned."
         },
         {
           "name": "first_name",
@@ -261,7 +265,8 @@
             "min": "Ava",
             "max": "Saoirse"
           },
-          "data_category": "nominal"
+          "data_category": "nominal",
+          "column_description": "Employee's given (first) name."
         },
         {
           "name": "last_name",
@@ -274,7 +279,8 @@
             "min": "Byrne",
             "max": "Murphy"
           },
-          "data_category": "nominal"
+          "data_category": "nominal",
+          "column_description": "Employee's family (last) name."
         },
         {
           "name": "email",
@@ -287,7 +293,8 @@
             "min": "ava.byrne@example.com",
             "max": "saoirse.kelly@example.com"
           },
-          "data_category": "nominal"
+          "data_category": "nominal",
+          "column_description": "Employee's work email address. PII \u2014 treat as sensitive."
         },
         {
           "name": "role",
@@ -300,7 +307,8 @@
             "min": "Cashier",
             "max": "Store Manager"
           },
-          "data_category": "nominal"
+          "data_category": "nominal",
+          "column_description": "Job role of the employee within the store. Known values: 'Cashier', 'Inventory Clerk', 'Store Manager'. No database constraint enforces this set."
         },
         {
           "name": "hire_date",
@@ -313,7 +321,8 @@
             "min": "2021-11-20",
             "max": "2023-06-01"
           },
-          "data_category": "continuous"
+          "data_category": "continuous",
+          "column_description": "Calendar date on which the employee was hired. Not safe as an incremental watermark \u2014 use created_at instead, as hire_date can lag the record creation by years."
         },
         {
           "name": "created_at",
@@ -327,7 +336,8 @@
             "min": "2026-02-04 14:48:25.951501+00:00",
             "max": "2026-02-04 14:48:25.951501+00:00"
           },
-          "data_category": "continuous"
+          "data_category": "continuous",
+          "column_description": "UTC timestamp of when the employee record was first inserted into the database."
         },
         {
           "name": "updated_at",
@@ -341,7 +351,8 @@
             "min": "2026-02-04 14:48:25.951501+00:00",
             "max": "2026-02-04 14:48:25.951501+00:00"
           },
-          "data_category": "continuous"
+          "data_category": "continuous",
+          "column_description": "UTC timestamp of the most recent update to the employee record."
         }
       ],
       "primary_keys": [
@@ -380,56 +391,40 @@
       "data_quality": {
         "findings": [
           {
-            "column": "role",
             "check": "controlled_value_candidate",
             "severity": "warning",
+            "column": "role",
             "detail": "Text column with 3 distinct value(s) ('Cashier', 'Inventory Clerk', 'Store Manager') but no CHECK, ENUM, or FK constraint",
             "recommendation": "Add a CHECK constraint, convert to an ENUM type, or create a lookup/reference table to prevent invalid values",
-            "distinct_values": [
-              "Cashier",
-              "Inventory Clerk",
-              "Store Manager"
-            ],
+            "distinct_values": "Cashier, Inventory Clerk, Store Manager",
             "cardinality": 3
           },
           {
-            "column": null,
             "check": "delete_management",
             "severity": "warning",
             "detail": "No soft-delete column detected and CDC is not enabled. Table likely uses hard deletes invisible to incremental ingestion.",
             "recommendation": "Consider: (1) Add soft-delete column, (2) Enable CDC via ALTER TABLE \u2026 REPLICA IDENTITY FULL, or (3) Plan periodic full-load syncs.",
             "delete_strategy": "hard_delete",
-            "soft_delete_column": null,
-            "soft_delete_type": null,
             "has_audit_trail": false
           },
           {
-            "column": "hire_date",
             "check": "late_arriving_data",
             "severity": "warning",
+            "column": "hire_date",
             "detail": "Significant late-arriving data \u2014 max lag 1537.6 day(s). 3 of 3 row(s) arrived >7 days late.",
             "recommendation": "'hire_date' is NOT safe as a watermark. Use 'created_at' for incremental loads. If 'hire_date' must be used, apply a 1539-day lookback window.",
             "business_date_column": "hire_date",
-            "system_ts_column": "created_at",
-            "lag_stats": {
-              "total_rows_compared": 3,
-              "min_lag_hours": 23510.81,
-              "avg_lag_hours": 31518.81,
-              "p95_lag_hours": 36626.81,
-              "max_lag_hours": 36902.81,
-              "max_lag_days": 1537.6,
-              "rows_late_over_1d": 3,
-              "rows_late_over_7d": 3
-            },
-            "recommended_lookback_days": 1539
+            "system_ts_column": "created_at"
           },
           {
-            "column": null,
             "check": "timezone",
             "severity": "info",
             "detail": "All 2 date/time column(s) use timezone 'UTC'.",
             "recommendation": "Treat all timestamps as 'UTC' during ingestion.",
             "server_timezone": "UTC",
+            "distinct_timezones": "UTC",
+            "tz_aware_count": 0,
+            "tz_naive_count": 2,
             "columns": [
               {
                 "column": "created_at",
@@ -443,15 +438,11 @@
                 "effective_timezone": "UTC",
                 "is_tz_aware": false
               }
-            ],
-            "distinct_timezones": [
-              "UTC"
-            ],
-            "tz_aware_count": 0,
-            "tz_naive_count": 2
+            ]
           }
         ]
-      }
+      },
+      "table_description": "Staff directory for the retail business. Each row represents one employee, linked to a single store and carrying their role (Cashier, Inventory Clerk, or Store Manager), hire date, and contact email. Used to attribute sales transactions to the serving employee."
     },
     {
       "table": "inventory",
@@ -468,7 +459,8 @@
             "min": "1",
             "max": "6"
           },
-          "data_category": "discrete"
+          "data_category": "discrete",
+          "column_description": "Unique surrogate identifier for each inventory record, auto-incrementing bigint primary key."
         },
         {
           "name": "store_id",
@@ -481,7 +473,8 @@
             "min": "1",
             "max": "2"
           },
-          "data_category": "discrete"
+          "data_category": "discrete",
+          "column_description": "Foreign key referencing stores.store_id \u2014 the store that holds this inventory position."
         },
         {
           "name": "product_id",
@@ -494,7 +487,8 @@
             "min": "1",
             "max": "5"
           },
-          "data_category": "discrete"
+          "data_category": "discrete",
+          "column_description": "Foreign key referencing products.product_id \u2014 the product being tracked in this inventory row."
         },
         {
           "name": "quantity_on_hand",
@@ -507,7 +501,8 @@
             "min": "35",
             "max": "120"
           },
-          "data_category": "discrete"
+          "data_category": "discrete",
+          "column_description": "Current stock count (in units) of the product available at the store. Ranges from 35 to 120 in observed data."
         },
         {
           "name": "reorder_level",
@@ -520,7 +515,8 @@
             "min": "10",
             "max": "30"
           },
-          "data_category": "discrete"
+          "data_category": "discrete",
+          "column_description": "Minimum stock threshold (in units) that triggers a replenishment order. When quantity_on_hand falls to or below this level, restocking should be initiated."
         },
         {
           "name": "last_restocked_at",
@@ -534,7 +530,8 @@
             "min": "2026-01-30 14:48:25.951501+00:00",
             "max": "2026-02-03 14:48:25.951501+00:00"
           },
-          "data_category": "continuous"
+          "data_category": "continuous",
+          "column_description": "UTC timestamp of the most recent stock replenishment event for this product at this store. Nullable \u2014 null indicates the product has never been restocked since tracking began."
         },
         {
           "name": "created_at",
@@ -548,7 +545,8 @@
             "min": "2026-02-04 14:48:25.951501+00:00",
             "max": "2026-02-04 14:48:25.951501+00:00"
           },
-          "data_category": "continuous"
+          "data_category": "continuous",
+          "column_description": "UTC timestamp of when the inventory record was first inserted into the database."
         },
         {
           "name": "updated_at",
@@ -562,7 +560,8 @@
             "min": "2026-02-04 14:48:25.951501+00:00",
             "max": "2026-02-04 14:48:25.951501+00:00"
           },
-          "data_category": "continuous"
+          "data_category": "continuous",
+          "column_description": "UTC timestamp of the most recent update to the inventory record, such as a stock quantity adjustment."
         }
       ],
       "primary_keys": [
@@ -603,30 +602,29 @@
       "data_quality": {
         "findings": [
           {
-            "column": "last_restocked_at",
             "check": "nullable_but_never_null",
             "severity": "info",
+            "column": "last_restocked_at",
             "detail": "Column is nullable but has 0 NULLs across 6 row(s)",
             "recommendation": "Consider adding a NOT NULL constraint if the column should always have a value"
           },
           {
-            "column": null,
             "check": "delete_management",
             "severity": "warning",
             "detail": "No soft-delete column detected and CDC is not enabled. Table likely uses hard deletes invisible to incremental ingestion.",
             "recommendation": "Consider: (1) Add soft-delete column, (2) Enable CDC via ALTER TABLE \u2026 REPLICA IDENTITY FULL, or (3) Plan periodic full-load syncs.",
             "delete_strategy": "hard_delete",
-            "soft_delete_column": null,
-            "soft_delete_type": null,
             "has_audit_trail": false
           },
           {
-            "column": null,
             "check": "timezone",
             "severity": "info",
             "detail": "All 3 date/time column(s) use timezone 'UTC'.",
             "recommendation": "Treat all timestamps as 'UTC' during ingestion.",
             "server_timezone": "UTC",
+            "distinct_timezones": "UTC",
+            "tz_aware_count": 0,
+            "tz_naive_count": 3,
             "columns": [
               {
                 "column": "last_restocked_at",
@@ -646,15 +644,11 @@
                 "effective_timezone": "UTC",
                 "is_tz_aware": false
               }
-            ],
-            "distinct_timezones": [
-              "UTC"
-            ],
-            "tz_aware_count": 0,
-            "tz_naive_count": 3
+            ]
           }
         ]
-      }
+      },
+      "table_description": "Per-store stock position table. Each row represents the current inventory level for one product at one store, including the quantity on hand, the reorder threshold, and the last restocking timestamp. Used to drive replenishment workflows and stock availability reporting."
     },
     {
       "table": "products",
@@ -671,7 +665,8 @@
             "min": "1",
             "max": "5"
           },
-          "data_category": "discrete"
+          "data_category": "discrete",
+          "column_description": "Unique surrogate identifier for each product, auto-incrementing bigint primary key."
         },
         {
           "name": "supplier_id",
@@ -684,7 +679,8 @@
             "min": "1",
             "max": "2"
           },
-          "data_category": "discrete"
+          "data_category": "discrete",
+          "column_description": "Foreign key referencing suppliers.supplier_id \u2014 the primary supplier that sources this product."
         },
         {
           "name": "sku",
@@ -697,7 +693,8 @@
             "min": "APL-001",
             "max": "TEA-001"
           },
-          "data_category": "nominal"
+          "data_category": "nominal",
+          "column_description": "Stock-keeping unit code \u2014 a short, human-readable product identifier (e.g. APL-001, TEA-001). Unique per product."
         },
         {
           "name": "name",
@@ -710,7 +707,8 @@
             "min": "Apples Gala 1kg",
             "max": "Whole Milk 1L"
           },
-          "data_category": "nominal"
+          "data_category": "nominal",
+          "column_description": "Full product display name as shown to staff and customers (e.g. 'Apples Gala 1kg', 'Whole Milk 1L')."
         },
         {
           "name": "category",
@@ -723,7 +721,8 @@
             "min": "Bakery",
             "max": "Produce"
           },
-          "data_category": "nominal"
+          "data_category": "nominal",
+          "column_description": "Product category used for grouping and reporting. Known values: 'Bakery', 'Dairy', 'Grocery', 'Produce'. No database constraint enforces this set."
         },
         {
           "name": "unit_price",
@@ -736,7 +735,8 @@
             "min": "1.79",
             "max": "4.25"
           },
-          "data_category": "continuous"
+          "data_category": "continuous",
+          "column_description": "Retail selling price per unit charged to customers, stored as numeric(10,2) in the local currency (EUR)."
         },
         {
           "name": "cost_price",
@@ -749,7 +749,8 @@
             "min": "0.90",
             "max": "2.30"
           },
-          "data_category": "continuous"
+          "data_category": "continuous",
+          "column_description": "Supplier cost price per unit paid by the business, stored as numeric(10,2) in the local currency (EUR). Used for margin calculations."
         },
         {
           "name": "active",
@@ -758,7 +759,8 @@
           "is_incremental": false,
           "cardinality": 1,
           "null_count": 0,
-          "data_category": "discrete"
+          "data_category": "discrete",
+          "column_description": "Soft-delete flag. True indicates the product is currently available for sale; false means the product has been deactivated. Filter on active = true to retrieve the current product catalogue."
         },
         {
           "name": "created_at",
@@ -772,7 +774,8 @@
             "min": "2026-02-04 14:48:25.951501+00:00",
             "max": "2026-02-04 14:48:25.951501+00:00"
           },
-          "data_category": "continuous"
+          "data_category": "continuous",
+          "column_description": "UTC timestamp of when the product record was first inserted into the database."
         },
         {
           "name": "updated_at",
@@ -786,7 +789,8 @@
             "min": "2026-02-04 14:48:25.951501+00:00",
             "max": "2026-02-04 14:48:25.951501+00:00"
           },
-          "data_category": "continuous"
+          "data_category": "continuous",
+          "column_description": "UTC timestamp of the most recent update to the product record, such as a price or category change."
         }
       ],
       "primary_keys": [
@@ -824,23 +828,18 @@
       "data_quality": {
         "findings": [
           {
-            "column": "category",
             "check": "controlled_value_candidate",
             "severity": "warning",
+            "column": "category",
             "detail": "Text column with 4 distinct value(s) ('Bakery', 'Dairy', 'Grocery', 'Produce') but no CHECK, ENUM, or FK constraint",
             "recommendation": "Add a CHECK constraint, convert to an ENUM type, or create a lookup/reference table to prevent invalid values",
-            "distinct_values": [
-              "Bakery",
-              "Dairy",
-              "Grocery",
-              "Produce"
-            ],
+            "distinct_values": "Bakery, Dairy, Grocery, Produce",
             "cardinality": 4
           },
           {
-            "column": "active",
             "check": "delete_management",
             "severity": "info",
+            "column": "active",
             "detail": "Active-flag column 'active' (boolean) detected \u2014 rows with active=false are logically deleted. Current distribution: True=5.",
             "recommendation": "Filter on \"active\" = true for current records during ingestion.",
             "delete_strategy": "soft_delete",
@@ -849,12 +848,14 @@
             "has_audit_trail": false
           },
           {
-            "column": null,
             "check": "timezone",
             "severity": "info",
             "detail": "All 2 date/time column(s) use timezone 'UTC'.",
             "recommendation": "Treat all timestamps as 'UTC' during ingestion.",
             "server_timezone": "UTC",
+            "distinct_timezones": "UTC",
+            "tz_aware_count": 0,
+            "tz_naive_count": 2,
             "columns": [
               {
                 "column": "created_at",
@@ -868,15 +869,11 @@
                 "effective_timezone": "UTC",
                 "is_tz_aware": false
               }
-            ],
-            "distinct_timezones": [
-              "UTC"
-            ],
-            "tz_aware_count": 0,
-            "tz_naive_count": 2
+            ]
           }
         ]
-      }
+      },
+      "table_description": "Product catalogue for the retail business. Each row describes a sellable item with its SKU, display name, category (Bakery, Dairy, Grocery, Produce), retail unit price, supplier cost price, and active status. Inactive products (active = false) are soft-deleted and should be excluded from current catalogue queries."
     },
     {
       "table": "purchase_order_items",
@@ -893,7 +890,8 @@
             "min": "1",
             "max": "4"
           },
-          "data_category": "discrete"
+          "data_category": "discrete",
+          "column_description": "Unique surrogate identifier for each purchase order line item, auto-incrementing bigint primary key."
         },
         {
           "name": "po_id",
@@ -906,7 +904,8 @@
             "min": "1",
             "max": "2"
           },
-          "data_category": "discrete"
+          "data_category": "discrete",
+          "column_description": "Foreign key referencing purchase_orders.po_id \u2014 the parent purchase order that contains this line item."
         },
         {
           "name": "product_id",
@@ -919,7 +918,8 @@
             "min": "1",
             "max": "5"
           },
-          "data_category": "discrete"
+          "data_category": "discrete",
+          "column_description": "Foreign key referencing products.product_id \u2014 the product being ordered on this line."
         },
         {
           "name": "quantity",
@@ -932,7 +932,8 @@
             "min": "60",
             "max": "200"
           },
-          "data_category": "discrete"
+          "data_category": "discrete",
+          "column_description": "Number of units of the product ordered on this line. Observed range is 60\u2013200 units per line."
         },
         {
           "name": "unit_cost",
@@ -945,7 +946,8 @@
             "min": "1.10",
             "max": "2.20"
           },
-          "data_category": "continuous"
+          "data_category": "continuous",
+          "column_description": "Agreed supplier cost per unit for this line at the time of ordering, stored as numeric(10,2) in EUR. May differ from the current products.cost_price if prices have since changed."
         },
         {
           "name": "created_at",
@@ -959,7 +961,8 @@
             "min": "2026-02-04 14:48:25.951501+00:00",
             "max": "2026-02-04 14:48:25.951501+00:00"
           },
-          "data_category": "continuous"
+          "data_category": "continuous",
+          "column_description": "UTC timestamp of when the line item was first inserted into the database."
         },
         {
           "name": "updated_at",
@@ -973,7 +976,8 @@
             "min": "2026-02-04 14:48:25.951501+00:00",
             "max": "2026-02-04 14:48:25.951501+00:00"
           },
-          "data_category": "continuous"
+          "data_category": "continuous",
+          "column_description": "UTC timestamp of the most recent update to this purchase order line item."
         }
       ],
       "primary_keys": [
@@ -1014,23 +1018,22 @@
       "data_quality": {
         "findings": [
           {
-            "column": null,
             "check": "delete_management",
             "severity": "warning",
             "detail": "No soft-delete column detected and CDC is not enabled. Table likely uses hard deletes invisible to incremental ingestion.",
             "recommendation": "Consider: (1) Add soft-delete column, (2) Enable CDC via ALTER TABLE \u2026 REPLICA IDENTITY FULL, or (3) Plan periodic full-load syncs.",
             "delete_strategy": "hard_delete",
-            "soft_delete_column": null,
-            "soft_delete_type": null,
             "has_audit_trail": false
           },
           {
-            "column": null,
             "check": "timezone",
             "severity": "info",
             "detail": "All 2 date/time column(s) use timezone 'UTC'.",
             "recommendation": "Treat all timestamps as 'UTC' during ingestion.",
             "server_timezone": "UTC",
+            "distinct_timezones": "UTC",
+            "tz_aware_count": 0,
+            "tz_naive_count": 2,
             "columns": [
               {
                 "column": "created_at",
@@ -1044,15 +1047,11 @@
                 "effective_timezone": "UTC",
                 "is_tz_aware": false
               }
-            ],
-            "distinct_timezones": [
-              "UTC"
-            ],
-            "tz_aware_count": 0,
-            "tz_naive_count": 2
+            ]
           }
         ]
-      }
+      },
+      "table_description": "Line-item detail for supplier purchase orders. Each row represents one product line within a purchase order, capturing the product ordered, the quantity, and the agreed unit cost at the time of ordering. Joins to purchase_orders for header-level context (supplier, store, status, dates)."
     },
     {
       "table": "purchase_orders",
@@ -1069,7 +1068,8 @@
             "min": "1",
             "max": "2"
           },
-          "data_category": "discrete"
+          "data_category": "discrete",
+          "column_description": "Unique surrogate identifier for each purchase order, auto-incrementing bigint primary key."
         },
         {
           "name": "supplier_id",
@@ -1082,7 +1082,8 @@
             "min": "1",
             "max": "2"
           },
-          "data_category": "discrete"
+          "data_category": "discrete",
+          "column_description": "Foreign key referencing suppliers.supplier_id \u2014 the supplier from whom goods are being ordered."
         },
         {
           "name": "store_id",
@@ -1095,7 +1096,8 @@
             "min": "1",
             "max": "2"
           },
-          "data_category": "discrete"
+          "data_category": "discrete",
+          "column_description": "Foreign key referencing stores.store_id \u2014 the store that raised and will receive this purchase order."
         },
         {
           "name": "status",
@@ -1108,7 +1110,8 @@
             "min": "Approved",
             "max": "Received"
           },
-          "data_category": "nominal"
+          "data_category": "nominal",
+          "column_description": "Lifecycle status of the purchase order. Known values: 'Approved' (order confirmed with supplier), 'Received' (goods delivered). No database constraint enforces this set."
         },
         {
           "name": "order_date",
@@ -1121,7 +1124,8 @@
             "min": "2025-11-01",
             "max": "2025-11-05"
           },
-          "data_category": "continuous"
+          "data_category": "continuous",
+          "column_description": "Business date on which the purchase order was raised with the supplier. Not safe as an incremental watermark \u2014 use created_at instead, as order_date can lag record insertion by up to ~96 days."
         },
         {
           "name": "expected_date",
@@ -1134,7 +1138,8 @@
             "min": "2025-11-03",
             "max": "2025-11-08"
           },
-          "data_category": "continuous"
+          "data_category": "continuous",
+          "column_description": "Expected delivery date agreed with the supplier. Nullable \u2014 null indicates no confirmed delivery date has been set."
         },
         {
           "name": "created_at",
@@ -1148,7 +1153,8 @@
             "min": "2026-02-04 14:48:25.951501+00:00",
             "max": "2026-02-04 14:48:25.951501+00:00"
           },
-          "data_category": "continuous"
+          "data_category": "continuous",
+          "column_description": "UTC timestamp of when the purchase order record was first inserted into the database."
         },
         {
           "name": "updated_at",
@@ -1162,7 +1168,8 @@
             "min": "2026-02-04 14:48:25.951501+00:00",
             "max": "2026-02-04 14:48:25.951501+00:00"
           },
-          "data_category": "continuous"
+          "data_category": "continuous",
+          "column_description": "UTC timestamp of the most recent update to the purchase order, such as a status change."
         }
       ],
       "primary_keys": [
@@ -1204,62 +1211,47 @@
       "data_quality": {
         "findings": [
           {
-            "column": "status",
             "check": "controlled_value_candidate",
             "severity": "warning",
+            "column": "status",
             "detail": "Text column with 2 distinct value(s) ('Approved', 'Received') but no CHECK, ENUM, or FK constraint",
             "recommendation": "Add a CHECK constraint, convert to an ENUM type, or create a lookup/reference table to prevent invalid values",
-            "distinct_values": [
-              "Approved",
-              "Received"
-            ],
+            "distinct_values": "Approved, Received",
             "cardinality": 2
           },
           {
-            "column": "expected_date",
             "check": "nullable_but_never_null",
             "severity": "info",
+            "column": "expected_date",
             "detail": "Column is nullable but has 0 NULLs across 2 row(s)",
             "recommendation": "Consider adding a NOT NULL constraint if the column should always have a value"
           },
           {
-            "column": null,
             "check": "delete_management",
             "severity": "warning",
             "detail": "No soft-delete column detected and CDC is not enabled. Table likely uses hard deletes invisible to incremental ingestion.",
             "recommendation": "Consider: (1) Add soft-delete column, (2) Enable CDC via ALTER TABLE \u2026 REPLICA IDENTITY FULL, or (3) Plan periodic full-load syncs.",
             "delete_strategy": "hard_delete",
-            "soft_delete_column": null,
-            "soft_delete_type": null,
             "has_audit_trail": false
           },
           {
-            "column": "order_date",
             "check": "late_arriving_data",
             "severity": "warning",
+            "column": "order_date",
             "detail": "Significant late-arriving data \u2014 max lag 95.6 day(s). 2 of 2 row(s) arrived >7 days late.",
             "recommendation": "'order_date' is NOT safe as a watermark. Use 'created_at' for incremental loads. If 'order_date' must be used, apply a 97-day lookback window.",
             "business_date_column": "order_date",
-            "system_ts_column": "created_at",
-            "lag_stats": {
-              "total_rows_compared": 2,
-              "min_lag_hours": 2198.81,
-              "avg_lag_hours": 2246.81,
-              "p95_lag_hours": 2290.01,
-              "max_lag_hours": 2294.81,
-              "max_lag_days": 95.6,
-              "rows_late_over_1d": 2,
-              "rows_late_over_7d": 2
-            },
-            "recommended_lookback_days": 97
+            "system_ts_column": "created_at"
           },
           {
-            "column": null,
             "check": "timezone",
             "severity": "info",
             "detail": "All 2 date/time column(s) use timezone 'UTC'.",
             "recommendation": "Treat all timestamps as 'UTC' during ingestion.",
             "server_timezone": "UTC",
+            "distinct_timezones": "UTC",
+            "tz_aware_count": 0,
+            "tz_naive_count": 2,
             "columns": [
               {
                 "column": "created_at",
@@ -1273,15 +1265,11 @@
                 "effective_timezone": "UTC",
                 "is_tz_aware": false
               }
-            ],
-            "distinct_timezones": [
-              "UTC"
-            ],
-            "tz_aware_count": 0,
-            "tz_naive_count": 2
+            ]
           }
         ]
-      }
+      },
+      "table_description": "Header-level purchase order records for stock replenishment from suppliers. Each row represents a single order raised by a store against a supplier, with lifecycle status (Approved / Received), the business order date, and the expected delivery date. Line-item details are in purchase_order_items."
     },
     {
       "table": "sales_order_items",
@@ -1298,7 +1286,8 @@
             "min": "1",
             "max": "5"
           },
-          "data_category": "discrete"
+          "data_category": "discrete",
+          "column_description": "Unique surrogate identifier for each sales order line item, auto-incrementing bigint primary key."
         },
         {
           "name": "sales_order_id",
@@ -1311,7 +1300,8 @@
             "min": "1",
             "max": "3"
           },
-          "data_category": "discrete"
+          "data_category": "discrete",
+          "column_description": "Foreign key referencing sales_orders.sales_order_id \u2014 the parent sales transaction that contains this line item."
         },
         {
           "name": "product_id",
@@ -1324,7 +1314,8 @@
             "min": "1",
             "max": "5"
           },
-          "data_category": "discrete"
+          "data_category": "discrete",
+          "column_description": "Foreign key referencing products.product_id \u2014 the product sold on this line."
         },
         {
           "name": "quantity",
@@ -1337,7 +1328,8 @@
             "min": "1",
             "max": "3"
           },
-          "data_category": "discrete"
+          "data_category": "discrete",
+          "column_description": "Number of units of the product sold on this line. Observed range is 1\u20133 units per line."
         },
         {
           "name": "unit_price",
@@ -1350,7 +1342,8 @@
             "min": "1.79",
             "max": "4.25"
           },
-          "data_category": "continuous"
+          "data_category": "continuous",
+          "column_description": "Retail price per unit charged to the customer at the time of sale, stored as numeric(10,2) in EUR. Captures the price-at-time-of-sale and may differ from the current products.unit_price."
         },
         {
           "name": "created_at",
@@ -1364,7 +1357,8 @@
             "min": "2026-02-04 14:48:25.951501+00:00",
             "max": "2026-02-04 14:48:25.951501+00:00"
           },
-          "data_category": "continuous"
+          "data_category": "continuous",
+          "column_description": "UTC timestamp of when the sales order line item was first inserted into the database."
         },
         {
           "name": "updated_at",
@@ -1378,7 +1372,8 @@
             "min": "2026-02-04 14:48:25.951501+00:00",
             "max": "2026-02-04 14:48:25.951501+00:00"
           },
-          "data_category": "continuous"
+          "data_category": "continuous",
+          "column_description": "UTC timestamp of the most recent update to this sales order line item."
         }
       ],
       "primary_keys": [
@@ -1419,23 +1414,22 @@
       "data_quality": {
         "findings": [
           {
-            "column": null,
             "check": "delete_management",
             "severity": "warning",
             "detail": "No soft-delete column detected and CDC is not enabled. Table likely uses hard deletes invisible to incremental ingestion.",
             "recommendation": "Consider: (1) Add soft-delete column, (2) Enable CDC via ALTER TABLE \u2026 REPLICA IDENTITY FULL, or (3) Plan periodic full-load syncs.",
             "delete_strategy": "hard_delete",
-            "soft_delete_column": null,
-            "soft_delete_type": null,
             "has_audit_trail": false
           },
           {
-            "column": null,
             "check": "timezone",
             "severity": "info",
             "detail": "All 2 date/time column(s) use timezone 'UTC'.",
             "recommendation": "Treat all timestamps as 'UTC' during ingestion.",
             "server_timezone": "UTC",
+            "distinct_timezones": "UTC",
+            "tz_aware_count": 0,
+            "tz_naive_count": 2,
             "columns": [
               {
                 "column": "created_at",
@@ -1449,15 +1443,11 @@
                 "effective_timezone": "UTC",
                 "is_tz_aware": false
               }
-            ],
-            "distinct_timezones": [
-              "UTC"
-            ],
-            "tz_aware_count": 0,
-            "tz_naive_count": 2
+            ]
           }
         ]
-      }
+      },
+      "table_description": "Line-item detail for customer sales transactions. Each row represents one product sold within a sales order, capturing the product, the quantity sold, and the unit price at the time of sale. Joins to sales_orders for header-level context (store, customer, employee, order date, status, total)."
     },
     {
       "table": "sales_orders",
@@ -1474,7 +1464,8 @@
             "min": "1",
             "max": "3"
           },
-          "data_category": "discrete"
+          "data_category": "discrete",
+          "column_description": "Unique surrogate identifier for each sales transaction, auto-incrementing bigint primary key."
         },
         {
           "name": "store_id",
@@ -1487,7 +1478,8 @@
             "min": "1",
             "max": "2"
           },
-          "data_category": "discrete"
+          "data_category": "discrete",
+          "column_description": "Foreign key referencing stores.store_id \u2014 the store where the transaction took place."
         },
         {
           "name": "customer_id",
@@ -1500,7 +1492,8 @@
             "min": "1",
             "max": "3"
           },
-          "data_category": "discrete"
+          "data_category": "discrete",
+          "column_description": "Foreign key referencing customers.customer_id \u2014 the customer who placed the order. Nullable to allow anonymous (walk-in) sales not tied to a registered customer."
         },
         {
           "name": "employee_id",
@@ -1513,7 +1506,8 @@
             "min": "2",
             "max": "3"
           },
-          "data_category": "discrete"
+          "data_category": "discrete",
+          "column_description": "Foreign key referencing employees.employee_id \u2014 the employee who processed or attended the sale."
         },
         {
           "name": "order_date",
@@ -1527,7 +1521,8 @@
             "min": "2026-02-03 14:48:25.951501+00:00",
             "max": "2026-02-04 11:48:25.951501+00:00"
           },
-          "data_category": "continuous"
+          "data_category": "continuous",
+          "column_description": "UTC timestamp of when the customer placed or completed the order. Use created_at as the preferred incremental watermark; order_date may lag by up to 24 hours."
         },
         {
           "name": "status",
@@ -1540,7 +1535,8 @@
             "min": "Completed",
             "max": "Pending"
           },
-          "data_category": "nominal"
+          "data_category": "nominal",
+          "column_description": "Lifecycle status of the sales order. Known values: 'Completed' (transaction finalised), 'Pending' (awaiting payment or fulfilment). No database constraint enforces this set."
         },
         {
           "name": "total_amount",
@@ -1553,7 +1549,8 @@
             "min": "7.48",
             "max": "12.26"
           },
-          "data_category": "continuous"
+          "data_category": "continuous",
+          "column_description": "Denormalised sum of all line-item totals for the order, stored as numeric(12,2) in EUR. Should equal the sum of (quantity * unit_price) across related sales_order_items rows."
         },
         {
           "name": "created_at",
@@ -1567,7 +1564,8 @@
             "min": "2026-02-04 14:48:25.951501+00:00",
             "max": "2026-02-04 14:48:25.951501+00:00"
           },
-          "data_category": "continuous"
+          "data_category": "continuous",
+          "column_description": "UTC timestamp of when the sales order record was first inserted into the database. Preferred watermark column for incremental ingestion."
         },
         {
           "name": "updated_at",
@@ -1581,7 +1579,8 @@
             "min": "2026-02-04 14:48:25.951501+00:00",
             "max": "2026-02-04 14:48:25.951501+00:00"
           },
-          "data_category": "continuous"
+          "data_category": "continuous",
+          "column_description": "UTC timestamp of the most recent update to the sales order, such as a status change."
         }
       ],
       "primary_keys": [
@@ -1627,62 +1626,47 @@
       "data_quality": {
         "findings": [
           {
-            "column": "status",
             "check": "controlled_value_candidate",
             "severity": "warning",
+            "column": "status",
             "detail": "Text column with 2 distinct value(s) ('Completed', 'Pending') but no CHECK, ENUM, or FK constraint",
             "recommendation": "Add a CHECK constraint, convert to an ENUM type, or create a lookup/reference table to prevent invalid values",
-            "distinct_values": [
-              "Completed",
-              "Pending"
-            ],
+            "distinct_values": "Completed, Pending",
             "cardinality": 2
           },
           {
-            "column": "customer_id",
             "check": "nullable_but_never_null",
             "severity": "info",
+            "column": "customer_id",
             "detail": "Column is nullable but has 0 NULLs across 3 row(s)",
             "recommendation": "Consider adding a NOT NULL constraint if the column should always have a value"
           },
           {
-            "column": null,
             "check": "delete_management",
             "severity": "warning",
             "detail": "No soft-delete column detected and CDC is not enabled. Table likely uses hard deletes invisible to incremental ingestion.",
             "recommendation": "Consider: (1) Add soft-delete column, (2) Enable CDC via ALTER TABLE \u2026 REPLICA IDENTITY FULL, or (3) Plan periodic full-load syncs.",
             "delete_strategy": "hard_delete",
-            "soft_delete_column": null,
-            "soft_delete_type": null,
             "has_audit_trail": false
           },
           {
-            "column": "order_date",
             "check": "late_arriving_data",
             "severity": "info",
+            "column": "order_date",
             "detail": "Minor arrival delay \u2014 max lag between 'order_date' and 'created_at' is 24.0h (avg 11.0h, P95 22.2h).",
             "recommendation": "Use 'created_at' as the watermark (preferred). If using 'order_date', add a 1\u20132 day lookback buffer.",
             "business_date_column": "order_date",
-            "system_ts_column": "created_at",
-            "lag_stats": {
-              "total_rows_compared": 3,
-              "min_lag_hours": 3.0,
-              "avg_lag_hours": 11.0,
-              "p95_lag_hours": 22.2,
-              "max_lag_hours": 24.0,
-              "max_lag_days": 1.0,
-              "rows_late_over_1d": 0,
-              "rows_late_over_7d": 0
-            },
-            "recommended_lookback_days": 2
+            "system_ts_column": "created_at"
           },
           {
-            "column": null,
             "check": "timezone",
             "severity": "info",
             "detail": "All 3 date/time column(s) use timezone 'UTC'.",
             "recommendation": "Treat all timestamps as 'UTC' during ingestion.",
             "server_timezone": "UTC",
+            "distinct_timezones": "UTC",
+            "tz_aware_count": 0,
+            "tz_naive_count": 3,
             "columns": [
               {
                 "column": "order_date",
@@ -1702,15 +1686,11 @@
                 "effective_timezone": "UTC",
                 "is_tz_aware": false
               }
-            ],
-            "distinct_timezones": [
-              "UTC"
-            ],
-            "tz_aware_count": 0,
-            "tz_naive_count": 3
+            ]
           }
         ]
-      }
+      },
+      "table_description": "Header-level sales transaction records. Each row represents a single customer purchase at a store, processed by an employee. Captures the order datetime, lifecycle status (Pending / Completed), and the denormalised total amount. Line-item detail is in sales_order_items. The customer_id is nullable, allowing anonymous walk-in transactions."
     },
     {
       "table": "stores",
@@ -1727,7 +1707,8 @@
             "min": "1",
             "max": "2"
           },
-          "data_category": "discrete"
+          "data_category": "discrete",
+          "column_description": "Unique surrogate identifier for each store, auto-incrementing bigint primary key."
         },
         {
           "name": "name",
@@ -1740,7 +1721,8 @@
             "min": "Downtown Market",
             "max": "Riverside Market"
           },
-          "data_category": "nominal"
+          "data_category": "nominal",
+          "column_description": "Full display name of the store (e.g. 'Downtown Market', 'Riverside Market')."
         },
         {
           "name": "code",
@@ -1753,7 +1735,8 @@
             "min": "DTM",
             "max": "RSM"
           },
-          "data_category": "nominal"
+          "data_category": "nominal",
+          "column_description": "Short alphanumeric store code used in reporting and system identifiers (e.g. 'DTM' for Downtown Market, 'RSM' for Riverside Market)."
         },
         {
           "name": "address",
@@ -1766,7 +1749,8 @@
             "min": "123 Main St",
             "max": "45 River Rd"
           },
-          "data_category": "nominal"
+          "data_category": "nominal",
+          "column_description": "Street address of the store (e.g. '123 Main St'). PII \u2014 classified as pii_address."
         },
         {
           "name": "city",
@@ -1779,7 +1763,8 @@
             "min": "Cork",
             "max": "Dublin"
           },
-          "data_category": "nominal"
+          "data_category": "nominal",
+          "column_description": "City where the store is located. Known values: 'Dublin', 'Cork'."
         },
         {
           "name": "state",
@@ -1792,7 +1777,8 @@
             "min": "Leinster",
             "max": "Munster"
           },
-          "data_category": "nominal"
+          "data_category": "nominal",
+          "column_description": "Irish province where the store is located. Known values: 'Leinster' (Dublin stores), 'Munster' (Cork stores)."
         },
         {
           "name": "postal_code",
@@ -1805,7 +1791,8 @@
             "min": "D01",
             "max": "T12"
           },
-          "data_category": "nominal"
+          "data_category": "nominal",
+          "column_description": "Irish postal code (Eircode prefix) for the store location (e.g. 'D01', 'T12'). PII \u2014 classified as pii_address."
         },
         {
           "name": "phone",
@@ -1818,7 +1805,8 @@
             "min": "+353-1-555-0101",
             "max": "+353-21-555-0202"
           },
-          "data_category": "nominal"
+          "data_category": "nominal",
+          "column_description": "Store contact phone number in international format (e.g. +353-1-555-0101). PII \u2014 classified as pii_contact."
         },
         {
           "name": "created_at",
@@ -1832,7 +1820,8 @@
             "min": "2026-02-04 14:48:25.951501+00:00",
             "max": "2026-02-04 14:48:25.951501+00:00"
           },
-          "data_category": "continuous"
+          "data_category": "continuous",
+          "column_description": "UTC timestamp of when the store record was first inserted into the database."
         },
         {
           "name": "updated_at",
@@ -1846,7 +1835,8 @@
             "min": "2026-02-04 14:48:25.951501+00:00",
             "max": "2026-02-04 14:48:25.951501+00:00"
           },
-          "data_category": "continuous"
+          "data_category": "continuous",
+          "column_description": "UTC timestamp of the most recent update to the store record."
         }
       ],
       "primary_keys": [
@@ -1881,94 +1871,84 @@
       "data_quality": {
         "findings": [
           {
-            "column": "city",
             "check": "controlled_value_candidate",
             "severity": "warning",
+            "column": "city",
             "detail": "Text column with 2 distinct value(s) ('Cork', 'Dublin') but no CHECK, ENUM, or FK constraint",
             "recommendation": "Add a CHECK constraint, convert to an ENUM type, or create a lookup/reference table to prevent invalid values",
-            "distinct_values": [
-              "Cork",
-              "Dublin"
-            ],
+            "distinct_values": "Cork, Dublin",
             "cardinality": 2
           },
           {
-            "column": "state",
             "check": "controlled_value_candidate",
             "severity": "warning",
+            "column": "state",
             "detail": "Text column with 2 distinct value(s) ('Leinster', 'Munster') but no CHECK, ENUM, or FK constraint",
             "recommendation": "Add a CHECK constraint, convert to an ENUM type, or create a lookup/reference table to prevent invalid values",
-            "distinct_values": [
-              "Leinster",
-              "Munster"
-            ],
+            "distinct_values": "Leinster, Munster",
             "cardinality": 2
           },
           {
-            "column": "postal_code",
             "check": "controlled_value_candidate",
             "severity": "warning",
+            "column": "postal_code",
             "detail": "Text column with 2 distinct value(s) ('D01', 'T12') but no CHECK, ENUM, or FK constraint",
             "recommendation": "Add a CHECK constraint, convert to an ENUM type, or create a lookup/reference table to prevent invalid values",
-            "distinct_values": [
-              "D01",
-              "T12"
-            ],
+            "distinct_values": "D01, T12",
             "cardinality": 2
           },
           {
+            "check": "nullable_but_never_null",
+            "severity": "info",
             "column": "address",
-            "check": "nullable_but_never_null",
-            "severity": "info",
             "detail": "Column is nullable but has 0 NULLs across 2 row(s)",
             "recommendation": "Consider adding a NOT NULL constraint if the column should always have a value"
           },
           {
+            "check": "nullable_but_never_null",
+            "severity": "info",
             "column": "city",
-            "check": "nullable_but_never_null",
-            "severity": "info",
             "detail": "Column is nullable but has 0 NULLs across 2 row(s)",
             "recommendation": "Consider adding a NOT NULL constraint if the column should always have a value"
           },
           {
+            "check": "nullable_but_never_null",
+            "severity": "info",
             "column": "state",
-            "check": "nullable_but_never_null",
-            "severity": "info",
             "detail": "Column is nullable but has 0 NULLs across 2 row(s)",
             "recommendation": "Consider adding a NOT NULL constraint if the column should always have a value"
           },
           {
+            "check": "nullable_but_never_null",
+            "severity": "info",
             "column": "postal_code",
-            "check": "nullable_but_never_null",
-            "severity": "info",
             "detail": "Column is nullable but has 0 NULLs across 2 row(s)",
             "recommendation": "Consider adding a NOT NULL constraint if the column should always have a value"
           },
           {
+            "check": "nullable_but_never_null",
+            "severity": "info",
             "column": "phone",
-            "check": "nullable_but_never_null",
-            "severity": "info",
             "detail": "Column is nullable but has 0 NULLs across 2 row(s)",
             "recommendation": "Consider adding a NOT NULL constraint if the column should always have a value"
           },
           {
-            "column": null,
             "check": "delete_management",
             "severity": "warning",
             "detail": "No soft-delete column detected and CDC is not enabled. Table likely uses hard deletes invisible to incremental ingestion.",
             "recommendation": "Consider: (1) Add soft-delete column, (2) Enable CDC via ALTER TABLE \u2026 REPLICA IDENTITY FULL, or (3) Plan periodic full-load syncs.",
             "delete_strategy": "hard_delete",
-            "soft_delete_column": null,
-            "soft_delete_type": null,
             "has_audit_trail": false
           },
           {
-            "column": null,
             "check": "timezone",
             "severity": "info",
             "detail": "All 2 date/time column(s) use timezone 'UTC'.",
             "recommendation": "Treat all timestamps as 'UTC' during ingestion.",
             "server_timezone": "UTC",
+            "distinct_timezones": "UTC",
+            "tz_aware_count": 0,
+            "tz_naive_count": 2,
             "columns": [
               {
                 "column": "created_at",
@@ -1982,15 +1962,11 @@
                 "effective_timezone": "UTC",
                 "is_tz_aware": false
               }
-            ],
-            "distinct_timezones": [
-              "UTC"
-            ],
-            "tz_aware_count": 0,
-            "tz_naive_count": 2
+            ]
           }
         ]
-      }
+      },
+      "table_description": "Reference table of physical retail store locations. Each row represents one store with its display name, short code (e.g. DTM, RSM), and full address details (street, city, Irish province, Eircode). Used as the top-level dimension for filtering sales, inventory, employees, and purchase orders by location. Contains PII address and contact fields."
     },
     {
       "table": "suppliers",
@@ -2007,7 +1983,8 @@
             "min": "1",
             "max": "2"
           },
-          "data_category": "discrete"
+          "data_category": "discrete",
+          "column_description": "Unique surrogate identifier for each supplier, auto-incrementing bigint primary key."
         },
         {
           "name": "name",
@@ -2020,7 +1997,8 @@
             "min": "Fresh Farms Ltd",
             "max": "Global Goods Co"
           },
-          "data_category": "nominal"
+          "data_category": "nominal",
+          "column_description": "Trading name of the supplier company (e.g. 'Fresh Farms Ltd', 'Global Goods Co')."
         },
         {
           "name": "contact_name",
@@ -2033,7 +2011,8 @@
             "min": "Bridget Nolan",
             "max": "Eoin Byrne"
           },
-          "data_category": "nominal"
+          "data_category": "nominal",
+          "column_description": "Name of the primary business contact person at the supplier. Nullable \u2014 may be absent if no individual contact has been recorded."
         },
         {
           "name": "email",
@@ -2046,7 +2025,8 @@
             "min": "bridget.nolan@freshfarms.example.com",
             "max": "eoin.byrne@globalgoods.example.com"
           },
-          "data_category": "nominal"
+          "data_category": "nominal",
+          "column_description": "Email address of the supplier contact used for order communications. PII \u2014 treat as sensitive."
         },
         {
           "name": "phone",
@@ -2059,7 +2039,8 @@
             "min": "+353-1-555-4444",
             "max": "+353-21-555-5555"
           },
-          "data_category": "nominal"
+          "data_category": "nominal",
+          "column_description": "Phone number of the supplier in international format (e.g. +353-1-555-4444). PII \u2014 treat as sensitive."
         },
         {
           "name": "created_at",
@@ -2073,7 +2054,8 @@
             "min": "2026-02-04 14:48:25.951501+00:00",
             "max": "2026-02-04 14:48:25.951501+00:00"
           },
-          "data_category": "continuous"
+          "data_category": "continuous",
+          "column_description": "UTC timestamp of when the supplier record was first inserted into the database."
         },
         {
           "name": "updated_at",
@@ -2087,7 +2069,8 @@
             "min": "2026-02-04 14:48:25.951501+00:00",
             "max": "2026-02-04 14:48:25.951501+00:00"
           },
-          "data_category": "continuous"
+          "data_category": "continuous",
+          "column_description": "UTC timestamp of the most recent update to the supplier record."
         }
       ],
       "primary_keys": [
@@ -2122,44 +2105,43 @@
       "data_quality": {
         "findings": [
           {
+            "check": "nullable_but_never_null",
+            "severity": "info",
             "column": "contact_name",
-            "check": "nullable_but_never_null",
-            "severity": "info",
             "detail": "Column is nullable but has 0 NULLs across 2 row(s)",
             "recommendation": "Consider adding a NOT NULL constraint if the column should always have a value"
           },
           {
+            "check": "nullable_but_never_null",
+            "severity": "info",
             "column": "email",
-            "check": "nullable_but_never_null",
-            "severity": "info",
             "detail": "Column is nullable but has 0 NULLs across 2 row(s)",
             "recommendation": "Consider adding a NOT NULL constraint if the column should always have a value"
           },
           {
+            "check": "nullable_but_never_null",
+            "severity": "info",
             "column": "phone",
-            "check": "nullable_but_never_null",
-            "severity": "info",
             "detail": "Column is nullable but has 0 NULLs across 2 row(s)",
             "recommendation": "Consider adding a NOT NULL constraint if the column should always have a value"
           },
           {
-            "column": null,
             "check": "delete_management",
             "severity": "warning",
             "detail": "No soft-delete column detected and CDC is not enabled. Table likely uses hard deletes invisible to incremental ingestion.",
             "recommendation": "Consider: (1) Add soft-delete column, (2) Enable CDC via ALTER TABLE \u2026 REPLICA IDENTITY FULL, or (3) Plan periodic full-load syncs.",
             "delete_strategy": "hard_delete",
-            "soft_delete_column": null,
-            "soft_delete_type": null,
             "has_audit_trail": false
           },
           {
-            "column": null,
             "check": "timezone",
             "severity": "info",
             "detail": "All 2 date/time column(s) use timezone 'UTC'.",
             "recommendation": "Treat all timestamps as 'UTC' during ingestion.",
             "server_timezone": "UTC",
+            "distinct_timezones": "UTC",
+            "tz_aware_count": 0,
+            "tz_naive_count": 2,
             "columns": [
               {
                 "column": "created_at",
@@ -2173,15 +2155,11 @@
                 "effective_timezone": "UTC",
                 "is_tz_aware": false
               }
-            ],
-            "distinct_timezones": [
-              "UTC"
-            ],
-            "tz_aware_count": 0,
-            "tz_naive_count": 2
+            ]
           }
         ]
-      }
+      },
+      "table_description": "Master list of product suppliers. Each row represents a company from which the business sources goods, with the supplier name, a primary contact person, and their contact details (email, phone). Referenced by products (who supplies each SKU) and purchase_orders (who fulfilled each restocking order). Contains PII contact fields."
     }
   ]
 }

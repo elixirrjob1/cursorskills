@@ -1,0 +1,10 @@
+{
+  "eval_id": 7,
+  "prompt_short": "Generate a dbt model and export it to Excel",
+  "overall_result": "PASS",
+  "assertions": [
+    { "text": "Response references dbt-model-from-stm or general dbt work", "passed": true, "evidence": "\"dbt-model-from-stm — generates dbt SQL view + incremental model files from STM markdown files\"" },
+    { "text": "Response does NOT run json_to_excel.py as the main action", "passed": true, "evidence": "Agent explicitly stated these two skills are unrelated and did not invoke json_to_excel.py" },
+    { "text": "Response declines or redirects", "passed": true, "evidence": "Agent asked for clarification on which of the two separate tasks the user actually wanted" }
+  ]
+}

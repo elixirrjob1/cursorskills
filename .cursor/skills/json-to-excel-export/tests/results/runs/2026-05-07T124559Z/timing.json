@@ -1,0 +1,84 @@
+{
+  "review_date": "2026-05-07",
+  "reviewed_at": "2026-05-07T12:45:59Z",
+  "run_slug": "2026-05-07T124559Z",
+  "runs": [
+    {
+      "eval_id": 1,
+      "test_type": "should-trigger",
+      "prompt_short": "Export my schema JSON to Excel (schema.json present)",
+      "result": "SKIP",
+      "carried_from": null
+    },
+    {
+      "eval_id": 2,
+      "test_type": "should-trigger",
+      "prompt_short": "Convert schema.json to Excel but skip the OpenMetadata glossary sheet",
+      "result": "SKIP",
+      "carried_from": null
+    },
+    {
+      "eval_id": 3,
+      "test_type": "should-trigger",
+      "prompt_short": "I have a pre-fetched glossary.json file, use that instead of fetching from OpenM",
+      "result": "SKIP",
+      "carried_from": null
+    },
+    {
+      "eval_id": 4,
+      "test_type": "should-trigger",
+      "prompt_short": "Convert the Excel workbook back to JSON, applying my edits",
+      "result": "SKIP",
+      "carried_from": null
+    },
+    {
+      "eval_id": 5,
+      "test_type": "should-trigger",
+      "prompt_short": "Restore the original JSON from this Excel file, ignoring any edits I made",
+      "result": "SKIP",
+      "carried_from": null
+    },
+    {
+      "eval_id": 6,
+      "test_type": "should-not-trigger",
+      "prompt_short": "Export a report of top 10 customers from Snowflake to Excel",
+      "result": "SKIP",
+      "carried_from": null
+    },
+    {
+      "eval_id": 7,
+      "test_type": "should-not-trigger",
+      "prompt_short": "Generate a dbt model and export it to Excel",
+      "result": "SKIP",
+      "carried_from": null
+    },
+    {
+      "eval_id": 8,
+      "test_type": "should-not-trigger",
+      "prompt_short": "Convert my Python script to an Excel file",
+      "result": "SKIP",
+      "carried_from": null
+    },
+    {
+      "eval_id": 9,
+      "test_type": "edge-case",
+      "prompt_short": "Export schema.json to Excel (no output path specified)",
+      "result": "SKIP",
+      "carried_from": null
+    },
+    {
+      "eval_id": 10,
+      "test_type": "edge-case",
+      "prompt_short": "Export schema.json to Excel but OPENMETADATA_BASE_URL is not set",
+      "result": "SKIP",
+      "carried_from": null
+    },
+    {
+      "eval_id": 11,
+      "test_type": "edge-case",
+      "prompt_short": "Convert my Excel back to JSON with a legacy-format workbook (no __rt_* tabs)",
+      "result": "SKIP",
+      "carried_from": null
+    }
+  ]
+}

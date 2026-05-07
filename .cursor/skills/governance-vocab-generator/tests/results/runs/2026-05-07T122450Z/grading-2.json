@@ -1,0 +1,22 @@
+{
+  "eval_id": 2,
+  "prompt_short": "Create governance taxonomy for our data platform \u2014 it uses Bronze/Silver/Gold me",
+  "overall_result": "FAIL",
+  "assertions": [
+    {
+      "text": "Response includes an Architecture classification or mentions Architecture as a selected dimension",
+      "passed": false,
+      "evidence": "Response is path-only; Architecture selection not confirmed \u2014 skill spec says 'return only the file path'"
+    },
+    {
+      "text": "Response references Bronze, Silver, or Gold as level names",
+      "passed": false,
+      "evidence": "No Bronze/Silver/Gold mentioned in path-only response"
+    },
+    {
+      "text": "Response output path follows the governance-vocabularies/<slug>-governance-vocab.md pattern",
+      "passed": true,
+      "evidence": "Response: 'governance-vocabularies/data-platform-governance-vocab.md' \u2014 pattern correct"
+    }
+  ]
+}

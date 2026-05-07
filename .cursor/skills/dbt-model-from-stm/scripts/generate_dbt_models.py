@@ -133,7 +133,13 @@ def parse_stm(filepath: str) -> STM:
         stm.table_type = r.get("Table Type", "").strip()
 
     s7 = extract_section(md, 7)
-    col_rows = parse_md_table(s7)
+    # Section 7 may include "### Data Condition N" tables plus a "### Final" matrix.
+    # Only the Final table has Target Column / Field Type — parse that slice only.
+    s7_final = s7
+    final_m = re.search(r"###\s*Final\s*\n(.*?)(?=\n##\s|\n###\s|$(?!.))", s7, re.DOTALL | re.IGNORECASE)
+    if final_m:
+        s7_final = final_m.group(1).strip()
+    col_rows = parse_md_table(s7_final)
     for r in col_rows:
         stm.columns.append(ColumnMapping(
             target_table=r.get("Target Table", "").strip(),
@@ -236,7 +242,9 @@ def generate_view_schema_yml(stms: list[STM]) -> str:
         lines.append(f"    description: \"{_yaml_quote(view_desc)}\"")
         lines.append("    columns:")
         for col in stm.columns:
-            col_name = col.target_column
+            col_name = col.target_column.strip()
+            if not col_name:
+                continue
             lines.append(f"      - name: {col_name}")
             if col.description:
                 lines.append(f"        description: \"{_yaml_quote(col.description)}\"")
@@ -268,7 +276,9 @@ def generate_enriched_schema_yml(stms: list[STM]) -> str:
         lines.append(f"    description: \"{_yaml_quote(base_desc)}\"")
         lines.append("    columns:")
         for col in stm.columns:
-            col_name = col.target_column
+            col_name = col.target_column.strip()
+            if not col_name:
+                continue
             lines.append(f"      - name: {col_name}")
             if col.description:
                 lines.append(f"        description: \"{_yaml_quote(col.description)}\"")

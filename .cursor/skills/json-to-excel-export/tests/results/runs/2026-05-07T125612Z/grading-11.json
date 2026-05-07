@@ -1,0 +1,10 @@
+{
+  "eval_id": 11,
+  "prompt_short": "Convert my Excel back to JSON with a legacy-format workbook (no __rt_* tabs)",
+  "overall_result": "PASS",
+  "assertions": [
+    { "text": "Response runs excel_to_json.py", "passed": true, "evidence": "Agent provided the full excel_to_json.py command" },
+    { "text": "Response notes backward compatibility with legacy workbooks OR applies visible tab edits", "passed": true, "evidence": "\"excel_to_json.py detects the absence of __rt_meta and automatically switches to visible-sheet mode\" — explicitly confirms backward-compatible fallback" },
+    { "text": "Response does NOT refuse or error on missing __rt_* tabs", "passed": true, "evidence": "Agent confirmed operation proceeds with no error; legacy behaviour explicitly described as \"expected behaviour and fully supported\"" }
+  ]
+}

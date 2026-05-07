@@ -1,0 +1,22 @@
+{
+  "eval_id": 6,
+  "prompt_short": "Build a dbt SQL model that tracks data classification levels in our Snowflake wa",
+  "overall_result": "PASS",
+  "assertions": [
+    {
+      "text": "Response references dbt, SQL, Snowflake transformation, or dbt-model-from-stm skill",
+      "passed": true,
+      "evidence": "Response: 'use the dbt-model-from-stm skill or work directly in your dbt project'"
+    },
+    {
+      "text": "Response does NOT generate a governance vocabulary markdown file as its main output",
+      "passed": true,
+      "evidence": "Response routes to dbt; no governance vocabulary generated"
+    },
+    {
+      "text": "Response does NOT output ## Classification and ### Level headed sections as the answer",
+      "passed": true,
+      "evidence": "Response contains no classification/level structure"
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "eval_id": 3,
+  "prompt_short": "We need a classification framework for our digital health data catalog.",
+  "overall_result": "FAIL",
+  "assertions": [
+    {
+      "text": "Response includes Privacy classification or explicitly mentions Privacy as a selected dimension",
+      "passed": false,
+      "evidence": "Response is path-only; Privacy selection unverifiable from response alone"
+    },
+    {
+      "text": "Response returns a file path to governance-vocabularies/",
+      "passed": true,
+      "evidence": "Response: 'governance-vocabularies/digital-health-governance-vocab.md'"
+    },
+    {
+      "text": "Response does NOT contain a lengthy prose explanation as the primary output",
+      "passed": true,
+      "evidence": "Response is a single file path \u2014 no prose"
+    }
+  ]
+}

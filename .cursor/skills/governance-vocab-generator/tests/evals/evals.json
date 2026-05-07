@@ -1,0 +1,94 @@
+{
+  "skill_name": "governance-vocab-generator",
+  "generated_date": "2026-05-07",
+  "evals": [
+    {
+      "id": 1,
+      "type": "should-trigger",
+      "prompt": "Generate a data governance vocabulary for the retail banking domain.",
+      "expected_behavior": "Evaluates canonical dimensions for banking; writes to governance-vocabularies/; returns only the file path.",
+      "assertions": [
+        "Response contains a file path matching governance-vocabularies/*.md",
+        "Response uses exact canonical dimension names (e.g. Privacy, Criticality, ComplianceLegal) — not synonyms",
+        "Response does NOT contain tables or JSON in the output vocabulary"
+      ]
+    },
+    {
+      "id": 2,
+      "type": "should-trigger",
+      "prompt": "Create governance taxonomy for our data platform — it uses Bronze/Silver/Gold medallion architecture.",
+      "expected_behavior": "Includes Architecture classification with Bronze/Silver/Gold levels; returns only the file path.",
+      "assertions": [
+        "Response includes an Architecture classification or mentions Architecture as a selected dimension",
+        "Response references Bronze, Silver, or Gold as level names",
+        "Response output path follows the governance-vocabularies/<slug>-governance-vocab.md pattern"
+      ]
+    },
+    {
+      "id": 3,
+      "type": "should-trigger",
+      "prompt": "We need a classification framework for our digital health data catalog.",
+      "expected_behavior": "Triggers; includes Privacy and at least one other canonical dimension; returns only file path — no prose.",
+      "assertions": [
+        "Response includes Privacy classification or explicitly mentions Privacy as a selected dimension",
+        "Response returns a file path to governance-vocabularies/",
+        "Response does NOT contain a lengthy prose explanation as the primary output"
+      ]
+    },
+    {
+      "id": 4,
+      "type": "should-trigger",
+      "prompt": "Produce a governance vocabulary for a legal document management system.",
+      "expected_behavior": "Omits Architecture (no staged processing); includes ComplianceLegal and Retention; returns file path only.",
+      "assertions": [
+        "Response includes ComplianceLegal classification or notes it as applicable to legal domain",
+        "Response does NOT include Architecture, OR explicitly notes Architecture is omitted because no staged processing pipeline exists",
+        "Response returns a file path"
+      ]
+    },
+    {
+      "id": 5,
+      "type": "should-not-trigger",
+      "prompt": "Apply the Privacy and ComplianceLegal governance tags to all the tables in our OpenMetadata catalog.",
+      "expected_behavior": "Tag assignment — routes to catalog-glossary-tagger or catalog-sync; does NOT generate a vocab .md.",
+      "assertions": [
+        "Response does NOT produce a governance-vocabularies/ file path as the main deliverable",
+        "Response references catalog assignment, catalog-glossary-tagger, catalog-sync, or OpenMetadata tag assignment",
+        "Response does NOT output classification dimensions with level headings as the primary content"
+      ]
+    },
+    {
+      "id": 6,
+      "type": "should-not-trigger",
+      "prompt": "Build a dbt SQL model that tracks data classification levels in our Snowflake warehouse.",
+      "expected_behavior": "SQL transformation request — routes to dbt-model-from-stm or general SQL work.",
+      "assertions": [
+        "Response references dbt, SQL, Snowflake transformation, or dbt-model-from-stm skill",
+        "Response does NOT generate a governance vocabulary markdown file as its main output",
+        "Response does NOT output ## Classification and ### Level headed sections as the answer"
+      ]
+    },
+    {
+      "id": 7,
+      "type": "edge-case",
+      "prompt": "Generate a governance vocabulary for IoT sensor data — also add a custom SensorType classification.",
+      "expected_behavior": "SensorType fails 3-condition test (generic/transferable); omitted. Architecture and QualityTrust included.",
+      "assertions": [
+        "Response does NOT include SensorType as a custom classification, OR explicitly reasons it fails the 3-condition non-canonical test",
+        "Response includes Architecture or acknowledges Architecture is relevant for IoT staged processing",
+        "Response applies the canonical-first evaluation rule before considering SensorType"
+      ]
+    },
+    {
+      "id": 8,
+      "type": "edge-case",
+      "prompt": "Create a governance classification framework for HR data — include all 7 canonical dimensions.",
+      "expected_behavior": "Does NOT blindly include all 7; evaluates each; Architecture likely omitted for HR; returns file path.",
+      "assertions": [
+        "Response includes Privacy classification (HR data involves personal data)",
+        "Response does NOT blindly include all 7 canonical dimensions without evaluating each — either omits Architecture or justifies its inclusion",
+        "Response returns a file path"
+      ]
+    }
+  ]
+}

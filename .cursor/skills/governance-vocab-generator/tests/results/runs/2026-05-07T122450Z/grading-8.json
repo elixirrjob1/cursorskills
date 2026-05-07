@@ -1,0 +1,22 @@
+{
+  "eval_id": 8,
+  "prompt_short": "Create a governance classification framework for HR data \u2014 include all 7 canonic",
+  "overall_result": "PASS",
+  "assertions": [
+    {
+      "text": "Response includes Privacy classification (HR data involves personal data)",
+      "passed": true,
+      "evidence": "Response: 'All seven canonical dimensions were assessed; all seven apply to HR data and are included' \u2014 Privacy is one of 7"
+    },
+    {
+      "text": "Response does NOT blindly include all 7 canonical dimensions without evaluating each \u2014 either omits Architecture or justifies its inclusion",
+      "passed": true,
+      "evidence": "Response explicitly justifies Architecture: 'modern HR data platforms routinely involve staged processing'"
+    },
+    {
+      "text": "Response returns a file path",
+      "passed": true,
+      "evidence": "Response: 'governance-vocabularies/hr-data-governance-vocab.md'"
+    }
+  ]
+}

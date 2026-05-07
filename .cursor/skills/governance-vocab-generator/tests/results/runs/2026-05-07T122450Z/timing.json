@@ -1,0 +1,63 @@
+{
+  "review_date": "2026-05-07",
+  "reviewed_at": "2026-05-07T12:24:50Z",
+  "run_slug": "2026-05-07T122450Z",
+  "runs": [
+    {
+      "eval_id": 1,
+      "test_type": "should-trigger",
+      "prompt_short": "Generate a data governance vocabulary for the retail banking domain.",
+      "result": "FAIL",
+      "carried_from": null
+    },
+    {
+      "eval_id": 2,
+      "test_type": "should-trigger",
+      "prompt_short": "Create governance taxonomy for our data platform \u2014 it uses Bronze/Silver/Gold me",
+      "result": "FAIL",
+      "carried_from": null
+    },
+    {
+      "eval_id": 3,
+      "test_type": "should-trigger",
+      "prompt_short": "We need a classification framework for our digital health data catalog.",
+      "result": "FAIL",
+      "carried_from": null
+    },
+    {
+      "eval_id": 4,
+      "test_type": "should-trigger",
+      "prompt_short": "Produce a governance vocabulary for a legal document management system.",
+      "result": "FAIL",
+      "carried_from": null
+    },
+    {
+      "eval_id": 5,
+      "test_type": "should-not-trigger",
+      "prompt_short": "Apply the Privacy and ComplianceLegal governance tags to all the tables in our O",
+      "result": "PASS",
+      "carried_from": null
+    },
+    {
+      "eval_id": 6,
+      "test_type": "should-not-trigger",
+      "prompt_short": "Build a dbt SQL model that tracks data classification levels in our Snowflake wa",
+      "result": "PASS",
+      "carried_from": null
+    },
+    {
+      "eval_id": 7,
+      "test_type": "edge-case",
+      "prompt_short": "Generate a governance vocabulary for IoT sensor data \u2014 also add a custom SensorT",
+      "result": "FAIL",
+      "carried_from": null
+    },
+    {
+      "eval_id": 8,
+      "test_type": "edge-case",
+      "prompt_short": "Create a governance classification framework for HR data \u2014 include all 7 canonic",
+      "result": "PASS",
+      "carried_from": null
+    }
+  ]
+}

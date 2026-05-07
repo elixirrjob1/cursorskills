@@ -1,0 +1,10 @@
+{
+  "eval_id": 1,
+  "prompt_short": "Export my schema JSON to Excel (schema.json present)",
+  "overall_result": "PASS",
+  "assertions": [
+    { "text": "Response runs or describes running json_to_excel.py", "passed": true, "evidence": "Agent ran json_to_excel.py and reported 76 rows across 16 sheets written to schema.xlsx" },
+    { "text": "Response mentions Summary or per-table worksheet output", "passed": true, "evidence": "Response explicitly lists Summary, SourceSystem, DataQualityFindings, per-table worksheets, and hidden __rt_* tabs" },
+    { "text": "Response does NOT refuse or ask for a different skill", "passed": true, "evidence": "Agent executed the conversion without redirecting or refusing" }
+  ]
+}

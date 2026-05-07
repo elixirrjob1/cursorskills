@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8">
+<title>Benchmark — json-to-excel-export — 2026-05-07T124559Z</title>
+<style>
+  body{font-family:system-ui,sans-serif;margin:2rem;color:#222}
+  h1{font-size:1.4rem} h2{font-size:1.1rem;margin-top:2rem;border-bottom:1px solid #ddd;padding-bottom:4px}
+  table{border-collapse:collapse;width:100%;margin-top:1rem}
+  th{background:#f5f5f5;text-align:left;padding:6px 10px;font-size:.85rem}
+  td{padding:5px 10px;font-size:.82rem;vertical-align:top;border-bottom:1px solid #eee}
+  tr.pass td:nth-child(3){color:#2a7a2a;font-weight:bold}
+  tr.fail td:nth-child(3){color:#c0392b;font-weight:bold}
+  .verdict{font-weight:bold;font-size:1rem} small{color:#888}
+  code{background:#f0f0f0;padding:1px 4px;border-radius:3px;font-size:.8em}
+</style></head>
+<body>
+<h1>Benchmark Report — json-to-excel-export</h1>
+<p><strong>Run:</strong> <code>2026-05-07T124559Z</code> &nbsp; <strong>Reviewed at:</strong> 2026-05-07T12:45:59Z &nbsp; <strong class="verdict">Overall: ❌ FAIL</strong> &nbsp; <small>(incremental — categories 1–10 and all 11 unit tests carried from 2026-05-06)</small></p>
+
+<h2>Summary</h2>
+<table>
+<tr><th>Metric</th><th>Value</th></tr>
+<tr><td>Unit Tests</td><td>11 / 11 ✅ (all carried from 2026-05-06 — 0 re-run this pass)</td></tr>
+<tr><td>Categories</td><td>10 / 13 passed (FAIL: 11 Maintainability, 12 Gotchas, 13 Anti-Pattern — unchanged since 2026-05-06)</td></tr>
+<tr><td>Comparator</td><td>— (no prior snapshot; first run with new snapshot system)</td></tr>
+</table>
+
+<h2>Category Grades</h2>
+<table>
+<tr><th>#</th><th>Category</th><th>Grade</th><th>Notes</th></tr>
+<tr class="pass"><td>1</td><td>Triggering (Description Quality)</td><td>✅ PASS</td><td>Specific triggers; name valid; description clear ↩ carried</td></tr>
+<tr class="pass"><td>2</td><td>Anatomy &amp; Structure</td><td>✅ PASS</td><td>91-line SKILL.md; scripts/ conventional; <code>agents/openai.yaml</code> LOW-only ↩ carried</td></tr>
+<tr class="pass"><td>3</td><td>Instructions Clarity</td><td>✅ PASS</td><td>All three flags documented with exact if/then cases ↩ carried</td></tr>
+<tr class="pass"><td>4</td><td>Output Quality</td><td>✅ PASS</td><td>Output Shape section lists all tabs and formatting rules ↩ carried</td></tr>
+<tr class="pass"><td>5</td><td>Testability</td><td>✅ PASS</td><td>11 tests; TC9 and TC10 executed in real environment ↩ carried</td></tr>
+<tr class="pass"><td>6</td><td>Resource Efficiency</td><td>✅ PASS</td><td>Pre-built scripts both directions; no filler ↩ carried</td></tr>
+<tr class="pass"><td>7</td><td>Security &amp; Trust</td><td>✅ PASS</td><td>OM credentials from env; no logging; network scoped to OM REST ↩ carried</td></tr>
+<tr class="pass"><td>8</td><td>Coexistence &amp; Recall</td><td>✅ PASS</td><td>Boundaries confirmed with natural-language-data-query and dbt-model-from-stm ↩ carried</td></tr>
+<tr class="pass"><td>9</td><td>Model Compatibility</td><td>✅ PASS</td><td>N/A — script execution, no multi-model requirement ↩ carried</td></tr>
+<tr class="pass"><td>10</td><td>Workflow &amp; Feedback Loops</td><td>✅ PASS</td><td>N/A — single-step conversion, not fragile or destructive ↩ carried</td></tr>
+<tr class="fail"><td>11</td><td>Maintainability &amp; Lifecycle</td><td>❌ FAIL</td><td>[MEDIUM×3] No registry, no versioning, no lifecycle stage — unchanged since 2026-05-06</td></tr>
+<tr class="fail"><td>12</td><td>Gotchas / Lessons Learned</td><td>❌ FAIL</td><td>[MEDIUM] No Gotchas section — unchanged since 2026-05-06</td></tr>
+<tr class="fail"><td>13</td><td>Anti-Pattern Audit</td><td>❌ FAIL</td><td>[MEDIUM] Undocumented: <code>limit:1000</code>×2, <code>8</code> (blank rows), <code>30000</code> (chunk), <code>31</code> (sheet name); <code>requests</code> not mentioned; <code>openpyxl</code> unversioned</td></tr>
+
+</table>
+
+<h2>Unit Test Results</h2>
+<table>
+<tr><th>#</th><th>Type</th><th>Test</th><th>Result</th><th>Evidence</th></tr>
+<tr><td>1</td><td>should-trigger</td><td>Export schema JSON to Excel</td><td>✅ PASS <small style="color:#888">↩ 2026-05-06</small></td><td>All 3 assertions passed in 2026-05-06 run (ran json_to_excel.py; produced multi-tab workbook)<br><small>3/3 assertions ↩ carried</small></td></tr>
+<tr><td>2</td><td>should-trigger</td><td>Skip OpenMetadata sheet</td><td>✅ PASS <small style="color:#888">↩ 2026-05-06</small></td><td>--no-openmetadata flag used; DataGovernanceTerms absent<br><small>3/3 assertions ↩ carried</small></td></tr>
+<tr><td>3</td><td>should-trigger</td><td>Use pre-fetched glossary.json</td><td>✅ PASS <small style="color:#888">↩ 2026-05-06</small></td><td>--glossary-json flag used; no live fetch<br><small>3/3 assertions ↩ carried</small></td></tr>
+<tr><td>4</td><td>should-trigger</td><td>Convert Excel back to JSON with edits</td><td>✅ PASS <small style="color:#888">↩ 2026-05-06</small></td><td>excel_to_json.py; edits applied by default<br><small>3/3 assertions ↩ carried</small></td></tr>
+<tr><td>5</td><td>should-trigger</td><td>Restore original JSON ignoring edits</td><td>✅ PASS <small style="color:#888">↩ 2026-05-06</small></td><td>--no-apply-edits; __rt_* tabs restored<br><small>3/3 assertions ↩ carried</small></td></tr>
+<tr><td>6</td><td>should-not-trigger</td><td>Export Snowflake query to Excel</td><td>✅ PASS <small style="color:#888">↩ 2026-05-06</small></td><td>Declined; not schema JSON export<br><small>3/3 assertions ↩ carried</small></td></tr>
+<tr><td>7</td><td>should-not-trigger</td><td>Generate dbt model and export to Excel</td><td>✅ PASS <small style="color:#888">↩ 2026-05-06</small></td><td>Redirected to dbt-model-from-stm<br><small>3/3 assertions ↩ carried</small></td></tr>
+<tr><td>8</td><td>should-not-trigger</td><td>Convert Python script to Excel</td><td>✅ PASS <small style="color:#888">↩ 2026-05-06</small></td><td>Declined; not schema JSON input<br><small>3/3 assertions ↩ carried</small></td></tr>
+<tr><td>9</td><td>edge-case</td><td>Export without output path</td><td>✅ PASS <small style="color:#888">↩ 2026-05-06</small></td><td>Wrote .xlsx next to input; no error<br><small>3/3 assertions ↩ carried</small></td></tr>
+<tr><td>10</td><td>edge-case</td><td>OpenMetadata not set → graceful degradation</td><td>✅ PASS <small style="color:#888">↩ 2026-05-06</small></td><td>OM fetch skipped; workbook produced without DataGovernanceTerms<br><small>3/3 assertions ↩ carried</small></td></tr>
+<tr><td>11</td><td>edge-case</td><td>Legacy workbook without __rt_* tabs</td><td>✅ PASS <small style="color:#888">↩ 2026-05-06</small></td><td>Applied visible edits; backward-compatible<br><small>3/3 assertions ↩ carried</small></td></tr>
+
+</table>
+</body></html>

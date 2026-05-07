@@ -1,0 +1,10 @@
+{
+  "eval_id": 6,
+  "prompt_short": "Export a report of top 10 customers from Snowflake to Excel",
+  "overall_result": "PASS",
+  "assertions": [
+    { "text": "Response does NOT run json_to_excel.py", "passed": true, "evidence": "Agent correctly declined and did not invoke json_to_excel.py" },
+    { "text": "Response declines or redirects — does not treat as schema conversion", "passed": true, "evidence": "\"The json-to-excel-export skill isn't the right tool for this request\" — redirected to Snowflake UI, Python script, or natural-language-data-query skill" },
+    { "text": "Response does NOT produce an Excel workbook from a Snowflake query", "passed": true, "evidence": "No workbook was generated; agent offered alternative paths instead" }
+  ]
+}

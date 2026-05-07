@@ -1,0 +1,10 @@
+{
+  "eval_id": 3,
+  "prompt_short": "I have a pre-fetched glossary.json file, use that instead of fetching from OpenMetadata",
+  "overall_result": "PASS",
+  "assertions": [
+    { "text": "Response includes --glossary-json flag", "passed": true, "evidence": "Agent used --glossary-json .cursor/flat/om_glossary_terms.json in the command" },
+    { "text": "Response references the provided glossary file path", "passed": true, "evidence": "Response mentions .cursor/flat/om_glossary_terms.json as the pre-fetched glossary source" },
+    { "text": "Response does NOT attempt a live OpenMetadata fetch when glossary is pre-fetched", "passed": true, "evidence": "\"using .cursor/flat/om_glossary_terms.json for the DataGovernanceTerms sheet instead of making a live call to OpenMetadata\"" }
+  ]
+}

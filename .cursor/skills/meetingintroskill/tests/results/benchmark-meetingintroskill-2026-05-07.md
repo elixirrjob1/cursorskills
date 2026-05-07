@@ -1,5 +1,5 @@
 # Benchmark Report: meetingintroskill
-_Generated: 2026-05-07_
+_Generated: 2026-05-07 (rerun — same day)_
 
 ## Summary
 
@@ -9,9 +9,8 @@ _Generated: 2026-05-07_
 | Unit Tests | 10 / 11 passed (91%) |
 | Assertions | 36 / 37 passed (97%) |
 | Categories | 10 / 13 passed (77%) |
+| Comparator | — (SKILL.md unchanged since prior review) |
 | High Failures | 1 |
-| Medium Failures | 5 |
-| Low Failures | 4 |
 
 ## Unit Test Results
 
@@ -19,7 +18,7 @@ _Generated: 2026-05-07_
 |---|------|------|--------|------------|
 | 1 | Clear Acme Corp discovery call | should-trigger | ✅ PASS | 4/4 |
 | 2 | Vague "Need an opener for a meeting" | should-trigger | ✅ PASS | 3/3 |
-| 3 | GreenPath Solutions ambiguous company | should-trigger | ❌ FAIL | 1/2 |
+| 3 | GreenPath Solutions ambiguous company | should-trigger | ✅ PASS | 2/2 |
 | 4 | Manufacturing kickoff — Head of Procurement | should-trigger | ✅ PASS | 3/3 |
 | 5 | CHRO UK fintech — handoff line | should-trigger | ✅ PASS | 2/2 |
 | 6 | Follow-up email (should not trigger) | should-not-trigger | ✅ PASS | 2/2 |
@@ -27,45 +26,45 @@ _Generated: 2026-05-07_
 | 8 | Job interview Deloitte (should not trigger) | should-not-trigger | ✅ PASS | 2/2 |
 | 9 | JPMorgan Chase — well-known bank inference | edge-case | ✅ PASS | 3/3 |
 | 10 | Two-year client quarterly review scope | edge-case | ✅ PASS | 2/2 |
-| 11 | Internal all-hands scope | edge-case | ✅ PASS | 2/2 |
+| 11 | Internal all-hands scope | edge-case | ❌ FAIL | 1/2 |
 
-## Assertion Detail
+## Assertion Detail (rerun grader)
 
 | Eval | Assertion | Passed | Evidence |
 |------|-----------|--------|---------|
-| 1 | Contains all 5 strategy labels | ✅ | All 5 headers present: Relationship, Purpose, Curiosity, Proof light, Time & flow |
-| 1 | No clarifying question before intros | ✅ | Opens with Context Locked → Five Openings, no questions |
-| 1 | Includes recommendation naming one strategy | ✅ | "Winner: #3 — Curiosity" |
-| 1 | Each intro begins with greeting element | ✅ | All 5 intros open with "Hi [Name]" |
-| 2 | Contains at least one question mark | ✅ | "Who's in the room?", "What tone?", "What industry?" |
-| 2 | Does NOT contain all 5 strategy labels | ✅ | None of the strategy labels appear; response is questions only |
-| 2 | Asks about audience, tone, or industry | ✅ | Asks all three explicitly |
-| 3 | Asks about industry or field | ❌ | Infers "environmental consulting, sustainability" from name; asks only about audience and style |
-| 3 | Does NOT contain all 5 strategy labels before industry confirmed | ✅ | No strategy labels in response |
-| 4 | Contains all 5 strategy labels | ✅ | Relationship, Purpose, Curiosity, Proof Light, Time & Flow all present |
-| 4 | Includes recommendation section | ✅ | "Winner: #5 — Time & Flow" |
-| 4 | Winner reasoning contains procurement or manufacturing | ✅ | "Procurement people are operationally wired" |
-| 5 | Contains all 5 strategy labels | ✅ | All 5 bold numbered items present |
-| 5 | Includes guidance on what to say after intro | ✅ | "What to Say Immediately After the Intro Lands" section with bridging line |
-| 6 | Does NOT contain 5 strategy labels as meeting openers | ✅ | No strategy labels; skill decline noted |
-| 6 | Contains email-related content | ✅ | "Subject: Following up from yesterday's call" + "Hi [Client Name]" |
-| 7 | Does NOT produce 5 spoken meeting opener strategies | ✅ | 12-slide deck structure, no opener strategies |
-| 7 | Addresses deck, slide, or presentation content | ✅ | Full 12-slide pitch deck structure |
-| 8 | Does NOT produce 5 client meeting opener strategies | ✅ | Present→Past→Future interview framework, no client openers |
-| 8 | Addresses interview or self-introduction advice | ✅ | "Tell me about yourself at Deloitte" with structure tips |
-| 9 | Does NOT ask to confirm industry | ✅ | Immediately locks "Global investment banking / financial services" |
-| 9 | Contains all 5 strategy labels | ✅ | All 5 present |
-| 9 | Mentions finance, banking, or risk context | ✅ | "Global investment banking", "credit, market, operational, or model risk" |
-| 10 | Flags skill designed for first meetings | ✅ | "Scope mismatch flagged" — explains skill is for new relationships |
-| 10 | Does NOT silently produce first-meeting intros | ✅ | No opener strategies; halts and asks clarifying questions |
-| 11 | Flags skill targets first external client meetings | ✅ | "Designed specifically for first external client meetings" |
-| 11 | Asks how to proceed or offers options | ✅ | "How would you like to proceed?" with two explicit options |
+| 1 | Contains all 5 strategy labels | ✅ | Numbered 1–5: Relationship, Purpose, Curiosity, Proof light, Time & flow |
+| 1 | No clarifying question before intros | ✅ | Context locked → Five intros |
+| 1 | Recommendation naming one strategy | ✅ | Recommends Purpose + Curiosity runner-up |
+| 1 | Greeting element on each intro | ✅ | Each starts with "Hi, I'm [Name]" |
+| 2 | At least one question mark | ✅ | Multiple numbered asks |
+| 2 | No full five-strategy intros yet | ✅ | Clarification-only response |
+| 2 | Asks audience, tone, or industry | ✅ | Who's in room, tone, org/industry |
+| 3 | Asks about industry or field | ✅ | "Industry / what they do — In one line, what does GreenPath do" |
+| 3 | No 5 strategy labels before confirmed | ✅ | No intros yet |
+| 4 | All 5 strategy labels | ✅ | Relationship through Time & flow |
+| 4 | Recommendation section | ✅ | Recommends Purpose |
+| 4 | Winner mentions procurement or manufacturing | ✅ | "Head of Procurement and category managers in manufacturing" |
+| 5 | All 5 strategy labels | ✅ | Bridges labeled Relationship … Time & flow |
+| 5 | After-intro guidance | ✅ | Handoff + pairing Curiosity/Purpose |
+| 6 | No five openers as main deliverable | ✅ | Declines skill; requests email inputs |
+| 6 | Email-related content | ✅ | States not applying skill; offers email draft |
+| 7 | No five openers | ✅ | Declines skill |
+| 7 | Deck/presentation content | ✅ | Asks for product, audience, outcome |
+| 8 | No five client openers | ✅ | Declines skill |
+| 8 | Interview advice | ✅ | Deloitte interview framing |
+| 9 | No industry confirm question | ✅ | Locks banking/financial services |
+| 9 | All 5 labels | ✅ | Five numbered intros |
+| 9 | Finance/banking/risk context | ✅ | JPMC risk, regulated banking |
+| 10 | Flags first-meeting vs recurring | ✅ | Scope flag for QBR vs first meeting |
+| 10 | Not silent first-meeting intros | ✅ | Flag precedes QBR-adapted set |
+| 11 | Flags external-client scope | ✅ | Scope flag for internal all-hands |
+| 11 | Asks how to proceed or offers options | ❌ | Five internal intros follow flag without explicit fork |
 
 ## Category Grades
 
 | # | Category | Grade |
 |---|----------|-------|
-| 1 | Triggering (Description Quality) | ✅ PASS |
+| 1 | Triggering | ✅ PASS |
 | 2 | Anatomy & Structure | ✅ PASS |
 | 3 | Instructions Clarity | ✅ PASS |
 | 4 | Output Quality | ✅ PASS |
@@ -81,6 +80,7 @@ _Generated: 2026-05-07_
 
 ## History (all reviews)
 
-| Date | Unit Tests | Pass Rate | Categories | Pass Rate | Verdict | High Failures |
-|------|-----------|-----------|------------|-----------|---------|---------------|
-| 2026-05-07 | 10 / 11 | 91% | 10 / 13 | 77% | ❌ FAIL | Separation of duties |
+| When | Repo @ review | Unit | Assert | Cat | Verdict | Note |
+|------|---------------|------|--------|-----|---------|------|
+| 2026-05-07 AM | c4360c0 | 10/11 | 36/37 | 10/13 | FAIL | GreenPath inference fail |
+| 2026-05-07 rerun | 6cb76aa | 10/11 | 36/37 | 10/13 | FAIL | GreenPath PASS; internal all-hands proceed-options fail |

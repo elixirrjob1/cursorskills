@@ -26,7 +26,7 @@
   <!--
     skill-reviewer Step 7c: Copy this file to tests/results/benchmark-<skill-name>-YYYY-MM-DD.html
     in the *target* skill folder. Replace every ___PLACEHOLDER___ below (do not leave placeholders in output).
-    Use class pass / fail / skip on verdict cells. Escape HTML in cell text (&amp; &lt; for raw angles if needed).
+    Summary table: metric labels are fixed; replace each ___SUMMARY_TD_*___ with one full <td>…</td> (use class pass/fail/skip on styled cells). Escape HTML in text if needed.
   -->
   <h1>Benchmark Report: ___SKILL_NAME___</h1>
   <p class="meta">___META_LINE___</p>
@@ -34,7 +34,13 @@
   <h2>Summary</h2>
   <table>
     <tr><th>Metric</th><th>Value</th></tr>
-___SUMMARY_ROWS___
+    <tr><td>Overall Verdict</td>___SUMMARY_TD_VERDICT___</tr>
+    <tr><td>Unit Tests</td>___SUMMARY_TD_UNIT_TESTS___</tr>
+    <tr><td>Assertions</td>___SUMMARY_TD_ASSERTIONS___</tr>
+    <tr><td>Categories</td>___SUMMARY_TD_CATEGORIES___</tr>
+    <tr><td>High Failures</td>___SUMMARY_TD_HIGH_FAILURES___</tr>
+    <tr><td>Medium Failures</td>___SUMMARY_TD_MEDIUM_FAILURES___</tr>
+    <tr><td>Comparator</td>___SUMMARY_TD_COMPARATOR___</tr>
   </table>
 
   <h2>Unit Test Results</h2>

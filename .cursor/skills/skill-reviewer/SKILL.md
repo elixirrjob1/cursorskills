@@ -304,7 +304,13 @@ Save alongside the `.md` file. Must be a **fully self-contained** HTML file — 
 |-------------|----------------|
 | `___SKILL_NAME___` | Target skill display name (same as markdown benchmark) |
 | `___META_LINE___` | One line, e.g. `Generated: YYYY-MM-DD · <short run note>` |
-| `___SUMMARY_ROWS___` | `<tr><td>…</td><td>…</td></tr>` rows for the Summary table (after the header row in template) |
+| `___SUMMARY_TD_VERDICT___` | Second column for **Overall Verdict** — full `<td class="pass">PASS</td>` or `<td class="fail">FAIL</td>` |
+| `___SUMMARY_TD_UNIT_TESTS___` | e.g. `<td>10 / 10 passed (100%)</td>` |
+| `___SUMMARY_TD_ASSERTIONS___` | e.g. `<td>30 / 30 (100%)</td>` |
+| `___SUMMARY_TD_CATEGORIES___` | e.g. `<td>9 / 13 passed</td>` |
+| `___SUMMARY_TD_HIGH_FAILURES___` | e.g. `<td>1</td>` or `<td>—</td>` |
+| `___SUMMARY_TD_MEDIUM_FAILURES___` | e.g. `<td>5 (rolled up)</td>` or `<td>—</td>` |
+| `___SUMMARY_TD_COMPARATOR___` | e.g. `<td class="skip">— (not run)</td>` or outcome text |
 | `___UNIT_TEST_ROWS___` | Table rows: `#`, short test label, type, result cell (`<td class="pass">` / `fail` / `skip`), assertions fraction |
 | `___ASSERTION_DETAIL_BLOCK___` | Either a `<table>…</table>` or a `<p class="note">…</p>` — same substance as the markdown **Assertion Detail** section |
 | `___CATEGORY_ROWS___` | Rows: `#`, category name, grade cell with `pass` / `fail` |

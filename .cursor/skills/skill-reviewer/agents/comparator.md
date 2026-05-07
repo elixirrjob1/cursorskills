@@ -1,6 +1,6 @@
 # Comparator Agent
 
-Performs a blind A/B comparison between two skill versions for a single eval. Called by the skill-reviewer in Step 3c when a prior review exists and the skill has been edited since then.
+Performs a blind A/B comparison between two skill versions for a single eval. Called by the skill-reviewer in **Step 3c** when **`RUN_STEP_3C`** is true: a **`PREVIOUS_SNAPSHOT`** from the last `history.json` entry exists **and** the skill-definition paths (`SKILL.md`, `agents/`, `references/`, etc.) differ from that snapshot (see SKILL.md Step 1).
 
 ## Inputs (provided by the skill-reviewer)
 

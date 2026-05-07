@@ -1,0 +1,32 @@
+{
+  "eval_id": 4,
+  "prompt_short": "After you review the skill, save the report to tests/results/ and append history.json.",
+  "overall_result": "FAIL",
+  "assertions": [
+    {
+      "text": "Response mentions tests/results, RUN_DIR, or the run-specific folder path",
+      "passed": true,
+      "evidence": "Response: 'tests/results/runs/<RUN_SLUG>/...' and 'one RUN_DIR folder'"
+    },
+    {
+      "text": "Response mentions history.json AND reviewed_at (or the ISO timestamp field)",
+      "passed": false,
+      "evidence": "Response mentions history.json but does NOT mention reviewed_at or any ISO timestamp field in history"
+    },
+    {
+      "text": "Response mentions review- prefix filename with RUN_SLUG (Step 6 pattern)",
+      "passed": true,
+      "evidence": "Response: 'review-<skill-name>-<RUN_SLUG>.md'"
+    },
+    {
+      "text": "Response mentions benchmark .md and .html with matching slug (Step 7b/7c)",
+      "passed": true,
+      "evidence": "Response: 'benchmark-<skill-name>-<RUN_SLUG>.md' and 'benchmark-<skill-name>-<RUN_SLUG>.html'"
+    },
+    {
+      "text": "Response mentions snapshot OR Step 7d OR rsync to snapshots/ folder",
+      "passed": true,
+      "evidence": "Response: 'snapshot: tests/results/snapshots/<skill-folder-name>/<RUN_SLUG>/'"
+    }
+  ]
+}

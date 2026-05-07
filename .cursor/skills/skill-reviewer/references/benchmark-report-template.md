@@ -1,5 +1,5 @@
 <!--
-  skill-reviewer Step 7b: Copy to tests/results/benchmark-<skill-name>-YYYY-MM-DD.md
+  skill-reviewer Step 7b: Copy to tests/results/benchmark-<skill-name>-<RUN_SLUG>.md
   in the *target* skill folder. Remove this comment block. Replace every ___PLACEHOLDER___.
   Summary metrics are fixed (same order as benchmark-report-template.html).
 
@@ -48,8 +48,8 @@ ___VERSION_COMPARISON_BLOCK___
 
 ## History (all reviews)
 
-| Date | Unit Tests | Assertions | Categories | Verdict | Comparison |
-|------|------------|------------|------------|---------|------------|
+| Reviewed at (ISO UTC) | Calendar | Unit Tests | Assertions | Categories | Verdict | Notes |
+|----------------------|----------|------------|------------|------------|---------|-------|
 ___HISTORY_ROWS___
 
 Full narrative: `___REVIEW_FILENAME___`.

@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Benchmark Report: skill-reviewer</title>
+  <style>
+    body { font-family: system-ui, sans-serif; font-size: 14px; margin: 24px; background: #fff; color: #222; }
+    h1 { font-size: 1.35rem; margin-bottom: 0.25rem; }
+    h2 { font-size: 1.1rem; margin-top: 2rem; margin-bottom: 0.75rem; border-bottom: 1px solid #ccc; padding-bottom: 0.25rem; }
+    .meta { color: #555; margin-bottom: 1.5rem; }
+    table { border-collapse: collapse; width: 100%; margin: 0.5rem 0 1rem; }
+    th, td { border: 1px solid #ccc; padding: 8px 10px; text-align: left; }
+    tr:nth-child(even) { background: #f9f9f9; }
+    th { background: #eee; font-weight: 600; }
+    .pass { background: #d4edda; color: #155724; }
+    .fail { background: #f8d7da; color: #721c24; }
+    .skip { background: #fff3cd; color: #856404; }
+    .bar-track { display: inline-block; width: 120px; height: 10px; background: #e0e0e0; border-radius: 2px; vertical-align: middle; margin-right: 8px; }
+    .bar-fill { height: 100%; background: #28a745; border-radius: 2px; }
+    .note { color: #444; font-style: italic; margin: 0.5rem 0; }
+    code { font-size: 13px; background: #f4f4f4; padding: 1px 4px; border-radius: 2px; }
+  </style>
+</head>
+<body>
+  
+  <h1>Benchmark Report: skill-reviewer</h1>
+  <p class="meta">Generated: 2026-05-07T11:21:20Z · incremental; first 7d snapshot</p>
+
+  <h2>Summary</h2>
+  <table>
+    <tr><th>Metric</th><th>Value</th></tr>
+    <tr><td>Overall Verdict</td><td class="fail"><strong>FAIL</strong></td></tr>
+    <tr><td>Unit Tests</td><td>10 / 10 passed (100%)</td></tr>
+    <tr><td>Assertions</td><td>30 / 30 (100%)</td></tr>
+    <tr><td>Categories</td><td class="fail"><strong>9 / 13 passed</strong></td></tr>
+    <tr><td>High Failures</td><td>4</td></tr>
+    <tr><td>Medium Failures</td><td>—</td></tr>
+    <tr><td>Comparator</td><td class="skip">— (evals not re-run this round)</td></tr>
+  </table>
+
+  <h2>Unit Test Results</h2>
+  <table>
+    <thead>
+      <tr><th>#</th><th>Test</th><th>Type</th><th>Result</th><th>Assertions</th><th>Evidence</th></tr>
+    </thead>
+    <tbody>
+<tr><td>1</td><td>Review <code>.cursor/skills/meetingintroskill/</code> for production readiness — full rubric. <small style="color:#888">not re-run, ↩ 2026-05-07</small></td><td>should-trigger</td><td class="pass">✅ PASS</td><td>3/3</td><td style="font-size:12px">Opens with reading <code>SKILL.md</code>, <code>test-cases.md</code>, <code>evals.json</code>, and the meetingint · Delivers <strong>full 13-category</strong> assessment and <strong>Category Grades</strong> table. · States Overall Verdict FAIL and per-category PASS/FAIL in the Category Grades ta <small style="color:#888">(↩ 2026-05-07)</small></td></tr>
+<tr><td>2</td><td>We have a prior review in tests/results/review-meetingintroskill-2026-05-07.md — only re-check what failed last time. <small style="color:#888">not re-run, ↩ 2026-05-07</small></td><td>should-trigger</td><td class="pass">✅ PASS</td><td>3/3</td><td style="font-size:12px">States <strong>prior review</strong> baseline and incremental workflow. · <strong>PASS rows were carried</strong>; only <strong>failed</strong> items re-checked. · Does not deny prior review—explicitly loads `review-meetingintroskill-2026-05-07 <small style="color:#888">(↩ 2026-05-07)</small></td></tr>
+<tr><td>3</td><td>Grade this SKILL.md against Anthropic skill best practices and list HIGH findings only. <small style="color:#888">not re-run, ↩ 2026-05-07</small></td><td>should-trigger</td><td class="pass">✅ PASS</td><td>3/3</td><td style="font-size:12px">Frames output as <strong>[HIGH]</strong>-only and lists <strong>High-criticality failures</strong>. · Discusses <strong>Category 7 (Security &amp; Trust)</strong> and rubric context. · Completes a substantive audit; does not refuse the request. <small style="color:#888">(↩ 2026-05-07)</small></td></tr>
+<tr><td>4</td><td>After you review the skill, save the report to tests/results/ and append history.json. <small style="color:#888">not re-run, ↩ 2026-05-07</small></td><td>should-trigger</td><td class="pass">✅ PASS</td><td>3/3</td><td style="font-size:12px"><strong>`tests/results/`</strong> and artifact table with full paths. · <strong>`history.json`</strong> and <strong>benchmark</strong> <code>.md</code>/<code>.html</code> called out. · Step 6–7 document <strong>`review-&lt;skill&gt;-&lt;RUN_SLUG&gt;.md`</strong> (timestamped); legacy **`re <small style="color:#888">(↩ 2026-05-07)</small></td></tr>
+<tr><td>5</td><td>Does our reviewer workflow document blind comparison between skill versions? <small style="color:#888">not re-run, ↩ 2026-05-07</small></td><td>should-trigger</td><td class="pass">✅ PASS</td><td>3/3</td><td style="font-size:12px"><strong>Step 3c</strong>, <strong>comparator</strong>, and <strong>blind comparison</strong> explained. · <strong>Snapshot</strong>, <strong>current vs snapshot</strong>, and <strong>two skill versions</strong> described. · Confirms the workflow documents this feature rather than denying it. <small style="color:#888">(↩ 2026-05-07)</small></td></tr>
+<tr><td>6</td><td>Convert this STM markdown into dbt SQL models for Snowflake. <small style="color:#888">not re-run, ↩ 2026-05-07</small></td><td>should-not-trigger</td><td class="pass">✅ PASS</td><td>3/3</td><td style="font-size:12px">Lead section routes to <strong>dbt-model-from-stm</strong>; no 13-category audit as main body · <strong>STM</strong>, <strong>dbt</strong>, <strong>Snowflake</strong>, and repo paths referenced. · Main content is dbt/STM guidance, not Category 1–13 tables alone. <small style="color:#888">(↩ 2026-05-07)</small></td></tr>
+<tr><td>7</td><td>Bootstrap a new Azure Key Vault and upload secrets from <code>.env</code>. <small style="color:#888">not re-run, ↩ 2026-05-07</small></td><td>should-not-trigger</td><td class="pass">✅ PASS</td><td>3/3</td><td style="font-size:12px">Explicitly states skill-reviewer is <strong>not</strong> for Key Vault; no rubric-as-sole-del · <strong>Azure</strong>, <strong>Key Vault</strong>, <code>azure-keyvault-deployer</code>, and populate script referen · Points to <strong>azure-keyvault-deployer</strong> skill rather than claiming skill-reviewer  <small style="color:#888">(↩ 2026-05-07)</small></td></tr>
+<tr><td>8</td><td>What is the capital of France? <small style="color:#888">not re-run, ↩ 2026-05-07</small></td><td>should-not-trigger</td><td class="pass">✅ PASS</td><td>3/3</td><td style="font-size:12px">Single factual sentence; no skill-audit workflow. · <strong>Paris</strong> as capital of France. · One-line answer; not a 13-category report. <small style="color:#888">(↩ 2026-05-07)</small></td></tr>
+<tr><td>9</td><td>Run the skill reviewer. <small style="color:#888">not re-run, ↩ 2026-05-07</small></td><td>edge-case</td><td class="pass">✅ PASS</td><td>3/3</td><td style="font-size:12px"><strong>Please specify the target</strong> and bullet options for path/skill/paste — asks whi · No fabricated full review for a specific unnamed skill—only asks for target. · Mentions <strong>path</strong>, <strong>skill folder</strong>, <strong>Pasted content</strong> / <strong>SKILL.md</strong>. <small style="color:#888">(↩ 2026-05-07)</small></td></tr>
+<tr><td>10</td><td>Use the grader agent — what file defines its contract? <small style="color:#888">not re-run, ↩ 2026-05-07</small></td><td>edge-case</td><td class="pass">✅ PASS</td><td>3/3</td><td style="font-size:12px">Names <strong>`agents/grader.md`</strong> as the contract file. · Describes <strong>`passed`</strong>, <strong>`evidence`</strong>, and <strong>`overall_result`</strong> in the JSON sha · Mentions <strong>`assertions[]`</strong>, <strong>`eval_id`</strong>, and grading JSON structure. <small style="color:#888">(↩ 2026-05-07)</small></td></tr>
+    </tbody>
+  </table>
+
+  <h2>Assertion Detail</h2>
+  <p class="note">Full assertion-by-assertion roll-up below (Step 3b). The table is required in every benchmark; do not replace this section with only links to JSON files.</p>
+  <table>
+    <thead>
+      <tr><th>Eval</th><th>Assertion</th><th>Passed</th><th>Evidence</th></tr>
+    </thead>
+    <tbody>
+<tr><td>1</td><td style="font-size:12px">Response mentions reading SKILL.md or the skill folder</td><td class="pass">Yes</td><td style="font-size:12px">Opens with reading <code>SKILL.md</code>, <code>test-cases.md</code>, <code>evals.json</code>, and the meetingintroskill folder/review files. <small style="color:#888">(↩ 2026-05-07)</small></td></tr>
+<tr><td>1</td><td style="font-size:12px">Response references 13 categories or the full rubric</td><td class="pass">Yes</td><td style="font-size:12px">Delivers <strong>full 13-category</strong> assessment and <strong>Category Grades</strong> table. <small style="color:#888">(↩ 2026-05-07)</small></td></tr>
+<tr><td>1</td><td style="font-size:12px">Response describes PASS/FAIL or structured review output (Category Grades or similar)</td><td class="pass">Yes</td><td style="font-size:12px">States Overall Verdict FAIL and per-category PASS/FAIL in the Category Grades table. <small style="color:#888">(↩ 2026-05-07)</small></td></tr>
+<tr><td>2</td><td style="font-size:12px">Response mentions incremental, prior review, or carry forward</td><td class="pass">Yes</td><td style="font-size:12px">States <strong>prior review</strong> baseline and incremental workflow. <small style="color:#888">(↩ 2026-05-07)</small></td></tr>
+<tr><td>2</td><td style="font-size:12px">Response mentions re-running only failed tests or failed categories</td><td class="pass">Yes</td><td style="font-size:12px"><strong>PASS rows were carried</strong>; only <strong>failed</strong> items re-checked. <small style="color:#888">(↩ 2026-05-07)</small></td></tr>
+<tr><td>2</td><td style="font-size:12px">Response does NOT claim there is no prior review without checking</td><td class="pass">Yes</td><td style="font-size:12px">Does not deny prior review—explicitly loads <code>review-meetingintroskill-2026-05-07.md</code>. <small style="color:#888">(↩ 2026-05-07)</small></td></tr>
+<tr><td>3</td><td style="font-size:12px">Response mentions HIGH, [HIGH], or severity</td><td class="pass">Yes</td><td style="font-size:12px">Frames output as <strong>[HIGH]</strong>-only and lists <strong>High-criticality failures</strong>. <small style="color:#888">(↩ 2026-05-07)</small></td></tr>
+<tr><td>3</td><td style="font-size:12px">Response references Category 7, Security, or rubric</td><td class="pass">Yes</td><td style="font-size:12px">Discusses <strong>Category 7 (Security &amp; Trust)</strong> and rubric context. <small style="color:#888">(↩ 2026-05-07)</small></td></tr>
+<tr><td>3</td><td style="font-size:12px">Response does NOT refuse as out of scope</td><td class="pass">Yes</td><td style="font-size:12px">Completes a substantive audit; does not refuse the request. <small style="color:#888">(↩ 2026-05-07)</small></td></tr>
+<tr><td>4</td><td style="font-size:12px">Response mentions tests/results or results folder</td><td class="pass">Yes</td><td style="font-size:12px"><strong>`tests/results/`</strong> and artifact table with full paths. <small style="color:#888">(↩ 2026-05-07)</small></td></tr>
+<tr><td>4</td><td style="font-size:12px">Response mentions history.json or benchmark report</td><td class="pass">Yes</td><td style="font-size:12px"><strong>`history.json`</strong> and <strong>benchmark</strong> <code>.md</code>/<code>.html</code> called out. <small style="color:#888">(↩ 2026-05-07)</small></td></tr>
+<tr><td>4</td><td style="font-size:12px">Response mentions review- prefix filename with RUN_SLUG or dated/timestamped report pattern (Step 6–7)</td><td class="pass">Yes</td><td style="font-size:12px">Step 6–7 document <strong>`review-&lt;skill&gt;-&lt;RUN_SLUG&gt;.md`</strong> (timestamped); legacy <strong>`review-&lt;skill&gt;-YYYY-MM-DD.md`</strong> noted where applicable. <small style="color:#888">(↩ 2026-05-07)</small></td></tr>
+<tr><td>5</td><td style="font-size:12px">Response mentions Step 3c OR comparator OR blind comparison</td><td class="pass">Yes</td><td style="font-size:12px"><strong>Step 3c</strong>, <strong>comparator</strong>, and <strong>blind comparison</strong> explained. <small style="color:#888">(↩ 2026-05-07)</small></td></tr>
+<tr><td>5</td><td style="font-size:12px">Response mentions snapshot OR old version vs new version OR two skill versions</td><td class="pass">Yes</td><td style="font-size:12px"><strong>Snapshot</strong>, <strong>current vs snapshot</strong>, and <strong>two skill versions</strong> described. <small style="color:#888">(↩ 2026-05-07)</small></td></tr>
+<tr><td>5</td><td style="font-size:12px">Response does NOT say the skill has no such feature</td><td class="pass">Yes</td><td style="font-size:12px">Confirms the workflow documents this feature rather than denying it. <small style="color:#888">(↩ 2026-05-07)</small></td></tr>
+<tr><td>6</td><td style="font-size:12px">Response does NOT begin a full 13-category skill audit as the main deliverable</td><td class="pass">Yes</td><td style="font-size:12px">Lead section routes to <strong>dbt-model-from-stm</strong>; no 13-category audit as main body. <small style="color:#888">(↩ 2026-05-07)</small></td></tr>
+<tr><td>6</td><td style="font-size:12px">Response references dbt, STM, SQL, or another skill instead</td><td class="pass">Yes</td><td style="font-size:12px"><strong>STM</strong>, <strong>dbt</strong>, <strong>Snowflake</strong>, and repo paths referenced. <small style="color:#888">(↩ 2026-05-07)</small></td></tr>
+<tr><td>6</td><td style="font-size:12px">Response does NOT output only Category 1-13 tables with no dbt content</td><td class="pass">Yes</td><td style="font-size:12px">Main content is dbt/STM guidance, not Category 1–13 tables alone. <small style="color:#888">(↩ 2026-05-07)</small></td></tr>
+<tr><td>7</td><td style="font-size:12px">Response does NOT perform a skill-quality rubric review as the sole answer</td><td class="pass">Yes</td><td style="font-size:12px">Explicitly states skill-reviewer is <strong>not</strong> for Key Vault; no rubric-as-sole-deliverable. <small style="color:#888">(↩ 2026-05-07)</small></td></tr>
+<tr><td>7</td><td style="font-size:12px">Response mentions Azure, Key Vault, vault, or deployment</td><td class="pass">Yes</td><td style="font-size:12px"><strong>Azure</strong>, <strong>Key Vault</strong>, <code>azure-keyvault-deployer</code>, and populate script referenced. <small style="color:#888">(↩ 2026-05-07)</small></td></tr>
+<tr><td>7</td><td style="font-size:12px">Response does not claim skill-reviewer alone is sufficient for vault bootstrap without naming deployer or infrastructure skill</td><td class="pass">Yes</td><td style="font-size:12px">Points to <strong>azure-keyvault-deployer</strong> skill rather than claiming skill-reviewer suffices alone. <small style="color:#888">(↩ 2026-05-07)</small></td></tr>
+<tr><td>8</td><td style="font-size:12px">Response does NOT perform a skill audit workflow</td><td class="pass">Yes</td><td style="font-size:12px">Single factual sentence; no skill-audit workflow. <small style="color:#888">(↩ 2026-05-07)</small></td></tr>
+<tr><td>8</td><td style="font-size:12px">Response answers Paris OR treats as general knowledge</td><td class="pass">Yes</td><td style="font-size:12px"><strong>Paris</strong> as capital of France. <small style="color:#888">(↩ 2026-05-07)</small></td></tr>
+<tr><td>8</td><td style="font-size:12px">Response is short or direct — not a 13-category report</td><td class="pass">Yes</td><td style="font-size:12px">One-line answer; not a 13-category report. <small style="color:#888">(↩ 2026-05-07)</small></td></tr>
+<tr><td>9</td><td style="font-size:12px">Response contains a question mark OR asks which skill or path</td><td class="pass">Yes</td><td style="font-size:12px"><strong>Please specify the target</strong> and bullet options for path/skill/paste — asks which skill to review. <small style="color:#888">(↩ 2026-05-07)</small></td></tr>
+<tr><td>9</td><td style="font-size:12px">Response does NOT output a complete fabricated review for a specific unnamed skill as if the target were known</td><td class="pass">Yes</td><td style="font-size:12px">No fabricated full review for a specific unnamed skill—only asks for target. <small style="color:#888">(↩ 2026-05-07)</small></td></tr>
+<tr><td>9</td><td style="font-size:12px">Response mentions needing SKILL.md, path, or pasted content</td><td class="pass">Yes</td><td style="font-size:12px">Mentions <strong>path</strong>, <strong>skill folder</strong>, <strong>Pasted content</strong> / <strong>SKILL.md</strong>. <small style="color:#888">(↩ 2026-05-07)</small></td></tr>
+<tr><td>10</td><td style="font-size:12px">Response mentions agents/grader.md OR grader.md</td><td class="pass">Yes</td><td style="font-size:12px">Names <strong>`agents/grader.md`</strong> as the contract file. <small style="color:#888">(↩ 2026-05-07)</small></td></tr>
+<tr><td>10</td><td style="font-size:12px">Response mentions passed AND evidence OR overall_result in relation to grading</td><td class="pass">Yes</td><td style="font-size:12px">Describes <strong>`passed`</strong>, <strong>`evidence`</strong>, and <strong>`overall_result`</strong> in the JSON shape. <small style="color:#888">(↩ 2026-05-07)</small></td></tr>
+<tr><td>10</td><td style="font-size:12px">Response mentions grading JSON OR eval_id OR assertion</td><td class="pass">Yes</td><td style="font-size:12px">Mentions <strong>`assertions[]`</strong>, <strong>`eval_id`</strong>, and grading JSON structure. <small style="color:#888">(↩ 2026-05-07)</small></td></tr>
+    </tbody>
+  </table>
+
+  <h2>Category Grades</h2>
+  <table>
+    <thead>
+      <tr><th>#</th><th>Category</th><th>Grade</th><th>Explanation</th></tr>
+    </thead>
+    <tbody>
+<tr><td>1</td><td>Triggering (Description Quality)</td><td class="pass">✅ PASS</td><td style="font-size:12px">Description lists what + when; triggers rich ↩ carried</td></tr><tr><td>2</td><td>Anatomy &amp; Structure</td><td class="pass">✅ PASS</td><td style="font-size:12px">Frontmatter, references, body length ↩ carried</td></tr><tr><td>3</td><td>Instructions Clarity</td><td class="pass">✅ PASS</td><td style="font-size:12px">Steps 1–7, Step 3c signposted ↩ carried</td></tr><tr><td>4</td><td>Output Quality</td><td class="pass">✅ PASS</td><td style="font-size:12px">Output format template strict ↩ carried</td></tr><tr><td>5</td><td>Testability</td><td class="pass">✅ PASS</td><td style="font-size:12px">Isolation, assertions, eval suite ↩ carried</td></tr><tr><td>6</td><td>Resource Efficiency</td><td class="pass">✅ PASS</td><td style="font-size:12px">Templates extracted; lean workflow ↩ carried</td></tr><tr><td>7</td><td>Security &amp; Trust</td><td class="pass">✅ PASS</td><td style="font-size:12px">Markdown-first; W007/W011 pointers ↩ carried</td></tr><tr><td>8</td><td>Coexistence &amp; Recall</td><td class="fail">❌ FAIL</td><td style="font-size:12px">[MEDIUM] No team-facing operational coexistence / recall guidance ↩ carried</td></tr><tr><td>9</td><td>Model Compatibility</td><td class="fail">❌ FAIL</td><td style="font-size:12px">No documented validation target ↩ carried</td></tr><tr><td>10</td><td>Workflow &amp; Feedback Loops</td><td class="pass">✅ PASS</td><td style="font-size:12px">Incremental loop, grader reconciliation ↩ carried</td></tr><tr><td>11</td><td>Maintainability &amp; Lifecycle</td><td class="fail">❌ FAIL</td><td style="font-size:12px">[HIGH] No separation of duties; no registry block ↩ carried</td></tr><tr><td>12</td><td>Gotchas / Lessons Learned</td><td class="fail">❌ FAIL</td><td style="font-size:12px">No <code>## Gotchas</code> section ↩ carried</td></tr><tr><td>13</td><td>Anti-Pattern Audit</td><td class="pass">✅ PASS</td><td style="font-size:12px">Forward-slash paths; no bundled scripts ↩ carried</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Version Comparison</h2>
+<p class="note"><code>RUN_STEP_3C=true</code> — SKILL.md changed vs prior snapshot. Comparator not executed (evals not re-run).</p>
+
+  <h2>History (all reviews)</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Reviewed at (UTC)</th>
+        <th>Date</th>
+        <th>Unit Tests</th>
+        <th>Assertions</th>
+        <th>Categories</th>
+        <th>Verdict</th>
+        <th>Notes</th>
+      </tr>
+    </thead>
+    <tbody>
+<tr><td style="font-size:12px">2026-05-07T10:00:00Z</td><td>2026-05-07</td><td>10/10</td><td>30/30</td><td>9/13</td><td class="fail">FAIL</td><td style="font-size:12px">First review. Legacy date-only run dir.</td></tr>
+<tr><td style="font-size:12px">2026-05-07T11:00:00Z</td><td>2026-05-07</td><td>10/10</td><td>30/30</td><td>9/13</td><td class="fail">FAIL</td><td style="font-size:12px">Incremental re-check; all evals SKIP (carried PASS); no comparator snapshot.</td></tr>
+<tr><td style="font-size:12px">2026-05-07T12:00:00Z</td><td>2026-05-07</td><td>10/10</td><td>30/30</td><td>9/13</td><td class="fail">FAIL</td><td style="font-size:12px">Live harness: 10 parallel executor subagents; 30/30 assertions.</td></tr>
+<tr><td style="font-size:12px">2026-05-07T11:21:20Z</td><td>2026-05-07</td><td>10/10</td><td>30/30</td><td>9/13</td><td class="fail">FAIL</td><td style="font-size:12px">Incremental; all evals SKIP; first 7d snapshot.</td></tr>
+<tr><td style="font-size:12px">2026-05-07T11:27:37Z</td><td>2026-05-07</td><td>10/10</td><td>30/30</td><td>13/13</td><td class="pass">PASS</td><td style="font-size:12px">Post-fix: Registry, Gotchas, Model Compat, Coexistence added. 13/13 PASS.</td></tr>
+<tr><td style="font-size:12px">2026-05-07T11:40:58Z</td><td>2026-05-07</td><td>10/10</td><td>30/30</td><td>13/13</td><td class="pass">PASS</td><td style="font-size:12px">carried_from pointers in timing.json; no grading JSON duplicated for SKIP evals. RUN_STEP_3C=true; comparator skipped (all SKIP).</td></tr>
+    </tbody>
+  </table>
+  <p class="note">Full narrative: <code>review-skill-reviewer-2026-05-07T112120Z.md</code></p>
+</body>
+</html>

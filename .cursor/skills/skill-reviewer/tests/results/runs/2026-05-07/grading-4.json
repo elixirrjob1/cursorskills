@@ -14,9 +14,9 @@
       "evidence": "**`history.json`** and **benchmark** `.md`/`.html` called out."
     },
     {
-      "text": "Response mentions review- prefix filename or dated report pattern",
+      "text": "Response mentions review- prefix filename with RUN_SLUG or dated/timestamped report pattern (Step 6–7)",
       "passed": true,
-      "evidence": "**`review-<skill>-YYYY-MM-DD.md`** naming pattern documented."
+      "evidence": "Step 6–7 document **`review-<skill>-<RUN_SLUG>.md`** (timestamped); legacy **`review-<skill>-YYYY-MM-DD.md`** noted where applicable."
     }
   ]
 }

@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Benchmark Report: skill-reviewer</title>
+  <style>
+    body { font-family: system-ui, sans-serif; font-size: 14px; margin: 24px; background: #fff; color: #222; }
+    h1 { font-size: 1.35rem; margin-bottom: 0.25rem; }
+    h2 { font-size: 1.1rem; margin-top: 2rem; margin-bottom: 0.75rem; border-bottom: 1px solid #ccc; padding-bottom: 0.25rem; }
+    .meta { color: #555; margin-bottom: 1.5rem; }
+    table { border-collapse: collapse; width: 100%; margin: 0.5rem 0 1rem; }
+    th, td { border: 1px solid #ccc; padding: 8px 10px; text-align: left; }
+    tr:nth-child(even) { background: #f9f9f9; }
+    th { background: #eee; font-weight: 600; }
+    .pass { background: #d4edda; color: #155724; }
+    .fail { background: #f8d7da; color: #721c24; }
+    .skip { background: #fff3cd; color: #856404; }
+    .bar-track { display: inline-block; width: 120px; height: 10px; background: #e0e0e0; border-radius: 2px; vertical-align: middle; margin-right: 8px; }
+    .bar-fill { height: 100%; background: #28a745; border-radius: 2px; }
+    .note { color: #444; font-style: italic; margin: 0.5rem 0; }
+    code { font-size: 13px; background: #f4f4f4; padding: 1px 4px; border-radius: 2px; }
+  </style>
+</head>
+<body>
+  
+  <h1>Benchmark Report: skill-reviewer</h1>
+  <p class="meta">Generated: 2026-05-07T11:27:37Z · post-fix; first 13/13 PASS</p>
+
+  <h2>Summary</h2>
+  <table>
+    <tr><th>Metric</th><th>Value</th></tr>
+    <tr><td>Overall Verdict</td><td class="pass"><strong>PASS</strong></td></tr>
+    <tr><td>Unit Tests</td><td>10 / 10 passed (100%)</td></tr>
+    <tr><td>Assertions</td><td>30 / 30 (100%)</td></tr>
+    <tr><td>Categories</td><td class="pass"><strong>13 / 13 passed</strong></td></tr>
+    <tr><td>High Failures</td><td>—</td></tr>
+    <tr><td>Medium Failures</td><td>—</td></tr>
+    <tr><td>Comparator</td><td class="skip">— (evals not re-run this round)</td></tr>
+  </table>
+
+  <h2>Unit Test Results</h2>
+  <table>
+    <thead>
+      <tr><th>#</th><th>Test</th><th>Type</th><th>Result</th><th>Assertions</th><th>Evidence</th></tr>
+    </thead>
+    <tbody>
+<tr><td>1</td><td>Review <code>.cursor/skills/meetingintroskill/</code> for production readiness — full rubric. <small style="color:#888">not re-run, ↩ 2026-05-07T112120Z</small></td><td>should-trigger</td><td class="pass">✅ PASS</td><td>3/3</td><td style="font-size:12px"> <small style="color:#888">(↩ 2026-05-07T112120Z)</small></td></tr>
+<tr><td>2</td><td>We have a prior review in tests/results/review-meetingintroskill-2026-05-07.md — only re-check what failed last time. <small style="color:#888">not re-run, ↩ 2026-05-07T112120Z</small></td><td>should-trigger</td><td class="pass">✅ PASS</td><td>3/3</td><td style="font-size:12px"> <small style="color:#888">(↩ 2026-05-07T112120Z)</small></td></tr>
+<tr><td>3</td><td>Grade this SKILL.md against Anthropic skill best practices and list HIGH findings only. <small style="color:#888">not re-run, ↩ 2026-05-07T112120Z</small></td><td>should-trigger</td><td class="pass">✅ PASS</td><td>3/3</td><td style="font-size:12px"> <small style="color:#888">(↩ 2026-05-07T112120Z)</small></td></tr>
+<tr><td>4</td><td>After you review the skill, save the report to tests/results/ and append history.json. <small style="color:#888">not re-run, ↩ 2026-05-07T112120Z</small></td><td>should-trigger</td><td class="pass">✅ PASS</td><td>3/3</td><td style="font-size:12px"> <small style="color:#888">(↩ 2026-05-07T112120Z)</small></td></tr>
+<tr><td>5</td><td>Does our reviewer workflow document blind comparison between skill versions? <small style="color:#888">not re-run, ↩ 2026-05-07T112120Z</small></td><td>should-trigger</td><td class="pass">✅ PASS</td><td>3/3</td><td style="font-size:12px"> <small style="color:#888">(↩ 2026-05-07T112120Z)</small></td></tr>
+<tr><td>6</td><td>Convert this STM markdown into dbt SQL models for Snowflake. <small style="color:#888">not re-run, ↩ 2026-05-07T112120Z</small></td><td>should-not-trigger</td><td class="pass">✅ PASS</td><td>3/3</td><td style="font-size:12px"> <small style="color:#888">(↩ 2026-05-07T112120Z)</small></td></tr>
+<tr><td>7</td><td>Bootstrap a new Azure Key Vault and upload secrets from <code>.env</code>. <small style="color:#888">not re-run, ↩ 2026-05-07T112120Z</small></td><td>should-not-trigger</td><td class="pass">✅ PASS</td><td>3/3</td><td style="font-size:12px"> <small style="color:#888">(↩ 2026-05-07T112120Z)</small></td></tr>
+<tr><td>8</td><td>What is the capital of France? <small style="color:#888">not re-run, ↩ 2026-05-07T112120Z</small></td><td>should-not-trigger</td><td class="pass">✅ PASS</td><td>3/3</td><td style="font-size:12px"> <small style="color:#888">(↩ 2026-05-07T112120Z)</small></td></tr>
+<tr><td>9</td><td>Run the skill reviewer. <small style="color:#888">not re-run, ↩ 2026-05-07T112120Z</small></td><td>edge-case</td><td class="pass">✅ PASS</td><td>3/3</td><td style="font-size:12px"> <small style="color:#888">(↩ 2026-05-07T112120Z)</small></td></tr>
+<tr><td>10</td><td>Use the grader agent — what file defines its contract? <small style="color:#888">not re-run, ↩ 2026-05-07T112120Z</small></td><td>edge-case</td><td class="pass">✅ PASS</td><td>3/3</td><td style="font-size:12px"> <small style="color:#888">(↩ 2026-05-07T112120Z)</small></td></tr>
+    </tbody>
+  </table>
+
+  <h2>Assertion Detail</h2>
+  <p class="note">Full assertion-by-assertion roll-up below (Step 3b). The table is required in every benchmark; do not replace this section with only links to JSON files.</p>
+  <table>
+    <thead>
+      <tr><th>Eval</th><th>Assertion</th><th>Passed</th><th>Evidence</th></tr>
+    </thead>
+    <tbody>
+
+    </tbody>
+  </table>
+
+  <h2>Category Grades</h2>
+  <table>
+    <thead>
+      <tr><th>#</th><th>Category</th><th>Grade</th><th>Explanation</th></tr>
+    </thead>
+    <tbody>
+<tr><td>1</td><td>Triggering (Description Quality)</td><td class="pass">✅ PASS</td><td style="font-size:12px">Description lists what + when; triggers rich ↩ carried</td></tr><tr><td>2</td><td>Anatomy &amp; Structure</td><td class="pass">✅ PASS</td><td style="font-size:12px">Frontmatter, references, body length ↩ carried</td></tr><tr><td>3</td><td>Instructions Clarity</td><td class="pass">✅ PASS</td><td style="font-size:12px">Steps 1–7, Step 3c, 7d; <code>carried_from</code> rule in Step 3b ↩ carried</td></tr><tr><td>4</td><td>Output Quality</td><td class="pass">✅ PASS</td><td style="font-size:12px">Output format template strict ↩ carried</td></tr><tr><td>5</td><td>Testability</td><td class="pass">✅ PASS</td><td style="font-size:12px">Isolation, assertions, eval suite ↩ carried</td></tr><tr><td>6</td><td>Resource Efficiency</td><td class="pass">✅ PASS</td><td style="font-size:12px">Templates extracted; lean workflow ↩ carried</td></tr><tr><td>7</td><td>Security &amp; Trust</td><td class="pass">✅ PASS</td><td style="font-size:12px">Markdown-first; W007/W011 pointers ↩ carried</td></tr><tr><td>8</td><td>Coexistence &amp; Recall</td><td class="pass">✅ PASS</td><td style="font-size:12px"><code>## Deployment / Coexistence Notes</code> section present ↩ carried</td></tr><tr><td>9</td><td>Model Compatibility</td><td class="pass">✅ PASS</td><td style="font-size:12px"><code>## Model Compatibility</code> section present ↩ carried</td></tr><tr><td>10</td><td>Workflow &amp; Feedback Loops</td><td class="pass">✅ PASS</td><td style="font-size:12px">Incremental loop; <code>carried_from</code> prevents duplication ↩ carried</td></tr><tr><td>11</td><td>Maintainability &amp; Lifecycle</td><td class="pass">✅ PASS</td><td style="font-size:12px"><code>## Registry</code> with separation of duties ↩ carried</td></tr><tr><td>12</td><td>Gotchas / Lessons Learned</td><td class="pass">✅ PASS</td><td style="font-size:12px"><code>## Gotchas</code> covers <code>carried_from</code>, snapshot recursion ↩ carried</td></tr><tr><td>13</td><td>Anti-Pattern Audit</td><td class="pass">✅ PASS</td><td style="font-size:12px">Forward-slash paths; no bundled scripts ↩ carried</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Version Comparison</h2>
+<p class="note"><code>RUN_STEP_3C=true</code> — SKILL.md changed vs prior snapshot. Comparator not executed (evals not re-run).</p>
+
+  <h2>History (all reviews)</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Reviewed at (UTC)</th>
+        <th>Date</th>
+        <th>Unit Tests</th>
+        <th>Assertions</th>
+        <th>Categories</th>
+        <th>Verdict</th>
+        <th>Notes</th>
+      </tr>
+    </thead>
+    <tbody>
+<tr><td style="font-size:12px">2026-05-07T10:00:00Z</td><td>2026-05-07</td><td>10/10</td><td>30/30</td><td>9/13</td><td class="fail">FAIL</td><td style="font-size:12px">First review. Legacy date-only run dir.</td></tr>
+<tr><td style="font-size:12px">2026-05-07T11:00:00Z</td><td>2026-05-07</td><td>10/10</td><td>30/30</td><td>9/13</td><td class="fail">FAIL</td><td style="font-size:12px">Incremental re-check; all evals SKIP (carried PASS); no comparator snapshot.</td></tr>
+<tr><td style="font-size:12px">2026-05-07T12:00:00Z</td><td>2026-05-07</td><td>10/10</td><td>30/30</td><td>9/13</td><td class="fail">FAIL</td><td style="font-size:12px">Live harness: 10 parallel executor subagents; 30/30 assertions.</td></tr>
+<tr><td style="font-size:12px">2026-05-07T11:21:20Z</td><td>2026-05-07</td><td>10/10</td><td>30/30</td><td>9/13</td><td class="fail">FAIL</td><td style="font-size:12px">Incremental; all evals SKIP; first 7d snapshot.</td></tr>
+<tr><td style="font-size:12px">2026-05-07T11:27:37Z</td><td>2026-05-07</td><td>10/10</td><td>30/30</td><td>13/13</td><td class="pass">PASS</td><td style="font-size:12px">Post-fix: Registry, Gotchas, Model Compat, Coexistence added. 13/13 PASS.</td></tr>
+<tr><td style="font-size:12px">2026-05-07T11:40:58Z</td><td>2026-05-07</td><td>10/10</td><td>30/30</td><td>13/13</td><td class="pass">PASS</td><td style="font-size:12px">carried_from pointers in timing.json; no grading JSON duplicated for SKIP evals. RUN_STEP_3C=true; comparator skipped (all SKIP).</td></tr>
+    </tbody>
+  </table>
+  <p class="note">Full narrative: <code>review-skill-reviewer-2026-05-07T112737Z.md</code></p>
+</body>
+</html>

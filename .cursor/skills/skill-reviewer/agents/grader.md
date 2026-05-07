@@ -64,4 +64,4 @@ Return only this JSON — no other text:
 
 `overall_result` is `"PASS"` only if every assertion has `passed: true`. If any assertion fails, `overall_result` is `"FAIL"`.
 
-The skill-reviewer will save this JSON to `tests/results/runs/YYYY-MM-DD/grading-<eval_id>.json`.
+The skill-reviewer will save this JSON to `tests/results/runs/<RUN_SLUG>/grading-<eval_id>.json` (see Step 1 **`RUN_SLUG`**).

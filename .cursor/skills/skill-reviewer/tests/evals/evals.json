@@ -5,7 +5,7 @@
     {
       "id": 1,
       "type": "should-trigger",
-      "prompt": "Review `.cursor/skills/meetingintroskill/` for production readiness — full rubric.",
+      "prompt": "Review `.cursor/skills/meetingintroskill/` for production readiness \u2014 full rubric.",
       "expected_behavior": "Workflow: read skill, 13-category rubric, structured report.",
       "assertions": [
         "Response mentions reading SKILL.md or the skill folder",
@@ -16,7 +16,7 @@
     {
       "id": 2,
       "type": "should-trigger",
-      "prompt": "We have a prior review in tests/results/review-meetingintroskill-2026-05-07.md — only re-check what failed last time.",
+      "prompt": "We have a prior review in tests/results/review-meetingintroskill-2026-05-07.md \u2014 only re-check what failed last time.",
       "expected_behavior": "Incremental mode: carry PASS, re-run FAIL.",
       "assertions": [
         "Response mentions incremental, prior review, or carry forward",
@@ -39,11 +39,13 @@
       "id": 4,
       "type": "should-trigger",
       "prompt": "After you review the skill, save the report to tests/results/ and append history.json.",
-      "expected_behavior": "Cites Step 6–7 file naming and history append.",
+      "expected_behavior": "Cites Step 6\u20137 file naming and history append.",
       "assertions": [
-        "Response mentions tests/results or results folder",
-        "Response mentions history.json or benchmark report",
-        "Response mentions review- prefix filename or dated report pattern"
+        "Response mentions tests/results, RUN_DIR, or the run-specific folder path",
+        "Response mentions history.json AND reviewed_at (or the ISO timestamp field)",
+        "Response mentions review- prefix filename with RUN_SLUG (Step 6 pattern)",
+        "Response mentions benchmark .md and .html with matching slug (Step 7b/7c)",
+        "Response mentions snapshot OR Step 7d OR rsync to snapshots/ folder"
       ]
     },
     {
@@ -83,11 +85,11 @@
       "id": 8,
       "type": "should-not-trigger",
       "prompt": "What is the capital of France?",
-      "expected_behavior": "Trivia — not skill review.",
+      "expected_behavior": "Trivia \u2014 not skill review.",
       "assertions": [
         "Response does NOT perform a skill audit workflow",
         "Response answers Paris OR treats as general knowledge",
-        "Response is short or direct — not a 13-category report"
+        "Response is short or direct \u2014 not a 13-category report"
       ]
     },
     {
@@ -104,7 +106,7 @@
     {
       "id": 10,
       "type": "edge-case",
-      "prompt": "Use the grader agent — what file defines its contract?",
+      "prompt": "Use the grader agent \u2014 what file defines its contract?",
       "expected_behavior": "agents/grader.md and JSON schema.",
       "assertions": [
         "Response mentions agents/grader.md OR grader.md",

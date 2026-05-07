@@ -1,0 +1,18 @@
+{
+  "run_slug": "2026-05-07T120946Z",
+  "previous_snapshot": "2026-05-07T115753Z",
+  "comparisons": [
+    {
+      "eval_id": 4,
+      "verdict": "B_WINS",
+      "reason": "B explicitly names all required history.json fields including reviewed_at (ISO 8601 UTC), run_slug, review_file, benchmark_md, benchmark_html, snapshot_dir, and verdict. A omits reviewed_at entirely, which the expected answer specifically calls out as required."
+    },
+    {
+      "eval_id": 2,
+      "verdict": "B_WINS",
+      "reason": "B articulates two distinct skip rules (category skip and executor skip) and correctly notes that RUN_STEP_3C=true forces all executors to re-run. A only describes a single undifferentiated skip rule with no mention of the RUN_STEP_3C flag or the two-rule distinction."
+    }
+  ],
+  "overall": "new_wins",
+  "summary": "B wins both evals: explicit reviewed_at callout in history.json (eval 4) and two-rule skip distinction with RUN_STEP_3C semantics (eval 2)."
+}

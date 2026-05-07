@@ -1,0 +1,116 @@
+{
+  "skill_name": "skill-reviewer",
+  "generated_date": "2026-05-07",
+  "evals": [
+    {
+      "id": 1,
+      "type": "should-trigger",
+      "prompt": "Review `.cursor/skills/meetingintroskill/` for production readiness — full rubric.",
+      "expected_behavior": "Workflow: read skill, 13-category rubric, structured report.",
+      "assertions": [
+        "Response mentions reading SKILL.md or the skill folder",
+        "Response references 13 categories or the full rubric",
+        "Response describes PASS/FAIL or structured review output (Category Grades or similar)"
+      ]
+    },
+    {
+      "id": 2,
+      "type": "should-trigger",
+      "prompt": "We have a prior review in tests/results/review-meetingintroskill-2026-05-07.md — only re-check what failed last time.",
+      "expected_behavior": "Incremental mode: carry PASS, re-run FAIL.",
+      "assertions": [
+        "Response mentions incremental, prior review, or carry forward",
+        "Response mentions re-running only failed tests or failed categories",
+        "Response does NOT claim there is no prior review without checking"
+      ]
+    },
+    {
+      "id": 3,
+      "type": "should-trigger",
+      "prompt": "Grade this SKILL.md against Anthropic skill best practices and list HIGH findings only.",
+      "expected_behavior": "Scopes to HIGH severity / Category 7 HIGH.",
+      "assertions": [
+        "Response mentions HIGH, [HIGH], or severity",
+        "Response references Category 7, Security, or rubric",
+        "Response does NOT refuse as out of scope"
+      ]
+    },
+    {
+      "id": 4,
+      "type": "should-trigger",
+      "prompt": "After you review the skill, save the report to tests/results/ and append history.json.",
+      "expected_behavior": "Cites Step 6–7 file naming and history append.",
+      "assertions": [
+        "Response mentions tests/results or results folder",
+        "Response mentions history.json or benchmark report",
+        "Response mentions review- prefix filename or dated report pattern"
+      ]
+    },
+    {
+      "id": 5,
+      "type": "should-trigger",
+      "prompt": "Does our reviewer workflow document blind comparison between skill versions?",
+      "expected_behavior": "Cites Step 3c and comparator.",
+      "assertions": [
+        "Response mentions Step 3c OR comparator OR blind comparison",
+        "Response mentions snapshot OR old version vs new version OR two skill versions",
+        "Response does NOT say the skill has no such feature"
+      ]
+    },
+    {
+      "id": 6,
+      "type": "should-not-trigger",
+      "prompt": "Convert this STM markdown into dbt SQL models for Snowflake.",
+      "expected_behavior": "Not skill-reviewer primary job.",
+      "assertions": [
+        "Response does NOT begin a full 13-category skill audit as the main deliverable",
+        "Response references dbt, STM, SQL, or another skill instead",
+        "Response does NOT output only Category 1-13 tables with no dbt content"
+      ]
+    },
+    {
+      "id": 7,
+      "type": "should-not-trigger",
+      "prompt": "Bootstrap a new Azure Key Vault and upload secrets from `.env`.",
+      "expected_behavior": "Key vault skill domain.",
+      "assertions": [
+        "Response does NOT perform a skill-quality rubric review as the sole answer",
+        "Response mentions Azure, Key Vault, vault, or deployment",
+        "Response does not claim skill-reviewer alone is sufficient for vault bootstrap without naming deployer or infrastructure skill"
+      ]
+    },
+    {
+      "id": 8,
+      "type": "should-not-trigger",
+      "prompt": "What is the capital of France?",
+      "expected_behavior": "Trivia — not skill review.",
+      "assertions": [
+        "Response does NOT perform a skill audit workflow",
+        "Response answers Paris OR treats as general knowledge",
+        "Response is short or direct — not a 13-category report"
+      ]
+    },
+    {
+      "id": 9,
+      "type": "edge-case",
+      "prompt": "Run the skill reviewer.",
+      "expected_behavior": "Ask for skill target.",
+      "assertions": [
+        "Response contains a question mark OR asks which skill or path",
+        "Response does NOT output a complete fabricated review for a specific unnamed skill as if the target were known",
+        "Response mentions needing SKILL.md, path, or pasted content"
+      ]
+    },
+    {
+      "id": 10,
+      "type": "edge-case",
+      "prompt": "Use the grader agent — what file defines its contract?",
+      "expected_behavior": "agents/grader.md and JSON schema.",
+      "assertions": [
+        "Response mentions agents/grader.md OR grader.md",
+        "Response mentions passed AND evidence OR overall_result in relation to grading",
+        "Response mentions grading JSON OR eval_id OR assertion"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "eval_id": 3,
+  "prompt_short": "Sync our governance tags \u2014 re-run the vocab publisher",
+  "overall_result": "FAIL",
+  "assertions": [
+    {
+      "text": "Response states or implies the script is idempotent / safe to re-run",
+      "passed": true,
+      "evidence": "Response mentioned CREATED / UPDATED / SKIPPED output implying safe re-run semantics"
+    },
+    {
+      "text": "Response includes the publish_vocab.py command",
+      "passed": false,
+      "evidence": "Agent asked for file and env var confirmation; no actual publish_vocab.py command shown"
+    },
+    {
+      "text": "Response does not warn that re-running will cause destructive changes",
+      "passed": true,
+      "evidence": "No destructive warning issued"
+    }
+  ]
+}

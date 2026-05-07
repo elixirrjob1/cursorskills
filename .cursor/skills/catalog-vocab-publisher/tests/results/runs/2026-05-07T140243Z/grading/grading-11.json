@@ -1,0 +1,22 @@
+{
+  "eval_id": 11,
+  "prompt_short": "Publish my vocab",
+  "overall_result": "PASS",
+  "assertions": [
+    {
+      "text": "Response asks for the vocabulary .md file path",
+      "passed": true,
+      "evidence": "'Can you share the path to the .md vocab file you want to push to OpenMetadata?'"
+    },
+    {
+      "text": "Response does NOT attempt to run the script without knowing the file path",
+      "passed": true,
+      "evidence": "Agent stopped at Step 1 and asked for file path before proceeding"
+    },
+    {
+      "text": "Response checks or asks about OM_BASE_URL and OM_TOKEN",
+      "passed": true,
+      "evidence": "'Do you have those [OM_BASE_URL and OM_TOKEN] configured already?'"
+    }
+  ]
+}

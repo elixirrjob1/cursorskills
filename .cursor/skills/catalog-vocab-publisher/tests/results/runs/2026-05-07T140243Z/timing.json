@@ -1,0 +1,20 @@
+{
+  "review_date": "2026-05-07",
+  "reviewed_at": "2026-05-07T14:02:43Z",
+  "run_slug": "2026-05-07T140243Z",
+  "runs": [
+    {"eval_id": 1, "test_type": "should-trigger", "prompt_short": "Publish my governance vocabulary to OpenMetadata", "result": "PASS", "carried_from": null},
+    {"eval_id": 2, "test_type": "should-trigger", "prompt_short": "Push my retail-governance-vocab.md to the data catalog", "result": "FAIL", "carried_from": null},
+    {"eval_id": 3, "test_type": "should-trigger", "prompt_short": "Sync our governance tags — re-run the vocab publisher", "result": "FAIL", "carried_from": null},
+    {"eval_id": 4, "test_type": "should-trigger", "prompt_short": "I got 401 Unauthorized when publishing the vocabulary", "result": "PASS", "carried_from": null},
+    {"eval_id": 5, "test_type": "should-trigger", "prompt_short": "The publish script returned 403 Forbidden", "result": "PASS", "carried_from": null},
+    {"eval_id": 6, "test_type": "should-trigger", "prompt_short": "Upload our governance framework classifications to OpenMetadata", "result": "PASS", "carried_from": null},
+    {"eval_id": 7, "test_type": "should-trigger", "prompt_short": "Our tag descriptions have changed — push the updates", "result": "FAIL", "carried_from": null},
+    {"eval_id": 8, "test_type": "should-trigger", "prompt_short": "Push vocabulary to OpenMetadata, publish classifications", "result": "PASS", "carried_from": null},
+    {"eval_id": 9, "test_type": "should-not-trigger", "prompt_short": "Generate a governance vocabulary for the retail domain", "result": "PASS", "carried_from": null},
+    {"eval_id": 10, "test_type": "should-not-trigger", "prompt_short": "Run a metadata ingestion from Snowflake into OpenMetadata", "result": "PASS", "carried_from": null},
+    {"eval_id": 11, "test_type": "edge-case", "prompt_short": "Publish my vocab", "result": "PASS", "carried_from": null},
+    {"eval_id": 12, "test_type": "edge-case", "prompt_short": "I want to publish but haven't set up the service account yet", "result": "PASS", "carried_from": null},
+    {"eval_id": 13, "test_type": "edge-case", "prompt_short": "I get SSL errors when trying to publish", "result": "PASS", "carried_from": null}
+  ]
+}

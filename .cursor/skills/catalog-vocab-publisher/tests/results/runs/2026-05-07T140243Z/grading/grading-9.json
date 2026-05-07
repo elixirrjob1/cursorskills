@@ -1,0 +1,22 @@
+{
+  "eval_id": 9,
+  "prompt_short": "Generate a governance vocabulary for the retail domain",
+  "overall_result": "PASS",
+  "assertions": [
+    {
+      "text": "Response does NOT attempt to run publish_vocab.py",
+      "passed": true,
+      "evidence": "No publish_vocab.py command or OpenMetadata publishing actions in response"
+    },
+    {
+      "text": "Response indicates this is a vocabulary generation task (not publishing)",
+      "passed": true,
+      "evidence": "Agent produced vocabulary content (retail domain classifications/tags) \u2014 generation behavior"
+    },
+    {
+      "text": "Response does NOT ask for OM credentials or base URL",
+      "passed": true,
+      "evidence": "No OM_BASE_URL, OM_TOKEN, or credentials mentioned"
+    }
+  ]
+}

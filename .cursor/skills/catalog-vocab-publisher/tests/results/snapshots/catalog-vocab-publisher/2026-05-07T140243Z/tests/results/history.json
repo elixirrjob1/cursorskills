@@ -1,0 +1,24 @@
+{
+  "history": [
+    {
+      "reviewed_at": "2026-05-07T14:02:43Z",
+      "date": "2026-05-07",
+      "run_slug": "2026-05-07T140243Z",
+      "skill_version": "e329e4b",
+      "unit_tests": { "passed": 10, "total": 13, "pass_rate": 0.77 },
+      "assertions": { "passed": 32, "total": 39, "pass_rate": 0.82 },
+      "categories": { "passed": 11, "total": 13, "pass_rate": 0.85 },
+      "verdict": "FAIL",
+      "high_failures": [
+        "Bundled scripts reviewed and behavior matches stated purpose (Cat 7 — script/SKILL.md auth mismatch)",
+        "Separation of duties observed (Cat 11 — no peer review requirement documented)"
+      ],
+      "review_file": "runs/2026-05-07T140243Z/review-catalog-vocab-publisher-2026-05-07T140243Z.md",
+      "timing_file": "runs/2026-05-07T140243Z/timing.json",
+      "benchmark_md": "runs/2026-05-07T140243Z/benchmark-catalog-vocab-publisher-2026-05-07T140243Z.md",
+      "benchmark_html": "runs/2026-05-07T140243Z/benchmark-catalog-vocab-publisher-2026-05-07T140243Z.html",
+      "snapshot_dir": "snapshots/catalog-vocab-publisher/2026-05-07T140243Z",
+      "comparison_file": null
+    }
+  ]
+}

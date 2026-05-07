@@ -296,15 +296,25 @@ _Generated: YYYY-MM-DD_
 
 #### 7c: Generate `benchmark-<skill-name>-YYYY-MM-DD.html`
 
-Save alongside the `.md` file. Must be a **fully self-contained** HTML file — no external CDN links, all CSS inline. Include the same sections as the markdown benchmark: Summary, Unit Test Results (with Assertions column), Assertion Detail table, Version Comparison (if comparator was run), Category Grades, History. Use these style conventions:
-- White background, `font-family: system-ui, sans-serif`, `font-size: 14px`
-- Tables: `border-collapse: collapse`, `1px solid #ccc`, alternating row shading (`#f9f9f9`)
-- PASS cells: `background: #d4edda; color: #155724`
-- FAIL cells: `background: #f8d7da; color: #721c24`
-- SKIP cells: `background: #fff3cd; color: #856404`
-- History section: render pass rate as an inline progress bar — a `<div>` with a green fill proportional to the pass rate, followed by the percentage text
+Save alongside the `.md` file. Must be a **fully self-contained** HTML file — no external CDN links, all CSS in the template’s `<style>` block (do not strip or rename classes).
 
-Generate a self-contained HTML file directly (no separate script). Structure: `<!DOCTYPE html>` with all CSS in a `<style>` block in `<head>`, then `<body>` containing each section as a heading + table.
+**Reuse the canonical template (preferred):** Read `references/benchmark-report-template.html` from **this skill’s folder** (`skill-reviewer`), not from the skill under review. In a typical repo layout that is `.cursor/skills/skill-reviewer/references/benchmark-report-template.html`. Copy the entire file to the target’s `tests/results/benchmark-<skill-name>-YYYY-MM-DD.html`, then **replace every placeholder** (each is unique `___NAME___`):
+
+| Placeholder | Replace with |
+|-------------|----------------|
+| `___SKILL_NAME___` | Target skill display name (same as markdown benchmark) |
+| `___META_LINE___` | One line, e.g. `Generated: YYYY-MM-DD · <short run note>` |
+| `___SUMMARY_ROWS___` | `<tr><td>…</td><td>…</td></tr>` rows for the Summary table (after the header row in template) |
+| `___UNIT_TEST_ROWS___` | Table rows: `#`, short test label, type, result cell (`<td class="pass">` / `fail` / `skip`), assertions fraction |
+| `___ASSERTION_DETAIL_BLOCK___` | Either a `<table>…</table>` or a `<p class="note">…</p>` — same substance as the markdown **Assertion Detail** section |
+| `___CATEGORY_ROWS___` | Rows: `#`, category name, grade cell with `pass` / `fail` |
+| `___VERSION_COMPARISON_BLOCK___` | Comparator table + rows, or `<p class="note">…</p>` if skipped |
+| `___HISTORY_ROWS___` | One row per `history.json` entry; use **bar-track** / **bar-fill** for test/assertion/category rates (`style="width:NN%"` on bar-fill) |
+| `___REVIEW_FILENAME___` | `review-<skill-name>-YYYY-MM-DD.md` for this run |
+
+Remove the instructional HTML comment block from the template in the saved output. **Do not** leave any `___…___` placeholder in the final file.
+
+**Fallback** if the template file cannot be read: build equivalent HTML from scratch using the same sections and styles: white background, `system-ui`, 14px; tables `border-collapse: collapse`, `1px solid #ccc`, alternating `#f9f9f9`; `.pass` / `.fail` / `.skip` as in the template; history pass rates as inline green bar + percentage.
 
 ---
 

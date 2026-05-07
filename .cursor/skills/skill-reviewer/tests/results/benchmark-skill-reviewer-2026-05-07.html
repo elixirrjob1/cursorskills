@@ -58,27 +58,65 @@
   </table>
 
   <h2>Assertion Detail</h2>
-  <p class="note">Per-eval JSON: <code>runs/2026-05-07/grading-&lt;n&gt;.json</code> for n = 1…10.</p>
+  <p class="note">Full assertion-by-assertion roll-up (Step 3b). This table is required; do not use only a pointer to JSON files.</p>
+  <table>
+    <thead>
+      <tr><th>Eval</th><th>Assertion</th><th>Passed</th><th>Evidence</th></tr>
+    </thead>
+    <tbody>
+<tr><td>1</td><td>Response mentions reading SKILL.md or the skill folder</td><td class="pass">✅</td><td>Opens with reading `SKILL.md`, `test-cases.md`, `evals.json`, and the meetingintroskill folder/review files.</td></tr>
+<tr><td>1</td><td>Response references 13 categories or the full rubric</td><td class="pass">✅</td><td>Delivers **full 13-category** assessment and **Category Grades** table.</td></tr>
+<tr><td>1</td><td>Response describes PASS/FAIL or structured review output (Category Grades or similar)</td><td class="pass">✅</td><td>States Overall Verdict FAIL and per-category PASS/FAIL in the Category Grades table.</td></tr>
+<tr><td>2</td><td>Response mentions incremental, prior review, or carry forward</td><td class="pass">✅</td><td>States **prior review** baseline and incremental workflow.</td></tr>
+<tr><td>2</td><td>Response mentions re-running only failed tests or failed categories</td><td class="pass">✅</td><td>**PASS rows were carried**; only **failed** items re-checked.</td></tr>
+<tr><td>2</td><td>Response does NOT claim there is no prior review without checking</td><td class="pass">✅</td><td>Does not deny prior review—explicitly loads `review-meetingintroskill-2026-05-07.md`.</td></tr>
+<tr><td>3</td><td>Response mentions HIGH, [HIGH], or severity</td><td class="pass">✅</td><td>Frames output as **[HIGH]**-only and lists **High-criticality failures**.</td></tr>
+<tr><td>3</td><td>Response references Category 7, Security, or rubric</td><td class="pass">✅</td><td>Discusses **Category 7 (Security &amp; Trust)** and rubric context.</td></tr>
+<tr><td>3</td><td>Response does NOT refuse as out of scope</td><td class="pass">✅</td><td>Completes a substantive audit; does not refuse the request.</td></tr>
+<tr><td>4</td><td>Response mentions tests/results or results folder</td><td class="pass">✅</td><td>**`tests/results/`** and artifact table with full paths.</td></tr>
+<tr><td>4</td><td>Response mentions history.json or benchmark report</td><td class="pass">✅</td><td>**`history.json`** and **benchmark** `.md`/`.html` called out.</td></tr>
+<tr><td>4</td><td>Response mentions review- prefix filename or dated report pattern</td><td class="pass">✅</td><td>**`review-&lt;skill&gt;-YYYY-MM-DD.md`** naming pattern documented.</td></tr>
+<tr><td>5</td><td>Response mentions Step 3c OR comparator OR blind comparison</td><td class="pass">✅</td><td>**Step 3c**, **comparator**, and **blind comparison** explained.</td></tr>
+<tr><td>5</td><td>Response mentions snapshot OR old version vs new version OR two skill versions</td><td class="pass">✅</td><td>**Snapshot**, **current vs snapshot**, and **two skill versions** described.</td></tr>
+<tr><td>5</td><td>Response does NOT say the skill has no such feature</td><td class="pass">✅</td><td>Confirms the workflow documents this feature rather than denying it.</td></tr>
+<tr><td>6</td><td>Response does NOT begin a full 13-category skill audit as the main deliverable</td><td class="pass">✅</td><td>Lead section routes to **dbt-model-from-stm**; no 13-category audit as main body.</td></tr>
+<tr><td>6</td><td>Response references dbt, STM, SQL, or another skill instead</td><td class="pass">✅</td><td>**STM**, **dbt**, **Snowflake**, and repo paths referenced.</td></tr>
+<tr><td>6</td><td>Response does NOT output only Category 1-13 tables with no dbt content</td><td class="pass">✅</td><td>Main content is dbt/STM guidance, not Category 1–13 tables alone.</td></tr>
+<tr><td>7</td><td>Response does NOT perform a skill-quality rubric review as the sole answer</td><td class="pass">✅</td><td>Explicitly states skill-reviewer is **not** for Key Vault; no rubric-as-sole-deliverable.</td></tr>
+<tr><td>7</td><td>Response mentions Azure, Key Vault, vault, or deployment</td><td class="pass">✅</td><td>**Azure**, **Key Vault**, `azure-keyvault-deployer`, and populate script referenced.</td></tr>
+<tr><td>7</td><td>Response does not claim skill-reviewer alone is sufficient for vault bootstrap without naming deployer or infrastructure skill</td><td class="pass">✅</td><td>Points to **azure-keyvault-deployer** skill rather than claiming skill-reviewer suffices alone.</td></tr>
+<tr><td>8</td><td>Response does NOT perform a skill audit workflow</td><td class="pass">✅</td><td>Single factual sentence; no skill-audit workflow.</td></tr>
+<tr><td>8</td><td>Response answers Paris OR treats as general knowledge</td><td class="pass">✅</td><td>**Paris** as capital of France.</td></tr>
+<tr><td>8</td><td>Response is short or direct — not a 13-category report</td><td class="pass">✅</td><td>One-line answer; not a 13-category report.</td></tr>
+<tr><td>9</td><td>Response contains a question mark OR asks which skill or path</td><td class="pass">✅</td><td>**Please specify the target** and bullet options for path/skill/paste — asks which skill to review.</td></tr>
+<tr><td>9</td><td>Response does NOT output a complete fabricated review for a specific unnamed skill as if the target were known</td><td class="pass">✅</td><td>No fabricated full review for a specific unnamed skill—only asks for target.</td></tr>
+<tr><td>9</td><td>Response mentions needing SKILL.md, path, or pasted content</td><td class="pass">✅</td><td>Mentions **path**, **skill folder**, **Pasted content** / **SKILL.md**.</td></tr>
+<tr><td>10</td><td>Response mentions agents/grader.md OR grader.md</td><td class="pass">✅</td><td>Names **`agents/grader.md`** as the contract file.</td></tr>
+<tr><td>10</td><td>Response mentions passed AND evidence OR overall_result in relation to grading</td><td class="pass">✅</td><td>Describes **`passed`**, **`evidence`**, and **`overall_result`** in the JSON shape.</td></tr>
+<tr><td>10</td><td>Response mentions grading JSON OR eval_id OR assertion</td><td class="pass">✅</td><td>Mentions **`assertions[]`**, **`eval_id`**, and grading JSON structure.</td></tr>
+    </tbody>
+  </table>
+  <p class="note">Machine-readable graders: <code>tests/results/runs/2026-05-07/grading-1.json</code> … <code>grading-10.json</code>.</p>
 
   <h2>Category Grades</h2>
   <table>
     <thead>
-      <tr><th>#</th><th>Category</th><th>Grade</th></tr>
+      <tr><th>#</th><th>Category</th><th>Grade</th><th>Explanation</th></tr>
     </thead>
     <tbody>
-      <tr><td>1</td><td>Triggering</td><td class="pass">PASS</td></tr>
-      <tr><td>2</td><td>Anatomy & Structure</td><td class="pass">PASS</td></tr>
-      <tr><td>3</td><td>Instructions Clarity</td><td class="pass">PASS</td></tr>
-      <tr><td>4</td><td>Output Quality</td><td class="pass">PASS</td></tr>
-      <tr><td>5</td><td>Testability</td><td class="pass">PASS</td></tr>
-      <tr><td>6</td><td>Resource Efficiency</td><td class="pass">PASS</td></tr>
-      <tr><td>7</td><td>Security & Trust</td><td class="pass">PASS</td></tr>
-      <tr><td>8</td><td>Coexistence & Recall</td><td class="fail">FAIL</td></tr>
-      <tr><td>9</td><td>Model Compatibility</td><td class="fail">FAIL</td></tr>
-      <tr><td>10</td><td>Workflow & Feedback Loops</td><td class="pass">PASS</td></tr>
-      <tr><td>11</td><td>Maintainability & Lifecycle</td><td class="fail">FAIL</td></tr>
-      <tr><td>12</td><td>Gotchas / Lessons Learned</td><td class="fail">FAIL</td></tr>
-      <tr><td>13</td><td>Anti-Pattern Audit</td><td class="pass">PASS</td></tr>
+<tr><td>1</td><td>Triggering (Description Quality)</td><td class="pass">PASS</td><td>Description lists what + when; triggers rich ↩ carried</td></tr>
+<tr><td>2</td><td>Anatomy &amp; Structure</td><td class="pass">PASS</td><td>Frontmatter, references, body length ↩ carried</td></tr>
+<tr><td>3</td><td>Instructions Clarity</td><td class="pass">PASS</td><td>Steps 1–7, Step 3c signposted ↩ carried</td></tr>
+<tr><td>4</td><td>Output Quality</td><td class="pass">PASS</td><td>Output format template strict ↩ carried</td></tr>
+<tr><td>5</td><td>Testability</td><td class="pass">PASS</td><td>Isolation, assertions, eval suite ↩ carried</td></tr>
+<tr><td>6</td><td>Resource Efficiency</td><td class="pass">PASS</td><td>Templates extracted; lean workflow ↩ carried</td></tr>
+<tr><td>7</td><td>Security &amp; Trust</td><td class="pass">PASS</td><td>Markdown-first; W007/W011 pointers ↩ carried</td></tr>
+<tr><td>8</td><td>Coexistence &amp; Recall</td><td class="fail">FAIL</td><td>[MEDIUM] Rubric text exists (lines 366–368) but no **operational** guidance for teams (e.g. validating alongside adjacent skills, practical recall/skill-count constraints in deployment notes).</td></tr>
+<tr><td>9</td><td>Model Compatibility</td><td class="fail">FAIL</td><td>No documented validation target (model tier / product) for the workflow-heavy reviewer path.</td></tr>
+<tr><td>10</td><td>Workflow &amp; Feedback Loops</td><td class="pass">PASS</td><td>Incremental loop, grader reconciliation ↩ carried</td></tr>
+<tr><td>11</td><td>Maintainability &amp; Lifecycle</td><td class="fail">FAIL</td><td>[HIGH] No documented separation of author vs reviewer. [MEDIUM] No registry block (owner, dependencies, last-eval), version pin/rollback, or explicit lifecycle stage in skill body.</td></tr>
+<tr><td>12</td><td>Gotchas / Lessons Learned</td><td class="fail">FAIL</td><td>No &quot;Gotchas&quot; / &quot;Common mistakes&quot; section (e.g. Step 3c snapshot prerequisite, when to skip comparator, incremental carry-forward caveats).</td></tr>
+<tr><td>13</td><td>Anti-Pattern Audit</td><td class="pass">PASS</td><td>Forward-slash paths; no bundled scripts requiring error handling ↩ carried</td></tr>
     </tbody>
   </table>
 

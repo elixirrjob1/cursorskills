@@ -27,6 +27,11 @@
     skill-reviewer Step 7c: Copy this file to tests/results/benchmark-<skill-name>-YYYY-MM-DD.html
     in the *target* skill folder. Replace every ___PLACEHOLDER___ below (do not leave placeholders in output).
     Summary table: metric labels are fixed; replace each ___SUMMARY_TD_*___ with one full <td>…</td> (use class pass/fail/skip on styled cells). Escape HTML in text if needed.
+
+    Assertion Detail: ___ASSERTION_DETAIL_ROWS___ MUST be <tr>…</tr> rows for a table whose columns are Eval | Assertion | Passed | Evidence.
+    Do NOT leave Assertion Detail as only a pointer to grading-*.json files (that pattern is forbidden). You may mention paths in Evidence cells when relevant.
+
+    Category Grades: four columns — # | Category | Grade | Explanation.
   -->
   <h1>Benchmark Report: ___SKILL_NAME___</h1>
   <p class="meta">___META_LINE___</p>
@@ -54,12 +59,20 @@ ___UNIT_TEST_ROWS___
   </table>
 
   <h2>Assertion Detail</h2>
-___ASSERTION_DETAIL_BLOCK___
+  <p class="note">Full assertion-by-assertion roll-up below (Step 3b). The table is required in every benchmark; do not replace this section with only links to JSON files.</p>
+  <table>
+    <thead>
+      <tr><th>Eval</th><th>Assertion</th><th>Passed</th><th>Evidence</th></tr>
+    </thead>
+    <tbody>
+___ASSERTION_DETAIL_ROWS___
+    </tbody>
+  </table>
 
   <h2>Category Grades</h2>
   <table>
     <thead>
-      <tr><th>#</th><th>Category</th><th>Grade</th></tr>
+      <tr><th>#</th><th>Category</th><th>Grade</th><th>Explanation</th></tr>
     </thead>
     <tbody>
 ___CATEGORY_ROWS___

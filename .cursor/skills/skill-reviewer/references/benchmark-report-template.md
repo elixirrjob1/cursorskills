@@ -2,6 +2,11 @@
   skill-reviewer Step 7b: Copy to tests/results/benchmark-<skill-name>-YYYY-MM-DD.md
   in the *target* skill folder. Remove this comment block. Replace every ___PLACEHOLDER___.
   Summary metrics are fixed (same order as benchmark-report-template.html).
+
+  Assertion Detail: use the table below; ___ASSERTION_DETAIL_ROWS___ must list every graded assertion (Eval | Assertion | Passed | Evidence).
+  Forbidden: a section that only says to open grading-*.json files without this table body.
+
+  Category Grades: include an Explanation column (brief rationale, same spirit as the narrative review).
 -->
 
 # Benchmark Report: ___SKILL_NAME___
@@ -27,12 +32,14 @@ ___UNIT_TEST_ROWS___
 
 ## Assertion Detail
 
-___ASSERTION_DETAIL_BLOCK___
+| Eval | Assertion | Passed | Evidence |
+|------|-----------|--------|----------|
+___ASSERTION_DETAIL_ROWS___
 
 ## Category Grades
 
-| # | Category | Grade |
-|---|----------|-------|
+| # | Category | Grade | Explanation |
+|---|----------|-------|-------------|
 ___CATEGORY_ROWS___
 
 ## Version Comparison (if comparator was run)

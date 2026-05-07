@@ -272,31 +272,19 @@ Save to `tests/results/`.
 | `___SUMMARY_MEDIUM_FAILURES___` | e.g. `5 (rolled up)` or `—` |
 | `___SUMMARY_COMPARATOR___` | e.g. `— (not run; no snapshot)` |
 | `___UNIT_TEST_ROWS___` | Markdown table body rows: `\| # \| label \| type \| ✅ PASS / ❌ FAIL \| a/b \|` |
-| `___ASSERTION_DETAIL_BLOCK___` | Table and/or prose matching Step 3b grading output |
-| `___CATEGORY_ROWS___` | Rows `\| n \| Category \| PASS / FAIL \|` |
+| `___ASSERTION_DETAIL_ROWS___` | **Required:** one row per assertion from all `grading-<eval_id>.json` files for this run: `\| eval_id \| <assertion text> \| ✅ / ❌ \| evidence \|`. **Forbidden:** omitting this table or replacing the section with only text like “Per-eval JSON: `runs/…/grading-<n>.json`” / “see JSON files” without listing every assertion inline. A footnote listing artifact paths is allowed *after* the full table, not instead of it. |
+| `___CATEGORY_ROWS___` | Rows `\| n \| Category \| PASS / FAIL \| Explanation \|` — **Explanation** = one short clause (why PASS or key finding for FAIL), aligned with the narrative `review-*.md`. |
 | `___VERSION_COMPARISON_BLOCK___` | Comparator table or italic `_Not run — …_` |
 | `___HISTORY_ROWS___` | One data row per `history.json` entry |
 | `___REVIEW_FILENAME___` | `review-<skill-name>-YYYY-MM-DD.md` for this run |
 
-**Fallback** if the template file cannot be read: write the same sections manually; **Summary must still list all seven metrics in the order above**.
+**Assertion Detail (required):** The **Assertion Detail** section must contain a **complete Markdown table** (columns: Eval, Assertion, Passed, Evidence) with **one row per assertion** from every `grading-*.json` produced in this review’s `runs/YYYY-MM-DD/`. Data must be copied from those JSON files into the benchmark — human-readable in the report itself.
 
-Minimal shape (reference):
+**Forbidden:** Using only a pointer to JSON files as the Assertion Detail body (e.g. “Per-eval JSON: `runs/2026-05-07/grading-<n>.json` for *n* = 1…10” with **no** assertion rows). You may add a sentence after the table citing where graders wrote machine-readable artifacts, but the table is mandatory.
 
-```markdown
-## Summary
-| Metric | Value |
-|--------|-------|
-| Overall Verdict | PASS / FAIL |
-| Unit Tests | X / Y passed (Z%) |
-| Assertions | A / B (C%) |
-| Categories | X / 13 passed |
-| High Failures | N |
-| Medium Failures | N |
-| Comparator | — |
+**Category Grades (required):** Include column **Explanation** (brief rationale per category, consistent with the review narrative).
 
-## Unit Test Results
-(…)
-```
+**Fallback** if the template file cannot be read: write the same sections manually; **Summary** must still list all seven metrics in the order above; **Assertion Detail** and **Category Grades** rules still apply.
 
 #### 7c: Generate `benchmark-<skill-name>-YYYY-MM-DD.html`
 
@@ -316,15 +304,19 @@ Save alongside the `.md` file. Must be a **fully self-contained** HTML file — 
 | `___SUMMARY_TD_MEDIUM_FAILURES___` | e.g. `<td>5 (rolled up)</td>` or `<td>—</td>` |
 | `___SUMMARY_TD_COMPARATOR___` | e.g. `<td class="skip">— (not run)</td>` or outcome text |
 | `___UNIT_TEST_ROWS___` | Table rows: `#`, short test label, type, result cell (`<td class="pass">` / `fail` / `skip`), assertions fraction |
-| `___ASSERTION_DETAIL_BLOCK___` | Either a `<table>…</table>` or a `<p class="note">…</p>` — same substance as the markdown **Assertion Detail** section |
-| `___CATEGORY_ROWS___` | Rows: `#`, category name, grade cell with `pass` / `fail` |
+| `___ASSERTION_DETAIL_ROWS___` | **Required:** one `<tr>` per assertion: `<td>eval_id</td><td>…assertion text…</td><td class="pass">Yes</td>` / `fail` + evidence — columns **Eval | Assertion | Passed | Evidence**. **Forbidden:** only a `<p class="note">` pointing at JSON files with no rows. You may repeat the table from the `.md` benchmark (HTML-escape cell text). |
+| `___CATEGORY_ROWS___` | Rows: `#`, category name, grade cell (`pass` / `fail`), `<td>…explanation…</td>` |
 | `___VERSION_COMPARISON_BLOCK___` | Comparator table + rows, or `<p class="note">…</p>` if skipped |
 | `___HISTORY_ROWS___` | One row per `history.json` entry; use **bar-track** / **bar-fill** for test/assertion/category rates (`style="width:NN%"` on bar-fill) |
 | `___REVIEW_FILENAME___` | `review-<skill-name>-YYYY-MM-DD.md` for this run |
 
 Remove the instructional HTML comment block from the template in the saved output. **Do not** leave any `___…___` placeholder in the final file.
 
-**Fallback** if the template file cannot be read: build equivalent HTML from scratch using the same sections and styles: white background, `system-ui`, 14px; tables `border-collapse: collapse`, `1px solid #ccc`, alternating `#f9f9f9`; `.pass` / `.fail` / `.skip` as in the template; history pass rates as inline green bar + percentage.
+**Assertion Detail (HTML):** Must mirror the markdown benchmark: a full **`<table>`** with thead **Eval | Assertion | Passed | Evidence** and one `<tr>` per assertion from the run’s `grading-*.json` files. Do not ship Assertion Detail as only a note that says to open JSON files on disk.
+
+**Category Grades (HTML):** Fourth column **Explanation** for every category.
+
+**Fallback** if the template file cannot be read: build equivalent HTML from scratch using the same sections and styles: white background, `system-ui`, 14px; tables `border-collapse: collapse`, `1px solid #ccc`, alternating `#f9f9f9`; `.pass` / `.fail` / `.skip` as in the template; history pass rates as inline green bar + percentage; **Assertion Detail** and **Category Explanation** rules still apply.
 
 ---
 

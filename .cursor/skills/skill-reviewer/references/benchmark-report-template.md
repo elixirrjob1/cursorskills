@@ -3,7 +3,7 @@
   in the *target* skill folder. Remove this comment block. Replace every ___PLACEHOLDER___.
   Summary metrics are fixed (same order as benchmark-report-template.html).
 
-  Assertion Detail: use the table below; ___ASSERTION_DETAIL_ROWS___ must list every graded assertion (Eval | Assertion | Passed | Evidence).
+  Assertion Detail: use the table below; ___ASSERTION_DETAIL_ROWS___ must list every graded assertion (Eval | Assertion | Passed | Evidence) for every eval in evals.json — on incremental runs, carry forward rows for SKIP evals from prior grading files.
   Forbidden: a section that only says to open grading-*.json files without this table body.
 
   Category Grades: include an Explanation column (brief rationale, same spirit as the narrative review).

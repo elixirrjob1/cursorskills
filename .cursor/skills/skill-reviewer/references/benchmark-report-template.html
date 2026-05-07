@@ -28,7 +28,7 @@
     in the *target* skill folder. Replace every ___PLACEHOLDER___ below (do not leave placeholders in output).
     Summary table: metric labels are fixed; replace each ___SUMMARY_TD_*___ with one full <td>…</td> (use class pass/fail/skip on styled cells). Escape HTML in text if needed.
 
-    Assertion Detail: ___ASSERTION_DETAIL_ROWS___ MUST be <tr>…</tr> rows for a table whose columns are Eval | Assertion | Passed | Evidence.
+    Assertion Detail: ___ASSERTION_DETAIL_ROWS___ = one <tr> per assertion for every eval in evals.json (carry forward prior grading data for incremental SKIP evals).
     Do NOT leave Assertion Detail as only a pointer to grading-*.json files (that pattern is forbidden). You may mention paths in Evidence cells when relevant.
 
     Category Grades: four columns — # | Category | Grade | Explanation.

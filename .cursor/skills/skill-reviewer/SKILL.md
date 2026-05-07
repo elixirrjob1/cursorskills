@@ -272,15 +272,15 @@ Save to `tests/results/`.
 | `___SUMMARY_MEDIUM_FAILURES___` | e.g. `5 (rolled up)` or `—` |
 | `___SUMMARY_COMPARATOR___` | e.g. `— (not run; no snapshot)` |
 | `___UNIT_TEST_ROWS___` | Markdown table body rows: `\| # \| label \| type \| ✅ PASS / ❌ FAIL \| a/b \|` |
-| `___ASSERTION_DETAIL_ROWS___` | **Required:** one row per assertion from all `grading-<eval_id>.json` files for this run: `\| eval_id \| <assertion text> \| ✅ / ❌ \| evidence \|`. **Forbidden:** omitting this table or replacing the section with only text like “Per-eval JSON: `runs/…/grading-<n>.json`” / “see JSON files” without listing every assertion inline. A footnote listing artifact paths is allowed *after* the full table, not instead of it. |
+| `___ASSERTION_DETAIL_ROWS___` | **Required:** one row per assertion for **every eval** in `evals.json` (reuse prior grading JSON rows for incremental SKIP evals). **Forbidden:** omitting this table or replacing the section with only text like “Per-eval JSON: `runs/…/grading-<n>.json`” / “see JSON files” without listing every assertion inline. A footnote listing artifact paths is allowed *after* the full table, not instead of it. |
 | `___CATEGORY_ROWS___` | Rows `\| n \| Category \| PASS / FAIL \| Explanation \|` — **Explanation** = one short clause (why PASS or key finding for FAIL), aligned with the narrative `review-*.md`. |
 | `___VERSION_COMPARISON_BLOCK___` | Comparator table or italic `_Not run — …_` |
 | `___HISTORY_ROWS___` | One data row per `history.json` entry |
 | `___REVIEW_FILENAME___` | `review-<skill-name>-YYYY-MM-DD.md` for this run |
 
-**Assertion Detail (required):** The **Assertion Detail** section must contain a **complete Markdown table** (columns: Eval, Assertion, Passed, Evidence) with **one row per assertion** from every `grading-*.json` produced in this review’s `runs/YYYY-MM-DD/`. Data must be copied from those JSON files into the benchmark — human-readable in the report itself.
+**Assertion Detail (required):** The **Assertion Detail** section must contain a **complete Markdown table** (columns: Eval, Assertion, Passed, Evidence) with **one row per assertion** for **every eval** in `tests/evals/evals.json`. Populate from this run’s `runs/YYYY-MM-DD/grading-<eval_id>.json` when Step 3 re-ran the eval; on **incremental** runs, for evals **not** re-run (SKIP), copy assertion rows from the **prior** run’s grading files or prior benchmark so **no eval drops out**.
 
-**Forbidden:** Using only a pointer to JSON files as the Assertion Detail body (e.g. “Per-eval JSON: `runs/2026-05-07/grading-<n>.json` for *n* = 1…10” with **no** assertion rows). You may add a sentence after the table citing where graders wrote machine-readable artifacts, but the table is mandatory.
+**Forbidden:** Using only a pointer to JSON files as the Assertion Detail body (e.g. “Per-eval JSON: `runs/2026-05-07/grading-<n>.json` for *n* = 1…10” with **no** assertion rows). You may add a sentence **after** the full table citing machine-readable grader paths, but the table is mandatory.
 
 **Category Grades (required):** Include column **Explanation** (brief rationale per category, consistent with the review narrative).
 
@@ -312,7 +312,7 @@ Save alongside the `.md` file. Must be a **fully self-contained** HTML file — 
 
 Remove the instructional HTML comment block from the template in the saved output. **Do not** leave any `___…___` placeholder in the final file.
 
-**Assertion Detail (HTML):** Must mirror the markdown benchmark: a full **`<table>`** with thead **Eval | Assertion | Passed | Evidence** and one `<tr>` per assertion from the run’s `grading-*.json` files. Do not ship Assertion Detail as only a note that says to open JSON files on disk.
+**Assertion Detail (HTML):** Must mirror the markdown benchmark: a full **`<table>`** with thead **Eval | Assertion | Passed | Evidence** and one `<tr>` per assertion for **every eval** in the suite (same incremental carry-forward rule as Step 7b).
 
 **Category Grades (HTML):** Fourth column **Explanation** for every category.
 

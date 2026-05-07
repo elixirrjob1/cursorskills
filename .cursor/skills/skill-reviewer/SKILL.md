@@ -96,6 +96,26 @@ def test_edge_case_<description>():
 
 Write both files to `tests/` inside the skill folder being reviewed (e.g. `.cursor/skills/my-skill/tests/`). If the path is unavailable, output both files inline before proceeding.
 
+Also write `tests/evals/evals.json` — the machine-readable version of the same test cases (used for timing aggregation and benchmark diffing across reviews):
+
+```json
+{
+  "skill_name": "<skill-name>",
+  "generated_date": "YYYY-MM-DD",
+  "evals": [
+    {
+      "id": 1,
+      "type": "should-trigger | should-not-trigger | edge-case",
+      "prompt": "...",
+      "expected_behavior": "...",
+      "assertions": []
+    }
+  ]
+}
+```
+
+If `tests/evals/evals.json` already exists and test-cases.md has not changed significantly, reuse it as-is — do not overwrite prior assertion history.
+
 ### Step 3: Run the unit tests
 
 Skip any test that carried a **PASS** from the prior review (Step 1 incremental check). For the remaining tests, launch a subagent with:
@@ -109,6 +129,24 @@ Run all subagents in parallel. Once responses are collected, evaluate each one y
 - **FAIL**: the actual response contradicts the expected behavior (e.g. expected "asks clarifying question" → response instead attempts to run a query)
 
 Do not ask the subagent to grade itself. You evaluate the responses against the expected column in `test-cases.md`.
+
+**Record run results:** Save all run outcomes to `tests/results/runs/YYYY-MM-DD/timing.json` (create the directory if needed):
+
+```json
+{
+  "review_date": "YYYY-MM-DD",
+  "runs": [
+    {
+      "eval_id": 1,
+      "test_type": "should-trigger | should-not-trigger | edge-case",
+      "prompt_short": "<first 80 chars of prompt>",
+      "result": "PASS | FAIL | SKIP"
+    }
+  ]
+}
+```
+
+For skipped tests (carried from prior review), set `result: "SKIP"`.
 
 Summarise as `X / Y tests passed` before proceeding to the rubric.
 
@@ -129,6 +167,104 @@ Use the output format defined at the bottom of this skill. Include the unit test
 After generating the report, save it as a file inside the skill's `tests/results/` folder. Name the file using the skill name and current date: `review-<skill-name>-YYYY-MM-DD.md` (e.g. `review-json-to-excel-export-2026-05-06.md`). Create the `results/` folder if it does not exist. If the path is unavailable, output the report inline only.
 
 In incremental runs, append `↩ carried` to the existing Notes value in the Unit Tests and Category Grades tables — do not replace the original note text. Example: `Discovered FactSales via OM, returned $35K ↩ carried`. Only re-evaluated rows get new note text.
+
+### Step 7: Update history and generate benchmark reports
+
+After saving the review markdown file, do three more things in order.
+
+#### 7a: Append to `tests/results/history.json`
+
+Read the existing file (create it with `{"history": []}` if absent), then append one new entry and write it back. Never truncate prior entries.
+
+```json
+{
+  "history": [
+    {
+      "date": "YYYY-MM-DD",
+      "skill_version": "<git short-hash or 'unversioned'>",
+      "unit_tests": { "passed": 0, "total": 0, "pass_rate": 0.00 },
+      "categories": { "passed": 0, "total": 13, "pass_rate": 0.00 },
+      "verdict": "PASS | FAIL",
+      "high_failures": ["<subcategory text>"],
+      "review_file": "review-<skill-name>-YYYY-MM-DD.md",
+      "timing_file": "runs/YYYY-MM-DD/timing.json"
+    }
+  ]
+}
+```
+
+For `skill_version`, run `git -C <skill-folder> rev-parse --short HEAD 2>/dev/null || echo unversioned`.
+
+#### 7b: Generate `benchmark-<skill-name>-YYYY-MM-DD.md`
+
+Save to `tests/results/`.
+
+```markdown
+# Benchmark Report: <skill-name>
+_Generated: YYYY-MM-DD_
+
+## Summary
+
+| Metric | Value |
+|--------|-------|
+| Overall Verdict | PASS / FAIL |
+| Unit Tests | X / Y passed (Z%) |
+| Categories | X / 13 passed |
+| High Failures | N |
+| Medium Failures | N |
+
+## Unit Test Results
+
+| # | Test | Type | Result |
+|---|------|------|--------|
+| 1 | ... | should-trigger | ✅ PASS |
+
+## Category Grades
+
+| # | Category | Grade |
+|---|----------|-------|
+| 1 | Triggering | PASS |
+...
+
+## History (all reviews)
+
+| Date | Unit Tests | Categories | Verdict | High Failures |
+|------|-----------|------------|---------|---------------|
+| YYYY-MM-DD | X/Y | X/13 | PASS | — |
+```
+
+#### 7c: Generate `benchmark-<skill-name>-YYYY-MM-DD.html`
+
+Save alongside the `.md` file. Must be a **fully self-contained** HTML file — no external CDN links, all CSS inline. Include the same four sections as the markdown benchmark (no token/duration columns). Use these style conventions:
+- White background, `font-family: system-ui, sans-serif`, `font-size: 14px`
+- Tables: `border-collapse: collapse`, `1px solid #ccc`, alternating row shading (`#f9f9f9`)
+- PASS cells: `background: #d4edda; color: #155724`
+- FAIL cells: `background: #f8d7da; color: #721c24`
+- SKIP cells: `background: #fff3cd; color: #856404`
+- History section: render pass rate as an inline progress bar — a `<div>` with a green fill proportional to the pass rate, followed by the percentage text
+
+Minimum HTML skeleton:
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Benchmark: <skill-name> — YYYY-MM-DD</title>
+  <style>/* all styles inline here */</style>
+</head>
+<body>
+  <h1>Benchmark Report: <skill-name></h1>
+  <p><em>Generated: YYYY-MM-DD</em></p>
+  <!-- Summary table -->
+  <!-- Unit test results table -->
+  <!-- Category grades table -->
+  <!-- History table with progress bars -->
+</body>
+</html>
+```
+
+Generate this file directly — do not require a separate script.
 
 ---
 

@@ -1,0 +1,121 @@
+{
+  "skill_name": "meetingintroskill",
+  "generated_date": "2026-05-07",
+  "evals": [
+    {
+      "id": 1,
+      "type": "should-trigger",
+      "prompt": "I'm walking into a discovery call with the VP of Engineering at Acme Corp (SaaS) tomorrow — keep it warm and brief",
+      "expected_behavior": "No clarifying questions. Exactly 5 intros using all 5 strategies, each with greeting prefix. Recommends one winner with reasoning.",
+      "assertions": [
+        "Response contains exactly 5 numbered intros or strategy labels",
+        "Each intro includes a greeting/name/role element before the strategy beat",
+        "A winner is named with a reasoning paragraph",
+        "No clarifying questions appear before the intros"
+      ]
+    },
+    {
+      "id": 2,
+      "type": "should-trigger",
+      "prompt": "Need an opener for a meeting",
+      "expected_behavior": "Agent asks minimal clarifying questions for audience, style, and industry. Does NOT produce intros before clarification.",
+      "assertions": [
+        "Response contains at least one clarifying question",
+        "Response does NOT contain five strategy intros",
+        "Questions target audience, style, or industry"
+      ]
+    },
+    {
+      "id": 3,
+      "type": "should-trigger",
+      "prompt": "Meeting tomorrow with GreenPath Solutions — first call",
+      "expected_behavior": "Company name is ambiguous — agent cannot safely infer industry. Must ask for industry or field before producing intros.",
+      "assertions": [
+        "Response asks about industry or field",
+        "Response does NOT produce five intros before clarification"
+      ]
+    },
+    {
+      "id": 4,
+      "type": "should-trigger",
+      "prompt": "I have a kickoff with the Head of Procurement and two category managers at a mid-size manufacturing firm — I want to sound competent without being stiff",
+      "expected_behavior": "All dimensions clear. Exactly 5 intros with greeting prefix. Winner reasoning mentions procurement/manufacturing fit.",
+      "assertions": [
+        "Response contains exactly 5 strategy intros",
+        "Winner recommendation mentions manufacturing or procurement context",
+        "Each intro begins with a greeting element"
+      ]
+    },
+    {
+      "id": 5,
+      "type": "should-trigger",
+      "prompt": "What should I say right after my intro lands — I'm meeting the CHRO of a UK fintech startup, formal tone",
+      "expected_behavior": "Produces 5 intros AND includes optional handoff/exit lines at the end of the recommendation.",
+      "assertions": [
+        "Response contains 5 intros",
+        "Response includes a section or lines about what to say after the intro (handoff/exit)"
+      ]
+    },
+    {
+      "id": 6,
+      "type": "should-not-trigger",
+      "prompt": "Draft a follow-up email to my client after yesterday's call — they seemed interested in the pricing tier",
+      "expected_behavior": "Should not trigger meetingintroskill. Agent handles as general email/writing task.",
+      "assertions": [
+        "Response does not produce five meeting opener strategies",
+        "Response addresses the follow-up email request directly"
+      ]
+    },
+    {
+      "id": 7,
+      "type": "should-not-trigger",
+      "prompt": "Help me build a sales pitch deck for our new product launch",
+      "expected_behavior": "Should not trigger meetingintroskill. Agent handles as presentation/document task.",
+      "assertions": [
+        "Response does not produce five meeting opener strategies",
+        "Response addresses pitch deck or presentation creation"
+      ]
+    },
+    {
+      "id": 8,
+      "type": "should-not-trigger",
+      "prompt": "How should I answer 'tell me about yourself' in my job interview at Deloitte?",
+      "expected_behavior": "Should not trigger meetingintroskill. Agent handles as interview prep.",
+      "assertions": [
+        "Response does not produce five client meeting opener strategies",
+        "Response addresses interview self-introduction"
+      ]
+    },
+    {
+      "id": 9,
+      "type": "edge-case",
+      "prompt": "Give me an opener for my first meeting with JPMorgan Chase's risk team",
+      "expected_behavior": "JPMorgan Chase is clearly finance/banking — agent must infer confidently and NOT ask to confirm industry. Produces 5 intros.",
+      "assertions": [
+        "Response does NOT ask to confirm the industry",
+        "Response produces 5 intros",
+        "Intros reflect finance/banking context"
+      ]
+    },
+    {
+      "id": 10,
+      "type": "edge-case",
+      "prompt": "Give me an opener — we've been working with this client for two years and this is our quarterly review",
+      "expected_behavior": "Skill is for first meetings. Agent must flag the scope mismatch or ask a clarifying question. Must NOT silently produce first-meeting intros.",
+      "assertions": [
+        "Response flags or questions whether this is a first meeting",
+        "Response does NOT produce five first-meeting intros without acknowledging the existing relationship"
+      ]
+    },
+    {
+      "id": 11,
+      "type": "edge-case",
+      "prompt": "I need a meeting intro for my internal all-hands where I'm introducing a new initiative to my own team",
+      "expected_behavior": "This is an internal meeting, not a first client commercial conversation. Agent should clarify the skill's scope and ask how to proceed.",
+      "assertions": [
+        "Response flags that the skill targets first external client meetings",
+        "Response asks whether to proceed differently or offers to adapt"
+      ]
+    }
+  ]
+}

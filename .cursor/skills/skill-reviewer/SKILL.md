@@ -21,7 +21,7 @@ Read all bundled reference files and scripts — they are within scope. Do not b
 **Timestamp this run (required):** As soon as the skill folder path is known, record:
 - **`reviewed_at`** — UTC wall time in ISO 8601, e.g. `2026-05-07T14:30:52Z` (use `date -u +"%Y-%m-%dT%H:%M:%SZ"`).
 - **`RUN_SLUG`** — compact, filesystem-safe token **derived from the same instant**: `YYYY-mm-ddTHHMMSSZ` with colons removed from the time portion, e.g. `2026-05-07T143052Z`. Same instant as `reviewed_at`; used in folder and filenames.
-- **`RUN_DIR`** — `tests/results/runs/<RUN_SLUG>/` (under the skill being reviewed). **Every** artifact for this review goes here: `timing.json`, `grading-*.json`, `comparison-*.json`, `comparison-summary.json`, `review-<skill>-<RUN_SLUG>.md`, `benchmark-<skill>-<RUN_SLUG>.md`, `benchmark-<skill>-<RUN_SLUG>.html`. The `tests/results/` root holds only `history.json`, the `runs/` tree, and the `snapshots/` tree.
+- **`RUN_DIR`** — `tests/results/runs/<RUN_SLUG>/` (under the skill being reviewed). **Every** artifact for this review goes here: `timing.json`, `grading/grading-*.json`, `comparison/comparison-*.json`, `comparison/comparison-summary.json`, `review-<skill>-<RUN_SLUG>.md`, `benchmark-<skill>-<RUN_SLUG>.md`, `benchmark-<skill>-<RUN_SLUG>.html`. The `tests/results/` root holds only `history.json`, the `runs/` tree, and the `snapshots/` tree.
 
 **Previous snapshot for Step 3c:** Read `tests/results/history.json` if it exists. Take the **last** entry in the `history` array (previous completed review). Let **`snapshot_dir`** be that entry’s **`snapshot_dir`** field. If **`snapshot_dir`** is missing, `null`, or empty, **`PREVIOUS_SNAPSHOT`** is unavailable — skip the diff check and Step 3c. Otherwise resolve **`PREVIOUS_SNAPSHOT`** = `<skill_dir>/tests/results/<snapshot_dir>`. If that directory does not exist on disk (e.g. clone without snapshots), treat as unavailable.
 
@@ -171,7 +171,7 @@ Do not ask the subagent to grade itself. You evaluate the responses against the 
 }
 ```
 
-For skipped tests (carried from prior review), set `result: "SKIP"` and `carried_from: "runs/<prior_RUN_SLUG>/grading-<eval_id>.json"` (relative to `tests/results/`). **Do not copy** the prior grading JSON into the new `RUN_DIR` — the pointer is the canonical reference. If no prior grading file exists (e.g. the first review), set `carried_from: null`.
+For skipped tests (carried from prior review), set `result: "SKIP"` and `carried_from: "runs/<prior_RUN_SLUG>/grading/grading-<eval_id>.json"` (relative to `tests/results/`). **Do not copy** the prior grading JSON into the new `RUN_DIR` — the pointer is the canonical reference. If no prior grading file exists (e.g. the first review), set `carried_from: null`.
 
 Summarise as `X / Y tests passed` before proceeding to the rubric.
 
@@ -181,7 +181,7 @@ Spawn grader subagents in parallel — one per eval with `result: "PASS" | "FAIL
 - The eval's `assertions` array from `evals.json`
 - The full actual response from the subagent
 
-See `agents/grader.md` for grader instructions. Each grader saves its output to **`tests/results/runs/<RUN_SLUG>/grading-<eval_id>.json`** (only for evals executed this run). When generating benchmarks (Step 7b/7c), for SKIP evals read the grading JSON from `carried_from`; add a `↩ carried from <prior_slug>` note in the Evidence cell to show the data is from a prior run:
+See `agents/grader.md` for grader instructions. Each grader saves its output to **`tests/results/runs/<RUN_SLUG>/grading/grading-<eval_id>.json`** (only for evals executed this run). When generating benchmarks (Step 7b/7c), for SKIP evals read the grading JSON from `carried_from`; add a `↩ carried from <prior_slug>` note in the Evidence cell to show the data is from a prior run:
 
 ```json
 {
@@ -219,9 +219,9 @@ An eval's `overall_result` is PASS only if all assertions pass. If grading contr
 - **New:** Load `SKILL.md` and bundled files from the **current** skill folder on disk.
 - **Old:** Load `SKILL.md` and bundled files from **`PREVIOUS_SNAPSHOT`** (same relative paths). If a file existed only in one tree, state that in the executor briefing.
 
-Do **not** label which output is old vs new when calling the comparator. Then spawn one **comparator** subagent per eval (see `agents/comparator.md`), passing `output_a` and `output_b` unlabelled. Track internally which output came from **current** vs **snapshot**. Each comparator saves to **`tests/results/runs/<RUN_SLUG>/comparison-<eval_id>.json`** with fields: `eval_id`, `prompt_short`, `verdict` (`a_wins | b_wins | tie`), `reasoning`.
+Do **not** label which output is old vs new when calling the comparator. Then spawn one **comparator** subagent per eval (see `agents/comparator.md`), passing `output_a` and `output_b` unlabelled. Track internally which output came from **current** vs **snapshot**. Each comparator saves to **`tests/results/runs/<RUN_SLUG>/comparison/comparison-<eval_id>.json`** with fields: `eval_id`, `prompt_short`, `verdict` (`a_wins | b_wins | tie`), `reasoning`.
 
-**Aggregate:** After all comparators complete, map `a_wins`/`b_wins` to `new_wins`/`old_wins`. Save **`tests/results/runs/<RUN_SLUG>/comparison-summary.json`** with fields: `reviewed_at`, `review_date`, `overall` (`new_wins | old_wins | tie | mixed`), `new_wins`, `old_wins`, `ties`, `total_compared`. `overall` is `new_wins` if new > old, `old_wins` if reversed, `tie` if equal, `mixed` if split. Include the summary in the benchmark report (Step 7b/7c) when present.
+**Aggregate:** After all comparators complete, map `a_wins`/`b_wins` to `new_wins`/`old_wins`. Save **`tests/results/runs/<RUN_SLUG>/comparison/comparison-summary.json`** with fields: `reviewed_at`, `review_date`, `overall` (`new_wins | old_wins | tie | mixed`), `new_wins`, `old_wins`, `ties`, `total_compared`. `overall` is `new_wins` if new > old, `old_wins` if reversed, `tie` if equal, `mixed` if split. Include the summary in the benchmark report (Step 7b/7c) when present.
 
 ### Step 4: Review each subcategory
 
@@ -267,7 +267,7 @@ Read the existing file (create it with `{"history": []}` if absent), then append
       "benchmark_md": "runs/<RUN_SLUG>/benchmark-<skill-name>-<RUN_SLUG>.md",
       "benchmark_html": "runs/<RUN_SLUG>/benchmark-<skill-name>-<RUN_SLUG>.html",
       "snapshot_dir": "snapshots/<skill-folder-name>/<RUN_SLUG>",
-      "comparison_file": "runs/<RUN_SLUG>/comparison-summary.json or null"
+      "comparison_file": "runs/<RUN_SLUG>/comparison/comparison-summary.json or null"
     }
   ]
 }
@@ -312,15 +312,15 @@ Save to **`RUN_DIR`** — i.e. `tests/results/runs/<RUN_SLUG>/benchmark-<skill-n
 | `___SUMMARY_MEDIUM_FAILURES___` | e.g. `5 (rolled up)` or `—` |
 | `___SUMMARY_COMPARATOR___` | e.g. `— (no diff vs prior snapshot)` or `new_wins` summary from `comparison-summary.json` |
 | `___UNIT_TEST_ROWS___` | Markdown table body rows: `\| # \| label \| type \| ✅ PASS / ❌ FAIL \| a/b \|` |
-| `___ASSERTION_DETAIL_ROWS___` | **Required:** one row per assertion for **every eval** in `evals.json` (reuse prior grading JSON rows for incremental SKIP evals). **Forbidden:** omitting this table or replacing the section with only text like “Per-eval JSON: `runs/…/grading-<n>.json`” / “see JSON files” without listing every assertion inline. A footnote listing artifact paths is allowed *after* the full table, not instead of it. |
+| `___ASSERTION_DETAIL_ROWS___` | **Required:** one row per assertion for **every eval** in `evals.json` (reuse prior grading JSON rows for incremental SKIP evals). **Forbidden:** omitting this table or replacing the section with only text like “Per-eval JSON: `runs/…/grading/grading-<n>.json`” / “see JSON files” without listing every assertion inline. A footnote listing artifact paths is allowed *after* the full table, not instead of it. |
 | `___CATEGORY_ROWS___` | Rows `\| n \| Category \| PASS / FAIL \| Explanation \|` — **Explanation** = one short clause (why PASS or key finding for FAIL), aligned with the narrative `review-*.md`. |
 | `___VERSION_COMPARISON_BLOCK___` | Comparator table or italic `_Not run — …_` |
 | `___HISTORY_ROWS___` | One row per `history.json` entry: `\| reviewed_at \| date \| 10/10 \| 30/30 \| 9/13 \| FAIL \| note \|` |
 | `___REVIEW_FILENAME___` | `review-<skill-name>-<RUN_SLUG>.md` for this run |
 
-**Assertion Detail (required):** The **Assertion Detail** section must contain a **complete Markdown table** (columns: Eval, Assertion, Passed, Evidence) with **one row per assertion** for **every eval** in `tests/evals/evals.json`. Populate from this run’s **`tests/results/runs/<RUN_SLUG>/grading-<eval_id>.json`** when Step 3 re-ran the eval; on **incremental** runs, for evals **not** re-run (SKIP), copy assertion rows from the **prior** run’s grading files or prior benchmark so **no eval drops out**.
+**Assertion Detail (required):** The **Assertion Detail** section must contain a **complete Markdown table** (columns: Eval, Assertion, Passed, Evidence) with **one row per assertion** for **every eval** in `tests/evals/evals.json`. Populate from this run’s **`tests/results/runs/<RUN_SLUG>/grading/grading-<eval_id>.json`** when Step 3 re-ran the eval; on **incremental** runs, for evals **not** re-run (SKIP), copy assertion rows from the **prior** run’s grading files or prior benchmark so **no eval drops out**.
 
-**Forbidden:** Using only a pointer to JSON files as the Assertion Detail body (e.g. “Per-eval JSON: `runs/<RUN_SLUG>/grading-<n>.json` for *n* = 1…10” with **no** assertion rows). You may add a sentence **after** the full table citing machine-readable grader paths, but the table is mandatory.
+**Forbidden:** Using only a pointer to JSON files as the Assertion Detail body (e.g. “Per-eval JSON: `runs/<RUN_SLUG>/grading/grading-<n>.json` for *n* = 1…10” with **no** assertion rows). You may add a sentence **after** the full table citing machine-readable grader paths, but the table is mandatory.
 
 **Category Grades (required):** Include column **Explanation** (brief rationale per category, consistent with the review narrative).
 

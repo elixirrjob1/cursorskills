@@ -1,5 +1,5 @@
 # Benchmark Report: skill-reviewer
-_Generated: 2026-05-07 · live executor harness (third history entry)_
+_Generated: 2026-05-07 · live executor harness; benchmark `.html` aligned to Step 7c (full Assertion Detail + Explanation column)._
 
 ## Summary
 

@@ -1,1 +1,17 @@
-{"eval_id":11,"prompt_short":"I need a meeting intro for my internal all-hands where I'm introducing a new initiative","overall_result":"FAIL","assertions":[{"text":"Response flags that the skill targets first external client meetings","passed":true,"evidence":"'Scope flag (meetingintroskill)' states skill's core is first external client meeting."},{"text":"Response asks how to proceed or offers options rather than silently producing client-focused intros","passed":false,"evidence":"After the scope flag, response immediately delivers five internal-adapted intros without a 'how would you like to proceed?' choice or numbered options—unlike the expected pause-for-user pattern."}]}
+{
+  "eval_id": 11,
+  "prompt_short": "I need a meeting intro for my internal all-hands where I'm introducing a new ini",
+  "overall_result": "PASS",
+  "assertions": [
+    {
+      "text": "Response flags that the skill targets first external client meetings",
+      "passed": true,
+      "evidence": "Opens with explicit scope framing: playbook is for \"opening a first meeting with a new external client\" versus an internal all-hands."
+    },
+    {
+      "text": "Response asks how to proceed or offers options rather than silently producing client-focused intros",
+      "passed": true,
+      "evidence": "\"How would you like to proceed?\" with labelled Option A (adapt strategies) / Option B (pivot framing); withholds five intros until choice."
+    }
+  ]
+}

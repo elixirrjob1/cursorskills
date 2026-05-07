@@ -1,17 +1,17 @@
 {
   "review_date": "2026-05-07",
-  "run_label": "rerun-2",
+  "run_label": "incremental-failed-only",
   "runs": [
-    { "eval_id": 1, "test_type": "should-trigger", "prompt_short": "I'm walking into a discovery call with the VP of Engineering at Acme Corp (SaaS) tomorro", "result": "PASS" },
-    { "eval_id": 2, "test_type": "should-trigger", "prompt_short": "Need an opener for a meeting", "result": "PASS" },
-    { "eval_id": 3, "test_type": "should-trigger", "prompt_short": "Meeting tomorrow with GreenPath Solutions — first call", "result": "PASS" },
-    { "eval_id": 4, "test_type": "should-trigger", "prompt_short": "I have a kickoff with the Head of Procurement and two category managers at a mid-size manu", "result": "PASS" },
-    { "eval_id": 5, "test_type": "should-trigger", "prompt_short": "What should I say right after my intro lands — I'm meeting the CHRO of a UK fintech start", "result": "PASS" },
-    { "eval_id": 6, "test_type": "should-not-trigger", "prompt_short": "Draft a follow-up email to my client after yesterday's call", "result": "PASS" },
-    { "eval_id": 7, "test_type": "should-not-trigger", "prompt_short": "Help me build a sales pitch deck for our new product launch", "result": "PASS" },
-    { "eval_id": 8, "test_type": "should-not-trigger", "prompt_short": "How should I answer 'tell me about yourself' in my job interview at Deloitte?", "result": "PASS" },
-    { "eval_id": 9, "test_type": "edge-case", "prompt_short": "Give me an opener for my first meeting with JPMorgan Chase's risk team", "result": "PASS" },
-    { "eval_id": 10, "test_type": "edge-case", "prompt_short": "Give me an opener — we've been working with this client for two years and this is our quar", "result": "PASS" },
-    { "eval_id": 11, "test_type": "edge-case", "prompt_short": "I need a meeting intro for my internal all-hands where I'm introducing a new initiative", "result": "FAIL" }
+    { "eval_id": 1, "test_type": "should-trigger", "prompt_short": "I'm walking into a discovery call with the VP of Engineering at Acme Corp (SaaS) tomorro", "result": "SKIP" },
+    { "eval_id": 2, "test_type": "should-trigger", "prompt_short": "Need an opener for a meeting", "result": "SKIP" },
+    { "eval_id": 3, "test_type": "should-trigger", "prompt_short": "Meeting tomorrow with GreenPath Solutions — first call", "result": "SKIP" },
+    { "eval_id": 4, "test_type": "should-trigger", "prompt_short": "I have a kickoff with the Head of Procurement and two category managers at a mid-size manu", "result": "SKIP" },
+    { "eval_id": 5, "test_type": "should-trigger", "prompt_short": "What should I say right after my intro lands — I'm meeting the CHRO of a UK fintech start", "result": "SKIP" },
+    { "eval_id": 6, "test_type": "should-not-trigger", "prompt_short": "Draft a follow-up email to my client after yesterday's call", "result": "SKIP" },
+    { "eval_id": 7, "test_type": "should-not-trigger", "prompt_short": "Help me build a sales pitch deck for our new product launch", "result": "SKIP" },
+    { "eval_id": 8, "test_type": "should-not-trigger", "prompt_short": "How should I answer 'tell me about yourself' in my job interview at Deloitte?", "result": "SKIP" },
+    { "eval_id": 9, "test_type": "edge-case", "prompt_short": "Give me an opener for my first meeting with JPMorgan Chase's risk team", "result": "SKIP" },
+    { "eval_id": 10, "test_type": "edge-case", "prompt_short": "Give me an opener — we've been working with this client for two years and this is our quar", "result": "SKIP" },
+    { "eval_id": 11, "test_type": "edge-case", "prompt_short": "I need a meeting intro for my internal all-hands where I'm introducing a new initiative", "result": "PASS" }
   ]
 }

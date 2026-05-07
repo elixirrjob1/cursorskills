@@ -39,7 +39,7 @@
 <body>
 
   <h1>Benchmark Report: meetingintroskill</h1>
-  <p class="meta">Generated: 2026-05-07 (rerun) &nbsp;·&nbsp; Repo @ review: 6cb76aa &nbsp;·&nbsp; Comparator: — (SKILL.md unchanged)</p>
+  <p class="meta">Generated: 2026-05-07 (incremental failed-only) &nbsp;·&nbsp; Repo @ review: f0f39f0 &nbsp;·&nbsp; Comparator: Step 3c skipped (SKILL.md mtime unchanged vs prior)</p>
 
   <!-- Summary -->
   <h2>Summary</h2>
@@ -50,11 +50,11 @@
     </div>
     <div class="summary-card">
       <div class="label">Unit Tests</div>
-      <div class="value">10 / 11 <span style="font-size:14px;color:#6b7280;">(91%)</span></div>
+      <div class="value green">11 / 11 <span style="font-size:14px;color:#6b7280;">(100%)</span></div>
     </div>
     <div class="summary-card">
       <div class="label">Assertions</div>
-      <div class="value green">36 / 37 <span style="font-size:14px;color:#6b7280;">(97%)</span></div>
+      <div class="value green">37 / 37 <span style="font-size:14px;color:#6b7280;">(100%)</span></div>
     </div>
     <div class="summary-card">
       <div class="label">Categories Passed</div>
@@ -87,7 +87,7 @@
       <tr><td>8</td><td>Job interview "tell me about yourself" at Deloitte</td><td><span class="badge badge-nottrigger">should-not-trigger</span></td><td class="pass">✅ PASS</td><td class="pass">2/2</td></tr>
       <tr><td>9</td><td>JPMorgan Chase risk team — well-known bank inference</td><td><span class="badge badge-edge">edge-case</span></td><td class="pass">✅ PASS</td><td class="pass">3/3</td></tr>
       <tr><td>10</td><td>Two-year client quarterly review scope mismatch</td><td><span class="badge badge-edge">edge-case</span></td><td class="pass">✅ PASS</td><td class="pass">2/2</td></tr>
-      <tr><td>11</td><td>Internal all-hands — non-client context</td><td><span class="badge badge-edge">edge-case</span></td><td class="fail">❌ FAIL</td><td class="fail">1/2</td></tr>
+      <tr><td>11</td><td>Internal all-hands — non-client context</td><td><span class="badge badge-edge">edge-case</span></td><td class="pass">✅ PASS</td><td class="pass">2/2</td></tr>
     </tbody>
   </table>
 
@@ -124,9 +124,12 @@
       <tr><td>10</td><td>Flags skill designed for first meetings</td><td class="pass">✅</td><td>Explicit scope flag: QBR after two years ≠ first meeting</td></tr>
       <tr><td>10</td><td>Does NOT silently produce first-meeting intros</td><td class="pass">✅</td><td>Scope flag precedes QBR-adapted intros; relationship acknowledged</td></tr>
       <tr><td>11</td><td>Flags skill targets first external client meetings</td><td class="pass">✅</td><td>"Designed specifically for first external client meetings"</td></tr>
-      <tr><td>11</td><td>Asks how to proceed or offers options</td><td class="fail">❌</td><td>Five internal intros follow scope flag without explicit "how would you like to proceed?" fork</td></tr>
+      <tr><td>11</td><td>Asks how to proceed or offers options</td><td class="pass">✅</td><td>Explicit fork with Option A/B; holds five intros until user chooses</td></tr>
     </tbody>
   </table>
+
+  <h2>Version Comparison (Step 3c)</h2>
+  <p class="note">Not run — <code>SKILL.md</code> last modified 2026-04-30; incremental policy skips blind comparator.</p>
 
   <!-- Category Grades -->
   <h2>Category Grades</h2>
@@ -211,6 +214,26 @@
         </td>
         <td class="fail">❌ FAIL</td>
         <td style="font-size:12px;">Separation · Eval11</td>
+      </tr>
+      <tr>
+        <td>2026-05-07 incr.</td>
+        <td style="font-family:monospace;font-size:12px;">f0f39f0</td>
+        <td>11 / 11 (100%)</td>
+        <td>
+          <div class="progress-wrap">
+            <div class="progress-bar-bg"><div class="progress-bar-fill" style="width:100%"></div></div>
+            <span class="progress-label">100%</span>
+          </div>
+        </td>
+        <td>10 / 13</td>
+        <td>
+          <div class="progress-wrap">
+            <div class="progress-bar-bg"><div class="progress-bar-fill" style="width:77%;background:#f59e0b;"></div></div>
+            <span class="progress-label">77%</span>
+          </div>
+        </td>
+        <td class="fail">❌ FAIL</td>
+        <td style="font-size:12px;">Separation · Eval11 PASS</td>
       </tr>
     </tbody>
   </table>

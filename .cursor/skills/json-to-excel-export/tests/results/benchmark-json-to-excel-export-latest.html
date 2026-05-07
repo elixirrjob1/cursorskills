@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Benchmark Report: json-to-excel-export</title>
+  <style>
+    body { font-family: system-ui, sans-serif; font-size: 14px; margin: 24px; background: #fff; color: #222; }
+    h1 { font-size: 1.35rem; margin-bottom: 0.25rem; }
+    h2 { font-size: 1.1rem; margin-top: 2rem; margin-bottom: 0.75rem; border-bottom: 1px solid #ccc; padding-bottom: 0.25rem; }
+    .meta { color: #555; margin-bottom: 1.5rem; }
+    table { border-collapse: collapse; width: 100%; margin: 0.5rem 0 1rem; }
+    th, td { border: 1px solid #ccc; padding: 8px 10px; text-align: left; }
+    tr:nth-child(even) { background: #f9f9f9; }
+    th { background: #eee; font-weight: 600; }
+    .pass { background: #d4edda; color: #155724; }
+    .fail { background: #f8d7da; color: #721c24; }
+    .skip { background: #fff3cd; color: #856404; }
+    .bar-track { display: inline-block; width: 120px; height: 10px; background: #e0e0e0; border-radius: 2px; vertical-align: middle; margin-right: 8px; }
+    .bar-fill { height: 100%; background: #28a745; border-radius: 2px; }
+    .note { color: #444; font-style: italic; margin: 0.5rem 0; }
+    code { font-size: 13px; background: #f4f4f4; padding: 1px 4px; border-radius: 2px; }
+  </style>
+</head>
+<body>
+  <h1>Benchmark Report: json-to-excel-export</h1>
+  <p class="meta">Generated: 2026-05-07T12:56:12Z UTC · Incremental re-check — cats 11/12/13 re-evaluated, all 11 executors re-run (SKILL.md + script changed), comparator new_wins 3–0</p>
+
+  <h2>Summary</h2>
+  <table>
+    <tr><th>Metric</th><th>Value</th></tr>
+    <tr><td>Overall Verdict</td><td class="pass">PASS</td></tr>
+    <tr><td>Unit Tests</td><td>11 / 11 passed (100%)</td></tr>
+    <tr><td>Assertions</td><td>33 / 33 (100%)</td></tr>
+    <tr><td>Categories</td><td>13 / 13 passed</td></tr>
+    <tr><td>High Failures</td><td>—</td></tr>
+    <tr><td>Medium Failures</td><td>—</td></tr>
+    <tr><td>Comparator</td><td class="pass">new_wins (3–0 vs snapshot 2026-05-07T124559Z)</td></tr>
+  </table>
+
+  <h2>Unit Test Results</h2>
+  <table>
+    <thead>
+      <tr><th>#</th><th>Test</th><th>Type</th><th>Result</th><th>Assertions</th><th>Evidence</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>1</td><td>Export my schema JSON to Excel (schema.json present)</td><td>should-trigger</td><td class="pass">✅ PASS</td><td>3/3</td><td>Ran json_to_excel.py; listed Summary, per-table sheets, __rt_* tabs</td></tr>
+      <tr><td>2</td><td>Convert schema.json to Excel but skip the OpenMetadata glossary sheet</td><td>should-trigger</td><td class="pass">✅ PASS</td><td>3/3</td><td>Used <code>--no-openmetadata</code>; confirmed DataGovernanceTerms skipped</td></tr>
+      <tr><td>3</td><td>I have a pre-fetched glossary.json file, use that instead of fetching from OpenMetadata</td><td>should-trigger</td><td class="pass">✅ PASS</td><td>3/3</td><td>Used <code>--glossary-json .cursor/flat/om_glossary_terms.json</code>; no live OM call</td></tr>
+      <tr><td>4</td><td>Convert the Excel workbook back to JSON, applying my edits</td><td>should-trigger</td><td class="pass">✅ PASS</td><td>3/3</td><td>Ran excel_to_json.py; no <code>--no-apply-edits</code>; output JSON confirmed</td></tr>
+      <tr><td>5</td><td>Restore the original JSON from this Excel file, ignoring any edits I made</td><td>should-trigger</td><td class="pass">✅ PASS</td><td>3/3</td><td>Used <code>--no-apply-edits</code>; mentioned <code>__rt_*</code> round-trip tabs</td></tr>
+      <tr><td>6</td><td>Export a report of top 10 customers from Snowflake to Excel</td><td>should-not-trigger</td><td class="pass">✅ PASS</td><td>3/3</td><td>Correctly declined; redirected to Snowflake UI / natural-language-data-query</td></tr>
+      <tr><td>7</td><td>Generate a dbt model and export it to Excel</td><td>should-not-trigger</td><td class="pass">✅ PASS</td><td>3/3</td><td>Correctly separated dbt-model-from-stm from schema JSON export; asked for clarification</td></tr>
+      <tr><td>8</td><td>Convert my Python script to an Excel file</td><td>should-not-trigger</td><td class="pass">✅ PASS</td><td>3/3</td><td>Correctly declined; explained Python script is not schema metadata</td></tr>
+      <tr><td>9</td><td>Export schema.json to Excel (no output path specified)</td><td>edge-case</td><td class="pass">✅ PASS</td><td>3/3</td><td>Showed command without output arg; confirmed <code>schema.xlsx</code> written next to input; mentioned OM auto-fetch gotcha</td></tr>
+      <tr><td>10</td><td>Export schema.json to Excel but OPENMETADATA_BASE_URL is not set</td><td>edge-case</td><td class="pass">✅ PASS</td><td>3/3</td><td>"No error, no crash — it degrades gracefully"; DataGovernanceTerms skipped silently</td></tr>
+      <tr><td>11</td><td>Convert my Excel back to JSON with a legacy-format workbook (no __rt_* tabs)</td><td>edge-case</td><td class="pass">✅ PASS</td><td>3/3</td><td>Confirmed backward-compatible fallback to visible-sheet mode; "expected behaviour and fully supported"</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Assertion Detail</h2>
+  <p class="note">Full assertion-by-assertion roll-up below (Step 3b).</p>
+  <table>
+    <thead>
+      <tr><th>Eval</th><th>Assertion</th><th>Passed</th><th>Evidence</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>1</td><td>Response runs or describes running json_to_excel.py</td><td class="pass">Yes</td><td>Agent ran the script and reported 76 rows across 16 sheets</td></tr>
+      <tr><td>1</td><td>Response mentions Summary or per-table worksheet output</td><td class="pass">Yes</td><td>Explicitly lists Summary, SourceSystem, DataQualityFindings, per-table worksheets</td></tr>
+      <tr><td>1</td><td>Response does NOT refuse or ask for a different skill</td><td class="pass">Yes</td><td>Executed conversion without redirecting</td></tr>
+      <tr><td>2</td><td>Response includes --no-openmetadata flag</td><td class="pass">Yes</td><td>Command included <code>--no-openmetadata</code></td></tr>
+      <tr><td>2</td><td>Response does NOT attempt to fetch from OpenMetadata</td><td class="pass">Yes</td><td>No OM call made; flag passed explicitly</td></tr>
+      <tr><td>2</td><td>Response mentions DataGovernanceTerms sheet being skipped or absent</td><td class="pass">Yes</td><td>"The DataGovernanceTerms sheet was skipped as requested"</td></tr>
+      <tr><td>3</td><td>Response includes --glossary-json flag</td><td class="pass">Yes</td><td>Used <code>--glossary-json .cursor/flat/om_glossary_terms.json</code></td></tr>
+      <tr><td>3</td><td>Response references the provided glossary file path</td><td class="pass">Yes</td><td>Mentions <code>.cursor/flat/om_glossary_terms.json</code> as the pre-fetched source</td></tr>
+      <tr><td>3</td><td>Response does NOT attempt a live OpenMetadata fetch when glossary is pre-fetched</td><td class="pass">Yes</td><td>"using … for the DataGovernanceTerms sheet instead of making a live call to OpenMetadata"</td></tr>
+      <tr><td>4</td><td>Response runs or describes running excel_to_json.py</td><td class="pass">Yes</td><td>Agent ran excel_to_json.py on schema.xlsx</td></tr>
+      <tr><td>4</td><td>Response does NOT include --no-apply-edits</td><td class="pass">Yes</td><td>Default mode; edits applied; no flag added</td></tr>
+      <tr><td>4</td><td>Response mentions output JSON file</td><td class="pass">Yes</td><td>"JSON has been written to schema.json at the workspace root"</td></tr>
+      <tr><td>5</td><td>Response includes --no-apply-edits flag</td><td class="pass">Yes</td><td>Ran with <code>--no-apply-edits</code>; restored from hidden <code>__rt_*</code> tabs</td></tr>
+      <tr><td>5</td><td>Response mentions __rt_ round-trip tabs or original payload restore</td><td class="pass">Yes</td><td>"restored … from the hidden __rt_* round-trip tabs"</td></tr>
+      <tr><td>5</td><td>Response uses excel_to_json.py script</td><td class="pass">Yes</td><td>excel_to_json.py invoked</td></tr>
+      <tr><td>6</td><td>Response does NOT run json_to_excel.py</td><td class="pass">Yes</td><td>Correctly declined; no script invoked</td></tr>
+      <tr><td>6</td><td>Response declines or redirects — does not treat as schema conversion</td><td class="pass">Yes</td><td>"The json-to-excel-export skill isn't the right tool" — offered alternatives</td></tr>
+      <tr><td>6</td><td>Response does NOT produce an Excel workbook from a Snowflake query</td><td class="pass">Yes</td><td>No workbook produced; redirected instead</td></tr>
+      <tr><td>7</td><td>Response references dbt-model-from-stm or general dbt work</td><td class="pass">Yes</td><td>"dbt-model-from-stm — generates dbt SQL view + incremental model files"</td></tr>
+      <tr><td>7</td><td>Response does NOT run json_to_excel.py as the main action</td><td class="pass">Yes</td><td>Did not invoke json_to_excel.py; asked for clarification</td></tr>
+      <tr><td>7</td><td>Response declines or redirects</td><td class="pass">Yes</td><td>Explained skills are unrelated and asked which task the user wanted</td></tr>
+      <tr><td>8</td><td>Response does NOT run json_to_excel.py</td><td class="pass">Yes</td><td>Correctly declined</td></tr>
+      <tr><td>8</td><td>Response does not treat Python script as a schema JSON input</td><td class="pass">Yes</td><td>"A Python script is source code, not schema metadata"</td></tr>
+      <tr><td>8</td><td>Response declines or answers from general knowledge</td><td class="pass">Yes</td><td>Offered alternatives (document functions, export script output)</td></tr>
+      <tr><td>9</td><td>Response runs or describes running json_to_excel.py with only the input argument</td><td class="pass">Yes</td><td>Command shown: <code>json_to_excel.py schema.json</code> (no output arg)</td></tr>
+      <tr><td>9</td><td>Response mentions output file lands next to input OR uses same base name with .xlsx extension</td><td class="pass">Yes</td><td>"schema.xlsx will appear next to schema.json"</td></tr>
+      <tr><td>9</td><td>Response does NOT error on missing output path</td><td class="pass">Yes</td><td>Graceful behavior confirmed; no error mentioned</td></tr>
+      <tr><td>10</td><td>Response notes OpenMetadata fetch will be skipped or produce no DataGovernanceTerms sheet</td><td class="pass">Yes</td><td>"skip the DataGovernanceTerms sheet — the export continues normally"</td></tr>
+      <tr><td>10</td><td>Response does NOT error out — graceful degradation described</td><td class="pass">Yes</td><td>"No error, no crash — it degrades gracefully"</td></tr>
+      <tr><td>10</td><td>Response still proceeds with the conversion</td><td class="pass">Yes</td><td>Full run command provided; all other tabs confirmed intact</td></tr>
+      <tr><td>11</td><td>Response runs excel_to_json.py</td><td class="pass">Yes</td><td>Full excel_to_json.py command provided</td></tr>
+      <tr><td>11</td><td>Response notes backward compatibility with legacy workbooks OR applies visible tab edits</td><td class="pass">Yes</td><td>"detects the absence of __rt_meta and automatically switches to visible-sheet mode"</td></tr>
+      <tr><td>11</td><td>Response does NOT refuse or error on missing __rt_* tabs</td><td class="pass">Yes</td><td>"expected behaviour and fully supported" — no error state</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Category Grades</h2>
+  <table>
+    <thead>
+      <tr><th>#</th><th>Category</th><th>Grade</th><th>Explanation</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>1</td><td>Triggering (Description Quality)</td><td class="pass">PASS</td><td>↩ carried — name, description, and trigger terms all correct</td></tr>
+      <tr><td>2</td><td>Anatomy &amp; Structure</td><td class="pass">PASS</td><td>↩ carried — valid YAML frontmatter; well-organised sections; scripts in conventional folder</td></tr>
+      <tr><td>3</td><td>Instructions Clarity</td><td class="pass">PASS</td><td>↩ carried — clear step-by-step commands with explicit flags and fallbacks</td></tr>
+      <tr><td>4</td><td>Output Quality</td><td class="pass">PASS</td><td>↩ carried — output shape, tab names, and formatting rules explicitly documented</td></tr>
+      <tr><td>5</td><td>Testability</td><td class="pass">PASS</td><td>↩ carried — 11 test cases covering all documented flows; assertions verifiable from responses</td></tr>
+      <tr><td>6</td><td>Resource Efficiency</td><td class="pass">PASS</td><td>↩ carried — pre-built scripts used; no regenerated code; execution intent explicit</td></tr>
+      <tr><td>7</td><td>Security &amp; Trust</td><td class="pass">PASS</td><td>↩ carried — no hardcoded credentials; network access justified; env-var auth pattern</td></tr>
+      <tr><td>8</td><td>Coexistence &amp; Recall</td><td class="pass">PASS</td><td>↩ carried — specific description; does not overlap with data-query or dbt skills</td></tr>
+      <tr><td>9</td><td>Model Compatibility</td><td class="pass">PASS</td><td>New Model Compatibility section added: validated on Claude 3.5 Sonnet; command-construction task works across model tiers</td></tr>
+      <tr><td>10</td><td>Workflow &amp; Feedback Loops</td><td class="pass">PASS</td><td>↩ carried — deterministic script execution; graceful degradation documented</td></tr>
+      <tr><td>11</td><td>Maintainability &amp; Lifecycle</td><td class="pass">PASS</td><td>New Registry table: owner, reviewer, versioning (pinned to main, PR review), lifecycle stage (Deploy/Monitor), last-eval date, dependencies all present</td></tr>
+      <tr><td>12</td><td>Gotchas / Lessons Learned</td><td class="pass">PASS</td><td>Four concrete gotchas added: OM timeout, __rt_*/__dv_* silent-ignore, <code>requests</code> ImportError, legacy workbook fallback</td></tr>
+      <tr><td>13</td><td>Anti-Pattern Audit</td><td class="pass">PASS</td><td>All 8 magic constants documented with rationale; versioned install command now explicit (<code>openpyxl&gt;=3.1</code>, <code>requests&gt;=2.31</code>)</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Version Comparison</h2>
+  <table>
+    <thead>
+      <tr><th>Eval</th><th>Prompt</th><th>Verdict</th><th>Reasoning</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>9</td><td>Export schema.json to Excel (no output path specified)</td><td class="pass">new_wins</td><td>New version adds OM auto-fetch caveat and workbook-tab list from Gotchas section; old version correct but minimal</td></tr>
+      <tr><td>10</td><td>Export schema.json to Excel but OPENMETADATA_BASE_URL is not set</td><td class="pass">new_wins</td><td>New version cites correct sheet names, full script path, and --no-openmetadata timeout tip; old version uses relative path</td></tr>
+      <tr><td>11</td><td>Convert my Excel back to JSON with a legacy-format workbook (no __rt_* tabs)</td><td class="pass">new_wins</td><td>New version confirms backward-compatible fallback as supported feature; old version frames it as a limitation without resolution</td></tr>
+    </tbody>
+  </table>
+  <p class="note">Overall: <strong>new_wins (3–0)</strong> vs snapshot <code>snapshots/json-to-excel-export/2026-05-07T124559Z/</code></p>
+
+  <h2>History (all reviews)</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Reviewed at (UTC)</th>
+        <th>Date</th>
+        <th>Unit Tests</th>
+        <th>Assertions</th>
+        <th>Categories</th>
+        <th>Verdict</th>
+        <th>Notes</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>2026-05-07T12:45:59Z</td>
+        <td>2026-05-07</td>
+        <td><span class="bar-track"><span class="bar-fill" style="width:100%"></span></span>11/11</td>
+        <td><span class="bar-track"><span class="bar-fill" style="width:100%"></span></span>33/33</td>
+        <td><span class="bar-track"><span class="bar-fill" style="width:77%"></span></span>10/13</td>
+        <td class="fail">FAIL</td>
+        <td>Cats 11/12/13 FAIL — no Registry, no Gotchas, undocumented magic constants</td>
+      </tr>
+      <tr>
+        <td>2026-05-07T12:56:12Z</td>
+        <td>2026-05-07</td>
+        <td><span class="bar-track"><span class="bar-fill" style="width:100%"></span></span>11/11</td>
+        <td><span class="bar-track"><span class="bar-fill" style="width:100%"></span></span>33/33</td>
+        <td><span class="bar-track"><span class="bar-fill" style="width:100%"></span></span>13/13</td>
+        <td class="pass">PASS</td>
+        <td>All 3 previously-failing cats now PASS. Comparator new_wins 3–0.</td>
+      </tr>
+    </tbody>
+  </table>
+  <p class="note">Full narrative: <code>review-json-to-excel-export-2026-05-07T125612Z.md</code></p>
+</body>
+</html>

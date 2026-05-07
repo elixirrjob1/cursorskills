@@ -21,7 +21,7 @@ Read all bundled reference files and scripts — they are within scope. Do not b
 **Timestamp this run (required):** As soon as the skill folder path is known, record:
 - **`reviewed_at`** — UTC wall time in ISO 8601, e.g. `2026-05-07T14:30:52Z` (use `date -u +"%Y-%m-%dT%H:%M:%SZ"`).
 - **`RUN_SLUG`** — compact, filesystem-safe token **derived from the same instant**: `YYYY-mm-ddTHHMMSSZ` with colons removed from the time portion, e.g. `2026-05-07T143052Z`. Same instant as `reviewed_at`; used in folder and filenames.
-- **`RUN_DIR`** — `tests/results/runs/<RUN_SLUG>/` (under the skill being reviewed). **Every** artifact for this review goes here: `timing.json`, `grading/grading-*.json`, `comparison/comparison-*.json`, `comparison/comparison-summary.json`, `review-<skill>-<RUN_SLUG>.md`, `benchmark-<skill>-<RUN_SLUG>.md`, `benchmark-<skill>-<RUN_SLUG>.html`. The `tests/results/` root holds only `history.json`, the `runs/` tree, and the `snapshots/` tree.
+- **`RUN_DIR`** — `tests/results/runs/<RUN_SLUG>/` (under the skill being reviewed). **Every** versioned artifact for this review goes here: `timing.json`, `grading/grading-*.json`, `comparison/comparison-*.json`, `comparison/comparison-summary.json`, `review-<skill>-<RUN_SLUG>.md`, `benchmark-<skill>-<RUN_SLUG>.md`, `benchmark-<skill>-<RUN_SLUG>.html`. The `tests/results/` root holds `history.json`, the `runs/` tree, the `snapshots/` tree, and the two **latest-convenience copies**: `benchmark-<skill>-latest.md` and `benchmark-<skill>-latest.html` (always overwritten to point at the most recent run — see Step 7d).
 
 **Previous snapshot for Step 3c:** Read `tests/results/history.json` if it exists. Take the **last** entry in the `history` array (previous completed review). Let **`snapshot_dir`** be that entry’s **`snapshot_dir`** field. If **`snapshot_dir`** is missing, `null`, or empty, **`PREVIOUS_SNAPSHOT`** is unavailable — skip the diff check and Step 3c. Otherwise resolve **`PREVIOUS_SNAPSHOT`** = `<skill_dir>/tests/results/<snapshot_dir>`. If that directory does not exist on disk (e.g. clone without snapshots), treat as unavailable.
 
@@ -358,9 +358,20 @@ Remove the instructional HTML comment block from the template in the saved outpu
 
 **Fallback** if the template file cannot be read: build equivalent HTML from scratch using the same sections and styles: white background, `system-ui`, 14px; tables `border-collapse: collapse`, `1px solid #ccc`, alternating `#f9f9f9`; `.pass` / `.fail` / `.skip` as in the template; history pass rates as inline green bar + percentage; **Assertion Detail** and **Category Explanation** rules still apply.
 
-#### 7d: Snapshot the skill tree (every run)
+#### 7d: Copy latest benchmark to results root (every run)
 
-After **7b** and **7c**, materialize **`tests/results/snapshots/<skill-folder-name>/<RUN_SLUG>/`** (`<skill-folder-name>` = basename of the reviewed skill directory, e.g. `skill-reviewer`):
+After **7b** and **7c**, copy the two benchmark files to the `tests/results/` root with a fixed `latest` name so they are immediately accessible without navigating into the run folder:
+
+```bash
+cp "$RUN_DIR/benchmark-<skill-name>-<RUN_SLUG>.md"   "$SKILL_DIR/tests/results/benchmark-<skill-name>-latest.md"
+cp "$RUN_DIR/benchmark-<skill-name>-<RUN_SLUG>.html"  "$SKILL_DIR/tests/results/benchmark-<skill-name>-latest.html"
+```
+
+These two files are always overwritten on every run and always reflect the **most recent** review. The versioned copies inside `runs/<RUN_SLUG>/` are the permanent record; the `latest.*` files at the root are a convenience pointer.
+
+#### 7e: Snapshot the skill tree (every run)
+
+After **7b**, **7c**, and **7d**, materialize **`tests/results/snapshots/<skill-folder-name>/<RUN_SLUG>/`** (`<skill-folder-name>` = basename of the reviewed skill directory, e.g. `skill-reviewer`):
 
 ```bash
 mkdir -p "$SKILL_DIR/tests/results/snapshots/<skill-folder-name>/$RUN_SLUG"

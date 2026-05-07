@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Benchmark — governance-vocab-generator — 2026-05-07T122450Z</title>
+<style>
+  body { font-family: system-ui, sans-serif; margin: 2rem; color: #222; }
+  h1 { font-size: 1.4rem; }
+  h2 { font-size: 1.1rem; margin-top: 2rem; border-bottom: 1px solid #ddd; padding-bottom: 4px; }
+  table { border-collapse: collapse; width: 100%; margin-top: 1rem; }
+  th { background: #f5f5f5; text-align: left; padding: 6px 10px; font-size: 0.85rem; }
+  td { padding: 5px 10px; font-size: 0.82rem; vertical-align: top; border-bottom: 1px solid #eee; }
+  tr.pass td:nth-child(3) { color: #2a7a2a; font-weight: bold; }
+  tr.fail td:nth-child(3) { color: #c0392b; font-weight: bold; }
+  .verdict { font-weight: bold; font-size: 1rem; }
+  small { color: #888; }
+  code { background: #f0f0f0; padding: 1px 4px; border-radius: 3px; font-size: 0.8em; }
+</style>
+</head>
+<body>
+<h1>Benchmark Report — governance-vocab-generator</h1>
+<p><strong>Run:</strong> <code>2026-05-07T122450Z</code> &nbsp; <strong>Reviewed at:</strong> 2026-05-07T12:24:50Z &nbsp; <strong class="verdict">Overall: ❌ FAIL</strong></p>
+
+<h2>Summary</h2>
+<table>
+<tr><th>Metric</th><th>Value</th></tr>
+<tr><td>Unit Tests</td><td>3 / 8 passed (5 FAIL due to path-only response — output quality assertions unverifiable)</td></tr>
+<tr><td>Categories</td><td>9 / 13 passed (FAIL: 5 Testability, 9 Model Compatibility, 11 Maintainability, 12 Gotchas)</td></tr>
+<tr><td>Comparator</td><td>— (first review; no prior snapshot)</td></tr>
+</table>
+
+<h2>High Findings</h2>
+<table>
+<tr><th>Category</th><th>Severity</th><th>Finding</th><th>Fix</th></tr>
+<tr><td>5 — Testability</td><td><strong>[HIGH]</strong></td><td>Output quality cannot be evaluated — <code>return only the file path</code> spec makes dimension selection and rule adherence invisible in the response. 5 of 8 evals failed because assertions checking canonical names, Architecture inclusion, and non-canonical rules cannot be verified from a path-only response.</td><td>Add a brief dimension-summary line before the file path (e.g. <code>Dimensions included: Privacy, Criticality, ComplianceLegal</code>) so assertions can be checked programmatically.</td></tr>
+<tr><td>5 — Testability</td><td><strong>[HIGH]</strong></td><td>Instruction-following (3-condition test, Architecture rule) unverifiable from path-only response. Eval 7 only partially passed because the executor voluntarily added a note — not guaranteed behavior.</td><td>Same fix as above, or document a verbose mode that shows dimension reasoning.</td></tr>
+</table>
+
+<h2>Category Grades</h2>
+<table>
+<tr><th>#</th><th>Category</th><th>Grade</th><th>Notes</th></tr>
+<tr class="pass"><td>1</td><td>Triggering (Description Quality)</td><td>✅ PASS</td><td>What + when both present; specific trigger terms; name valid; description ~440 chars</td></tr>
+<tr class="pass"><td>2</td><td>Anatomy &amp; Structure</td><td>✅ PASS</td><td>Valid YAML frontmatter; 150-line single file; no reference hops</td></tr>
+<tr class="pass"><td>3</td><td>Instructions Clarity</td><td>✅ PASS</td><td>Canonical/non-canonical rules clearly signposted; degrees of freedom appropriate</td></tr>
+<tr class="pass"><td>4</td><td>Output Quality</td><td>✅ PASS</td><td>Strict format explicitly defined with exact structure and example skeleton</td></tr>
+<tr class="fail"><td>5</td><td>Testability</td><td>❌ FAIL</td><td>[HIGH] &#x27;Return only file path&#x27; spec makes output quality unverifiable from response; no test infrastructure existed before this review</td></tr>
+<tr class="pass"><td>6</td><td>Resource Efficiency</td><td>✅ PASS</td><td>No filler; execution intent explicit</td></tr>
+<tr class="pass"><td>7</td><td>Security &amp; Trust</td><td>✅ PASS</td><td>No credentials, no scripts, no network access</td></tr>
+<tr class="pass"><td>8</td><td>Coexistence &amp; Recall</td><td>✅ PASS</td><td>Trigger terms distinct from adjacent catalog-assignment skills</td></tr>
+<tr class="fail"><td>9</td><td>Model Compatibility</td><td>❌ FAIL</td><td>[MEDIUM] No model tier or compatibility notes documented</td></tr>
+<tr class="pass"><td>10</td><td>Workflow &amp; Feedback Loops</td><td>✅ PASS</td><td>N/A — text-file generation; no fragile or destructive operations</td></tr>
+<tr class="fail"><td>11</td><td>Maintainability &amp; Lifecycle</td><td>❌ FAIL</td><td>[MEDIUM×3] No registry, no versioning strategy, no lifecycle stage</td></tr>
+<tr class="fail"><td>12</td><td>Gotchas / Lessons Learned</td><td>❌ FAIL</td><td>[MEDIUM] No Gotchas section</td></tr>
+<tr class="pass"><td>13</td><td>Anti-Pattern Audit</td><td>✅ PASS</td><td>Forward slashes; no magic constants; no scripts; no installs</td></tr>
+
+</table>
+
+<h2>Unit Test Results</h2>
+<table>
+<tr><th>#</th><th>Type</th><th>Test</th><th>Result</th><th>Evidence</th></tr>
+<tr><td>1</td><td>should-trigger</td><td>Generate a data governance vocabulary for the retail banking domain.</td><td>❌ FAIL</td><td>✅ Response: &#x27;governance-vocabularies/retail-banking-governance-vocab.md&#x27; — correct path pattern<br>❌ Response is path-only; canonical dimension names used in generated file are unverifiable from response alone — skill spec says &#x27;return only the file path&#x27;<br>✅ Response contains only a file path — no tables or JSON<br><small>2/3 assertions</small></td></tr>
+<tr><td>2</td><td>should-trigger</td><td>Create governance taxonomy for our data platform — it uses Bronze/Silver/Gold medallion architecture.</td><td>❌ FAIL</td><td>❌ Response is path-only; Architecture selection not confirmed — skill spec says &#x27;return only the file path&#x27;<br>❌ No Bronze/Silver/Gold mentioned in path-only response<br>✅ Response: &#x27;governance-vocabularies/data-platform-governance-vocab.md&#x27; — pattern correct<br><small>1/3 assertions</small></td></tr>
+<tr><td>3</td><td>should-trigger</td><td>We need a classification framework for our digital health data catalog.</td><td>❌ FAIL</td><td>❌ Response is path-only; Privacy selection unverifiable from response alone<br>✅ Response: &#x27;governance-vocabularies/digital-health-governance-vocab.md&#x27;<br>✅ Response is a single file path — no prose<br><small>2/3 assertions</small></td></tr>
+<tr><td>4</td><td>should-trigger</td><td>Produce a governance vocabulary for a legal document management system.</td><td>❌ FAIL</td><td>❌ Response is path-only; ComplianceLegal selection unverifiable from response alone<br>❌ Response is path-only; no explanation of Architecture decision given<br>✅ Response: &#x27;governance-vocabularies/legal-document-management-governance-vocab.md&#x27;<br><small>1/3 assertions</small></td></tr>
+<tr><td>5</td><td>should-not-trigger</td><td>Apply the Privacy and ComplianceLegal governance tags to all the tables in our OpenMetadata catalog.</td><td>✅ PASS</td><td>✅ Response routes away from vocab generation entirely — no file path produced<br>✅ Response: &#x27;use the catalog-glossary-tagger or stm-to-catalog-enricher skill&#x27;<br>✅ Response is a routing explanation only — no vocabulary structure<br><small>3/3 assertions</small></td></tr>
+<tr><td>6</td><td>should-not-trigger</td><td>Build a dbt SQL model that tracks data classification levels in our Snowflake warehouse.</td><td>✅ PASS</td><td>✅ Response: &#x27;use the dbt-model-from-stm skill or work directly in your dbt project&#x27;<br>✅ Response routes to dbt; no governance vocabulary generated<br>✅ Response contains no classification/level structure<br><small>3/3 assertions</small></td></tr>
+<tr><td>7</td><td>edge-case</td><td>Generate a governance vocabulary for IoT sensor data — also add a custom SensorType classification.</td><td>❌ FAIL</td><td>✅ Response explicitly applies 3-condition test: &#x27;does not reflect a governance practice... fully addressed within canonical dimensions&#x27;<br>❌ Response mentions Privacy, Criticality, ComplianceLegal as canonical coverage but does NOT confirm Architecture — IoT staged processing (raw → processed → aggregated) should trigger Architecture inclusion<br>✅ Response: &#x27;fully addressed within the canonical dimensions&#x27; — demonstrates canonical-first reasoning<br><small>2/3 assertions</small></td></tr>
+<tr><td>8</td><td>edge-case</td><td>Create a governance classification framework for HR data — include all 7 canonical dimensions.</td><td>✅ PASS</td><td>✅ Response: &#x27;All seven canonical dimensions were assessed; all seven apply to HR data and are included&#x27; — Privacy is one of 7<br>✅ Response explicitly justifies Architecture: &#x27;modern HR data platforms routinely involve staged processing&#x27;<br>✅ Response: &#x27;governance-vocabularies/hr-data-governance-vocab.md&#x27;<br><small>3/3 assertions</small></td></tr>
+
+</table>
+</body>
+</html>

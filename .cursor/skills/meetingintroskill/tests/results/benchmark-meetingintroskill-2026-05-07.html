@@ -53,6 +53,10 @@
       <div class="value">10 / 11 <span style="font-size:14px;color:#6b7280;">(91%)</span></div>
     </div>
     <div class="summary-card">
+      <div class="label">Assertions</div>
+      <div class="value green">36 / 37 <span style="font-size:14px;color:#6b7280;">(97%)</span></div>
+    </div>
+    <div class="summary-card">
       <div class="label">Categories Passed</div>
       <div class="value">10 / 13 <span style="font-size:14px;color:#6b7280;">(77%)</span></div>
     </div>
@@ -64,90 +68,63 @@
       <div class="label">Medium Failures</div>
       <div class="value" style="color:#b45309;">5</div>
     </div>
-    <div class="summary-card">
-      <div class="label">Low Failures</div>
-      <div class="value" style="color:#374151;">4</div>
-    </div>
   </div>
 
   <!-- Unit Tests -->
   <h2>Unit Test Results</h2>
   <table>
     <thead>
-      <tr>
-        <th>#</th>
-        <th>Test</th>
-        <th>Type</th>
-        <th>Result</th>
-      </tr>
+      <tr><th>#</th><th>Test</th><th>Type</th><th>Result</th><th>Assertions</th></tr>
     </thead>
     <tbody>
-      <tr>
-        <td>1</td>
-        <td>Clear Acme Corp discovery call — VP Engineering, SaaS, warm/brief</td>
-        <td><span class="badge badge-trigger">should-trigger</span></td>
-        <td class="pass">✅ PASS</td>
-      </tr>
-      <tr>
-        <td>2</td>
-        <td>Vague "Need an opener for a meeting"</td>
-        <td><span class="badge badge-trigger">should-trigger</span></td>
-        <td class="pass">✅ PASS</td>
-      </tr>
-      <tr>
-        <td>3</td>
-        <td>GreenPath Solutions — ambiguous company name</td>
-        <td><span class="badge badge-trigger">should-trigger</span></td>
-        <td class="fail">❌ FAIL</td>
-      </tr>
-      <tr>
-        <td>4</td>
-        <td>Manufacturing kickoff — Head of Procurement</td>
-        <td><span class="badge badge-trigger">should-trigger</span></td>
-        <td class="pass">✅ PASS</td>
-      </tr>
-      <tr>
-        <td>5</td>
-        <td>CHRO UK fintech — handoff line</td>
-        <td><span class="badge badge-trigger">should-trigger</span></td>
-        <td class="pass">✅ PASS</td>
-      </tr>
-      <tr>
-        <td>6</td>
-        <td>Follow-up email after call</td>
-        <td><span class="badge badge-nottrigger">should-not-trigger</span></td>
-        <td class="pass">✅ PASS</td>
-      </tr>
-      <tr>
-        <td>7</td>
-        <td>Sales pitch deck</td>
-        <td><span class="badge badge-nottrigger">should-not-trigger</span></td>
-        <td class="pass">✅ PASS</td>
-      </tr>
-      <tr>
-        <td>8</td>
-        <td>Job interview "tell me about yourself" at Deloitte</td>
-        <td><span class="badge badge-nottrigger">should-not-trigger</span></td>
-        <td class="pass">✅ PASS</td>
-      </tr>
-      <tr>
-        <td>9</td>
-        <td>JPMorgan Chase risk team — well-known bank inference</td>
-        <td><span class="badge badge-edge">edge-case</span></td>
-        <td class="pass">✅ PASS</td>
-      </tr>
-      <tr>
-        <td>10</td>
-        <td>Two-year client quarterly review scope mismatch</td>
-        <td><span class="badge badge-edge">edge-case</span></td>
-        <td class="pass">✅ PASS</td>
-      </tr>
-      <tr>
-        <td>11</td>
-        <td>Internal all-hands — non-client context</td>
-        <td><span class="badge badge-edge">edge-case</span></td>
-        <td class="pass">✅ PASS</td>
-      </tr>
+      <tr><td>1</td><td>Clear Acme Corp discovery call — VP Engineering, SaaS, warm/brief</td><td><span class="badge badge-trigger">should-trigger</span></td><td class="pass">✅ PASS</td><td class="pass">4/4</td></tr>
+      <tr><td>2</td><td>Vague "Need an opener for a meeting"</td><td><span class="badge badge-trigger">should-trigger</span></td><td class="pass">✅ PASS</td><td class="pass">3/3</td></tr>
+      <tr><td>3</td><td>GreenPath Solutions — ambiguous company name</td><td><span class="badge badge-trigger">should-trigger</span></td><td class="fail">❌ FAIL</td><td class="fail">1/2</td></tr>
+      <tr><td>4</td><td>Manufacturing kickoff — Head of Procurement</td><td><span class="badge badge-trigger">should-trigger</span></td><td class="pass">✅ PASS</td><td class="pass">3/3</td></tr>
+      <tr><td>5</td><td>CHRO UK fintech — handoff line</td><td><span class="badge badge-trigger">should-trigger</span></td><td class="pass">✅ PASS</td><td class="pass">2/2</td></tr>
+      <tr><td>6</td><td>Follow-up email after call</td><td><span class="badge badge-nottrigger">should-not-trigger</span></td><td class="pass">✅ PASS</td><td class="pass">2/2</td></tr>
+      <tr><td>7</td><td>Sales pitch deck</td><td><span class="badge badge-nottrigger">should-not-trigger</span></td><td class="pass">✅ PASS</td><td class="pass">2/2</td></tr>
+      <tr><td>8</td><td>Job interview "tell me about yourself" at Deloitte</td><td><span class="badge badge-nottrigger">should-not-trigger</span></td><td class="pass">✅ PASS</td><td class="pass">2/2</td></tr>
+      <tr><td>9</td><td>JPMorgan Chase risk team — well-known bank inference</td><td><span class="badge badge-edge">edge-case</span></td><td class="pass">✅ PASS</td><td class="pass">3/3</td></tr>
+      <tr><td>10</td><td>Two-year client quarterly review scope mismatch</td><td><span class="badge badge-edge">edge-case</span></td><td class="pass">✅ PASS</td><td class="pass">2/2</td></tr>
+      <tr><td>11</td><td>Internal all-hands — non-client context</td><td><span class="badge badge-edge">edge-case</span></td><td class="pass">✅ PASS</td><td class="pass">2/2</td></tr>
+    </tbody>
+  </table>
+
+  <!-- Assertion Detail -->
+  <h2>Assertion Detail</h2>
+  <table>
+    <thead>
+      <tr><th>Eval</th><th>Assertion</th><th>Passed</th><th>Evidence</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>1</td><td>Contains all 5 strategy labels</td><td class="pass">✅</td><td>All 5 headers present: Relationship, Purpose, Curiosity, Proof light, Time & flow</td></tr>
+      <tr><td>1</td><td>No clarifying question before intros</td><td class="pass">✅</td><td>Opens with Context Locked → Five Openings, no questions</td></tr>
+      <tr><td>1</td><td>Includes recommendation naming one strategy</td><td class="pass">✅</td><td>"Winner: #3 — Curiosity"</td></tr>
+      <tr><td>1</td><td>Each intro begins with greeting element</td><td class="pass">✅</td><td>All 5 intros open with "Hi [Name]"</td></tr>
+      <tr><td>2</td><td>Contains at least one question mark</td><td class="pass">✅</td><td>"Who's in the room?", "What tone?", "What industry?"</td></tr>
+      <tr><td>2</td><td>Does NOT contain all 5 strategy labels</td><td class="pass">✅</td><td>None of the strategy labels appear; response is questions only</td></tr>
+      <tr><td>2</td><td>Asks about audience, tone, or industry</td><td class="pass">✅</td><td>Asks all three explicitly</td></tr>
+      <tr><td>3</td><td>Asks about industry or field</td><td class="fail">❌</td><td>Infers "environmental consulting, sustainability" from name; asks only about audience and style</td></tr>
+      <tr><td>3</td><td>Does NOT contain all 5 strategy labels before industry confirmed</td><td class="pass">✅</td><td>No strategy labels in response</td></tr>
+      <tr><td>4</td><td>Contains all 5 strategy labels</td><td class="pass">✅</td><td>Relationship, Purpose, Curiosity, Proof Light, Time & Flow all present</td></tr>
+      <tr><td>4</td><td>Includes recommendation section</td><td class="pass">✅</td><td>"Winner: #5 — Time & Flow"</td></tr>
+      <tr><td>4</td><td>Winner reasoning contains procurement or manufacturing</td><td class="pass">✅</td><td>"Procurement people are operationally wired"</td></tr>
+      <tr><td>5</td><td>Contains all 5 strategy labels</td><td class="pass">✅</td><td>All 5 bold numbered items present</td></tr>
+      <tr><td>5</td><td>Includes guidance on what to say after intro</td><td class="pass">✅</td><td>"What to Say Immediately After the Intro Lands" section with bridging line</td></tr>
+      <tr><td>6</td><td>Does NOT contain 5 strategy labels as meeting openers</td><td class="pass">✅</td><td>No strategy labels; skill decline noted</td></tr>
+      <tr><td>6</td><td>Contains email-related content</td><td class="pass">✅</td><td>"Subject: Following up from yesterday's call" + "Hi [Client Name]"</td></tr>
+      <tr><td>7</td><td>Does NOT produce 5 spoken meeting opener strategies</td><td class="pass">✅</td><td>12-slide deck structure, no opener strategies</td></tr>
+      <tr><td>7</td><td>Addresses deck, slide, or presentation content</td><td class="pass">✅</td><td>Full 12-slide pitch deck structure</td></tr>
+      <tr><td>8</td><td>Does NOT produce 5 client meeting opener strategies</td><td class="pass">✅</td><td>Present→Past→Future interview framework, no client openers</td></tr>
+      <tr><td>8</td><td>Addresses interview or self-introduction advice</td><td class="pass">✅</td><td>"Tell me about yourself at Deloitte" with structure tips</td></tr>
+      <tr><td>9</td><td>Does NOT ask to confirm industry</td><td class="pass">✅</td><td>Immediately locks "Global investment banking / financial services"</td></tr>
+      <tr><td>9</td><td>Contains all 5 strategy labels</td><td class="pass">✅</td><td>All 5 present</td></tr>
+      <tr><td>9</td><td>Mentions finance, banking, or risk context</td><td class="pass">✅</td><td>"Global investment banking", "credit, market, operational, or model risk"</td></tr>
+      <tr><td>10</td><td>Flags skill designed for first meetings</td><td class="pass">✅</td><td>"Scope mismatch flagged" — explains skill is for new relationships</td></tr>
+      <tr><td>10</td><td>Does NOT silently produce first-meeting intros</td><td class="pass">✅</td><td>No opener strategies; halts and asks clarifying questions</td></tr>
+      <tr><td>11</td><td>Flags skill targets first external client meetings</td><td class="pass">✅</td><td>"Designed specifically for first external client meetings"</td></tr>
+      <tr><td>11</td><td>Asks how to proceed or offers options</td><td class="pass">✅</td><td>"How would you like to proceed?" with two explicit options</td></tr>
     </tbody>
   </table>
 
@@ -187,7 +164,7 @@
         <th>Date</th>
         <th>Git</th>
         <th>Unit Tests</th>
-        <th>Unit Pass Rate</th>
+        <th>Assertions</th>
         <th>Categories</th>
         <th>Cat. Pass Rate</th>
         <th>Verdict</th>
@@ -198,11 +175,11 @@
       <tr>
         <td>2026-05-07</td>
         <td style="font-family:monospace;font-size:12px;">c4360c0</td>
-        <td>10 / 11</td>
+        <td>10 / 11 (91%)</td>
         <td>
           <div class="progress-wrap">
-            <div class="progress-bar-bg"><div class="progress-bar-fill" style="width:91%"></div></div>
-            <span class="progress-label">91%</span>
+            <div class="progress-bar-bg"><div class="progress-bar-fill" style="width:97%"></div></div>
+            <span class="progress-label">97%</span>
           </div>
         </td>
         <td>10 / 13</td>

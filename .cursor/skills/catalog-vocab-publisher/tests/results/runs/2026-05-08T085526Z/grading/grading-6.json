@@ -1,0 +1,22 @@
+{
+  "eval_id": 6,
+  "prompt_short": "Upload our governance framework classifications to OpenMetadata",
+  "overall_result": "PASS",
+  "assertions": [
+    {
+      "text": "Response asks for or confirms the vocabulary .md file path",
+      "passed": true,
+      "evidence": "Response explicitly asks 'Which vocabulary file do you want to publish?' and lists 7 candidate .md files found in governance-vocabularies/."
+    },
+    {
+      "text": "Response includes or references the publish_vocab.py script invocation",
+      "passed": true,
+      "evidence": "Response states 'I'll run the publish script and show you the summary of what gets created, updated, or skipped' — referencing the publish script invocation pending confirmation."
+    },
+    {
+      "text": "Response does NOT attempt to generate a vocabulary (that is a different skill)",
+      "passed": true,
+      "evidence": "Response contains no vocabulary generation; it only lists existing files and asks which one to publish."
+    }
+  ]
+}

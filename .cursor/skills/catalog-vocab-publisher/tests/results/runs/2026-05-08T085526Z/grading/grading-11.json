@@ -1,0 +1,22 @@
+{
+  "eval_id": 11,
+  "prompt_short": "Publish my vocab",
+  "overall_result": "PASS",
+  "assertions": [
+    {
+      "text": "Response asks for the vocabulary .md file path",
+      "passed": true,
+      "evidence": "Response lists 7 found vocabulary files and explicitly asks 'Which vocabulary file do you want to publish?'"
+    },
+    {
+      "text": "Response does NOT attempt to run the script without knowing the file path",
+      "passed": true,
+      "evidence": "Response stops and requests both the file selection and env vars before proceeding; no script execution is attempted."
+    },
+    {
+      "text": "Response checks or asks about OM_BASE_URL and OM_TOKEN",
+      "passed": true,
+      "evidence": "Response explicitly states 'The environment variables OM_BASE_URL and OM_TOKEN are not set' and asks the user to provide both values."
+    }
+  ]
+}

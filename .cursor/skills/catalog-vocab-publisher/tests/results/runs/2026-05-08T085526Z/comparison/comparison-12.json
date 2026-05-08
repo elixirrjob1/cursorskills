@@ -1,0 +1,6 @@
+{
+  "eval_id": 12,
+  "prompt_short": "I want to publish but haven't set up the service account yet",
+  "verdict": "tie",
+  "reasoning": "Both outputs are from the same SKILL.md (no change between old and new snapshot). Identical quality and content for this eval."
+}

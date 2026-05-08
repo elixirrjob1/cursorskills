@@ -1,0 +1,6 @@
+{
+  "eval_id": 12,
+  "prompt_short": "I want to publish but haven't set up the service account yet",
+  "verdict": "tie",
+  "reasoning": "The Step 1 change (idempotency acknowledgment for re-run signals) does not affect this eval's prompt. Both old and new SKILL.md produce equivalent responses for this input — behavior is unchanged."
+}

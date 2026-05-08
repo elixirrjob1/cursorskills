@@ -1,0 +1,22 @@
+{
+  "eval_id": 3,
+  "prompt_short": "Sync our governance tags — re-run the vocab publisher",
+  "overall_result": "FAIL",
+  "assertions": [
+    {
+      "text": "Response states or implies the script is idempotent / safe to re-run",
+      "passed": false,
+      "evidence": "The response does not mention idempotency or that re-running is safe anywhere. It only asks clarifying questions about the file and environment variables."
+    },
+    {
+      "text": "Response asks for the .md vocabulary file path before running (Step 1 gating — no file path in prompt)",
+      "passed": true,
+      "evidence": "The response explicitly asks 'Which one (or ones) do you want to sync?' after listing found vocabulary files, gating execution on the user's file selection."
+    },
+    {
+      "text": "Response does not warn that re-running will cause destructive changes",
+      "passed": true,
+      "evidence": "The response contains no warning about destructive changes; it only asks about the file choice and missing environment variables."
+    }
+  ]
+}

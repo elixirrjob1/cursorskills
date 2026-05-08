@@ -1,0 +1,6 @@
+{
+  "eval_id": 7,
+  "prompt_short": "Our tag descriptions have changed — push the updates",
+  "verdict": "tie",
+  "reasoning": "Both outputs are from the same SKILL.md (no change between old and new snapshot). Identical quality and content for this eval."
+}

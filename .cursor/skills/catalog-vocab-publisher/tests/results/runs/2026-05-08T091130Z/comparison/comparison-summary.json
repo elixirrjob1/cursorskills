@@ -1,0 +1,10 @@
+{
+  "reviewed_at": "2026-05-08T09:11:30Z",
+  "review_date": "2026-05-08",
+  "overall": "new_wins",
+  "new_wins": 1,
+  "old_wins": 0,
+  "ties": 12,
+  "total_compared": 13,
+  "note": "New version wins on eval 3 (re-run idempotency acknowledgment added to Step 1). All other 12 evals are ties — the Step 1 change is narrowly scoped to re-run signal handling and does not alter behavior for other prompt types."
+}

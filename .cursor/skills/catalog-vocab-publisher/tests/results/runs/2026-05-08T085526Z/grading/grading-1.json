@@ -1,0 +1,22 @@
+{
+  "eval_id": 1,
+  "prompt_short": "Publish my governance vocabulary to OpenMetadata",
+  "overall_result": "PASS",
+  "assertions": [
+    {
+      "text": "Response asks for or confirms the .md vocabulary file path",
+      "passed": true,
+      "evidence": "Response lists 7 vocabulary files and explicitly asks 'Which vocabulary file do you want to publish?' before proceeding."
+    },
+    {
+      "text": "Response references OM_BASE_URL and/or OM_TOKEN environment variables",
+      "passed": true,
+      "evidence": "Response states 'Both OM_BASE_URL and OM_TOKEN are missing' and provides export commands for both variables."
+    },
+    {
+      "text": "Response does NOT use --username / --password flags",
+      "passed": true,
+      "evidence": "No --username or --password flags appear anywhere in the response; authentication is handled entirely via OM_TOKEN."
+    }
+  ]
+}

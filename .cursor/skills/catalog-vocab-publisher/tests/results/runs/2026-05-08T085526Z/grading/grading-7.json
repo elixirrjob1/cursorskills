@@ -1,0 +1,22 @@
+{
+  "eval_id": 7,
+  "prompt_short": "Our tag descriptions have changed — push the updates",
+  "overall_result": "PASS",
+  "assertions": [
+    {
+      "text": "Response asks for the vocabulary .md file path before running (Step 1 gating — no file path in prompt)",
+      "passed": true,
+      "evidence": "Response explicitly asks 'Which vocabulary file do you want to push?' and lists candidate files before proceeding."
+    },
+    {
+      "text": "Response references the publish workflow or indicates changed descriptions will be updated and unchanged ones skipped",
+      "passed": true,
+      "evidence": "Response states 'the [UPDATED] tags with changed descriptions will be patched in OpenMetadata automatically — everything already in sync will be skipped'."
+    },
+    {
+      "text": "Response does NOT say all tags will be deleted and recreated",
+      "passed": true,
+      "evidence": "No mention of deletion or recreation anywhere in the response. It describes a patch/update flow with skipping unchanged items."
+    }
+  ]
+}

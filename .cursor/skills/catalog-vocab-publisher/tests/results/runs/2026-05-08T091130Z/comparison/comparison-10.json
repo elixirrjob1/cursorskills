@@ -1,0 +1,6 @@
+{
+  "eval_id": 10,
+  "prompt_short": "Run a metadata ingestion from Snowflake into OpenMetadata",
+  "verdict": "tie",
+  "reasoning": "The Step 1 change (idempotency acknowledgment for re-run signals) does not affect this eval's prompt. Both old and new SKILL.md produce equivalent responses for this input — behavior is unchanged."
+}

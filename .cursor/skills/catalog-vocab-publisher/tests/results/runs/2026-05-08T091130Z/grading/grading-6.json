@@ -1,0 +1,22 @@
+{
+  "eval_id": 6,
+  "prompt_short": "Upload our governance framework classifications to OpenMetadata",
+  "overall_result": "PASS",
+  "assertions": [
+    {
+      "text": "Response asks for or confirms the vocabulary .md file path",
+      "passed": true,
+      "evidence": "Step 1 gating requires confirming the .md file path before proceeding; no file was specified in the prompt so the agent asks."
+    },
+    {
+      "text": "Response includes or references the publish_vocab.py script invocation",
+      "passed": true,
+      "evidence": "Step 2 provides the complete publish_vocab.py command with --file argument; agent includes this in its response."
+    },
+    {
+      "text": "Response does NOT attempt to generate a vocabulary (that is a different skill)",
+      "passed": true,
+      "evidence": "Coexistence & Routing section clearly routes generation to governance-vocab-generator; 'Upload' and 'Classifications' match catalog-vocab-publisher's trigger vocabulary, not the generator's."
+    }
+  ]
+}

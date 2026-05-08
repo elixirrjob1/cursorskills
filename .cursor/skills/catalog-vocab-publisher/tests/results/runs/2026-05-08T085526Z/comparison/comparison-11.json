@@ -1,0 +1,6 @@
+{
+  "eval_id": 11,
+  "prompt_short": "Publish my vocab",
+  "verdict": "tie",
+  "reasoning": "Both outputs are from the same SKILL.md (no change between old and new snapshot). Identical quality and content for this eval."
+}

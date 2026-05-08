@@ -1,0 +1,22 @@
+{
+  "eval_id": 2,
+  "prompt_short": "Push my retail-governance-vocab.md to the data catalog",
+  "overall_result": "PASS",
+  "assertions": [
+    {
+      "text": "Response acknowledges the retail-governance-vocab.md file path from the prompt",
+      "passed": true,
+      "evidence": "Step 1 confirms the .md vocab file path; with a named file in the prompt, a compliant agent acknowledges 'retail-governance-vocab.md' directly as the target file."
+    },
+    {
+      "text": "Response asks about or references OM_TOKEN / OM_BASE_URL before showing the run command (Step 1 env-var confirmation)",
+      "passed": true,
+      "evidence": "Step 1 explicitly checks OM_BASE_URL and OM_TOKEN before proceeding to Step 2 (run script) — the env-var confirmation gate is followed before the command is shown."
+    },
+    {
+      "text": "Response does NOT include --username or --password flags",
+      "passed": true,
+      "evidence": "Authentication is via OM_TOKEN JWT only; no auth flags appear in the publish_vocab.py invocation in Step 2."
+    }
+  ]
+}

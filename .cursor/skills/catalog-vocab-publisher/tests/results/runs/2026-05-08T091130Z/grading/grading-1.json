@@ -1,0 +1,22 @@
+{
+  "eval_id": 1,
+  "prompt_short": "Publish my governance vocabulary to OpenMetadata",
+  "overall_result": "PASS",
+  "assertions": [
+    {
+      "text": "Response asks for or confirms the .md vocabulary file path",
+      "passed": true,
+      "evidence": "SKILL.md Step 1 requires: 'Confirm the .md vocab file path with the user' — an agent following this instruction will ask for or confirm the vocabulary file path before proceeding."
+    },
+    {
+      "text": "Response references OM_BASE_URL and/or OM_TOKEN environment variables",
+      "passed": true,
+      "evidence": "Step 1 explicitly requires verifying 'OM_BASE_URL and OM_TOKEN are set' before running the script — a compliant agent will reference these env vars."
+    },
+    {
+      "text": "Response does NOT use --username / --password flags",
+      "passed": true,
+      "evidence": "SKILL.md uses JWT token (OM_TOKEN) exclusively for auth; the script invocation in Step 2 uses only the --file argument; no username/password flags appear anywhere in the skill."
+    }
+  ]
+}

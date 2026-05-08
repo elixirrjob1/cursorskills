@@ -1,0 +1,6 @@
+{
+  "eval_id": 8,
+  "prompt_short": "Push vocabulary to OpenMetadata, publish classifications",
+  "verdict": "tie",
+  "reasoning": "Both outputs are from the same SKILL.md (no change between old and new snapshot). Identical quality and content for this eval."
+}

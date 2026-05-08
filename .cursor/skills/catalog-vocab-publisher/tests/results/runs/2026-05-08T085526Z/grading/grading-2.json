@@ -1,0 +1,22 @@
+{
+  "eval_id": 2,
+  "prompt_short": "Push my retail-governance-vocab.md to the data catalog",
+  "overall_result": "PASS",
+  "assertions": [
+    {
+      "text": "Response acknowledges the retail-governance-vocab.md file path from the prompt",
+      "passed": true,
+      "evidence": "Response states 'I found your vocab file at governance-vocabularies/retail-governance-vocab.md' and references the file path again later."
+    },
+    {
+      "text": "Response asks about or references OM_TOKEN / OM_BASE_URL before showing the run command (Step 1 env-var confirmation)",
+      "passed": true,
+      "evidence": "Response references both OM_TOKEN (present) and OM_BASE_URL (missing), and asks 'What is your OpenMetadata base URL?' before proceeding — no run command is shown."
+    },
+    {
+      "text": "Response does NOT include --username or --password flags",
+      "passed": true,
+      "evidence": "The response contains no command invocation at all, and no --username or --password flags appear anywhere in the text."
+    }
+  ]
+}

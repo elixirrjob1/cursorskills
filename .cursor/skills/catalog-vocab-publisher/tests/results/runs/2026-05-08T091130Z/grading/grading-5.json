@@ -1,0 +1,22 @@
+{
+  "eval_id": 5,
+  "prompt_short": "The publish script returned 403 Forbidden",
+  "overall_result": "PASS",
+  "assertions": [
+    {
+      "text": "Response explains 403 is a permissions error (not auth)",
+      "passed": true,
+      "evidence": "SKILL.md Step 5: 'If 403 Forbidden is returned, the bot is missing write permissions' — clearly distinguishes permissions from authentication."
+    },
+    {
+      "text": "Response mentions VocabPublisherPolicy or equivalent custom policy",
+      "passed": true,
+      "evidence": "Step 5 explicitly names 'VocabPublisherPolicy' as the required policy: 'verify VocabPublisherPolicy is attached under Settings → Bots → vocab-publisher-bot → Roles'."
+    },
+    {
+      "text": "Response directs user to Settings → Bots → vocab-publisher-bot → Roles",
+      "passed": true,
+      "evidence": "Step 5 specifies the exact navigation path 'Settings → Bots → vocab-publisher-bot → Roles' for verification."
+    }
+  ]
+}

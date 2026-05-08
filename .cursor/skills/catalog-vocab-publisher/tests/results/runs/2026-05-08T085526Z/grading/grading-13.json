@@ -1,0 +1,22 @@
+{
+  "eval_id": 13,
+  "prompt_short": "I get SSL errors when trying to publish",
+  "overall_result": "PASS",
+  "assertions": [
+    {
+      "text": "Response links SSL/TLS errors to the HTTP vs HTTPS mismatch",
+      "passed": true,
+      "evidence": "Response states 'SSL errors when publishing almost always mean the OM_BASE_URL is set to https:// but the OpenMetadata server is running plain HTTP without TLS configured'."
+    },
+    {
+      "text": "Response advises checking or correcting the OM_BASE_URL scheme (http:// vs https://)",
+      "passed": true,
+      "evidence": "Response explicitly says 'Check your OM_BASE_URL value and switch the scheme from https:// to http://' with a before/after bash example."
+    },
+    {
+      "text": "Response does NOT suggest reinstalling requests or Python as primary fix",
+      "passed": true,
+      "evidence": "No mention of reinstalling requests, pip, or Python anywhere in the response. The fix focuses entirely on the URL scheme."
+    }
+  ]
+}

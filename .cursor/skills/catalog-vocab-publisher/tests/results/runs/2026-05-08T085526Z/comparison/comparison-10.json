@@ -1,0 +1,6 @@
+{
+  "eval_id": 10,
+  "prompt_short": "Run a metadata ingestion from Snowflake into OpenMetadata",
+  "verdict": "tie",
+  "reasoning": "Both outputs are from the same SKILL.md (no change between old and new snapshot). Identical quality and content for this eval."
+}

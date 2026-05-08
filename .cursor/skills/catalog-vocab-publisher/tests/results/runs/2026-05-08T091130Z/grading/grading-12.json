@@ -1,0 +1,22 @@
+{
+  "eval_id": 12,
+  "prompt_short": "I want to publish but haven't set up the service account yet",
+  "overall_result": "PASS",
+  "assertions": [
+    {
+      "text": "Response lists prerequisite setup steps (service account and/or OM_TOKEN)",
+      "passed": true,
+      "evidence": "SKILL.md Prerequisites section lists: Python 3.8+, requests, OM instance, vocab-publisher-bot service account, VocabPublisherPolicy, OM_TOKEN env var — agent surfaces these."
+    },
+    {
+      "text": "Response references vocab-publisher-bot or equivalent service account",
+      "passed": true,
+      "evidence": "Prerequisites section names 'vocab-publisher-bot service account' explicitly; Step 4/5 troubleshooting also references it."
+    },
+    {
+      "text": "Response does NOT proceed to run the script before prerequisites are confirmed",
+      "passed": true,
+      "evidence": "Step 1 requires OM_TOKEN to be set before proceeding; with the user explicitly stating setup is incomplete, the agent stops at Step 1 and surfaces prerequisites."
+    }
+  ]
+}

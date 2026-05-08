@@ -1,0 +1,22 @@
+{
+  "eval_id": 10,
+  "prompt_short": "Run a metadata ingestion from Snowflake into OpenMetadata",
+  "overall_result": "PASS",
+  "assertions": [
+    {
+      "text": "Response does NOT run or reference publish_vocab.py",
+      "passed": true,
+      "evidence": "The response makes no mention of publish_vocab.py anywhere. It only references Airflow, OpenMetadata connectivity, and pipeline triggers."
+    },
+    {
+      "text": "Response treats this as a catalog ingestion / sync task",
+      "passed": true,
+      "evidence": "The response describes triggering a metadata ingestion pipeline ('snowflake_fivetran_metadata') via Airflow to sync Snowflake tables/columns into OpenMetadata."
+    },
+    {
+      "text": "Response does NOT ask for a vocabulary .md file",
+      "passed": true,
+      "evidence": "The response does not request or reference any vocabulary Markdown file. It proceeds directly with the ingestion task."
+    }
+  ]
+}

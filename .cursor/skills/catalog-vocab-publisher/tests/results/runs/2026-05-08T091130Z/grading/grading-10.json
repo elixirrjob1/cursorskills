@@ -1,0 +1,22 @@
+{
+  "eval_id": 10,
+  "prompt_short": "Run a metadata ingestion from Snowflake into OpenMetadata",
+  "overall_result": "PASS",
+  "assertions": [
+    {
+      "text": "Response does NOT run or reference publish_vocab.py",
+      "passed": true,
+      "evidence": "Trigger precision section: skill does NOT fire on 'ingest' or 'sync database'; Snowflake ingestion is out of scope for this skill."
+    },
+    {
+      "text": "Response treats this as a catalog ingestion / sync task",
+      "passed": true,
+      "evidence": "Coexistence table routes 'full database/schema metadata ingestion' to catalog-sync, which the agent should reference."
+    },
+    {
+      "text": "Response does NOT ask for a vocabulary .md file",
+      "passed": true,
+      "evidence": "No vocabulary file is involved in Snowflake ingestion; a correctly non-triggered response does not enter the publish workflow."
+    }
+  ]
+}

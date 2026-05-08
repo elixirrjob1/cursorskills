@@ -1,0 +1,22 @@
+{
+  "eval_id": 3,
+  "prompt_short": "Sync our governance tags — re-run the vocab publisher",
+  "overall_result": "PASS",
+  "assertions": [
+    {
+      "text": "Response states or implies the script is idempotent / safe to re-run",
+      "passed": true,
+      "evidence": "New SKILL.md Step 1 instruction: 'If the user signals a re-run (e.g. \"re-run\", \"sync again\", \"run it again\"), acknowledge upfront that re-runs are safe and idempotent — no writes occur if the vocabulary is unchanged.' The prompt contains 're-run the vocab publisher', directly matching the documented re-run signal trigger; the agent must proactively acknowledge idempotency. This assertion previously FAILED (prior run 2026-05-08T085526Z) because the old Step 1 did not instruct idempotency acknowledgment; the new wording resolves that gap."
+    },
+    {
+      "text": "Response asks for the .md vocabulary file path before running (Step 1 gating — no file path in prompt)",
+      "passed": true,
+      "evidence": "Step 1 still requires confirming the .md vocab file path; no file path was provided in the prompt so the agent asks for it before proceeding to Step 2."
+    },
+    {
+      "text": "Response does not warn that re-running will cause destructive changes",
+      "passed": true,
+      "evidence": "The explicit acknowledgment that re-runs are 'safe and idempotent' with 'no writes if vocabulary is unchanged' directly precludes any destructive-change warning."
+    }
+  ]
+}

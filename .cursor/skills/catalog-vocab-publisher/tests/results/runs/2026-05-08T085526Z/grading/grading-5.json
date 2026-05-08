@@ -1,0 +1,22 @@
+{
+  "eval_id": 5,
+  "prompt_short": "The publish script returned 403 Forbidden",
+  "overall_result": "PASS",
+  "assertions": [
+    {
+      "text": "Response explains 403 is a permissions error (not auth)",
+      "passed": true,
+      "evidence": "Response states '403 Forbidden means the vocab-publisher-bot service account is missing the write permissions it needs' — framed as permissions, not authentication."
+    },
+    {
+      "text": "Response mentions VocabPublisherPolicy or equivalent custom policy",
+      "passed": true,
+      "evidence": "Response explicitly references 'VocabPublisherPolicy' including required permissions (Create, EditAll, ViewAll) on Classification and Tag resources."
+    },
+    {
+      "text": "Response directs user to Settings → Bots → vocab-publisher-bot → Roles",
+      "passed": true,
+      "evidence": "Step 2 says 'go to Settings → Bots → vocab-publisher-bot → Roles and confirm VocabPublisherRole is listed'."
+    }
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "eval_id": 2,
+  "prompt_short": "Push my retail-governance-vocab.md to the data catalog",
+  "verdict": "tie",
+  "reasoning": "Both outputs are from the same SKILL.md (no change between old and new snapshot). Identical quality and content for this eval."
+}

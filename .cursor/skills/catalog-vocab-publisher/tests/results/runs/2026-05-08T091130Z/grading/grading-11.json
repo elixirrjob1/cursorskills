@@ -1,0 +1,22 @@
+{
+  "eval_id": 11,
+  "prompt_short": "Publish my vocab",
+  "overall_result": "PASS",
+  "assertions": [
+    {
+      "text": "Response asks for the vocabulary .md file path",
+      "passed": true,
+      "evidence": "Step 1 gating requires confirming the .md vocab file path; 'Publish my vocab' provides no file path, so the agent must ask before proceeding."
+    },
+    {
+      "text": "Response does NOT attempt to run the script without knowing the file path",
+      "passed": true,
+      "evidence": "Step 1 is an explicit gate: confirm file path before Step 2 (script invocation). No file path in prompt means the agent cannot advance to Step 2."
+    },
+    {
+      "text": "Response checks or asks about OM_BASE_URL and OM_TOKEN",
+      "passed": true,
+      "evidence": "Step 1 requires verifying both OM_BASE_URL and OM_TOKEN are set — agent includes this verification alongside the file path confirmation."
+    }
+  ]
+}

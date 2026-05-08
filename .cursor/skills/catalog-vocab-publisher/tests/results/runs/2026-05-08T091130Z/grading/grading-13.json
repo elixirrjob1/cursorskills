@@ -1,0 +1,22 @@
+{
+  "eval_id": 13,
+  "prompt_short": "I get SSL errors when trying to publish",
+  "overall_result": "PASS",
+  "assertions": [
+    {
+      "text": "Response links SSL/TLS errors to the HTTP vs HTTPS mismatch",
+      "passed": true,
+      "evidence": "SKILL.md Gotchas: 'If OM_BASE_URL starts with https:// but the server is running plain HTTP, requests will raise a TLS handshake error (\"underlying connection was closed\").' — agent cites this directly."
+    },
+    {
+      "text": "Response advises checking or correcting the OM_BASE_URL scheme (http:// vs https://)",
+      "passed": true,
+      "evidence": "Gotcha advises: 'Use http:// for local/dev instances and https:// only when TLS is configured on the server' — agent recommends verifying and correcting the scheme."
+    },
+    {
+      "text": "Response does NOT suggest reinstalling requests or Python as primary fix",
+      "passed": true,
+      "evidence": "The Gotcha clearly attributes the error to server configuration mismatch (OM_BASE_URL scheme), not to package issues — agent's primary fix is scheme correction."
+    }
+  ]
+}

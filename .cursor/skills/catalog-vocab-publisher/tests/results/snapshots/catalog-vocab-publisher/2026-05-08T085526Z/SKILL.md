@@ -62,7 +62,7 @@ $env:OM_TOKEN = ($line.Line -split '=', 2)[1].Trim()
 
 ## Workflow
 
-1. Confirm the `.md` vocab file path with the user and verify `OM_BASE_URL` and `OM_TOKEN` are set. If the user signals a re-run (e.g. "re-run", "sync again", "run it again"), acknowledge upfront that re-runs are safe and idempotent — no writes occur if the vocabulary is unchanged.
+1. Confirm the `.md` vocab file path with the user and verify `OM_BASE_URL` and `OM_TOKEN` are set.
 2. Run the publish script:
 
 ```bash

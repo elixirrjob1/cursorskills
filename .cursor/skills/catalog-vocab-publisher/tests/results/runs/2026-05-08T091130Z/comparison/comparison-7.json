@@ -1,0 +1,6 @@
+{
+  "eval_id": 7,
+  "prompt_short": "Our tag descriptions have changed — push the updates",
+  "verdict": "tie",
+  "reasoning": "The Step 1 change (idempotency acknowledgment for re-run signals) does not affect this eval's prompt. Both old and new SKILL.md produce equivalent responses for this input — behavior is unchanged."
+}

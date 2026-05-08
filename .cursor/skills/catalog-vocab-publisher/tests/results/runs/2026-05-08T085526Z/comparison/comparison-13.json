@@ -1,0 +1,6 @@
+{
+  "eval_id": 13,
+  "prompt_short": "I get SSL errors when trying to publish",
+  "verdict": "tie",
+  "reasoning": "Both outputs are from the same SKILL.md (no change between old and new snapshot). Identical quality and content for this eval."
+}

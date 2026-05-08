@@ -1,0 +1,22 @@
+{
+  "eval_id": 12,
+  "prompt_short": "I want to publish but haven't set up the service account yet",
+  "overall_result": "PASS",
+  "assertions": [
+    {
+      "text": "Response lists prerequisite setup steps (service account and/or OM_TOKEN)",
+      "passed": true,
+      "evidence": "Response provides 5 numbered steps covering bot creation, policy creation, role assignment, and setting OM_BASE_URL/OM_TOKEN environment variables."
+    },
+    {
+      "text": "Response references vocab-publisher-bot or equivalent service account",
+      "passed": true,
+      "evidence": "Step 1 explicitly instructs: 'create a new bot named vocab-publisher-bot'."
+    },
+    {
+      "text": "Response does NOT proceed to run the script before prerequisites are confirmed",
+      "passed": true,
+      "evidence": "The script is not executed. Step 5 ends with 'Once you confirm the file and the env vars are set, you're ready to run the publish script' — gating execution on user confirmation."
+    }
+  ]
+}

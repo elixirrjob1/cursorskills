@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Benchmark Report: catalog-vocab-publisher</title>
+  <style>
+    body { font-family: system-ui, sans-serif; font-size: 14px; margin: 24px; background: #fff; color: #222; }
+    h1 { font-size: 1.35rem; margin-bottom: 0.25rem; }
+    h2 { font-size: 1.1rem; margin-top: 2rem; margin-bottom: 0.75rem; border-bottom: 1px solid #ccc; padding-bottom: 0.25rem; }
+    .meta { color: #555; margin-bottom: 1.5rem; }
+    table { border-collapse: collapse; width: 100%; margin: 0.5rem 0 1rem; }
+    th, td { border: 1px solid #ccc; padding: 8px 10px; text-align: left; }
+    tr:nth-child(even) { background: #f9f9f9; }
+    th { background: #eee; font-weight: 600; }
+    .pass { background: #d4edda; color: #155724; }
+    .fail { background: #f8d7da; color: #721c24; }
+    .skip { background: #fff3cd; color: #856404; }
+    .bar-track { display: inline-block; width: 120px; height: 10px; background: #e0e0e0; border-radius: 2px; vertical-align: middle; margin-right: 8px; }
+    .bar-fill { height: 100%; background: #28a745; border-radius: 2px; }
+    .note { color: #444; font-style: italic; margin: 0.5rem 0; }
+    code { font-size: 13px; background: #f4f4f4; padding: 1px 4px; border-radius: 2px; }
+  </style>
+</head>
+<body>
+  <h1>Benchmark Report: catalog-vocab-publisher</h1>
+  <p class="meta">Generated: 2026-05-08T08:55:26Z UTC · Incremental re-review; RUN_STEP_3C=true (test files changed); 12 categories carried from 2026-05-08T083926Z; Category 5 re-evaluated</p>
+
+  <h2>Summary</h2>
+  <table>
+    <tr><th>Metric</th><th>Value</th></tr>
+    <tr><td>Overall Verdict</td><td class="pass">PASS</td></tr>
+    <tr><td>Unit Tests</td><td>12 / 13 passed (92%)</td></tr>
+    <tr><td>Assertions</td><td>38 / 39 (97%)</td></tr>
+    <tr><td>Categories</td><td>13 / 13 passed</td></tr>
+    <tr><td>High Failures</td><td>—</td></tr>
+    <tr><td>Medium Failures</td><td>—</td></tr>
+    <tr><td>Comparator</td><td class="skip">tie (SKILL.md unchanged vs prior snapshot; all 13 comparisons tie)</td></tr>
+  </table>
+
+  <h2>Unit Test Results</h2>
+  <table>
+    <thead>
+      <tr><th>#</th><th>Test</th><th>Type</th><th>Result</th><th>Assertions</th><th>Evidence</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>1</td><td>Publish my governance vocabulary to OpenMetadata</td><td>should-trigger</td><td class="pass">✅ PASS</td><td>3/3</td><td></td></tr>
+      <tr><td>2</td><td>Push my retail-governance-vocab.md to the data catalog</td><td>should-trigger</td><td class="pass">✅ PASS</td><td>3/3</td><td>Previously FAIL — new assertions aligned with Step 1 gating</td></tr>
+      <tr><td>3</td><td>Sync our governance tags — re-run the vocab publisher</td><td>should-trigger</td><td class="fail">❌ FAIL</td><td>2/3</td><td>Assertion "idempotent / safe to re-run" not satisfied — executor asks for file path and env vars but omits idempotency mention</td></tr>
+      <tr><td>4</td><td>I got 401 Unauthorized when publishing the vocabulary</td><td>should-trigger</td><td class="pass">✅ PASS</td><td>3/3</td><td></td></tr>
+      <tr><td>5</td><td>The publish script returned 403 Forbidden</td><td>should-trigger</td><td class="pass">✅ PASS</td><td>3/3</td><td></td></tr>
+      <tr><td>6</td><td>Upload our governance framework classifications to OpenMetadata</td><td>should-trigger</td><td class="pass">✅ PASS</td><td>3/3</td><td></td></tr>
+      <tr><td>7</td><td>Our tag descriptions have changed — push the updates</td><td>should-trigger</td><td class="pass">✅ PASS</td><td>3/3</td><td>Previously FAIL — new assertions aligned with Step 1 gating + UPDATED/SKIPPED logic</td></tr>
+      <tr><td>8</td><td>Push vocabulary to OpenMetadata, publish classifications</td><td>should-trigger</td><td class="pass">✅ PASS</td><td>3/3</td><td></td></tr>
+      <tr><td>9</td><td>Generate a governance vocabulary for the retail domain</td><td>should-not-trigger</td><td class="pass">✅ PASS</td><td>3/3</td><td></td></tr>
+      <tr><td>10</td><td>Run a metadata ingestion from Snowflake into OpenMetadata</td><td>should-not-trigger</td><td class="pass">✅ PASS</td><td>3/3</td><td></td></tr>
+      <tr><td>11</td><td>Publish my vocab</td><td>edge-case</td><td class="pass">✅ PASS</td><td>3/3</td><td></td></tr>
+      <tr><td>12</td><td>I want to publish but haven't set up the service account yet</td><td>edge-case</td><td class="pass">✅ PASS</td><td>3/3</td><td></td></tr>
+      <tr><td>13</td><td>I get SSL errors when trying to publish</td><td>edge-case</td><td class="pass">✅ PASS</td><td>3/3</td><td></td></tr>
+    </tbody>
+  </table>
+
+  <h2>Assertion Detail</h2>
+  <p class="note">Full assertion-by-assertion roll-up below (Step 3b). The table is required in every benchmark; do not replace this section with only links to JSON files.</p>
+  <table>
+    <thead>
+      <tr><th>Eval</th><th>Assertion</th><th>Passed</th><th>Evidence</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>1</td><td>Response asks for or confirms the .md vocabulary file path</td><td class="pass">Yes</td><td>Response lists 7 vocabulary files and explicitly asks 'Which vocabulary file do you want to publish?' before proceeding.</td></tr>
+      <tr><td>1</td><td>Response references OM_BASE_URL and/or OM_TOKEN environment variables</td><td class="pass">Yes</td><td>Response states 'Both OM_BASE_URL and OM_TOKEN are missing' and provides export commands for both variables.</td></tr>
+      <tr><td>1</td><td>Response does NOT use --username / --password flags</td><td class="pass">Yes</td><td>No --username or --password flags appear anywhere in the response; authentication is handled entirely via OM_TOKEN.</td></tr>
+      <tr><td>2</td><td>Response acknowledges the retail-governance-vocab.md file path from the prompt</td><td class="pass">Yes</td><td>Response states 'I found your vocab file at governance-vocabularies/retail-governance-vocab.md' and references the file path again later.</td></tr>
+      <tr><td>2</td><td>Response asks about or references OM_TOKEN / OM_BASE_URL before showing the run command (Step 1 env-var confirmation)</td><td class="pass">Yes</td><td>Response references both OM_TOKEN (present) and OM_BASE_URL (missing), and asks 'What is your OpenMetadata base URL?' before proceeding — no run command shown.</td></tr>
+      <tr><td>2</td><td>Response does NOT include --username or --password flags</td><td class="pass">Yes</td><td>The response contains no command invocation at all, and no --username or --password flags appear anywhere in the text.</td></tr>
+      <tr><td>3</td><td>Response states or implies the script is idempotent / safe to re-run</td><td class="fail">No</td><td>The response does not mention idempotency or that re-running is safe anywhere. It only asks clarifying questions about the file and environment variables.</td></tr>
+      <tr><td>3</td><td>Response asks for the .md vocabulary file path before running (Step 1 gating — no file path in prompt)</td><td class="pass">Yes</td><td>The response explicitly asks 'Which one (or ones) do you want to sync?' after listing found vocabulary files, gating execution on the user's file selection.</td></tr>
+      <tr><td>3</td><td>Response does not warn that re-running will cause destructive changes</td><td class="pass">Yes</td><td>The response contains no warning about destructive changes; it only asks about the file choice and missing environment variables.</td></tr>
+      <tr><td>4</td><td>Response references the bot token expiry / revocation as cause of 401</td><td class="pass">Yes</td><td>Response states 'the JWT token for the vocab-publisher-bot service account has either expired or been revoked'.</td></tr>
+      <tr><td>4</td><td>Response mentions regenerating the token under Settings → Bots or vocab-publisher-bot</td><td class="pass">Yes</td><td>Response states 'go to Settings → Bots → vocab-publisher-bot' and 'Regenerate the token there'.</td></tr>
+      <tr><td>4</td><td>Response mentions updating OM_TOKEN after regeneration</td><td class="pass">Yes</td><td>Response states 'Update your OM_TOKEN environment variable with the new token' with example export command.</td></tr>
+      <tr><td>5</td><td>Response explains 403 is a permissions error (not auth)</td><td class="pass">Yes</td><td>Response states '403 Forbidden means the vocab-publisher-bot service account is missing the write permissions it needs'.</td></tr>
+      <tr><td>5</td><td>Response mentions VocabPublisherPolicy or equivalent custom policy</td><td class="pass">Yes</td><td>Response explicitly references 'VocabPublisherPolicy' including required permissions (Create, EditAll, ViewAll) on Classification and Tag resources.</td></tr>
+      <tr><td>5</td><td>Response directs user to Settings → Bots → vocab-publisher-bot → Roles</td><td class="pass">Yes</td><td>Step 2 says 'go to Settings → Bots → vocab-publisher-bot → Roles and confirm VocabPublisherRole is listed'.</td></tr>
+      <tr><td>6</td><td>Response asks for or confirms the vocabulary .md file path</td><td class="pass">Yes</td><td>Response explicitly asks 'Which vocabulary file do you want to publish?' and lists 7 candidate .md files.</td></tr>
+      <tr><td>6</td><td>Response includes or references the publish_vocab.py script invocation</td><td class="pass">Yes</td><td>Response states 'I'll run the publish script and show you the summary of what gets created, updated, or skipped'.</td></tr>
+      <tr><td>6</td><td>Response does NOT attempt to generate a vocabulary (that is a different skill)</td><td class="pass">Yes</td><td>Response contains no vocabulary generation; it only lists existing files and asks which one to publish.</td></tr>
+      <tr><td>7</td><td>Response asks for the vocabulary .md file path before running (Step 1 gating — no file path in prompt)</td><td class="pass">Yes</td><td>Response explicitly asks 'Which vocabulary file do you want to push?' and lists candidate files before proceeding.</td></tr>
+      <tr><td>7</td><td>Response references the publish workflow or indicates changed descriptions will be updated and unchanged ones skipped</td><td class="pass">Yes</td><td>Response states 'the [UPDATED] tags with changed descriptions will be patched in OpenMetadata automatically — everything already in sync will be skipped'.</td></tr>
+      <tr><td>7</td><td>Response does NOT say all tags will be deleted and recreated</td><td class="pass">Yes</td><td>No mention of deletion or recreation anywhere in the response. It describes a patch/update flow with skipping unchanged items.</td></tr>
+      <tr><td>8</td><td>Response engages with the publish workflow (confirms file path and/or env vars)</td><td class="pass">Yes</td><td>Response lists available vocabulary files, asks which to publish, and calls out that OM_BASE_URL and OM_TOKEN env vars are not set.</td></tr>
+      <tr><td>8</td><td>Response does NOT deflect to a different skill</td><td class="pass">Yes</td><td>The response stays entirely within the catalog-vocab-publisher workflow. No mention of other skills.</td></tr>
+      <tr><td>8</td><td>Response does NOT ask clarifying questions about whether to generate vs publish</td><td class="pass">Yes</td><td>The response assumes publishing is the goal and only asks which file to target and for env vars.</td></tr>
+      <tr><td>9</td><td>Response does NOT attempt to run publish_vocab.py</td><td class="pass">Yes</td><td>The agent routed to the governance-vocab-generator skill and did not attempt to run publish_vocab.py at any point.</td></tr>
+      <tr><td>9</td><td>Response indicates this is a vocabulary generation task (not publishing)</td><td class="pass">Yes</td><td>The agent explicitly identified this as a vocabulary generation task and routed to the governance-vocab-generator skill.</td></tr>
+      <tr><td>9</td><td>Response does NOT ask for OM credentials or base URL</td><td class="pass">Yes</td><td>The agent asked for no credentials or base URL; it simply read the governance-vocab-generator skill file.</td></tr>
+      <tr><td>10</td><td>Response does NOT run or reference publish_vocab.py</td><td class="pass">Yes</td><td>The response makes no mention of publish_vocab.py anywhere. It only references Airflow, OpenMetadata connectivity, and pipeline triggers.</td></tr>
+      <tr><td>10</td><td>Response treats this as a catalog ingestion / sync task</td><td class="pass">Yes</td><td>The response describes triggering a metadata ingestion pipeline via Airflow to sync Snowflake tables/columns into OpenMetadata.</td></tr>
+      <tr><td>10</td><td>Response does NOT ask for a vocabulary .md file</td><td class="pass">Yes</td><td>The response does not request or reference any vocabulary Markdown file.</td></tr>
+      <tr><td>11</td><td>Response asks for the vocabulary .md file path</td><td class="pass">Yes</td><td>Response lists 7 found vocabulary files and explicitly asks 'Which vocabulary file do you want to publish?'</td></tr>
+      <tr><td>11</td><td>Response does NOT attempt to run the script without knowing the file path</td><td class="pass">Yes</td><td>Response stops and requests both the file selection and env vars before proceeding; no script execution is attempted.</td></tr>
+      <tr><td>11</td><td>Response checks or asks about OM_BASE_URL and OM_TOKEN</td><td class="pass">Yes</td><td>Response explicitly states 'The environment variables OM_BASE_URL and OM_TOKEN are not set' and asks the user to provide both values.</td></tr>
+      <tr><td>12</td><td>Response lists prerequisite setup steps (service account and/or OM_TOKEN)</td><td class="pass">Yes</td><td>Response provides 5 numbered steps covering bot creation, policy creation, role assignment, and setting OM_BASE_URL/OM_TOKEN.</td></tr>
+      <tr><td>12</td><td>Response references vocab-publisher-bot or equivalent service account</td><td class="pass">Yes</td><td>Step 1 explicitly instructs: 'create a new bot named vocab-publisher-bot'.</td></tr>
+      <tr><td>12</td><td>Response does NOT proceed to run the script before prerequisites are confirmed</td><td class="pass">Yes</td><td>Step 5 ends with 'Once you confirm the file and the env vars are set, you're ready to run the publish script' — gating execution.</td></tr>
+      <tr><td>13</td><td>Response links SSL/TLS errors to the HTTP vs HTTPS mismatch</td><td class="pass">Yes</td><td>Response states 'SSL errors when publishing almost always mean the OM_BASE_URL is set to https:// but the OpenMetadata server is running plain HTTP'.</td></tr>
+      <tr><td>13</td><td>Response advises checking or correcting the OM_BASE_URL scheme (http:// vs https://)</td><td class="pass">Yes</td><td>Response explicitly says 'Check your OM_BASE_URL value and switch the scheme from https:// to http://' with before/after example.</td></tr>
+      <tr><td>13</td><td>Response does NOT suggest reinstalling requests or Python as primary fix</td><td class="pass">Yes</td><td>No mention of reinstalling requests, pip, or Python anywhere in the response.</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Category Grades</h2>
+  <table>
+    <thead>
+      <tr><th>#</th><th>Category</th><th>Grade</th><th>Explanation</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>1</td><td>Triggering (Description Quality)</td><td class="pass">PASS</td><td>✓ carried · Description is specific, ≤1024 chars, includes exact trigger phrases and no generic language</td></tr>
+      <tr><td>2</td><td>Anatomy &amp; Structure</td><td class="pass">PASS</td><td>✓ carried · Valid YAML frontmatter; references shallow; SKILL.md body within 500 lines</td></tr>
+      <tr><td>3</td><td>Instructions Clarity</td><td class="pass">PASS</td><td>✓ carried · Degrees of freedom calibrated; consistent terminology; no time-sensitive content</td></tr>
+      <tr><td>4</td><td>Output Quality</td><td class="pass">PASS</td><td>✓ carried · Template strictness appropriate for API-driven workflow; output format defined</td></tr>
+      <tr><td>5</td><td>Testability</td><td class="pass">PASS</td><td>Re-evaluated · All HIGH subcategories pass (isolation, instruction-following, output quality evaluable); test suite covers 8 should-trigger, 3 should-not-trigger, 3 edge cases; coexistence documented in Routing section</td></tr>
+      <tr><td>6</td><td>Resource Efficiency</td><td class="pass">PASS</td><td>✓ carried · Pre-built Python script used; no generated code for deterministic ops; execution intent explicit</td></tr>
+      <tr><td>7</td><td>Security &amp; Trust</td><td class="pass">PASS</td><td>✓ carried · No hardcoded credentials; OM_TOKEN env-var-only auth; .env git-ignored; .env.example has placeholders</td></tr>
+      <tr><td>8</td><td>Coexistence &amp; Recall</td><td class="pass">PASS</td><td>✓ carried · Routing table clearly delineates adjacent skills; trigger terms non-overlapping</td></tr>
+      <tr><td>9</td><td>Model Compatibility</td><td class="pass">PASS</td><td>✓ carried · Validated on Claude Sonnet 4.6; documented in YAML frontmatter</td></tr>
+      <tr><td>10</td><td>Workflow &amp; Feedback Loops</td><td class="pass">PASS</td><td>✓ carried · Validate-fix-repeat loop present (steps 4-5 for 401/403); plan-validate-execute pattern used</td></tr>
+      <tr><td>11</td><td>Maintainability &amp; Lifecycle</td><td class="pass">PASS</td><td>✓ carried · Registry table present; peer-review requirement documented; versioning strategy and rollback plan defined</td></tr>
+      <tr><td>12</td><td>Gotchas / Lessons Learned</td><td class="pass">PASS</td><td>✓ carried · Five documented gotchas covering real failure modes (bot policy, HTTP/HTTPS, PowerShell, token expiry, .env)</td></tr>
+      <tr><td>13</td><td>Anti-Pattern Audit</td><td class="pass">PASS</td><td>✓ carried · Forward slashes throughout; pinned requests==2.33.1; explicit error handling; no voodoo constants</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Version Comparison</h2>
+  <p class="note">SKILL.md is identical between current tree and prior snapshot (2026-05-08T083926Z). Only test files changed. All 13 comparisons returned <strong>tie</strong> — no regression in skill behavior.</p>
+  <table>
+    <thead>
+      <tr><th>Eval</th><th>Prompt</th><th>Verdict</th><th>Reasoning</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>1</td><td>Publish my governance vocabulary to OpenMetadata</td><td class="skip">tie</td><td>Both outputs identical: ask for file and gate on env vars.</td></tr>
+      <tr><td>2</td><td>Push my retail-governance-vocab.md to the data catalog</td><td class="skip">tie</td><td>Both outputs identical: acknowledge file path, confirm OM_TOKEN present, ask for OM_BASE_URL.</td></tr>
+      <tr><td>3</td><td>Sync our governance tags — re-run the vocab publisher</td><td class="skip">tie</td><td>Both outputs identical: ask for file and env vars; neither mentions idempotency (shared gap).</td></tr>
+      <tr><td>4</td><td>I got 401 Unauthorized when publishing the vocabulary</td><td class="skip">tie</td><td>Both outputs identical: diagnose expired/revoked JWT; direct to Settings → Bots.</td></tr>
+      <tr><td>5</td><td>The publish script returned 403 Forbidden</td><td class="skip">tie</td><td>Both outputs identical: attribute to missing permissions; direct to VocabPublisherPolicy.</td></tr>
+      <tr><td>6</td><td>Upload our governance framework classifications to OpenMetadata</td><td class="skip">tie</td><td>Both outputs identical: gate on file selection and env vars.</td></tr>
+      <tr><td>7</td><td>Our tag descriptions have changed — push the updates</td><td class="skip">tie</td><td>Both outputs identical: gate on file, reference UPDATED/SKIPPED logic.</td></tr>
+      <tr><td>8</td><td>Push vocabulary to OpenMetadata, publish classifications</td><td class="skip">tie</td><td>Both outputs identical: engage publish workflow; mention idempotency.</td></tr>
+      <tr><td>9</td><td>Generate a governance vocabulary for the retail domain</td><td class="skip">tie</td><td>Both outputs identical: route to governance-vocab-generator.</td></tr>
+      <tr><td>10</td><td>Run a metadata ingestion from Snowflake into OpenMetadata</td><td class="skip">tie</td><td>Both outputs identical: treat as ingestion task, no vocab publisher triggered.</td></tr>
+      <tr><td>11</td><td>Publish my vocab</td><td class="skip">tie</td><td>Both outputs identical: ask for file and confirm env vars.</td></tr>
+      <tr><td>12</td><td>I want to publish but haven't set up the service account yet</td><td class="skip">tie</td><td>Both outputs identical: surface prerequisite setup steps.</td></tr>
+      <tr><td>13</td><td>I get SSL errors when trying to publish</td><td class="skip">tie</td><td>Both outputs identical: cite HTTP vs HTTPS gotcha.</td></tr>
+    </tbody>
+  </table>
+
+  <h2>History (all reviews)</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Reviewed at (UTC)</th>
+        <th>Date</th>
+        <th>Unit Tests</th>
+        <th>Assertions</th>
+        <th>Categories</th>
+        <th>Verdict</th>
+        <th>Notes</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>2026-05-07T14:02:43Z</td><td>2026-05-07</td>
+        <td><span class="bar-track"><span class="bar-fill" style="width:77%"></span></span>10/13 (77%)</td>
+        <td><span class="bar-track"><span class="bar-fill" style="width:82%"></span></span>32/39 (82%)</td>
+        <td><span class="bar-track"><span class="bar-fill" style="width:85%"></span></span>11/13 (85%)</td>
+        <td class="fail">FAIL</td><td>Initial review</td>
+      </tr>
+      <tr>
+        <td>2026-05-08T08:10:53Z</td><td>2026-05-08</td>
+        <td><span class="bar-track"><span class="bar-fill" style="width:77%"></span></span>10/13 (77%)</td>
+        <td><span class="bar-track"><span class="bar-fill" style="width:90%"></span></span>35/39 (90%)</td>
+        <td><span class="bar-track"><span class="bar-fill" style="width:92%"></span></span>12/13 (92%)</td>
+        <td class="fail">FAIL</td><td>Incremental re-review after Cat 7 + Cat 11 fixes</td>
+      </tr>
+      <tr>
+        <td>2026-05-08T08:39:26Z</td><td>2026-05-08</td>
+        <td><span class="bar-track"><span class="bar-fill" style="width:77%"></span></span>10/13 (77%)</td>
+        <td><span class="bar-track"><span class="bar-fill" style="width:90%"></span></span>35/39 (90%)</td>
+        <td><span class="bar-track"><span class="bar-fill" style="width:100%"></span></span>13/13 (100%)</td>
+        <td class="pass">PASS</td><td>All categories pass; 3 unit test assertions misaligned with Step 1 gating</td>
+      </tr>
+      <tr>
+        <td>2026-05-08T08:55:26Z</td><td>2026-05-08</td>
+        <td><span class="bar-track"><span class="bar-fill" style="width:92%"></span></span>12/13 (92%)</td>
+        <td><span class="bar-track"><span class="bar-fill" style="width:97%"></span></span>38/39 (97%)</td>
+        <td><span class="bar-track"><span class="bar-fill" style="width:100%"></span></span>13/13 (100%)</td>
+        <td class="pass">PASS</td><td>Evals 2+7 fixed by new assertions; eval 3 still fails (idempotency not mentioned)</td>
+      </tr>
+    </tbody>
+  </table>
+  <p class="note">Full narrative: <code>review-catalog-vocab-publisher-2026-05-08T085526Z.md</code></p>
+</body>
+</html>

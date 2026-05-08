@@ -1,0 +1,22 @@
+{
+  "eval_id": 7,
+  "prompt_short": "Our tag descriptions have changed — push the updates",
+  "overall_result": "PASS",
+  "assertions": [
+    {
+      "text": "Response asks for the vocabulary .md file path before running (Step 1 gating — no file path in prompt)",
+      "passed": true,
+      "evidence": "Step 1 requires file path confirmation; no file was provided in the prompt so the agent stops to ask before running Step 2."
+    },
+    {
+      "text": "Response references the publish workflow or indicates changed descriptions will be updated and unchanged ones skipped",
+      "passed": true,
+      "evidence": "SKILL.md 'What the script does' and Step 3 output example document [UPDATED] for changed descriptions and [SKIPPED] for unchanged ones — agent references this workflow."
+    },
+    {
+      "text": "Response does NOT say all tags will be deleted and recreated",
+      "passed": true,
+      "evidence": "The script uses create/update/skip logic per tag with no deletion step; the idempotency guarantees explicitly preclude destructive recreation."
+    }
+  ]
+}

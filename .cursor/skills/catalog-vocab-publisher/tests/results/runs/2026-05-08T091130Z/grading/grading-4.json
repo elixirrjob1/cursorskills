@@ -1,0 +1,22 @@
+{
+  "eval_id": 4,
+  "prompt_short": "I got 401 Unauthorized when publishing the vocabulary",
+  "overall_result": "PASS",
+  "assertions": [
+    {
+      "text": "Response references the bot token expiry / revocation as cause of 401",
+      "passed": true,
+      "evidence": "SKILL.md Step 4: 'If 401 Unauthorized is returned, the bot token has expired or been revoked' — compliant agent cites this as root cause."
+    },
+    {
+      "text": "Response mentions regenerating the token under Settings → Bots or vocab-publisher-bot",
+      "passed": true,
+      "evidence": "Step 4 specifies 'regenerate it under Settings → Bots → vocab-publisher-bot' as the remediation path."
+    },
+    {
+      "text": "Response mentions updating OM_TOKEN after regeneration",
+      "passed": true,
+      "evidence": "Step 4 says 'update OM_TOKEN' after regeneration — agent follows this explicit instruction."
+    }
+  ]
+}

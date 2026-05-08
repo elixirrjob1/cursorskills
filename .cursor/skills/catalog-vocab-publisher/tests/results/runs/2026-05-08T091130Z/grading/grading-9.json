@@ -1,0 +1,22 @@
+{
+  "eval_id": 9,
+  "prompt_short": "Generate a governance vocabulary for the retail domain",
+  "overall_result": "PASS",
+  "assertions": [
+    {
+      "text": "Response does NOT attempt to run publish_vocab.py",
+      "passed": true,
+      "evidence": "Trigger precision section: 'This skill does NOT fire on \"generate\"'; a correctly-routed agent directs this to governance-vocab-generator without invoking the publish script."
+    },
+    {
+      "text": "Response indicates this is a vocabulary generation task (not publishing)",
+      "passed": true,
+      "evidence": "Coexistence & Routing table explicitly routes generation requests to governance-vocab-generator skill."
+    },
+    {
+      "text": "Response does NOT ask for OM credentials or base URL",
+      "passed": true,
+      "evidence": "Credential steps are only invoked at Step 1 of this skill; a correctly non-triggered response does not reach the publish workflow."
+    }
+  ]
+}

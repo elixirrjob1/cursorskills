@@ -72,23 +72,6 @@
       "benchmark_html": "runs/2026-05-08T085526Z/benchmark-catalog-vocab-publisher-2026-05-08T085526Z.html",
       "snapshot_dir": "snapshots/catalog-vocab-publisher/2026-05-08T085526Z",
       "comparison_file": "runs/2026-05-08T085526Z/comparison/comparison-summary.json"
-    },
-    {
-      "reviewed_at": "2026-05-08T09:11:30Z",
-      "date": "2026-05-08",
-      "run_slug": "2026-05-08T091130Z",
-      "skill_version": "0343ea8",
-      "unit_tests": { "passed": 13, "total": 13, "pass_rate": 1.00 },
-      "assertions": { "passed": 39, "total": 39, "pass_rate": 1.00 },
-      "categories": { "passed": 13, "total": 13, "pass_rate": 1.00 },
-      "verdict": "PASS",
-      "high_failures": [],
-      "review_file": "runs/2026-05-08T091130Z/review-catalog-vocab-publisher-2026-05-08T091130Z.md",
-      "timing_file": "runs/2026-05-08T091130Z/timing.json",
-      "benchmark_md": "runs/2026-05-08T091130Z/benchmark-catalog-vocab-publisher-2026-05-08T091130Z.md",
-      "benchmark_html": "runs/2026-05-08T091130Z/benchmark-catalog-vocab-publisher-2026-05-08T091130Z.html",
-      "snapshot_dir": "snapshots/catalog-vocab-publisher/2026-05-08T091130Z",
-      "comparison_file": "runs/2026-05-08T091130Z/comparison/comparison-summary.json"
     }
   ]
 }

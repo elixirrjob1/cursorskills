@@ -12,6 +12,9 @@ models:
           - source_not_in_target:
               arguments:
                 target_model: "{{ ref('DimDate') }}"
+          - target_not_in_source:
+              arguments:
+                target_model: "{{ ref('DimDate') }}"
           - source_hashdiff_matches_target:
               arguments:
                 target_model: "{{ ref('DimDate') }}"
@@ -119,6 +122,9 @@ models:
         tests:
           - not_null
           - source_not_in_target:
+              arguments:
+                target_model: "{{ ref('DimProduct') }}"
+          - target_not_in_source:
               arguments:
                 target_model: "{{ ref('DimProduct') }}"
           - source_hashdiff_matches_target:
@@ -235,6 +241,9 @@ models:
           - source_not_in_target:
               arguments:
                 target_model: "{{ ref('DimStore') }}"
+          - target_not_in_source:
+              arguments:
+                target_model: "{{ ref('DimStore') }}"
           - source_hashdiff_matches_target:
               arguments:
                 target_model: "{{ ref('DimStore') }}"
@@ -325,6 +334,9 @@ models:
           - source_not_in_target:
               arguments:
                 target_model: "{{ ref('DimWarehouse') }}"
+          - target_not_in_source:
+              arguments:
+                target_model: "{{ ref('DimWarehouse') }}"
           - source_hashdiff_matches_target:
               arguments:
                 target_model: "{{ ref('DimWarehouse') }}"
@@ -400,6 +412,9 @@ models:
         tests:
           - not_null
           - source_not_in_target:
+              arguments:
+                target_model: "{{ ref('DimCustomer') }}"
+          - target_not_in_source:
               arguments:
                 target_model: "{{ ref('DimCustomer') }}"
           - source_hashdiff_matches_target:
@@ -604,6 +619,9 @@ models:
           - source_not_in_target:
               arguments:
                 target_model: "{{ ref('DimEmployee') }}"
+          - target_not_in_source:
+              arguments:
+                target_model: "{{ ref('DimEmployee') }}"
           - source_hashdiff_matches_target:
               arguments:
                 target_model: "{{ ref('DimEmployee') }}"
@@ -666,6 +684,9 @@ models:
           - unique
           - not_null
           - source_not_in_target:
+              arguments:
+                target_model: "{{ ref('FactSales') }}"
+          - target_not_in_source:
               arguments:
                 target_model: "{{ ref('FactSales') }}"
           - source_hashdiff_matches_target:
@@ -778,6 +799,9 @@ models:
           - source_not_in_target:
               arguments:
                 target_model: "{{ ref('FactInventorySnapshot') }}"
+          - target_not_in_source:
+              arguments:
+                target_model: "{{ ref('FactInventorySnapshot') }}"
           - source_hashdiff_matches_target:
               arguments:
                 target_model: "{{ ref('FactInventorySnapshot') }}"
@@ -870,6 +894,9 @@ models:
           - unique
           - not_null
           - source_not_in_target:
+              arguments:
+                target_model: "{{ ref('FactPurchaseOrder') }}"
+          - target_not_in_source:
               arguments:
                 target_model: "{{ ref('FactPurchaseOrder') }}"
           - source_hashdiff_matches_target:

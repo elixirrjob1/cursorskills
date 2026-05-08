@@ -243,7 +243,7 @@ In incremental runs, append `↩ carried` to the existing Notes value in the Uni
 
 ### Step 7: Update history and generate benchmark reports
 
-After saving the review markdown file, do **four** more things in order (**7a–7d**).
+After saving the review markdown file, do **five** more things in order (**7a–7f**).
 
 #### 7a: Append to `tests/results/history.json`
 
@@ -267,13 +267,14 @@ Read the existing file (create it with `{"history": []}` if absent), then append
       "benchmark_md": "runs/<RUN_SLUG>/benchmark-<skill-name>-<RUN_SLUG>.md",
       "benchmark_html": "runs/<RUN_SLUG>/benchmark-<skill-name>-<RUN_SLUG>.html",
       "snapshot_dir": "snapshots/<skill-folder-name>/<RUN_SLUG>",
-      "comparison_file": "runs/<RUN_SLUG>/comparison/comparison-summary.json or null"
+      "comparison_file": "runs/<RUN_SLUG>/comparison/comparison-summary.json or null",
+      "readme": "README.md or null (null when verdict is FAIL)"
     }
   ]
 }
 ```
 
-> ⚠️ **Required in every history.json entry:** `reviewed_at` (ISO 8601 UTC, from Step 1), `run_slug`, `review_file`, `benchmark_md`, `benchmark_html`, `snapshot_dir`, `verdict`. When describing or citing `history.json` to a user, always name **`reviewed_at`** explicitly — it is the primary timestamp key for the run.
+> ⚠️ **Required in every history.json entry:** `reviewed_at` (ISO 8601 UTC, from Step 1), `run_slug`, `review_file`, `benchmark_md`, `benchmark_html`, `snapshot_dir`, `verdict`, `readme` (`"README.md"` when PASS, `null` when FAIL). When describing or citing `history.json` to a user, always name **`reviewed_at`** explicitly — it is the primary timestamp key for the run.
 
 - **`reviewed_at`** — ISO 8601 UTC; must match the instant recorded in Step 1.
 - **`date`** — calendar portion only (for dashboards); same local-calendar day as `reviewed_at` in UTC unless you document otherwise.
@@ -382,6 +383,63 @@ rsync -a \
 ```
 
 This records **`SKILL.md`**, **`agents/`**, **`references/`**, **`tests/evals/`**, **`tests/test-cases.md`**, **`tests/test_skill.py`**, and **`tests/results/history.json`** — but **not** `tests/results/runs/` (all per-run artifacts stay there) and **not** `tests/results/snapshots/` (avoids recursion). The **next** review diffs the live skill-definition paths against this snapshot to decide Step 3c. The **next** review diffs the live tree vs the **last** history entry’s `snapshot_dir` to decide Step 3c.
+
+#### 7f: Write or update README.md (PASS runs only)
+
+**Trigger:** Only execute this step when the overall verdict is **PASS**. Skip entirely on FAIL runs — do not create or overwrite an existing README on a failing run.
+
+Write (or overwrite) **`$SKILL_DIR/README.md`** with a human-readable landing page for the skill repo. Derive all content from information already computed in this run — do not invent values.
+
+**Required sections, in this order:**
+
+1. **Header** — `# <skill display name>` from SKILL.md frontmatter `name` field (title-cased), followed by a one-line blockquote with `Owner`, `Version`, and `Lifecycle` from the Registry table in SKILL.md.
+
+2. **Description** — the `description` field from SKILL.md frontmatter, rendered as a short paragraph.
+
+3. **Latest Review** — a summary table with exactly these rows (values from this run):
+
+   | Metric | Result |
+   |--------|--------|
+   | Overall Verdict | ✅ PASS |
+   | Unit Tests | X / Y (Z%) |
+   | Assertions | A / B (C%) |
+   | Categories | X / 13 (100%) |
+   | High Failures | — |
+   | Medium Failures | — |
+   | Comparator | `<comparator outcome or "— (not run)">` |
+
+   Follow the summary table with a link to the latest benchmark: `[Full benchmark report](tests/results/benchmark-<skill-name>-latest.md)`
+
+4. **Unit Test Results** — the full unit test results table from this run (columns: `#`, `Test`, `Type`, `Result`) with ✅ / ❌ per row.
+
+5. **Review History** — the full history table from `history.json` (columns: `Reviewed at (UTC)`, `Unit Tests`, `Assertions`, `Categories`, `Verdict`). Bold the most recent row. Use ✅ for PASS and ❌ for FAIL in the Verdict column.
+
+6. **Quick Start** — extract and render verbatim from SKILL.md: the Prerequisites list, the Configuration environment-variables table (if present), and the Workflow section (numbered steps and any code blocks). If SKILL.md does not have a Workflow section, render the first numbered-list or code-block section that describes how to invoke the skill.
+
+7. **Skill Triggers** — one sentence stating what phrases trigger this skill, extracted from the `description` frontmatter field or a "Triggers:" line if present. If a `Coexistence & Routing` or similar section exists in SKILL.md, include its adjacent-skills table under a sub-heading `### Adjacent skills`.
+
+8. **Files** — a fenced code block listing the conventional skill files and their one-line purpose. Only list files that actually exist in the skill folder:
+   ```
+   SKILL.md                               ← agent instructions
+   reference.md (if present)             ← API or domain reference
+   requirements.txt (if present)         ← pinned Python dependencies
+   scripts/<script>.py (if present)      ← executable script
+   tests/test-cases.md                   ← behavioural assertions
+   tests/test_skill.py                   ← pytest-compatible unit test stubs
+   tests/evals/evals.json                ← machine-readable eval suite
+   tests/results/history.json            ← all review runs
+   tests/results/benchmark-*-latest.md   ← latest benchmark (markdown)
+   tests/results/benchmark-*-latest.html ← latest benchmark (HTML)
+   ```
+
+9. **Security** (only if SKILL.md has a `Credential Security` or `Security` section) — reproduce that section as a bullet list.
+
+10. **Registry** — reproduce the Registry table from SKILL.md as a two-column `Field` / `Value` table. Add a `Source` row pointing to the primary repo path and a `Mirror` row pointing to the secondary skill repo if known (check `skills-secondary-repos.mdc` rule for the mapping).
+
+**Formatting rules:**
+- Derive all content from SKILL.md, the benchmark, `history.json`, and `evals.json`. Do not invent values.
+- Do not include agent-instruction-only prose (rubric internals, grader instructions, reviewer-only notes).
+- The README must be self-contained: a developer cloning only the secondary skill repo should understand what the skill does, how to run it, and what its latest test status is.
 
 ---
 
@@ -606,7 +664,10 @@ A category or eval that was previously **FAIL** is never carried — it is alway
 **Grader is the source of truth on assertion conflicts.**  
 If your initial PASS/FAIL verdict for a unit test disagrees with the grader's `overall_result`, trust the grader (Step 3b) and update the unit test summary accordingly.
 
-**`RUN_SLUG` colons are stripped.**  
+**README.md is only written on PASS.**
+Step 7f is skipped on FAIL runs. An existing README from a prior PASS run is left unchanged, preserving the last known-good state. Never overwrite a README with a FAIL run's data.
+
+**RUN_SLUG` colons are stripped.**  
 `reviewed_at` uses standard ISO 8601 (`2026-05-07T11:21:20Z`); `RUN_SLUG` removes the colons from the time portion (`2026-05-07T112120Z`). Both refer to the same instant. Use `RUN_SLUG` for folder names and filenames; use `reviewed_at` for JSON fields and report headers.
 
 **Legacy `runs/YYYY-MM-DD/` directories.**  

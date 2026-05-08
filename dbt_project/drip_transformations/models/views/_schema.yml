@@ -515,6 +515,9 @@ models:
           - source_not_in_target:
               arguments:
                 target_model: "{{ ref('DimSupplier') }}"
+          - target_not_in_source:
+              arguments:
+                target_model: "{{ ref('DimSupplier') }}"
           - source_hashdiff_matches_target:
               arguments:
                 target_model: "{{ ref('DimSupplier') }}"

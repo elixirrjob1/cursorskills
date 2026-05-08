@@ -40,6 +40,7 @@ git push
 | `database-setup` | `skill-database-setup` |
 | `dbt-cloud-log-extractor` | `skill-dbt-cloud-log-extractor` |
 | `dbt-model-from-stm` | `skill-dbt-model-from-stm` |
+| `governance-import-dbt-lineage` | `skill-governance-import-dbt-lineage` |
 | `governance-vocab-generator` | `skill-governance-vocab-generator-v2` |
 | `ingestion-from-analyzer` | `skill-ingestion-from-analyzer` |
 | `json-to-excel-export` | `skill-json-to-excel-export` |

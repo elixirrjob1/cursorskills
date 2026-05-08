@@ -1,0 +1,22 @@
+{
+  "eval_id": 2,
+  "prompt_short": "Push my retail-governance-vocab.md to the data catalog",
+  "overall_result": "FAIL",
+  "assertions": [
+    {
+      "text": "Response includes a publish_vocab.py command with --file argument",
+      "passed": false,
+      "evidence": "SKILL.md Step 1 instructs agent to confirm file path AND verify env vars before proceeding to Step 2 (run command). With file given but env vars unconfirmed, agent stops at Step 1 confirmation phase without showing the full command. SKILL.md workflow unchanged from prior review — same step-gating behavior expected."
+    },
+    {
+      "text": "Response references OM_TOKEN (JWT / service account token)",
+      "passed": true,
+      "evidence": "SKILL.md Step 1 explicitly says 'verify OM_BASE_URL and OM_TOKEN are set'; agent references both env vars. Script now consistent with SKILL.md (OM_TOKEN used for Bearer auth)."
+    },
+    {
+      "text": "Response does NOT include --username or --password flags in the run command",
+      "passed": true,
+      "evidence": "Script updated to use OM_TOKEN env var exclusively; no --username or --password args remain. SKILL.md workflow command is 'python publish_vocab.py --file <path>' with no credential flags."
+    }
+  ]
+}

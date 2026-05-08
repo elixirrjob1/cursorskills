@@ -1,0 +1,22 @@
+{
+  "eval_id": 3,
+  "prompt_short": "Sync our governance tags — re-run the vocab publisher",
+  "overall_result": "FAIL",
+  "assertions": [
+    {
+      "text": "Response states or implies the script is idempotent / safe to re-run",
+      "passed": true,
+      "evidence": "SKILL.md 'What the script does' section states 'The script is idempotent — safe to re-run at any time. Running twice against unchanged vocabulary produces zero writes.' Agent surfaces this detail."
+    },
+    {
+      "text": "Response includes the publish_vocab.py command",
+      "passed": false,
+      "evidence": "No file path is given in the prompt. SKILL.md Step 1 requires confirming the .md file path before proceeding to run the script. Agent stops at Step 1 confirmation phase — same SKILL.md-driven behavior as prior review (SKILL.md unchanged)."
+    },
+    {
+      "text": "Response does not warn that re-running will cause destructive changes",
+      "passed": true,
+      "evidence": "SKILL.md clearly states idempotent behavior; agent correctly omits any destructive-change warning."
+    }
+  ]
+}

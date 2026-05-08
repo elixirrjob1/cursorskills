@@ -1,0 +1,22 @@
+{
+  "eval_id": 12,
+  "prompt_short": "I want to publish but haven't set up the service account yet",
+  "overall_result": "PASS",
+  "assertions": [
+    {
+      "text": "Response lists prerequisite setup steps (service account and/or OM_TOKEN)",
+      "passed": true,
+      "evidence": "SKILL.md Prerequisites section lists vocab-publisher-bot, VocabPublisherPolicy, OM_TOKEN. Agent produces a setup guide covering all required steps."
+    },
+    {
+      "text": "Response references vocab-publisher-bot or equivalent service account",
+      "passed": true,
+      "evidence": "SKILL.md Prerequisites and Gotchas explicitly name 'vocab-publisher-bot'. Agent surfaces this service account name."
+    },
+    {
+      "text": "Response does NOT proceed to run the script before prerequisites are confirmed",
+      "passed": true,
+      "evidence": "Agent stops at prerequisite setup guidance and indicates they will run the publish script once prerequisites are in place."
+    }
+  ]
+}

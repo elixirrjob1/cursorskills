@@ -1,0 +1,22 @@
+{
+  "eval_id": 13,
+  "prompt_short": "I get SSL errors when trying to publish",
+  "overall_result": "PASS",
+  "assertions": [
+    {
+      "text": "Response links SSL/TLS errors to the HTTP vs HTTPS mismatch",
+      "passed": true,
+      "evidence": "SKILL.md Gotchas: 'If OM_BASE_URL starts with https:// but the server is running plain HTTP, requests will raise a TLS handshake error.' Agent cites this directly."
+    },
+    {
+      "text": "Response advises checking or correcting the OM_BASE_URL scheme (http:// vs https://)",
+      "passed": true,
+      "evidence": "Agent advises correcting OM_BASE_URL scheme. SKILL.md Gotchas covers this exactly."
+    },
+    {
+      "text": "Response does NOT suggest reinstalling requests or Python as primary fix",
+      "passed": true,
+      "evidence": "Primary fix is OM_BASE_URL scheme correction. No reinstall suggestions. Correct root-cause diagnosis per SKILL.md Gotchas."
+    }
+  ]
+}

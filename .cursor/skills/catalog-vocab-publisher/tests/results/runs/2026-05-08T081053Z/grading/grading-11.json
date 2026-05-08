@@ -1,0 +1,22 @@
+{
+  "eval_id": 11,
+  "prompt_short": "Publish my vocab",
+  "overall_result": "PASS",
+  "assertions": [
+    {
+      "text": "Response asks for the vocabulary .md file path",
+      "passed": true,
+      "evidence": "No file path in prompt. SKILL.md Step 1 requires confirming the .md file path. Agent correctly asks for it before proceeding."
+    },
+    {
+      "text": "Response does NOT attempt to run the script without knowing the file path",
+      "passed": true,
+      "evidence": "Agent stops at Step 1, asks for file path. Does not show or execute the publish command without the required --file argument."
+    },
+    {
+      "text": "Response checks or asks about OM_BASE_URL and OM_TOKEN",
+      "passed": true,
+      "evidence": "SKILL.md Step 1: 'verify OM_BASE_URL and OM_TOKEN are set.' Agent asks if those env vars are configured."
+    }
+  ]
+}

@@ -16,18 +16,15 @@ https://sandbox.open-metadata.org/api/v1/classifications
 
 ## Authentication
 
-The bundled `publish_vocab.py` authenticates using a **long-lived Bot JWT token** read from the `OM_TOKEN` environment variable. No username or password is used — the token is issued to the `vocab-publisher-bot` service account under **Settings → Bots** in the OpenMetadata UI.
+The bundled `publish_vocab.py` authenticates with `POST /api/v1/users/login` (password is Base64-encoded in the JSON body per OpenMetadata’s login contract). It uses the returned `accessToken` as `Authorization: Bearer <token>` on all subsequent requests.
 
-All API requests carry the token as a standard Bearer header:
+For manual `curl` or other clients, use the same bearer header:
 
 ```
-Authorization: Bearer <OM_TOKEN value>
+Authorization: Bearer <token>
 Content-Type: application/json
 ```
 
-The base URL is read from `OM_BASE_URL` — no trailing slash, HTTPS required in production.
-
-**To regenerate the token:** navigate to **Settings → Bots → vocab-publisher-bot → Edit → Generate Token**, copy the new value, and update `OM_TOKEN` in your secret store (`.env` locally; GitHub Actions Secret or Azure Key Vault in CI/CD). Never log or echo the token value.
 ---
 
 ## Classifications

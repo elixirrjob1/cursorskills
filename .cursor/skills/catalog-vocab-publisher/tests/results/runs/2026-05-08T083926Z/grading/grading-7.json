@@ -1,0 +1,22 @@
+{
+  "eval_id": 7,
+  "prompt_short": "Our tag descriptions have changed — push the updates",
+  "overall_result": "FAIL",
+  "assertions": [
+    {
+      "text": "Response explains that changed descriptions will be updated and unchanged ones skipped",
+      "passed": false,
+      "evidence": "No file path given in prompt. Agent enters Step 1 confirmation phase and asks for the file path, preventing the UPDATED/SKIPPED explanation from appearing in the immediate response. Workflow section unchanged in this SKILL.md update."
+    },
+    {
+      "text": "Response includes publish_vocab.py command",
+      "passed": false,
+      "evidence": "No file path provided; agent must ask per SKILL.md Step 1 before showing the Step 2 command. Same step-gating behavior as prior review."
+    },
+    {
+      "text": "Response does NOT say all tags will be deleted and recreated",
+      "passed": true,
+      "evidence": "SKILL.md clearly describes create/update/skip logic, not delete-and-recreate. Agent correctly omits any deletion warning."
+    }
+  ]
+}

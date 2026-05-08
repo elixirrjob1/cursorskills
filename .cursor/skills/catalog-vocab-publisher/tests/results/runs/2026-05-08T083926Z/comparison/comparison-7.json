@@ -1,0 +1,6 @@
+{
+  "eval_id": 7,
+  "prompt_short": "Our tag descriptions have changed — push the updates",
+  "verdict": "tie",
+  "reasoning": "SKILL.md changes (Registry: Reviewer + versioning rows; Coexistence & Routing section) are governance metadata and routing documentation. The publish workflow (Steps 1-5), error handling branches, and all behavioral logic are unchanged. Both old and new skill trees produce equivalent responses for this prompt — same step-1 gating, same error-branch advice, same routing outcome."
+}

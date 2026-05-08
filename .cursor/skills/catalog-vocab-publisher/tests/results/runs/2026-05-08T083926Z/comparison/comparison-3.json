@@ -1,0 +1,7 @@
+{
+  "eval_id": 3,
+  "prompt_short": "Sync our governance tags — re-run the vocab publisher
+I get SSL errors when trying to publish",
+  "verdict": "tie",
+  "reasoning": "SKILL.md changes (Registry: Reviewer + versioning rows; Coexistence & Routing section) are governance metadata and routing documentation. The publish workflow (Steps 1-5), error handling branches, and all behavioral logic are unchanged. Both old and new skill trees produce equivalent responses for this prompt — same step-1 gating, same error-branch advice, same routing outcome."
+}

@@ -1,0 +1,22 @@
+{
+  "eval_id": 9,
+  "prompt_short": "Generate a governance vocabulary for the retail domain",
+  "overall_result": "PASS",
+  "assertions": [
+    {
+      "text": "Response does NOT attempt to run publish_vocab.py",
+      "passed": true,
+      "evidence": "Prompt is vocabulary generation. Coexistence & Routing section (new) explicitly states this skill does not fire on 'generate'. Agent correctly routes away from publishing."
+    },
+    {
+      "text": "Response indicates this is a vocabulary generation task (not publishing)",
+      "passed": true,
+      "evidence": "Agent produces vocabulary content for the retail domain — generation behavior confirmed. New Coexistence section strengthens routing precision."
+    },
+    {
+      "text": "Response does NOT ask for OM credentials or base URL",
+      "passed": true,
+      "evidence": "No OM_BASE_URL, OM_TOKEN, or OpenMetadata credentials mentioned. Generation tasks do not require publishing setup."
+    }
+  ]
+}

@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Benchmark Report: catalog-vocab-publisher</title>
+  <style>
+    body { font-family: system-ui, sans-serif; font-size: 14px; margin: 24px; background: #fff; color: #222; }
+    h1 { font-size: 1.35rem; margin-bottom: 0.25rem; }
+    h2 { font-size: 1.1rem; margin-top: 2rem; margin-bottom: 0.75rem; border-bottom: 1px solid #ccc; padding-bottom: 0.25rem; }
+    .meta { color: #555; margin-bottom: 1.5rem; }
+    table { border-collapse: collapse; width: 100%; margin: 0.5rem 0 1rem; }
+    th, td { border: 1px solid #ccc; padding: 8px 10px; text-align: left; }
+    tr:nth-child(even) { background: #f9f9f9; }
+    th { background: #eee; font-weight: 600; }
+    .pass { background: #d4edda; color: #155724; }
+    .fail { background: #f8d7da; color: #721c24; }
+    .skip { background: #fff3cd; color: #856404; }
+    .bar-track { display: inline-block; width: 120px; height: 10px; background: #e0e0e0; border-radius: 2px; vertical-align: middle; margin-right: 8px; }
+    .bar-fill { height: 100%; background: #28a745; border-radius: 2px; }
+    .note { color: #444; font-style: italic; margin: 0.5rem 0; }
+    code { font-size: 13px; background: #f4f4f4; padding: 1px 4px; border-radius: 2px; }
+  </style>
+</head>
+<body>
+  <h1>Benchmark Report: catalog-vocab-publisher</h1>
+  <p class="meta">Generated: 2026-05-08T08:10:53Z UTC · Incremental re-check; RUN_STEP_3C=true (scripts/publish_vocab.py changed); Cat 7 auth mismatch resolved</p>
+
+  <h2>Summary</h2>
+  <table>
+    <tr><th>Metric</th><th>Value</th></tr>
+    <tr><td>Overall Verdict</td><td class="fail">FAIL</td></tr>
+    <tr><td>Unit Tests</td><td>10 / 13 passed (77%)</td></tr>
+    <tr><td>Assertions</td><td>35 / 39 (90%)</td></tr>
+    <tr><td>Categories</td><td>12 / 13 passed</td></tr>
+    <tr><td>High Failures</td><td>1</td></tr>
+    <tr><td>Medium Failures</td><td>3 (Cat 11 versioning, Cat 13 requirements.txt, Cat 3 reference.md stale auth — Cat 3 still PASS)</td></tr>
+    <tr><td>Comparator</td><td class="skip">tie (0 new wins / 0 old wins / 13 ties — SKILL.md unchanged, only script changed)</td></tr>
+  </table>
+
+  <h2>Unit Test Results</h2>
+  <table>
+    <thead>
+      <tr><th>#</th><th>Test</th><th>Type</th><th>Result</th><th>Assertions</th><th>Evidence</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>1</td><td>Basic publish trigger</td><td>should-trigger</td><td class="pass">✅ PASS</td><td>3/3</td><td>Asks for file path and confirms OM_BASE_URL + OM_TOKEN per Step 1</td></tr>
+      <tr><td>2</td><td>Named file push with JWT auth</td><td>should-trigger</td><td class="fail">❌ FAIL</td><td>2/3</td><td>Assertion 1 fails: agent confirms env vars at Step 1 but does not yet show publish command</td></tr>
+      <tr><td>3</td><td>Idempotent re-run</td><td>should-trigger</td><td class="fail">❌ FAIL</td><td>2/3</td><td>Assertion 2 fails: agent notes idempotency correctly but stops at Step 1 without showing command</td></tr>
+      <tr><td>4</td><td>401 error handling</td><td>should-trigger</td><td class="pass">✅ PASS</td><td>3/3</td><td>Token expiry, Settings → Bots → vocab-publisher-bot, update OM_TOKEN</td></tr>
+      <tr><td>5</td><td>403 error handling</td><td>should-trigger</td><td class="pass">✅ PASS</td><td>3/3</td><td>Permissions vs auth distinction; VocabPublisherPolicy; Settings → Bots path</td></tr>
+      <tr><td>6</td><td>Upload framework</td><td>should-trigger</td><td class="pass">✅ PASS</td><td>3/3</td><td>File path confirmed; publish script referenced; no generation attempted</td></tr>
+      <tr><td>7</td><td>Push updated descriptions</td><td>should-trigger</td><td class="fail">❌ FAIL</td><td>1/3</td><td>Assertions 1 and 2 fail: Step 1 gating prevents UPDATED/SKIPPED explanation and command</td></tr>
+      <tr><td>8</td><td>Exact trigger phrase</td><td>should-trigger</td><td class="pass">✅ PASS</td><td>3/3</td><td>Exact trigger phrase; workflow engaged immediately; no routing confusion</td></tr>
+      <tr><td>9</td><td>Should-not-trigger: vocab generation</td><td>should-not-trigger</td><td class="pass">✅ PASS</td><td>3/3</td><td>Routes to generation behavior; no publish_vocab.py; no OM credentials requested</td></tr>
+      <tr><td>10</td><td>Should-not-trigger: Snowflake ingestion</td><td>should-not-trigger</td><td class="pass">✅ PASS</td><td>3/3</td><td>Routes to catalog ingestion; no vocabulary publishing actions</td></tr>
+      <tr><td>11</td><td>Edge: no file path</td><td>edge-case</td><td class="pass">✅ PASS</td><td>3/3</td><td>Correctly stops at Step 1, requests file path, checks env vars</td></tr>
+      <tr><td>12</td><td>Edge: service account not set up</td><td>edge-case</td><td class="pass">✅ PASS</td><td>3/3</td><td>Surfaces Prerequisites; names vocab-publisher-bot; waits for setup confirmation</td></tr>
+      <tr><td>13</td><td>Edge: SSL errors</td><td>edge-case</td><td class="pass">✅ PASS</td><td>3/3</td><td>Links TLS error to HTTP vs HTTPS scheme mismatch; advises correcting OM_BASE_URL</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Assertion Detail</h2>
+  <p class="note">Full assertion-by-assertion roll-up below (Step 3b). All 13 evals re-run (RUN_STEP_3C=true).</p>
+  <table>
+    <thead>
+      <tr><th>Eval</th><th>Assertion</th><th>Passed</th><th>Evidence</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>1</td><td>Response asks for or confirms the .md vocabulary file path</td><td class="pass">Yes</td><td>Agent asks 'Which vocabulary file do you want to publish?' per SKILL.md Step 1</td></tr>
+      <tr><td>1</td><td>Response references OM_BASE_URL and/or OM_TOKEN environment variables</td><td class="pass">Yes</td><td>SKILL.md Step 1 requires verifying both env vars; agent confirms both</td></tr>
+      <tr><td>1</td><td>Response does NOT use --username / --password flags</td><td class="pass">Yes</td><td>Script now uses env vars only; no credential flags in SKILL.md or script</td></tr>
+      <tr><td>2</td><td>Response includes a publish_vocab.py command with --file argument</td><td class="fail">No</td><td>SKILL.md Step 1 gates command on file + env-var confirmation; env vars unconfirmed → agent stays in Step 1 without showing command</td></tr>
+      <tr><td>2</td><td>Response references OM_TOKEN (JWT / service account token)</td><td class="pass">Yes</td><td>SKILL.md Step 1: 'verify OM_TOKEN'; agent references it. Script now consistent (Bearer JWT).</td></tr>
+      <tr><td>2</td><td>Response does NOT include --username or --password flags in the run command</td><td class="pass">Yes</td><td>Script updated to env vars only; no credential CLI flags anywhere</td></tr>
+      <tr><td>3</td><td>Response states or implies the script is idempotent / safe to re-run</td><td class="pass">Yes</td><td>SKILL.md 'What the script does': 'idempotent — safe to re-run at any time'; agent surfaces this</td></tr>
+      <tr><td>3</td><td>Response includes the publish_vocab.py command</td><td class="fail">No</td><td>No file path given in prompt; SKILL.md Step 1 requires confirming it before proceeding to Step 2 command</td></tr>
+      <tr><td>3</td><td>Response does not warn that re-running will cause destructive changes</td><td class="pass">Yes</td><td>Idempotency stated; no destructive warning issued</td></tr>
+      <tr><td>4</td><td>Response references the bot token expiry / revocation as cause of 401</td><td class="pass">Yes</td><td>SKILL.md Step 4: 'bot token has expired or been revoked'; agent cites directly</td></tr>
+      <tr><td>4</td><td>Response mentions regenerating the token under Settings → Bots or vocab-publisher-bot</td><td class="pass">Yes</td><td>SKILL.md Step 4: 'Settings → Bots → vocab-publisher-bot'; exact path cited</td></tr>
+      <tr><td>4</td><td>Response mentions updating OM_TOKEN after regeneration</td><td class="pass">Yes</td><td>SKILL.md Step 4: 'update OM_TOKEN'; agent instructs update after regeneration</td></tr>
+      <tr><td>5</td><td>Response explains 403 is a permissions error (not auth)</td><td class="pass">Yes</td><td>SKILL.md Step 5: 'missing write permissions'; agent distinguishes 403 from 401</td></tr>
+      <tr><td>5</td><td>Response mentions VocabPublisherPolicy or equivalent custom policy</td><td class="pass">Yes</td><td>VocabPublisherPolicy named explicitly; agent surfaces it from SKILL.md Step 5 and Gotchas</td></tr>
+      <tr><td>5</td><td>Response directs user to Settings → Bots → vocab-publisher-bot → Roles</td><td class="pass">Yes</td><td>SKILL.md Step 5 exact UI path; agent follows it</td></tr>
+      <tr><td>6</td><td>Response asks for or confirms the vocabulary .md file path</td><td class="pass">Yes</td><td>SKILL.md Step 1: 'Confirm the .md vocab file path'; agent asks for it</td></tr>
+      <tr><td>6</td><td>Response includes or references the publish_vocab.py script invocation</td><td class="pass">Yes</td><td>Agent references publish script; SKILL.md Step 2 shows exact command</td></tr>
+      <tr><td>6</td><td>Response does NOT attempt to generate a vocabulary (that is a different skill)</td><td class="pass">Yes</td><td>Agent stays in publishing workflow; no generation attempted</td></tr>
+      <tr><td>7</td><td>Response explains that changed descriptions will be updated and unchanged ones skipped</td><td class="fail">No</td><td>Agent enters Step 1 confirmation phase without file path; UPDATED/SKIPPED explanation not surfaced</td></tr>
+      <tr><td>7</td><td>Response includes publish_vocab.py command</td><td class="fail">No</td><td>No file path in prompt; SKILL.md Step 1 gating prevents Step 2 command from appearing</td></tr>
+      <tr><td>7</td><td>Response does NOT say all tags will be deleted and recreated</td><td class="pass">Yes</td><td>SKILL.md describes create/update/skip logic; no deletion language used</td></tr>
+      <tr><td>8</td><td>Response engages with the publish workflow (confirms file path and/or env vars)</td><td class="pass">Yes</td><td>Exact trigger phrase; agent immediately enters publish workflow per Step 1</td></tr>
+      <tr><td>8</td><td>Response does NOT deflect to a different skill</td><td class="pass">Yes</td><td>No deflection; agent stays in publish context</td></tr>
+      <tr><td>8</td><td>Response does NOT ask clarifying questions about whether to generate vs publish</td><td class="pass">Yes</td><td>No generate-vs-publish confusion; correct intent parsed</td></tr>
+      <tr><td>9</td><td>Response does NOT attempt to run publish_vocab.py</td><td class="pass">Yes</td><td>'Generate' prompt routes to vocab generator; no publish_vocab.py invoked</td></tr>
+      <tr><td>9</td><td>Response indicates this is a vocabulary generation task (not publishing)</td><td class="pass">Yes</td><td>Agent produces vocabulary content — generation behavior confirmed</td></tr>
+      <tr><td>9</td><td>Response does NOT ask for OM credentials or base URL</td><td class="pass">Yes</td><td>No OM_BASE_URL or OM_TOKEN mentioned for generation task</td></tr>
+      <tr><td>10</td><td>Response does NOT run or reference publish_vocab.py</td><td class="pass">Yes</td><td>Ingestion task; no publish_vocab.py referenced</td></tr>
+      <tr><td>10</td><td>Response treats this as a catalog ingestion / sync task</td><td class="pass">Yes</td><td>Agent engages with catalog ingestion workflow</td></tr>
+      <tr><td>10</td><td>Response does NOT ask for a vocabulary .md file</td><td class="pass">Yes</td><td>No vocabulary file requested; agent works with ingestion pipeline</td></tr>
+      <tr><td>11</td><td>Response asks for the vocabulary .md file path</td><td class="pass">Yes</td><td>No file in prompt; SKILL.md Step 1 triggers file path request</td></tr>
+      <tr><td>11</td><td>Response does NOT attempt to run the script without knowing the file path</td><td class="pass">Yes</td><td>Agent stops at Step 1; no premature script execution</td></tr>
+      <tr><td>11</td><td>Response checks or asks about OM_BASE_URL and OM_TOKEN</td><td class="pass">Yes</td><td>SKILL.md Step 1; agent confirms env vars needed</td></tr>
+      <tr><td>12</td><td>Response lists prerequisite setup steps (service account and/or OM_TOKEN)</td><td class="pass">Yes</td><td>SKILL.md Prerequisites; agent produces full setup guide</td></tr>
+      <tr><td>12</td><td>Response references vocab-publisher-bot or equivalent service account</td><td class="pass">Yes</td><td>'vocab-publisher-bot' named explicitly per SKILL.md Prerequisites</td></tr>
+      <tr><td>12</td><td>Response does NOT proceed to run the script before prerequisites are confirmed</td><td class="pass">Yes</td><td>Agent waits for prerequisite confirmation before offering to run</td></tr>
+      <tr><td>13</td><td>Response links SSL/TLS errors to the HTTP vs HTTPS mismatch</td><td class="pass">Yes</td><td>SKILL.md Gotchas: TLS handshake error from scheme mismatch; agent cites directly</td></tr>
+      <tr><td>13</td><td>Response advises checking or correcting the OM_BASE_URL scheme (http:// vs https://)</td><td class="pass">Yes</td><td>Agent advises correcting OM_BASE_URL scheme per SKILL.md Gotchas</td></tr>
+      <tr><td>13</td><td>Response does NOT suggest reinstalling requests or Python as primary fix</td><td class="pass">Yes</td><td>Primary fix is scheme correction; no reinstall suggestions</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Category Grades</h2>
+  <table>
+    <thead>
+      <tr><th>#</th><th>Category</th><th>Grade</th><th>Explanation</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>1</td><td>Triggering (Description Quality)</td><td class="pass">PASS ↩ carried</td><td>Name 23 chars, valid; what/when/triggers all present; 5 explicit trigger phrases cover natural synonyms</td></tr>
+      <tr><td>2</td><td>Anatomy &amp; Structure</td><td class="pass">PASS ↩ carried</td><td>Valid YAML frontmatter; ~139 lines (well under 500); reference.md is one hop from SKILL.md</td></tr>
+      <tr><td>3</td><td>Instructions Clarity</td><td class="pass">PASS ↩ carried</td><td>Step-by-step workflow; explicit 401/403 branches; consistent terminology; reference.md auth section stale (MEDIUM note — category still PASS)</td></tr>
+      <tr><td>4</td><td>Output Quality</td><td class="pass">PASS ↩ carried</td><td>Example output block defines exact CREATED/UPDATED/SKIPPED format; template strictness appropriate</td></tr>
+      <tr><td>5</td><td>Testability</td><td class="pass">PASS ↩ carried</td><td>13-case eval suite present; all HIGH subcategories pass; test-cases.md and test_skill.py maintained</td></tr>
+      <tr><td>6</td><td>Resource Efficiency</td><td class="pass">PASS ↩ carried</td><td>Pre-built script invoked deterministically; no over-explanation; common-knowledge explanations stripped</td></tr>
+      <tr><td>7</td><td>Security &amp; Trust</td><td class="pass">PASS</td><td>Re-evaluated: script now uses OM_TOKEN env var exclusively — auth mismatch resolved. No hardcoded credentials, no sensitive value logging, no sleeping payloads</td></tr>
+      <tr><td>8</td><td>Coexistence &amp; Recall</td><td class="pass">PASS ↩ carried</td><td>Specific triggers reduce false routing; coexistence note absent (LOW — does not fail category)</td></tr>
+      <tr><td>9</td><td>Model Compatibility</td><td class="pass">PASS ↩ carried</td><td>validated_on: Claude Sonnet 4.6 in frontmatter and Registry</td></tr>
+      <tr><td>10</td><td>Workflow &amp; Feedback Loops</td><td class="pass">PASS ↩ carried</td><td>Confirm → run → review loop; 401/403 fix-and-retry paths; idempotency documented</td></tr>
+      <tr><td>11</td><td>Maintainability &amp; Lifecycle</td><td class="fail">FAIL</td><td>[HIGH] No peer review / separation-of-duties requirement documented; [MEDIUM] versioning strategy missing</td></tr>
+      <tr><td>12</td><td>Gotchas / Lessons Learned</td><td class="pass">PASS ↩ carried</td><td>5 real-world gotchas: bot policy, HTTP/HTTPS, PowerShell, token expiry, .env git-ignore</td></tr>
+      <tr><td>13</td><td>Anti-Pattern Audit</td><td class="pass">PASS ↩ carried</td><td>Explicit error handling in script; no voodoo constants; requirements.txt missing (MEDIUM FAIL, 3/4 MEDIUM = 75% ≥ 70%)</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Version Comparison</h2>
+  <p class="note">RUN_STEP_3C=true (scripts/publish_vocab.py changed vs prior snapshot 2026-05-07T140243Z). SKILL.md unchanged between snapshots.</p>
+  <table>
+    <thead>
+      <tr><th>Eval</th><th>Verdict</th><th>Reasoning</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>1–13</td><td class="skip">tie</td><td>SKILL.md identical between old and new trees; executor outputs functionally equivalent (13 ties, 0 new wins, 0 old wins)</td></tr>
+    </tbody>
+  </table>
+
+  <h2>History (all reviews)</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Reviewed at (UTC)</th>
+        <th>Date</th>
+        <th>Unit Tests</th>
+        <th>Assertions</th>
+        <th>Categories</th>
+        <th>Verdict</th>
+        <th>Notes</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>2026-05-07T14:02:43Z</td>
+        <td>2026-05-07</td>
+        <td><span class="bar-track"><span class="bar-fill" style="width:77%"></span></span>10/13 (77%)</td>
+        <td><span class="bar-track"><span class="bar-fill" style="width:82%"></span></span>32/39 (82%)</td>
+        <td><span class="bar-track"><span class="bar-fill" style="width:85%"></span></span>11/13 (85%)</td>
+        <td class="fail">FAIL</td>
+        <td>Initial review; Cat 7 HIGH: auth mismatch (script used --username/--password vs SKILL.md OM_TOKEN); Cat 11 HIGH: no separation of duties</td>
+      </tr>
+      <tr>
+        <td>2026-05-08T08:10:53Z</td>
+        <td>2026-05-08</td>
+        <td><span class="bar-track"><span class="bar-fill" style="width:77%"></span></span>10/13 (77%)</td>
+        <td><span class="bar-track"><span class="bar-fill" style="width:90%"></span></span>35/39 (90%)</td>
+        <td><span class="bar-track"><span class="bar-fill" style="width:92%"></span></span>12/13 (92%)</td>
+        <td class="fail">FAIL</td>
+        <td>Incremental; Cat 7 resolved (script updated to OM_TOKEN env var); Cat 11 HIGH still open (no peer review requirement)</td>
+      </tr>
+    </tbody>
+  </table>
+  <p class="note">Full narrative: <code>review-catalog-vocab-publisher-2026-05-08T081053Z.md</code></p>
+</body>
+</html>

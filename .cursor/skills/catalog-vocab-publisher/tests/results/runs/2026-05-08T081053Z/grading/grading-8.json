@@ -1,0 +1,22 @@
+{
+  "eval_id": 8,
+  "prompt_short": "Push vocabulary to OpenMetadata, publish classifications",
+  "overall_result": "PASS",
+  "assertions": [
+    {
+      "text": "Response engages with the publish workflow (confirms file path and/or env vars)",
+      "passed": true,
+      "evidence": "Exact trigger phrase from SKILL.md description. Agent immediately enters publish workflow, confirms file path and checks OM_BASE_URL / OM_TOKEN per Step 1."
+    },
+    {
+      "text": "Response does NOT deflect to a different skill",
+      "passed": true,
+      "evidence": "Agent remains in the publish workflow context. No deflection to catalog-sync or governance-vocab-generator."
+    },
+    {
+      "text": "Response does NOT ask clarifying questions about whether to generate vs publish",
+      "passed": true,
+      "evidence": "No generate-vs-publish ambiguity raised. Agent correctly interprets as a publishing task."
+    }
+  ]
+}

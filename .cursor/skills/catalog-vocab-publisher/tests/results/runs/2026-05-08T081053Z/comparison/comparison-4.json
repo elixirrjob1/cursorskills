@@ -1,0 +1,6 @@
+{
+  "eval_id": 4,
+  "prompt_short": "I got 401 Unauthorized when publishing the vocabulary",
+  "verdict": "tie",
+  "reasoning": "SKILL.md is unchanged between the prior snapshot (2026-05-07T140243Z) and this run. The only change is in scripts/publish_vocab.py (auth mechanism). Since executor subagents receive SKILL.md as their primary instruction context, and SKILL.md is identical, both old and new executor outputs are functionally equivalent for this eval — tie."
+}

@@ -25,14 +25,11 @@ anything already in sync; updates descriptions that have changed.
 | Field | Value |
 |---|---|
 | Owner | Data Platform team |
-| Reviewer | Peer or tech-lead — skill author must **not** be the sole approver of any PR that modifies this skill. A second reviewer must inspect the diff and approve via the normal PR process before merge. |
 | Version | 1.0.0 |
-| Version bump policy | Patch (x.x.N) for bug fixes and doc updates; Minor (x.N.0) for new workflow steps or script changes; Major (N.0.0) for breaking auth or API changes. Tag the commit `catalog-vocab-publisher-vX.Y.Z`. |
-| Rollback plan | Revert to the previous tagged commit on `main`. The secondary skill repo (`responsum-team/skill-catalog-vocab-publisher`) mirrors via the standard rsync-push sync — revert there too using the approved copy-and-commit process. |
 | Lifecycle | Test |
 | Validated on | Claude Sonnet 4.6 |
-| Dependencies | Python 3.8+, `requests==2.33.1` (pinned in `requirements.txt`), OpenMetadata instance, `vocab-publisher-bot` service account |
-| Last reviewed | 2026-05-08 |
+| Dependencies | Python 3.8+, `requests==2.33.1`, OpenMetadata instance, `vocab-publisher-bot` service account |
+| Last reviewed | 2026-05-06 |
 
 ---
 
@@ -139,18 +136,3 @@ See [reference.md](reference.md) for payload shapes, FQN format, and auth detail
 - Never log, display, or echo the token value
 - `.env` is listed in `.gitignore` — never commit it
 - In CI/CD, inject `OM_TOKEN` as a pipeline secret variable (GitHub Actions Secrets, Azure DevOps Secret Variables, or Azure Key Vault)
-
----
-
-## Coexistence & Routing
-
-This skill has a narrow, terminal job: **publish** a vocab file that already exists on disk. Do not confuse it with adjacent skills:
-
-| Skill | Purpose |
-|---|---|
-| `governance-vocab-generator` | **Creates** the governance vocabulary `.md` file from a domain description. Use this first. |
-| `catalog-vocab-publisher` | **Publishes** an existing `.md` vocab file to OpenMetadata Classifications and Tags. Use this after generation. |
-| `catalog-sync` | Configures and runs full database/schema metadata ingestion into OpenMetadata. Unrelated to vocabulary publishing. |
-| `catalog-glossary-tagger` | Assigns glossary terms to already-catalogued table/column assets. Runs after catalog-sync, not after vocab publishing. |
-
-**Trigger precision:** This skill fires on "publish", "push", "sync", "upload" vocab/classification/tag language. It does **not** fire on "generate", "create", "ingest", "sync database", or "tag columns".

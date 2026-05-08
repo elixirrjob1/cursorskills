@@ -1,0 +1,10 @@
+{
+  "reviewed_at": "2026-05-08T08:10:53Z",
+  "review_date": "2026-05-08",
+  "overall": "tie",
+  "new_wins": 0,
+  "old_wins": 0,
+  "ties": 13,
+  "total_compared": 13,
+  "note": "SKILL.md was identical between the prior snapshot (2026-05-07T140243Z) and this run. Only scripts/publish_vocab.py changed. Since executor subagents receive SKILL.md as their primary instruction context, all outputs are equivalent — 13 ties."
+}

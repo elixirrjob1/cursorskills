@@ -1,0 +1,22 @@
+{
+  "eval_id": 2,
+  "prompt_short": "Push my retail-governance-vocab.md to the data catalog",
+  "overall_result": "FAIL",
+  "assertions": [
+    {
+      "text": "Response includes a publish_vocab.py command with --file argument",
+      "passed": false,
+      "evidence": "SKILL.md Step 1 still gates on confirming env vars before proceeding to Step 2 command. File path is given but agent stops to verify OM_BASE_URL/OM_TOKEN first. Workflow section unchanged in this SKILL.md update."
+    },
+    {
+      "text": "Response references OM_TOKEN (JWT / service account token)",
+      "passed": true,
+      "evidence": "Agent references OM_TOKEN for Bearer JWT auth per SKILL.md Step 1 and updated reference.md. Auth model now fully consistent across all skill files."
+    },
+    {
+      "text": "Response does NOT include --username or --password flags in the run command",
+      "passed": true,
+      "evidence": "No credential flags in publish_vocab.py or SKILL.md. OM_TOKEN env var is the sole auth mechanism."
+    }
+  ]
+}

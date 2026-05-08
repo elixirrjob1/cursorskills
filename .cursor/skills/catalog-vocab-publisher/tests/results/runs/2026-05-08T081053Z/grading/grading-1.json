@@ -1,0 +1,22 @@
+{
+  "eval_id": 1,
+  "prompt_short": "Publish my governance vocabulary to OpenMetadata",
+  "overall_result": "PASS",
+  "assertions": [
+    {
+      "text": "Response asks for or confirms the .md vocabulary file path",
+      "passed": true,
+      "evidence": "Agent asks 'Which vocabulary file do you want to publish?' and lists available .md files, following SKILL.md Step 1"
+    },
+    {
+      "text": "Response references OM_BASE_URL and/or OM_TOKEN environment variables",
+      "passed": true,
+      "evidence": "SKILL.md Step 1 explicitly requires verifying OM_BASE_URL and OM_TOKEN; agent confirms both are needed"
+    },
+    {
+      "text": "Response does NOT use --username / --password flags",
+      "passed": true,
+      "evidence": "Script now uses env vars only (OM_BASE_URL, OM_TOKEN); no --username or --password in SKILL.md or script"
+    }
+  ]
+}

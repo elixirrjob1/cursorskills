@@ -1,16 +1,25 @@
 """
 Publish a governance vocabulary .md file to OpenMetadata Classifications and Tags.
 
+Authentication uses a long-lived OpenMetadata Bot JWT token — no username or password
+is ever used. The token is read exclusively from an environment variable so that no
+secret appears in shell history or process listings.
+
+Required environment variables:
+    OM_BASE_URL   OpenMetadata base URL — HTTPS required, no trailing slash
+                  e.g. https://my-host:8585
+    OM_TOKEN      Long-lived JWT issued to the OpenMetadata Bot service account
+                  Create the bot under Settings → Bots in the OpenMetadata UI.
+
 Usage:
-    python scripts/publish_vocab.py \
-        --file <path-to-vocab.md> \
-        --base-url <openmetadata-url> \
-        --username <email> \
-        --password <password>
+    python scripts/publish_vocab.py --file <path-to-vocab.md>
+
+Copy .env.example to .env, fill in your values, then export them before running.
+In CI/CD, inject OM_BASE_URL and OM_TOKEN as pipeline secret variables — never
+store them in files that could be committed to source control.
 """
 
 import argparse
-import base64
 import os
 import re
 import sys
@@ -128,27 +137,6 @@ def parse_vocab(path: str) -> list[Classification]:
 
 
 # ---------------------------------------------------------------------------
-# Authentication
-# ---------------------------------------------------------------------------
-
-def login(base_url: str, username: str, password: str) -> str:
-    """Authenticate with OpenMetadata and return a bearer token."""
-    url = f"{base_url}/api/v1/users/login"
-    encoded_password = base64.b64encode(password.encode()).decode()
-    payload = {"email": username, "password": encoded_password}
-    resp = requests.post(url, json=payload)
-    if resp.status_code == 401:
-        print("ERROR: Login failed — check your username and password.", file=sys.stderr)
-        sys.exit(1)
-    resp.raise_for_status()
-    token = resp.json().get("accessToken")
-    if not token:
-        print("ERROR: Login succeeded but no accessToken was returned.", file=sys.stderr)
-        sys.exit(1)
-    return token
-
-
-# ---------------------------------------------------------------------------
 # API helpers
 # ---------------------------------------------------------------------------
 
@@ -257,29 +245,37 @@ def publish(classifications: list[Classification], base_url: str, token: str) ->
 # Entry point
 # ---------------------------------------------------------------------------
 
+def _require_env(name: str) -> str:
+    value = os.environ.get(name, "").strip()
+    if not value:
+        print(
+            f"ERROR: Required environment variable '{name}' is not set or is empty.\n"
+            "       Copy .env.example to .env, fill in your values, and export them before running.",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+    return value
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Publish a governance vocabulary .md to OpenMetadata Classifications and Tags."
     )
     parser.add_argument("--file", required=True, help="Path to the governance vocabulary .md file.")
-    parser.add_argument("--base-url", required=True, help="OpenMetadata base URL (e.g. https://sandbox.open-metadata.org).")
-    parser.add_argument("--username", required=True, help="OpenMetadata login email.")
-    parser.add_argument("--password", required=True, help="OpenMetadata login password.")
     args = parser.parse_args()
+
+    base_url = _require_env("OM_BASE_URL").rstrip("/")
+    token = _require_env("OM_TOKEN")
 
     if not os.path.isfile(args.file):
         print(f"ERROR: File not found: {args.file}", file=sys.stderr)
         sys.exit(1)
 
-    print(f"Authenticating as {args.username} ...")
-    token = login(args.base_url.rstrip("/"), args.username, args.password)
-    print("Authenticated.\n")
-
     print(f"Parsing: {args.file}")
     classifications = parse_vocab(args.file)
     print(f"Found {len(classifications)} classification(s)\n")
 
-    publish(classifications, args.base_url, token)
+    publish(classifications, base_url, token)
 
 
 if __name__ == "__main__":

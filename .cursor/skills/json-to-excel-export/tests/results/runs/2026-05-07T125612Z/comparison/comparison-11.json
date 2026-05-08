@@ -1,0 +1,6 @@
+{
+  "eval_id": 11,
+  "prompt_short": "Convert my Excel back to JSON with a legacy-format workbook (no __rt_* tabs)",
+  "verdict": "a_wins",
+  "reasoning": "Output A (new version) explicitly confirms backward-compatibility as a supported and expected feature, names the specific fallback mechanism (visible-sheet mode), and lists the sheets that get reconstructed — drawn from the new Gotchas section. Output B correctly explains the limitation but frames it as a caveat rather than a confirmed capability, and leaves resolution incomplete. On the eval criteria ('backward-compatible'), Output A is the clearer and more satisfying response."
+}

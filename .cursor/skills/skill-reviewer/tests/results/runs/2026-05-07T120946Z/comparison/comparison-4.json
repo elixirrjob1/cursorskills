@@ -1,0 +1,6 @@
+{
+  "eval_id": 4,
+  "previous_snapshot": "2026-05-07T115753Z",
+  "verdict": "B_WINS",
+  "reason": "B explicitly names all required history.json fields including reviewed_at (ISO 8601 UTC), run_slug, review_file, benchmark_md, benchmark_html, snapshot_dir, and verdict. A omits reviewed_at entirely, which the expected answer specifically calls out as required."
+}

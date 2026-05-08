@@ -1,0 +1,42 @@
+{
+  "history": [
+    {
+      "date": "2026-05-07",
+      "skill_version": "c4360c0",
+      "unit_tests": { "passed": 10, "total": 11, "pass_rate": 0.91 },
+      "assertions": { "passed": 36, "total": 37, "pass_rate": 0.97 },
+      "categories": { "passed": 10, "total": 13, "pass_rate": 0.77 },
+      "verdict": "FAIL",
+      "high_failures": ["Separation of duties observed (skill author is not also the sole reviewer)"],
+      "review_file": "review-meetingintroskill-2026-05-07.md",
+      "timing_file": "runs/2026-05-07/timing.json",
+      "notes": "First run; GreenPath eval failed (industry inferred)."
+    },
+    {
+      "date": "2026-05-07",
+      "skill_version": "6cb76aa",
+      "unit_tests": { "passed": 10, "total": 11, "pass_rate": 0.91 },
+      "assertions": { "passed": 36, "total": 37, "pass_rate": 0.97 },
+      "categories": { "passed": 10, "total": 13, "pass_rate": 0.77 },
+      "verdict": "FAIL",
+      "high_failures": ["Separation of duties observed (skill author is not also the sole reviewer)"],
+      "review_file": "review-meetingintroskill-2026-05-07.md",
+      "timing_file": "runs/2026-05-07/timing.json",
+      "comparison_file": null,
+      "notes": "Rerun: GreenPath PASS (explicit industry ask); internal all-hands FAIL (no proceed options)."
+    },
+    {
+      "date": "2026-05-07",
+      "skill_version": "f0f39f0",
+      "unit_tests": { "passed": 11, "total": 11, "pass_rate": 1.0 },
+      "assertions": { "passed": 37, "total": 37, "pass_rate": 1.0 },
+      "categories": { "passed": 10, "total": 13, "pass_rate": 0.77 },
+      "verdict": "FAIL",
+      "high_failures": ["Separation of duties observed (skill author is not also the sole reviewer)"],
+      "review_file": "review-meetingintroskill-2026-05-07.md",
+      "timing_file": "runs/2026-05-07/timing.json",
+      "comparison_file": null,
+      "notes": "Incremental failed-only: Eval 11 PASS (scope + proceed fork); Cats 9/11/12 unchanged FAIL; no Step 3c (SKILL unchanged)."
+    }
+  ]
+}

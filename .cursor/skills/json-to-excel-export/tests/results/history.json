@@ -1,0 +1,64 @@
+{
+  "history": [
+    {
+      "reviewed_at": "2026-05-07T12:45:59Z",
+      "date": "2026-05-07",
+      "run_slug": "2026-05-07T124559Z",
+      "skill_version": "baa69d9",
+      "unit_tests": {
+        "passed": 11,
+        "total": 11,
+        "pass_rate": 1.0
+      },
+      "assertions": {
+        "passed": 33,
+        "total": 33,
+        "pass_rate": 1.0
+      },
+      "categories": {
+        "passed": 10,
+        "total": 13,
+        "pass_rate": 0.77
+      },
+      "verdict": "FAIL",
+      "high_failures": [],
+      "review_file": "runs/2026-05-07T124559Z/review-json-to-excel-export-2026-05-07T124559Z.md",
+      "timing_file": "runs/2026-05-07T124559Z/timing.json",
+      "benchmark_md": "runs/2026-05-07T124559Z/benchmark-json-to-excel-export-2026-05-07T124559Z.md",
+      "benchmark_html": "runs/2026-05-07T124559Z/benchmark-json-to-excel-export-2026-05-07T124559Z.html",
+      "snapshot_dir": "snapshots/json-to-excel-export/2026-05-07T124559Z",
+      "comparison_file": null,
+      "notes": "Incremental \u2014 all 11 tests and cats 1-10 carried from 2026-05-06 flat review. Cats 11/12/13 re-evaluated: unchanged FAIL. New snapshot and history.json initialised."
+    },
+    {
+      "reviewed_at": "2026-05-07T12:56:12Z",
+      "date": "2026-05-07",
+      "run_slug": "2026-05-07T125612Z",
+      "skill_version": "baa69d9",
+      "unit_tests": {
+        "passed": 11,
+        "total": 11,
+        "pass_rate": 1.0
+      },
+      "assertions": {
+        "passed": 33,
+        "total": 33,
+        "pass_rate": 1.0
+      },
+      "categories": {
+        "passed": 13,
+        "total": 13,
+        "pass_rate": 1.0
+      },
+      "verdict": "PASS",
+      "high_failures": [],
+      "review_file": "runs/2026-05-07T125612Z/review-json-to-excel-export-2026-05-07T125612Z.md",
+      "timing_file": "runs/2026-05-07T125612Z/timing.json",
+      "benchmark_md": "runs/2026-05-07T125612Z/benchmark-json-to-excel-export-2026-05-07T125612Z.md",
+      "benchmark_html": "runs/2026-05-07T125612Z/benchmark-json-to-excel-export-2026-05-07T125612Z.html",
+      "snapshot_dir": "snapshots/json-to-excel-export/2026-05-07T125612Z",
+      "comparison_file": "runs/2026-05-07T125612Z/comparison/comparison-summary.json",
+      "notes": "Full PASS \u2014 cats 11/12/13 fixed: Registry added, Gotchas section added, all magic constants documented. All 11 executors re-run (SKILL.md + script changed). Comparator new_wins 3-0 vs 2026-05-07T124559Z."
+    }
+  ]
+}

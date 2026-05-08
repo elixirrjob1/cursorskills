@@ -1,0 +1,22 @@
+{
+  "eval_id": 3,
+  "prompt_short": "Grade this SKILL.md against Anthropic skill best practices and list HIGH finding",
+  "overall_result": "PASS",
+  "assertions": [
+    {
+      "text": "Response mentions HIGH, [HIGH], or severity",
+      "passed": true,
+      "evidence": "Frames output as **[HIGH]**-only and lists **High-criticality failures**."
+    },
+    {
+      "text": "Response references Category 7, Security, or rubric",
+      "passed": true,
+      "evidence": "Discusses **Category 7 (Security & Trust)** and rubric context."
+    },
+    {
+      "text": "Response does NOT refuse as out of scope",
+      "passed": true,
+      "evidence": "Completes a substantive audit; does not refuse the request."
+    }
+  ]
+}

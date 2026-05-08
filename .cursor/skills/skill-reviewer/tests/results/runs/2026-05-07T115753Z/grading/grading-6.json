@@ -1,0 +1,22 @@
+{
+  "eval_id": 6,
+  "prompt_short": "Convert this STM markdown into dbt SQL models for Snowflake.",
+  "overall_result": "PASS",
+  "assertions": [
+    {
+      "text": "Response does NOT begin a full 13-category skill audit as the main deliverable",
+      "passed": true,
+      "evidence": "Response delegates to dbt-model-from-stm skill \u2014 no audit"
+    },
+    {
+      "text": "Response references dbt, STM, SQL, or another skill instead",
+      "passed": true,
+      "evidence": "Response: 'dbt-model-from-stm skill (.cursor/skills/dbt-model-from-stm/SKILL.md)'"
+    },
+    {
+      "text": "Response does NOT output only Category 1-13 tables with no dbt content",
+      "passed": true,
+      "evidence": "No category table present; only dbt routing"
+    }
+  ]
+}

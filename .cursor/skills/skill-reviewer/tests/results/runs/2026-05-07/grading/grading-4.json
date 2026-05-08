@@ -1,0 +1,22 @@
+{
+  "eval_id": 4,
+  "prompt_short": "After you review the skill, save the report to tests/results/ and append history",
+  "overall_result": "PASS",
+  "assertions": [
+    {
+      "text": "Response mentions tests/results or results folder",
+      "passed": true,
+      "evidence": "**`tests/results/`** and artifact table with full paths."
+    },
+    {
+      "text": "Response mentions history.json or benchmark report",
+      "passed": true,
+      "evidence": "**`history.json`** and **benchmark** `.md`/`.html` called out."
+    },
+    {
+      "text": "Response mentions review- prefix filename with RUN_SLUG or dated/timestamped report pattern (Step 6–7)",
+      "passed": true,
+      "evidence": "Step 6–7 document **`review-<skill>-<RUN_SLUG>.md`** (timestamped); legacy **`review-<skill>-YYYY-MM-DD.md`** noted where applicable."
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "eval_id": 1,
+  "prompt_short": "Review `.cursor/skills/meetingintroskill/` for production readiness \u2014 full rubri",
+  "overall_result": "PASS",
+  "assertions": [
+    {
+      "text": "Response mentions reading SKILL.md or the skill folder",
+      "passed": true,
+      "evidence": "Opens with reading `SKILL.md`, `test-cases.md`, `evals.json`, and the meetingintroskill folder/review files."
+    },
+    {
+      "text": "Response references 13 categories or the full rubric",
+      "passed": true,
+      "evidence": "Delivers **full 13-category** assessment and **Category Grades** table."
+    },
+    {
+      "text": "Response describes PASS/FAIL or structured review output (Category Grades or similar)",
+      "passed": true,
+      "evidence": "States Overall Verdict FAIL and per-category PASS/FAIL in the Category Grades table."
+    }
+  ]
+}

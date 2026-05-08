@@ -1,0 +1,22 @@
+{
+  "eval_id": 4,
+  "prompt_short": "I got 401 Unauthorized when publishing the vocabulary",
+  "overall_result": "PASS",
+  "assertions": [
+    {
+      "text": "Response references the bot token expiry / revocation as cause of 401",
+      "passed": true,
+      "evidence": "'A 401 Unauthorized response means the bot token has expired or been revoked'"
+    },
+    {
+      "text": "Response mentions regenerating the token under Settings \u2192 Bots or vocab-publisher-bot",
+      "passed": true,
+      "evidence": "Directed to 'Settings \u2192 Bots \u2192 vocab-publisher-bot' to generate a new token"
+    },
+    {
+      "text": "Response mentions updating OM_TOKEN after regeneration",
+      "passed": true,
+      "evidence": "'replace the old value with the new token' in the secret store / OM_TOKEN"
+    }
+  ]
+}

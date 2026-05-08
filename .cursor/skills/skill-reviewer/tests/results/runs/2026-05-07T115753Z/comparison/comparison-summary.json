@@ -1,0 +1,18 @@
+{
+  "run_slug": "2026-05-07T115753Z",
+  "previous_snapshot": "2026-05-07T114058Z",
+  "comparisons": [
+    {
+      "eval_id": 2,
+      "verdict": "B_WINS",
+      "reason": "B explicitly articulates the two-rule distinction (category skip vs executor skip) and correctly explains that RUN_STEP_3C=true forces ALL executors to re-run even for previously-passing evals. A describes the behavior at a high level but collapses both rules into one, missing the nuance that executor re-runs are independent of category carries."
+    },
+    {
+      "eval_id": 9,
+      "verdict": "B_WINS",
+      "reason": "B is more helpful and specific: enumerates four concrete ways the user can supply the skill target and previews what will happen next. A is correct but minimal."
+    }
+  ],
+  "overall": "new_wins",
+  "summary": "The new skill version produces more precise, complete responses on both evals, correctly capturing the two-rule skip distinction in eval 2 and offering clearer guidance in eval 9."
+}

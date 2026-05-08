@@ -1,0 +1,10 @@
+{
+  "eval_id": 10,
+  "prompt_short": "Export schema.json to Excel but OPENMETADATA_BASE_URL is not set",
+  "overall_result": "PASS",
+  "assertions": [
+    { "text": "Response notes OpenMetadata fetch will be skipped or produce no DataGovernanceTerms sheet", "passed": true, "evidence": "\"the script will detect that the OpenMetadata connection details are absent and simply skip the DataGovernanceTerms sheet\"" },
+    { "text": "Response does NOT error out — graceful degradation described", "passed": true, "evidence": "\"No error, no crash — it degrades gracefully\"" },
+    { "text": "Response still proceeds with the conversion", "passed": true, "evidence": "Agent provided the full run command and confirmed workbook will be written with all other tabs intact" }
+  ]
+}

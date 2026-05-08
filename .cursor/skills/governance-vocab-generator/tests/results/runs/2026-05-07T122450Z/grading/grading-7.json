@@ -1,0 +1,22 @@
+{
+  "eval_id": 7,
+  "prompt_short": "Generate a governance vocabulary for IoT sensor data \u2014 also add a custom SensorT",
+  "overall_result": "FAIL",
+  "assertions": [
+    {
+      "text": "Response does NOT include SensorType as a custom classification, OR explicitly reasons it fails the 3-condition non-canonical test",
+      "passed": true,
+      "evidence": "Response explicitly applies 3-condition test: 'does not reflect a governance practice... fully addressed within canonical dimensions'"
+    },
+    {
+      "text": "Response includes Architecture or acknowledges Architecture is relevant for IoT staged processing",
+      "passed": false,
+      "evidence": "Response mentions Privacy, Criticality, ComplianceLegal as canonical coverage but does NOT confirm Architecture \u2014 IoT staged processing (raw \u2192 processed \u2192 aggregated) should trigger Architecture inclusion"
+    },
+    {
+      "text": "Response applies the canonical-first evaluation rule before considering SensorType",
+      "passed": true,
+      "evidence": "Response: 'fully addressed within the canonical dimensions' \u2014 demonstrates canonical-first reasoning"
+    }
+  ]
+}

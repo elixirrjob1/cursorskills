@@ -1,0 +1,22 @@
+{
+  "eval_id": 10,
+  "prompt_short": "Run a metadata ingestion from Snowflake into OpenMetadata",
+  "overall_result": "PASS",
+  "assertions": [
+    {
+      "text": "Response does NOT run or reference publish_vocab.py",
+      "passed": true,
+      "evidence": "No publish_vocab.py or vocabulary publishing in response; agent used catalog ingestion MCP tools"
+    },
+    {
+      "text": "Response treats this as a catalog ingestion / sync task",
+      "passed": true,
+      "evidence": "Agent triggered Snowflake metadata ingestion pipeline via MCP"
+    },
+    {
+      "text": "Response does NOT ask for a vocabulary .md file",
+      "passed": true,
+      "evidence": "No vocabulary file requested; agent worked with Snowflake service and ingestion pipeline"
+    }
+  ]
+}

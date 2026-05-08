@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Benchmark Report: catalog-vocab-publisher</title>
+  <style>
+    body { font-family: system-ui, sans-serif; font-size: 14px; margin: 24px; background: #fff; color: #222; }
+    h1 { font-size: 1.35rem; margin-bottom: 0.25rem; }
+    h2 { font-size: 1.1rem; margin-top: 2rem; margin-bottom: 0.75rem; border-bottom: 1px solid #ccc; padding-bottom: 0.25rem; }
+    .meta { color: #555; margin-bottom: 1.5rem; }
+    table { border-collapse: collapse; width: 100%; margin: 0.5rem 0 1rem; }
+    th, td { border: 1px solid #ccc; padding: 8px 10px; text-align: left; }
+    tr:nth-child(even) { background: #f9f9f9; }
+    th { background: #eee; font-weight: 600; }
+    .pass { background: #d4edda; color: #155724; }
+    .fail { background: #f8d7da; color: #721c24; }
+    .skip { background: #fff3cd; color: #856404; }
+    .bar-track { display: inline-block; width: 120px; height: 10px; background: #e0e0e0; border-radius: 2px; vertical-align: middle; margin-right: 8px; }
+    .bar-fill { height: 100%; background: #28a745; border-radius: 2px; }
+    .note { color: #444; font-style: italic; margin: 0.5rem 0; }
+    code { font-size: 13px; background: #f4f4f4; padding: 1px 4px; border-radius: 2px; }
+  </style>
+</head>
+<body>
+  <h1>Benchmark Report: catalog-vocab-publisher</h1>
+  <p class="meta">Generated: 2026-05-07T14:02:43Z UTC · First review — full run, no prior snapshot</p>
+
+  <h2>Summary</h2>
+  <table>
+    <tr><th>Metric</th><th>Value</th></tr>
+    <tr><td>Overall Verdict</td><td class="fail">FAIL</td></tr>
+    <tr><td>Unit Tests</td><td>10 / 13 passed (77%)</td></tr>
+    <tr><td>Assertions</td><td>32 / 39 (82%)</td></tr>
+    <tr><td>Categories</td><td>11 / 13 passed</td></tr>
+    <tr><td>High Failures</td><td>2</td></tr>
+    <tr><td>Medium Failures</td><td>2</td></tr>
+    <tr><td>Comparator</td><td class="skip">— (first review, no prior snapshot)</td></tr>
+  </table>
+
+  <h2>Unit Test Results</h2>
+  <table>
+    <thead>
+      <tr><th>#</th><th>Test</th><th>Type</th><th>Result</th><th>Assertions</th><th>Evidence</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>1</td><td>Basic publish trigger</td><td>should-trigger</td><td class="pass">✅ PASS</td><td>3/3</td><td>Asked for file path, OM_BASE_URL, OM_TOKEN; no password flags</td></tr>
+      <tr><td>2</td><td>Named file push with JWT auth</td><td>should-trigger</td><td class="fail">❌ FAIL</td><td>2/3</td><td>A1 fail: no actual command shown (Step 1 confirmation phase)</td></tr>
+      <tr><td>3</td><td>Idempotent re-run</td><td>should-trigger</td><td class="fail">❌ FAIL</td><td>2/3</td><td>A2 fail: no command shown (Step 1 phase)</td></tr>
+      <tr><td>4</td><td>401 error handling</td><td>should-trigger</td><td class="pass">✅ PASS</td><td>3/3</td><td>Token expiry → Settings → Bots → OM_TOKEN update</td></tr>
+      <tr><td>5</td><td>403 error handling</td><td>should-trigger</td><td class="pass">✅ PASS</td><td>3/3</td><td>Permissions error → VocabPublisherPolicy → Roles path</td></tr>
+      <tr><td>6</td><td>Upload framework</td><td>should-trigger</td><td class="pass">✅ PASS</td><td>3/3</td><td>File path requested; no generation attempt</td></tr>
+      <tr><td>7</td><td>Push updated descriptions</td><td>should-trigger</td><td class="fail">❌ FAIL</td><td>1/3</td><td>A1+A2 fail: UPDATED/SKIPPED not explained; no command shown</td></tr>
+      <tr><td>8</td><td>Exact trigger phrase</td><td>should-trigger</td><td class="pass">✅ PASS</td><td>3/3</td><td>Engaged with workflow; no deflection; no generate/publish confusion</td></tr>
+      <tr><td>9</td><td>Should-not-trigger: vocab generation</td><td>should-not-trigger</td><td class="pass">✅ PASS</td><td>3/3</td><td>Generated vocab content; no publish_vocab.py; no OM credentials</td></tr>
+      <tr><td>10</td><td>Should-not-trigger: Snowflake ingestion</td><td>should-not-trigger</td><td class="pass">✅ PASS</td><td>3/3</td><td>Ran catalog ingestion pipeline via MCP; no vocab file requested</td></tr>
+      <tr><td>11</td><td>Edge: no file path</td><td>edge-case</td><td class="pass">✅ PASS</td><td>3/3</td><td>Asked for file path; checked env vars; did not run script</td></tr>
+      <tr><td>12</td><td>Edge: service account not set up</td><td>edge-case</td><td class="pass">✅ PASS</td><td>3/3</td><td>4-step setup guide; did not proceed before prerequisites confirmed</td></tr>
+      <tr><td>13</td><td>Edge: SSL errors</td><td>edge-case</td><td class="pass">✅ PASS</td><td>3/3</td><td>HTTP/HTTPS mismatch identified; OM_BASE_URL scheme correction advised</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Assertion Detail</h2>
+  <p class="note">Full assertion-by-assertion roll-up (Step 3b). One row per assertion across all 13 evals.</p>
+  <table>
+    <thead>
+      <tr><th>Eval</th><th>Assertion</th><th>Passed</th><th>Evidence</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>1</td><td>Response asks for or confirms the .md vocabulary file path</td><td class="pass">Yes</td><td>"Which vocabulary file do you want to publish?" with file list</td></tr>
+      <tr><td>1</td><td>Response references OM_BASE_URL and/or OM_TOKEN</td><td class="pass">Yes</td><td>Both env vars explicitly mentioned and prompted</td></tr>
+      <tr><td>1</td><td>Response does NOT use --username / --password flags</td><td class="pass">Yes</td><td>No such flags anywhere in response</td></tr>
+      <tr><td>2</td><td>Response includes a publish_vocab.py command with --file argument</td><td class="fail">No</td><td>Agent in Step 1 confirmation phase; command not yet shown</td></tr>
+      <tr><td>2</td><td>Response references OM_TOKEN (JWT / service account token)</td><td class="pass">Yes</td><td>OM_TOKEN and JWT explicitly mentioned</td></tr>
+      <tr><td>2</td><td>Response does NOT include --username or --password flags</td><td class="pass">Yes</td><td>No such flags</td></tr>
+      <tr><td>3</td><td>Response states or implies the script is idempotent / safe to re-run</td><td class="pass">Yes</td><td>CREATED / UPDATED / SKIPPED output mentioned implies safe re-run</td></tr>
+      <tr><td>3</td><td>Response includes the publish_vocab.py command</td><td class="fail">No</td><td>Step 1 confirmation phase; command not shown</td></tr>
+      <tr><td>3</td><td>Response does not warn that re-running will cause destructive changes</td><td class="pass">Yes</td><td>No destructive warning issued</td></tr>
+      <tr><td>4</td><td>Response references bot token expiry / revocation as cause of 401</td><td class="pass">Yes</td><td>"bot token has expired or been revoked"</td></tr>
+      <tr><td>4</td><td>Response mentions regenerating under Settings → Bots → vocab-publisher-bot</td><td class="pass">Yes</td><td>Exact UI path cited</td></tr>
+      <tr><td>4</td><td>Response mentions updating OM_TOKEN after regeneration</td><td class="pass">Yes</td><td>"replace the old value with the new token" in OM_TOKEN</td></tr>
+      <tr><td>5</td><td>Response explains 403 is a permissions error (not auth)</td><td class="pass">Yes</td><td>"authenticated successfully but lacks write permissions"</td></tr>
+      <tr><td>5</td><td>Response mentions VocabPublisherPolicy or equivalent</td><td class="pass">Yes</td><td>VocabPublisherPolicy with Create/EditAll/ViewAll named</td></tr>
+      <tr><td>5</td><td>Response directs to Settings → Bots → vocab-publisher-bot → Roles</td><td class="pass">Yes</td><td>Exact UI path stated</td></tr>
+      <tr><td>6</td><td>Response asks for or confirms the vocabulary .md file path</td><td class="pass">Yes</td><td>File path requested</td></tr>
+      <tr><td>6</td><td>Response includes or references the publish_vocab.py script invocation</td><td class="pass">Yes</td><td>"I'll run the publish script and review the output"</td></tr>
+      <tr><td>6</td><td>Response does NOT attempt to generate a vocabulary</td><td class="pass">Yes</td><td>No generation attempted</td></tr>
+      <tr><td>7</td><td>Response explains changed descriptions will be UPDATED, unchanged SKIPPED</td><td class="fail">No</td><td>Response asked for file/env vars only; update vs skip not explained</td></tr>
+      <tr><td>7</td><td>Response includes publish_vocab.py command</td><td class="fail">No</td><td>Step 1 phase; no command shown</td></tr>
+      <tr><td>7</td><td>Response does NOT say all tags will be deleted and recreated</td><td class="pass">Yes</td><td>No deletion/recreation mentioned</td></tr>
+      <tr><td>8</td><td>Response engages with publish workflow (confirms file/env vars)</td><td class="pass">Yes</td><td>File path and env vars checked</td></tr>
+      <tr><td>8</td><td>Response does NOT deflect to a different skill</td><td class="pass">Yes</td><td>Remained in publish workflow</td></tr>
+      <tr><td>8</td><td>Response does NOT ask about generate vs publish</td><td class="pass">Yes</td><td>No generate-vs-publish confusion</td></tr>
+      <tr><td>9</td><td>Response does NOT attempt to run publish_vocab.py</td><td class="pass">Yes</td><td>No publish actions in response</td></tr>
+      <tr><td>9</td><td>Response indicates this is a vocab generation task</td><td class="pass">Yes</td><td>Produced retail domain vocabulary content</td></tr>
+      <tr><td>9</td><td>Response does NOT ask for OM credentials</td><td class="pass">Yes</td><td>No OM_BASE_URL, OM_TOKEN, or credentials mentioned</td></tr>
+      <tr><td>10</td><td>Response does NOT run or reference publish_vocab.py</td><td class="pass">Yes</td><td>Ran catalog ingestion pipeline via MCP</td></tr>
+      <tr><td>10</td><td>Response treats this as a catalog ingestion / sync task</td><td class="pass">Yes</td><td>Triggered Snowflake ingestion pipeline</td></tr>
+      <tr><td>10</td><td>Response does NOT ask for a vocabulary .md file</td><td class="pass">Yes</td><td>Worked with Snowflake service/pipeline</td></tr>
+      <tr><td>11</td><td>Response asks for the vocabulary .md file path</td><td class="pass">Yes</td><td>"Can you share the path to the .md vocab file?"</td></tr>
+      <tr><td>11</td><td>Response does NOT run script without knowing file path</td><td class="pass">Yes</td><td>Stopped at Step 1</td></tr>
+      <tr><td>11</td><td>Response checks or asks about OM_BASE_URL and OM_TOKEN</td><td class="pass">Yes</td><td>"Do you have those configured already?"</td></tr>
+      <tr><td>12</td><td>Response lists prerequisite setup steps</td><td class="pass">Yes</td><td>4-step guide: policy → role → bot → env vars</td></tr>
+      <tr><td>12</td><td>Response references vocab-publisher-bot</td><td class="pass">Yes</td><td>vocab-publisher-bot explicitly named in steps</td></tr>
+      <tr><td>12</td><td>Response does NOT run script before prerequisites confirmed</td><td class="pass">Yes</td><td>"Once those are in place, come back…"</td></tr>
+      <tr><td>13</td><td>Response links SSL/TLS errors to HTTP vs HTTPS mismatch</td><td class="pass">Yes</td><td>"OM_BASE_URL likely set to https:// but server running plain HTTP"</td></tr>
+      <tr><td>13</td><td>Response advises correcting OM_BASE_URL scheme</td><td class="pass">Yes</td><td>Exact before/after correction shown</td></tr>
+      <tr><td>13</td><td>Response does NOT suggest reinstalling requests or Python</td><td class="pass">Yes</td><td>Only scheme correction recommended</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Category Grades</h2>
+  <table>
+    <thead>
+      <tr><th>#</th><th>Category</th><th>Grade</th><th>Explanation</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>1</td><td>Triggering (Description Quality)</td><td class="pass">PASS</td><td>Valid name, what/when documented, 5 explicit trigger phrases</td></tr>
+      <tr><td>2</td><td>Anatomy &amp; Structure</td><td class="pass">PASS</td><td>~139 lines, valid frontmatter with extended fields, shallow references</td></tr>
+      <tr><td>3</td><td>Instructions Clarity</td><td class="pass">PASS</td><td>Step-by-step workflow, 401/403 branches explicit, consistent terms</td></tr>
+      <tr><td>4</td><td>Output Quality</td><td class="pass">PASS</td><td>Exact CREATED/UPDATED/SKIPPED example output shown</td></tr>
+      <tr><td>5</td><td>Testability</td><td class="pass">PASS</td><td>Tests created this run; all HIGH subcategories satisfied</td></tr>
+      <tr><td>6</td><td>Resource Efficiency</td><td class="pass">PASS</td><td>Pre-built script, deterministic invocation, no over-explanation</td></tr>
+      <tr><td>7</td><td>Security &amp; Trust</td><td class="fail">FAIL</td><td>[HIGH] publish_vocab.py uses --username/--password; SKILL.md says OM_TOKEN; run command missing required args</td></tr>
+      <tr><td>8</td><td>Coexistence &amp; Recall</td><td class="pass">PASS</td><td>Specific triggers; no coexistence issue at HIGH/MEDIUM level</td></tr>
+      <tr><td>9</td><td>Model Compatibility</td><td class="pass">PASS</td><td>validated_on Claude Sonnet 4.6 in frontmatter and Registry</td></tr>
+      <tr><td>10</td><td>Workflow &amp; Feedback Loops</td><td class="pass">PASS</td><td>Confirm→run→review loop; 401/403 fix paths present</td></tr>
+      <tr><td>11</td><td>Maintainability &amp; Lifecycle</td><td class="fail">FAIL</td><td>[HIGH] No peer review/separation-of-duties; [MEDIUM] versioning strategy missing</td></tr>
+      <tr><td>12</td><td>Gotchas / Lessons Learned</td><td class="pass">PASS</td><td>5 gotchas covering real operational failures</td></tr>
+      <tr><td>13</td><td>Anti-Pattern Audit</td><td class="pass">PASS</td><td>No magic constants; explicit error handling; requirements.txt missing (MEDIUM, 3/4 pass)</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Version Comparison</h2>
+  <p class="note">Not run — first review, no prior snapshot available.</p>
+
+  <h2>History (all reviews)</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Reviewed at (UTC)</th>
+        <th>Date</th>
+        <th>Unit Tests</th>
+        <th>Assertions</th>
+        <th>Categories</th>
+        <th>Verdict</th>
+        <th>Notes</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>2026-05-07T14:02:43Z</td>
+        <td>2026-05-07</td>
+        <td><span class="bar-track"><span class="bar-fill" style="width:77%"></span></span>10/13</td>
+        <td><span class="bar-track"><span class="bar-fill" style="width:82%"></span></span>32/39</td>
+        <td><span class="bar-track"><span class="bar-fill" style="width:85%"></span></span>11/13</td>
+        <td class="fail">FAIL</td>
+        <td>First review — script/SKILL.md auth mismatch; separation of duties missing</td>
+      </tr>
+    </tbody>
+  </table>
+  <p class="note">Full narrative: <code>review-catalog-vocab-publisher-2026-05-07T140243Z.md</code></p>
+</body>
+</html>

@@ -1,0 +1,22 @@
+{
+  "eval_id": 1,
+  "prompt_short": "Generate a data governance vocabulary for the retail banking domain.",
+  "overall_result": "FAIL",
+  "assertions": [
+    {
+      "text": "Response contains a file path matching governance-vocabularies/*.md",
+      "passed": true,
+      "evidence": "Response: 'governance-vocabularies/retail-banking-governance-vocab.md' \u2014 correct path pattern"
+    },
+    {
+      "text": "Response uses exact canonical dimension names (e.g. Privacy, Criticality, ComplianceLegal) \u2014 not synonyms",
+      "passed": false,
+      "evidence": "Response is path-only; canonical dimension names used in generated file are unverifiable from response alone \u2014 skill spec says 'return only the file path'"
+    },
+    {
+      "text": "Response does NOT contain tables or JSON in the output vocabulary",
+      "passed": true,
+      "evidence": "Response contains only a file path \u2014 no tables or JSON"
+    }
+  ]
+}

@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Benchmark — skill-reviewer — 2026-05-07T120946Z</title>
+<style>
+  body { font-family: system-ui, sans-serif; margin: 2rem; color: #222; }
+  h1 { font-size: 1.4rem; }
+  h2 { font-size: 1.1rem; margin-top: 2rem; border-bottom: 1px solid #ddd; padding-bottom: 4px; }
+  table { border-collapse: collapse; width: 100%; margin-top: 1rem; }
+  th { background: #f5f5f5; text-align: left; padding: 6px 10px; font-size: 0.85rem; }
+  td { padding: 5px 10px; font-size: 0.82rem; vertical-align: top; border-bottom: 1px solid #eee; }
+  tr.pass td:nth-child(3) { color: #2a7a2a; font-weight: bold; }
+  tr.fail td:nth-child(3) { color: #c0392b; font-weight: bold; }
+  .verdict { font-weight: bold; font-size: 1rem; }
+  small { color: #888; }
+  code { background: #f0f0f0; padding: 1px 4px; border-radius: 3px; font-size: 0.8em; }
+</style>
+</head>
+<body>
+<h1>Benchmark Report — skill-reviewer</h1>
+<p><strong>Run:</strong> <code>2026-05-07T120946Z</code> &nbsp; <strong>Reviewed at:</strong> 2026-05-07T12:09:46Z &nbsp; <strong class="verdict">Overall: ✅ PASS</strong></p>
+
+<h2>Summary</h2>
+<table>
+<tr><th>Metric</th><th>Value</th></tr>
+<tr><td>Unit Tests</td><td>10 / 10 passed</td></tr>
+<tr><td>Categories</td><td>13 / 13 passed</td></tr>
+<tr><td>Comparator</td><td>new_wins — B_WINS on evals 2, 4 vs snapshot <code>2026-05-07T115753Z</code></td></tr>
+</table>
+
+<h2>Category Grades</h2>
+<table>
+<tr><th>#</th><th>Category</th><th>Grade</th><th>Notes</th></tr>
+<tr class="pass"><td>1</td><td>Triggering &amp; description accuracy</td><td>✅ PASS</td><td>Trigger terms precise; no false-positive overlap</td></tr>
+<tr class="pass"><td>2</td><td>Anatomy &amp; structural compliance</td><td>✅ PASS</td><td>YAML frontmatter, references directory, agents/ present</td></tr>
+<tr class="pass"><td>3</td><td>Instruction clarity &amp; completeness</td><td>✅ PASS</td><td>Two independent skip rules clearly documented</td></tr>
+<tr class="pass"><td>4</td><td>Output format &amp; quality spec</td><td>✅ PASS</td><td>Step 7a ⚠️ callout makes <code>reviewed_at</code> unmissable; executor now cites all required fields</td></tr>
+<tr class="pass"><td>5</td><td>Testability</td><td>✅ PASS</td><td>evals.json has 5 assertions for eval 4, matching test-cases.md spec</td></tr>
+<tr class="pass"><td>6</td><td>Resource efficiency</td><td>✅ PASS</td><td>No common-knowledge padding; parallel subagents explicit</td></tr>
+<tr class="pass"><td>7</td><td>Security &amp; trust</td><td>✅ PASS</td><td>No credential handling, no destructive ops without confirmation</td></tr>
+<tr class="pass"><td>8</td><td>Coexistence &amp; conflict avoidance</td><td>✅ PASS</td><td>Registry section and no-overlap notes present</td></tr>
+<tr class="pass"><td>9</td><td>Model compatibility</td><td>✅ PASS</td><td>Model Compatibility section present</td></tr>
+<tr class="pass"><td>10</td><td>Workflow &amp; feedback loops</td><td>✅ PASS</td><td>Incremental mode, carry PASS, re-run FAIL, comparator loop all documented</td></tr>
+<tr class="pass"><td>11</td><td>Maintainability &amp; lifecycle</td><td>✅ PASS</td><td>Registry table with owner/version/last-eval present</td></tr>
+<tr class="pass"><td>12</td><td>Gotchas / lessons learned</td><td>✅ PASS</td><td>Gotchas section covers comparator, rsync, Unicode, executor-skip rule</td></tr>
+<tr class="pass"><td>13</td><td>Anti-pattern audit</td><td>✅ PASS</td><td>No backslashes, no magic constants, no install commands</td></tr>
+
+</table>
+
+<h2>Comparator (Step 3c)</h2>
+<p><strong>Trigger:</strong> <code>SKILL.md</code> + <code>tests/evals/evals.json</code> changed vs snapshot <code>2026-05-07T115753Z</code> → <code>RUN_STEP_3C=true</code>; all 10 executors re-ran. <strong>Overall: new_wins</strong></p>
+<table>
+<tr><th>Eval</th><th>Verdict</th><th>Reason</th></tr>
+<tr><td>4</td><td>B_WINS</td><td>B explicitly names all required history.json fields including reviewed_at (ISO 8601 UTC), run_slug, review_file, benchmark_md, benchmark_html, snapshot_dir, and verdict. A omits reviewed_at entirely, which the expected answer specifically calls out as required.</td></tr>
+<tr><td>2</td><td>B_WINS</td><td>B articulates two distinct skip rules (category skip and executor skip) and correctly notes that RUN_STEP_3C=true forces all executors to re-run. A only describes a single undifferentiated skip rule with no mention of the RUN_STEP_3C flag or the two-rule distinction.</td></tr>
+
+</table>
+
+<h2>Unit Test Results</h2>
+<table>
+<tr><th>#</th><th>Type</th><th>Test</th><th>Result</th><th>Evidence</th></tr>
+<tr><td>1</td><td>should-trigger</td><td>Review <code>.cursor/skills/meetingintroskill/</code> for production readiness — full rubric.</td><td>✅ PASS</td><td>✅ Response: &#x27;read .cursor/skills/meetingintroskill/SKILL.md and all bundled reference files in full&#x27;<br>✅ Response: &#x27;Apply the 13-category rubric&#x27;<br>✅ Response lists full workflow including step 6 save and category rubric<br><small>3/3 assertions</small></td></tr>
+<tr><td>2</td><td>should-trigger</td><td>We have a prior review in tests/results/review-meetingintroskill-2026-05-07.md — only re-check what failed last time.</td><td>✅ PASS</td><td>✅ Response: &#x27;Prior review found — running incremental re-check&#x27;<br>✅ Response: &#x27;Only failed evals get new executor subagents launched. Only failed categories get re-evaluated&#x27;<br>✅ Response reads history.json first before making any determination<br><small>3/3 assertions</small></td></tr>
+<tr><td>3</td><td>should-trigger</td><td>Grade this SKILL.md against Anthropic skill best practices and list HIGH findings only.</td><td>✅ PASS</td><td>✅ Response: &#x27;[HIGH]-tagged subcategories&#x27;, &#x27;HIGH-severity findings&#x27;, &#x27;High-Criticality Failures section&#x27;<br>✅ Response: &#x27;Cat 7: no adversarial instructions, no hardcoded credentials&#x27; — names rubric categories<br>✅ Response asks for skill path; does not refuse<br><small>3/3 assertions</small></td></tr>
+<tr><td>4</td><td>should-trigger</td><td>After you review the skill, save the report to tests/results/ and append history.json.</td><td>✅ PASS</td><td>✅ Response: &#x27;tests/results/runs/&lt;RUN_SLUG&gt;/&#x27; and &#x27;RUN_DIR&#x27; both named explicitly<br>✅ Response: &#x27;Required fields in every entry: <code>reviewed_at</code> (ISO 8601 UTC, from Step 1)&#x27; — directly cites the field<br>✅ Response: &#x27;review-&lt;skill-name&gt;-&lt;RUN_SLUG&gt;.md&#x27;<br>✅ Response: &#x27;benchmark <code>.md</code>&#x27; (7b) and &#x27;benchmark <code>.html</code>&#x27; (7c) with template instructions<br>✅ Response: &#x27;7d — snapshot: rsync -a --exclude=tests/results/snapshots/ ...&#x27;<br><small>5/5 assertions</small></td></tr>
+<tr><td>5</td><td>should-trigger</td><td>Does our reviewer workflow document blind comparison between skill versions?</td><td>✅ PASS</td><td>✅ Response: &#x27;blind version comparison is documented in Step 3c&#x27;, &#x27;comparator subagent&#x27;<br>✅ Response: &#x27;PREVIOUS_SNAPSHOT&#x27;, &#x27;current skill tree&#x27;, &#x27;PREVIOUS_SNAPSHOT tree&#x27; — two executor subagents per eval<br>✅ Response confirms feature fully documented with trigger conditions and skip conditions<br><small>3/3 assertions</small></td></tr>
+<tr><td>6</td><td>should-not-trigger</td><td>Convert this STM markdown into dbt SQL models for Snowflake.</td><td>✅ PASS</td><td>✅ Response routes immediately to dbt-model-from-stm — no audit performed<br>✅ Response: &#x27;dbt-model-from-stm skill, not a skill quality audit&#x27;<br>✅ No category table present<br><small>3/3 assertions</small></td></tr>
+<tr><td>7</td><td>should-not-trigger</td><td>Bootstrap a new Azure Key Vault and upload secrets from <code>.env</code>.</td><td>✅ PASS</td><td>✅ Response routes to azure-keyvault-deployer — no rubric<br>✅ Response: &#x27;Azure Key Vault&#x27;, &#x27;azure-keyvault-deployer skill&#x27;<br>✅ Response: &#x27;azure-keyvault-deployer skill&#x27; named explicitly<br><small>3/3 assertions</small></td></tr>
+<tr><td>8</td><td>should-not-trigger</td><td>What is the capital of France?</td><td>✅ PASS</td><td>✅ Response: &#x27;Paris.&#x27; — two words, no workflow<br>✅ Response: &#x27;Paris.&#x27;<br>✅ Response is one line<br><small>3/3 assertions</small></td></tr>
+<tr><td>9</td><td>edge-case</td><td>Run the skill reviewer.</td><td>✅ PASS</td><td>✅ Response: &#x27;Which skill would you like me to review?&#x27;<br>✅ Response asks for path; no review generated<br>✅ Response enumerates all three options: path, pasted content, skill name<br><small>3/3 assertions</small></td></tr>
+<tr><td>10</td><td>edge-case</td><td>Use the grader agent — what file defines its contract?</td><td>✅ PASS</td><td>✅ Response: &#x27;agents/grader.md inside the skill-reviewer folder&#x27;<br>✅ Response: &#x27;passed: true&#x27;, &#x27;evidence&#x27;, &#x27;overall_result&#x27; all in grading schema<br>✅ Response: &#x27;grading-&lt;eval_id&gt;.json&#x27;, &#x27;assertions&#x27; array, &#x27;eval_id&#x27;<br><small>3/3 assertions</small></td></tr>
+
+</table>
+</body>
+</html>

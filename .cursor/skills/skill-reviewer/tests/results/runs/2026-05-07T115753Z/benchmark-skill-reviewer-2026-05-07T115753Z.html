@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Benchmark — skill-reviewer — 2026-05-07T115753Z</title>
+<style>
+  body { font-family: system-ui, sans-serif; margin: 2rem; color: #222; }
+  h1 { font-size: 1.4rem; }
+  h2 { font-size: 1.1rem; margin-top: 2rem; border-bottom: 1px solid #ddd; padding-bottom: 4px; }
+  table { border-collapse: collapse; width: 100%; margin-top: 1rem; }
+  th { background: #f5f5f5; text-align: left; padding: 6px 10px; font-size: 0.85rem; }
+  td { padding: 5px 10px; font-size: 0.82rem; vertical-align: top; border-bottom: 1px solid #eee; }
+  tr.pass td:nth-child(3) { color: #2a7a2a; font-weight: bold; }
+  tr.fail td:nth-child(3) { color: #c0392b; font-weight: bold; }
+  .verdict { font-weight: bold; font-size: 1rem; }
+  small { color: #888; }
+  code { background: #f0f0f0; padding: 1px 4px; border-radius: 3px; font-size: 0.8em; }
+</style>
+</head>
+<body>
+<h1>Benchmark Report — skill-reviewer</h1>
+<p><strong>Run:</strong> <code>2026-05-07T115753Z</code> &nbsp; <strong>Reviewed at:</strong> 2026-05-07T11:57:53Z &nbsp; <strong class="verdict">Overall: ❌ FAIL</strong></p>
+
+<h2>Summary</h2>
+<table>
+<tr><th>Metric</th><th>Value</th></tr>
+<tr><td>Unit Tests</td><td>9 / 10 passed (eval 4 FAIL — executor omits <code>reviewed_at</code> from history.json description)</td></tr>
+<tr><td>Categories</td><td>12 / 13 passed (Category 4 FAIL)</td></tr>
+<tr><td>Comparator</td><td>new_wins — B_WINS on evals 2, 9 vs snapshot <code>2026-05-07T114058Z</code></td></tr>
+</table>
+
+<h2>High Findings</h2>
+<table>
+<tr><th>Category</th><th>Severity</th><th>Finding</th><th>Fix</th></tr>
+<tr><td>4 — Output format &amp; quality spec</td><td><strong>[HIGH]</strong></td><td>Step 7a does not call out <code>reviewed_at</code> as a required field in history.json prominently enough — executor omits it when describing save paths.</td><td>Update Step 7a to list <code>reviewed_at</code> explicitly as a required field in the history.json schema example.</td></tr>
+</table>
+
+<h2>Category Grades</h2>
+<table>
+<tr><th>#</th><th>Category</th><th>Grade</th><th>Notes</th></tr>
+<tr class="pass"><td>1</td><td>Triggering &amp; description accuracy</td><td>✅ PASS</td><td>Trigger terms precise; no false-positive overlap</td></tr>
+<tr class="pass"><td>2</td><td>Anatomy &amp; structural compliance</td><td>✅ PASS</td><td>YAML frontmatter, references directory, agents/ present</td></tr>
+<tr class="pass"><td>3</td><td>Instruction clarity &amp; completeness</td><td>✅ PASS</td><td>Two independent skip rules now clearly documented</td></tr>
+<tr class="fail"><td>4</td><td>Output format &amp; quality spec</td><td>❌ FAIL</td><td>Step 7a does not make <code>reviewed_at</code> prominent enough — executor omits it when describing history.json</td></tr>
+<tr class="pass"><td>5</td><td>Testability</td><td>✅ PASS</td><td>evals.json and test_skill.py present; eval 4 now has 5 assertions matching test-cases.md</td></tr>
+<tr class="pass"><td>6</td><td>Resource efficiency</td><td>✅ PASS</td><td>No common-knowledge padding; parallel subagents explicit</td></tr>
+<tr class="pass"><td>7</td><td>Security &amp; trust</td><td>✅ PASS</td><td>No credential handling, no destructive ops without confirmation</td></tr>
+<tr class="pass"><td>8</td><td>Coexistence &amp; conflict avoidance</td><td>✅ PASS</td><td>Registry section and no-overlap notes present</td></tr>
+<tr class="pass"><td>9</td><td>Model compatibility</td><td>✅ PASS</td><td>Model Compatibility section present</td></tr>
+<tr class="pass"><td>10</td><td>Workflow &amp; feedback loops</td><td>✅ PASS</td><td>Incremental mode, carry PASS, re-run FAIL, comparator loop</td></tr>
+<tr class="pass"><td>11</td><td>Maintainability &amp; lifecycle</td><td>✅ PASS</td><td>Registry table with owner/version/last-eval present</td></tr>
+<tr class="pass"><td>12</td><td>Gotchas / lessons learned</td><td>✅ PASS</td><td>Gotchas section present covering comparator, rsync, Unicode</td></tr>
+<tr class="pass"><td>13</td><td>Anti-pattern audit</td><td>✅ PASS</td><td>No backslashes, no magic constants, no install commands</td></tr>
+
+</table>
+
+<h2>Comparator (Step 3c)</h2>
+<p><strong>Trigger:</strong> <code>SKILL.md</code> changed vs snapshot <code>2026-05-07T114058Z</code> → <code>RUN_STEP_3C=true</code>; all executors re-ran. <strong>Overall: new_wins</strong> — new version outperforms prior on evals 2 and 9.</p>
+<table>
+<tr><th>Eval</th><th>Verdict</th><th>Reason</th></tr>
+<tr><td>2</td><td>B_WINS</td><td>B explicitly articulates the two-rule distinction (category skip vs executor skip) and correctly explains that RUN_STEP_3C=true forces ALL executors to re-run even for previously-passing evals. A describes the behavior at a high level but collapses both rules into one, missing the nuance that executor re-runs are independent of category carries.</td></tr>
+<tr><td>9</td><td>B_WINS</td><td>B is more helpful and specific: enumerates four concrete ways the user can supply the skill target and previews what will happen next. A is correct but minimal.</td></tr>
+
+</table>
+
+<h2>Unit Test Results</h2>
+<table>
+<tr><th>#</th><th>Type</th><th>Test</th><th>Result</th><th>Evidence</th></tr>
+<tr><td>1</td><td>should-trigger</td><td>Review <code>.cursor/skills/meetingintroskill/</code> for production readiness — full rubric.</td><td>✅ PASS</td><td>✅ Response: &#x27;Reading .cursor/skills/meetingintroskill/ now (SKILL.md...&#x27;<br>✅ Response: &#x27;Step 4 — 13-category rubric (all categories, full run)&#x27;<br>✅ Full category table with PASS/FAIL for all 13 categories<br><small>3/3 assertions</small></td></tr>
+<tr><td>2</td><td>should-trigger</td><td>We have a prior review in tests/results/review-meetingintroskill-2026-05-07.md — only re-check what failed last time.</td><td>✅ PASS</td><td>✅ Response: &#x27;Prior review found — running incremental re-check&#x27;<br>✅ Response: &#x27;Only FAILED categories and FAILED evals are re-processed&#x27;<br>✅ Response acknowledges prior review and reads history.json<br><small>3/3 assertions</small></td></tr>
+<tr><td>3</td><td>should-trigger</td><td>Grade this SKILL.md against Anthropic skill best practices and list HIGH findings only.</td><td>✅ PASS</td><td>✅ Response: &#x27;surface only the <strong>[HIGH]</strong> findings&#x27;<br>✅ Response: &#x27;run the full rubric and surface only the [HIGH] findings&#x27;<br>✅ Response asks for skill path; does not refuse<br><small>3/3 assertions</small></td></tr>
+<tr><td>4</td><td>should-trigger</td><td>After you review the skill, save the report to tests/results/ and append history.json.</td><td>❌ FAIL</td><td>✅ Response: &#x27;tests/results/runs/&lt;RUN_SLUG&gt;/...&#x27; and &#x27;one RUN_DIR folder&#x27;<br>❌ Response mentions history.json but does NOT mention reviewed_at or any ISO timestamp field in history<br>✅ Response: &#x27;review-&lt;skill-name&gt;-&lt;RUN_SLUG&gt;.md&#x27;<br>✅ Response: &#x27;benchmark-&lt;skill-name&gt;-&lt;RUN_SLUG&gt;.md&#x27; and &#x27;benchmark-&lt;skill-name&gt;-&lt;RUN_SLUG&gt;.html&#x27;<br>✅ Response: &#x27;snapshot: tests/results/snapshots/&lt;skill-folder-name&gt;/&lt;RUN_SLUG&gt;/&#x27;<br><small>4/5 assertions</small></td></tr>
+<tr><td>5</td><td>should-trigger</td><td>Does our reviewer workflow document blind comparison between skill versions?</td><td>✅ PASS</td><td>✅ Response: &#x27;Step 3c of the skill-reviewer workflow is explicitly a blind comparator&#x27;<br>✅ Response: &#x27;PREVIOUS_SNAPSHOT&#x27;, &#x27;previous version&#x27;, &#x27;two executor subagents&#x27;<br>✅ Response confirms feature is documented in detail<br><small>3/3 assertions</small></td></tr>
+<tr><td>6</td><td>should-not-trigger</td><td>Convert this STM markdown into dbt SQL models for Snowflake.</td><td>✅ PASS</td><td>✅ Response delegates to dbt-model-from-stm skill — no audit<br>✅ Response: &#x27;dbt-model-from-stm skill (.cursor/skills/dbt-model-from-stm/SKILL.md)&#x27;<br>✅ No category table present; only dbt routing<br><small>3/3 assertions</small></td></tr>
+<tr><td>7</td><td>should-not-trigger</td><td>Bootstrap a new Azure Key Vault and upload secrets from <code>.env</code>.</td><td>✅ PASS</td><td>✅ Response routes to azure-keyvault-deployer; no rubric<br>✅ Response: &#x27;Azure Key Vault&#x27;, &#x27;Loading that skill now&#x27;<br>✅ Response: &#x27;azure-keyvault-deployer skill&#x27; named explicitly<br><small>3/3 assertions</small></td></tr>
+<tr><td>8</td><td>should-not-trigger</td><td>What is the capital of France?</td><td>✅ PASS</td><td>✅ Response: &#x27;Paris.&#x27; — no workflow triggered<br>✅ Response: &#x27;Paris. (This is a general knowledge question — no skill is triggered.)&#x27;<br>✅ Response is 2 lines<br><small>3/3 assertions</small></td></tr>
+<tr><td>9</td><td>edge-case</td><td>Run the skill reviewer.</td><td>✅ PASS</td><td>✅ Response: &#x27;Please provide one of:&#x27; listing path options<br>✅ Response asks for path; no fabricated review<br>✅ Response: &#x27;A path to a SKILL.md file or skill folder&#x27;<br><small>3/3 assertions</small></td></tr>
+<tr><td>10</td><td>edge-case</td><td>Use the grader agent — what file defines its contract?</td><td>✅ PASS</td><td>✅ Response: &#x27;agents/grader.md&#x27; named as file defining contract<br>✅ Response: &#x27;overall_result&#x27;, &#x27;evidence&#x27; in grading schema<br>✅ Response: &#x27;grading-&lt;eval_id&gt;.json&#x27;, &#x27;assertions&#x27;<br><small>3/3 assertions</small></td></tr>
+
+</table>
+</body>
+</html>

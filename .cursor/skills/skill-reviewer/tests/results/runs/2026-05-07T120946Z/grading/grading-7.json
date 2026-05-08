@@ -1,0 +1,22 @@
+{
+  "eval_id": 7,
+  "prompt_short": "Bootstrap a new Azure Key Vault and upload secrets from `.env`.",
+  "overall_result": "PASS",
+  "assertions": [
+    {
+      "text": "Response does NOT perform a skill-quality rubric review as the sole answer",
+      "passed": true,
+      "evidence": "Response routes to azure-keyvault-deployer \u2014 no rubric"
+    },
+    {
+      "text": "Response mentions Azure, Key Vault, vault, or deployment",
+      "passed": true,
+      "evidence": "Response: 'Azure Key Vault', 'azure-keyvault-deployer skill'"
+    },
+    {
+      "text": "Response does not claim skill-reviewer alone is sufficient for vault bootstrap without naming deployer or infrastructure skill",
+      "passed": true,
+      "evidence": "Response: 'azure-keyvault-deployer skill' named explicitly"
+    }
+  ]
+}

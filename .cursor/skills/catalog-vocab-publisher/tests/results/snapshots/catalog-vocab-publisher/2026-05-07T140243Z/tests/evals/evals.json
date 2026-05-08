@@ -1,0 +1,149 @@
+{
+  "skill_name": "catalog-vocab-publisher",
+  "generated_date": "2026-05-07",
+  "evals": [
+    {
+      "id": 1,
+      "type": "should-trigger",
+      "prompt": "Publish my governance vocabulary to OpenMetadata",
+      "expected_behavior": "Skill triggers; confirms .md file path and that OM_BASE_URL + OM_TOKEN are set; runs publish_vocab.py with --file argument",
+      "assertions": [
+        "Response asks for or confirms the .md vocabulary file path",
+        "Response references OM_BASE_URL and/or OM_TOKEN environment variables",
+        "Response does NOT use --username / --password flags"
+      ]
+    },
+    {
+      "id": 2,
+      "type": "should-trigger",
+      "prompt": "Push my retail-governance-vocab.md to the data catalog",
+      "expected_behavior": "Skill triggers; uses JWT token from OM_TOKEN env var (not username/password); runs publish script",
+      "assertions": [
+        "Response includes a publish_vocab.py command with --file argument",
+        "Response references OM_TOKEN (JWT / service account token)",
+        "Response does NOT include --username or --password flags in the run command"
+      ]
+    },
+    {
+      "id": 3,
+      "type": "should-trigger",
+      "prompt": "Sync our governance tags — re-run the vocab publisher",
+      "expected_behavior": "Skill triggers; clarifies the re-run is idempotent (safe, zero writes if unchanged); runs script",
+      "assertions": [
+        "Response states or implies the script is idempotent / safe to re-run",
+        "Response includes the publish_vocab.py command",
+        "Response does not warn that re-running will cause destructive changes"
+      ]
+    },
+    {
+      "id": 4,
+      "type": "should-trigger",
+      "prompt": "I got 401 Unauthorized when publishing the vocabulary",
+      "expected_behavior": "Skill triggers; instructs user to regenerate bot token under Settings → Bots → vocab-publisher-bot and update OM_TOKEN",
+      "assertions": [
+        "Response references the bot token expiry / revocation as cause of 401",
+        "Response mentions regenerating the token under Settings → Bots or vocab-publisher-bot",
+        "Response mentions updating OM_TOKEN after regeneration"
+      ]
+    },
+    {
+      "id": 5,
+      "type": "should-trigger",
+      "prompt": "The publish script returned 403 Forbidden",
+      "expected_behavior": "Skill triggers; instructs user to verify VocabPublisherPolicy (Create, EditAll, ViewAll) is attached to bot role",
+      "assertions": [
+        "Response explains 403 is a permissions error (not auth)",
+        "Response mentions VocabPublisherPolicy or equivalent custom policy",
+        "Response directs user to Settings → Bots → vocab-publisher-bot → Roles"
+      ]
+    },
+    {
+      "id": 6,
+      "type": "should-trigger",
+      "prompt": "Upload our governance framework classifications to OpenMetadata",
+      "expected_behavior": "Skill triggers; asks for .md file path; runs full publish workflow",
+      "assertions": [
+        "Response asks for or confirms the vocabulary .md file path",
+        "Response includes or references the publish_vocab.py script invocation",
+        "Response does NOT attempt to generate a vocabulary (that is a different skill)"
+      ]
+    },
+    {
+      "id": 7,
+      "type": "should-trigger",
+      "prompt": "Our tag descriptions have changed — push the updates",
+      "expected_behavior": "Skill triggers; runs script; explains that changed descriptions are UPDATED, unchanged ones SKIPPED",
+      "assertions": [
+        "Response explains that changed descriptions will be updated and unchanged ones skipped",
+        "Response includes publish_vocab.py command",
+        "Response does NOT say all tags will be deleted and recreated"
+      ]
+    },
+    {
+      "id": 8,
+      "type": "should-trigger",
+      "prompt": "Push vocabulary to OpenMetadata, publish classifications",
+      "expected_behavior": "Skill triggers on exact trigger phrase; proceeds with publish workflow",
+      "assertions": [
+        "Response engages with the publish workflow (confirms file path and/or env vars)",
+        "Response does NOT deflect to a different skill",
+        "Response does NOT ask clarifying questions about whether to generate vs publish"
+      ]
+    },
+    {
+      "id": 9,
+      "type": "should-not-trigger",
+      "prompt": "Generate a governance vocabulary for the retail domain",
+      "expected_behavior": "Should NOT trigger; governance-vocab-generator skill handles this",
+      "assertions": [
+        "Response does NOT attempt to run publish_vocab.py",
+        "Response indicates this is a vocabulary generation task (not publishing)",
+        "Response does NOT ask for OM credentials or base URL"
+      ]
+    },
+    {
+      "id": 10,
+      "type": "should-not-trigger",
+      "prompt": "Run a metadata ingestion from Snowflake into OpenMetadata",
+      "expected_behavior": "Should NOT trigger; catalog-sync skill handles this",
+      "assertions": [
+        "Response does NOT run or reference publish_vocab.py",
+        "Response treats this as a catalog ingestion / sync task",
+        "Response does NOT ask for a vocabulary .md file"
+      ]
+    },
+    {
+      "id": 11,
+      "type": "edge-case",
+      "prompt": "Publish my vocab",
+      "expected_behavior": "Skill triggers but stops to ask for the .md file path before proceeding (Step 1)",
+      "assertions": [
+        "Response asks for the vocabulary .md file path",
+        "Response does NOT attempt to run the script without knowing the file path",
+        "Response checks or asks about OM_BASE_URL and OM_TOKEN"
+      ]
+    },
+    {
+      "id": 12,
+      "type": "edge-case",
+      "prompt": "I want to publish but haven't set up the service account yet",
+      "expected_behavior": "Skill triggers; surfaces Prerequisites (vocab-publisher-bot, VocabPublisherPolicy, OM_TOKEN); stops until setup confirmed",
+      "assertions": [
+        "Response lists prerequisite setup steps (service account and/or OM_TOKEN)",
+        "Response references vocab-publisher-bot or equivalent service account",
+        "Response does NOT proceed to run the script before prerequisites are confirmed"
+      ]
+    },
+    {
+      "id": 13,
+      "type": "edge-case",
+      "prompt": "I get SSL errors when trying to publish",
+      "expected_behavior": "Skill triggers; cites HTTP vs HTTPS Gotcha — advises correcting OM_BASE_URL scheme",
+      "assertions": [
+        "Response links SSL/TLS errors to the HTTP vs HTTPS mismatch",
+        "Response advises checking or correcting the OM_BASE_URL scheme (http:// vs https://)",
+        "Response does NOT suggest reinstalling requests or Python as primary fix"
+      ]
+    }
+  ]
+}

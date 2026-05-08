@@ -1,0 +1,10 @@
+{
+  "eval_id": 5,
+  "prompt_short": "Restore the original JSON from this Excel file, ignoring any edits I made",
+  "overall_result": "PASS",
+  "assertions": [
+    { "text": "Response includes --no-apply-edits flag", "passed": true, "evidence": "Agent ran excel_to_json.py and described restoring from the hidden __rt_* round-trip tabs" },
+    { "text": "Response mentions __rt_ round-trip tabs or original payload restore", "passed": true, "evidence": "\"The original JSON has been restored to schema.json from the hidden __rt_* round-trip tabs\"" },
+    { "text": "Response uses excel_to_json.py script", "passed": true, "evidence": "Agent invoked excel_to_json.py with --no-apply-edits" }
+  ]
+}

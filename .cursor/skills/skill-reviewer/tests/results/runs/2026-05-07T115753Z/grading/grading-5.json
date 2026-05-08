@@ -1,0 +1,22 @@
+{
+  "eval_id": 5,
+  "prompt_short": "Does our reviewer workflow document blind comparison between skill versions?",
+  "overall_result": "PASS",
+  "assertions": [
+    {
+      "text": "Response mentions Step 3c OR comparator OR blind comparison",
+      "passed": true,
+      "evidence": "Response: 'Step 3c of the skill-reviewer workflow is explicitly a blind comparator'"
+    },
+    {
+      "text": "Response mentions snapshot OR old version vs new version OR two skill versions",
+      "passed": true,
+      "evidence": "Response: 'PREVIOUS_SNAPSHOT', 'previous version', 'two executor subagents'"
+    },
+    {
+      "text": "Response does NOT say the skill has no such feature",
+      "passed": true,
+      "evidence": "Response confirms feature is documented in detail"
+    }
+  ]
+}

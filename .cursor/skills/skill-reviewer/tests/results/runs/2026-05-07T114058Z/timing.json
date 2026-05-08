@@ -1,0 +1,78 @@
+{
+  "review_date": "2026-05-07",
+  "reviewed_at": "2026-05-07T11:40:58Z",
+  "run_slug": "2026-05-07T114058Z",
+  "run_label": "post-carried_from-fix-incremental",
+  "runs": [
+    {
+      "eval_id": 1,
+      "test_type": "should-trigger",
+      "prompt_short": "Review `.cursor/skills/meetingintroskill/` for production readiness \u2014 full rubric.",
+      "result": "SKIP",
+      "carried_from": "runs/2026-05-07/grading/grading-1.json"
+    },
+    {
+      "eval_id": 2,
+      "test_type": "should-trigger",
+      "prompt_short": "We have a prior review in tests/results/review-meetingintroskill-2026-05-07.md \u2014 only re-chec\u2026",
+      "result": "SKIP",
+      "carried_from": "runs/2026-05-07/grading/grading-2.json"
+    },
+    {
+      "eval_id": 3,
+      "test_type": "should-trigger",
+      "prompt_short": "Grade this SKILL.md against Anthropic skill best practices and list HIGH findings only.",
+      "result": "SKIP",
+      "carried_from": "runs/2026-05-07/grading/grading-3.json"
+    },
+    {
+      "eval_id": 4,
+      "test_type": "should-trigger",
+      "prompt_short": "After you review the skill, save the report to tests/results/ and append history.json.",
+      "result": "SKIP",
+      "carried_from": "runs/2026-05-07/grading/grading-4.json"
+    },
+    {
+      "eval_id": 5,
+      "test_type": "should-trigger",
+      "prompt_short": "Does our reviewer workflow document blind comparison between skill versions?",
+      "result": "SKIP",
+      "carried_from": "runs/2026-05-07/grading/grading-5.json"
+    },
+    {
+      "eval_id": 6,
+      "test_type": "should-not-trigger",
+      "prompt_short": "Convert this STM markdown into dbt SQL models for Snowflake.",
+      "result": "SKIP",
+      "carried_from": "runs/2026-05-07/grading/grading-6.json"
+    },
+    {
+      "eval_id": 7,
+      "test_type": "should-not-trigger",
+      "prompt_short": "Bootstrap a new Azure Key Vault and upload secrets from `.env`.",
+      "result": "SKIP",
+      "carried_from": "runs/2026-05-07/grading/grading-7.json"
+    },
+    {
+      "eval_id": 8,
+      "test_type": "should-not-trigger",
+      "prompt_short": "What is the capital of France?",
+      "result": "SKIP",
+      "carried_from": "runs/2026-05-07/grading/grading-8.json"
+    },
+    {
+      "eval_id": 9,
+      "test_type": "edge-case",
+      "prompt_short": "Run the skill reviewer.",
+      "result": "SKIP",
+      "carried_from": "runs/2026-05-07/grading/grading-9.json"
+    },
+    {
+      "eval_id": 10,
+      "test_type": "edge-case",
+      "prompt_short": "Use the grader agent \u2014 what file defines its contract?",
+      "result": "SKIP",
+      "carried_from": "runs/2026-05-07/grading/grading-10.json"
+    }
+  ]
+}

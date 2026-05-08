@@ -1,0 +1,22 @@
+{
+  "eval_id": 8,
+  "prompt_short": "What is the capital of France?",
+  "overall_result": "PASS",
+  "assertions": [
+    {
+      "text": "Response does NOT perform a skill audit workflow",
+      "passed": true,
+      "evidence": "Single factual sentence; no skill-audit workflow."
+    },
+    {
+      "text": "Response answers Paris OR treats as general knowledge",
+      "passed": true,
+      "evidence": "**Paris** as capital of France."
+    },
+    {
+      "text": "Response is short or direct \u2014 not a 13-category report",
+      "passed": true,
+      "evidence": "One-line answer; not a 13-category report."
+    }
+  ]
+}

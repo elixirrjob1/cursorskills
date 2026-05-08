@@ -1,0 +1,10 @@
+{
+  "eval_id": 2,
+  "prompt_short": "Convert schema.json to Excel but skip the OpenMetadata glossary sheet",
+  "overall_result": "PASS",
+  "assertions": [
+    { "text": "Response includes --no-openmetadata flag", "passed": true, "evidence": "Agent explicitly ran command with --no-openmetadata flag" },
+    { "text": "Response does NOT attempt to fetch from OpenMetadata", "passed": true, "evidence": "No attempt to contact OpenMetadata; --no-openmetadata was passed" },
+    { "text": "Response mentions DataGovernanceTerms sheet being skipped or absent", "passed": true, "evidence": "\"The DataGovernanceTerms sheet was skipped as requested since --no-openmetadata was passed\"" }
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "eval_id": 9,
+  "previous_snapshot": "2026-05-07T114058Z",
+  "verdict": "B_WINS",
+  "reason": "B is more helpful and specific: enumerates four concrete ways the user can supply the skill target and previews what will happen next. A is correct but minimal."
+}

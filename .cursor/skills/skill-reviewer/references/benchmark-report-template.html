@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Benchmark Report: ___SKILL_NAME___</title>
+  <style>
+    body { font-family: system-ui, sans-serif; font-size: 14px; margin: 24px; background: #fff; color: #222; }
+    h1 { font-size: 1.35rem; margin-bottom: 0.25rem; }
+    h2 { font-size: 1.1rem; margin-top: 2rem; margin-bottom: 0.75rem; border-bottom: 1px solid #ccc; padding-bottom: 0.25rem; }
+    .meta { color: #555; margin-bottom: 1.5rem; }
+    table { border-collapse: collapse; width: 100%; margin: 0.5rem 0 1rem; }
+    th, td { border: 1px solid #ccc; padding: 8px 10px; text-align: left; }
+    tr:nth-child(even) { background: #f9f9f9; }
+    th { background: #eee; font-weight: 600; }
+    .pass { background: #d4edda; color: #155724; }
+    .fail { background: #f8d7da; color: #721c24; }
+    .skip { background: #fff3cd; color: #856404; }
+    .bar-track { display: inline-block; width: 120px; height: 10px; background: #e0e0e0; border-radius: 2px; vertical-align: middle; margin-right: 8px; }
+    .bar-fill { height: 100%; background: #28a745; border-radius: 2px; }
+    .note { color: #444; font-style: italic; margin: 0.5rem 0; }
+    code { font-size: 13px; background: #f4f4f4; padding: 1px 4px; border-radius: 2px; }
+  </style>
+</head>
+<body>
+  <!--
+    skill-reviewer Step 7c: Copy this file to tests/results/benchmark-<skill-name>-YYYY-MM-DD.html
+    in the *target* skill folder. Replace every ___PLACEHOLDER___ below (do not leave placeholders in output).
+    Summary table: metric labels are fixed; replace each ___SUMMARY_TD_*___ with one full <td>…</td> (use class pass/fail/skip on styled cells). Escape HTML in text if needed.
+
+    Assertion Detail: ___ASSERTION_DETAIL_ROWS___ = one <tr> per assertion for every eval in evals.json (carry forward prior grading data for incremental SKIP evals).
+    Do NOT leave Assertion Detail as only a pointer to grading-*.json files (that pattern is forbidden). You may mention paths in Evidence cells when relevant.
+
+    Category Grades: four columns — # | Category | Grade | Explanation.
+  -->
+  <h1>Benchmark Report: ___SKILL_NAME___</h1>
+  <p class="meta">___META_LINE___</p>
+
+  <h2>Summary</h2>
+  <table>
+    <tr><th>Metric</th><th>Value</th></tr>
+    <tr><td>Overall Verdict</td>___SUMMARY_TD_VERDICT___</tr>
+    <tr><td>Unit Tests</td>___SUMMARY_TD_UNIT_TESTS___</tr>
+    <tr><td>Assertions</td>___SUMMARY_TD_ASSERTIONS___</tr>
+    <tr><td>Categories</td>___SUMMARY_TD_CATEGORIES___</tr>
+    <tr><td>High Failures</td>___SUMMARY_TD_HIGH_FAILURES___</tr>
+    <tr><td>Medium Failures</td>___SUMMARY_TD_MEDIUM_FAILURES___</tr>
+    <tr><td>Comparator</td>___SUMMARY_TD_COMPARATOR___</tr>
+  </table>
+
+  <h2>Unit Test Results</h2>
+  <table>
+    <thead>
+      <tr><th>#</th><th>Test</th><th>Type</th><th>Result</th><th>Assertions</th><th>Evidence</th></tr>
+    </thead>
+    <tbody>
+___UNIT_TEST_ROWS___
+    </tbody>
+  </table>
+
+  <h2>Assertion Detail</h2>
+  <p class="note">Full assertion-by-assertion roll-up below (Step 3b). The table is required in every benchmark; do not replace this section with only links to JSON files.</p>
+  <table>
+    <thead>
+      <tr><th>Eval</th><th>Assertion</th><th>Passed</th><th>Evidence</th></tr>
+    </thead>
+    <tbody>
+___ASSERTION_DETAIL_ROWS___
+    </tbody>
+  </table>
+
+  <h2>Category Grades</h2>
+  <table>
+    <thead>
+      <tr><th>#</th><th>Category</th><th>Grade</th><th>Explanation</th></tr>
+    </thead>
+    <tbody>
+___CATEGORY_ROWS___
+    </tbody>
+  </table>
+
+  <h2>Version Comparison</h2>
+___VERSION_COMPARISON_BLOCK___
+
+  <h2>History (all reviews)</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Reviewed at (UTC)</th>
+        <th>Date</th>
+        <th>Unit Tests</th>
+        <th>Assertions</th>
+        <th>Categories</th>
+        <th>Verdict</th>
+        <th>Notes</th>
+      </tr>
+    </thead>
+    <tbody>
+___HISTORY_ROWS___
+    </tbody>
+  </table>
+  <p class="note">Full narrative: <code>___REVIEW_FILENAME___</code></p>
+</body>
+</html>

@@ -1,0 +1,6 @@
+{
+  "eval_id": 9,
+  "prompt_short": "Export schema.json to Excel (no output path specified)",
+  "verdict": "a_wins",
+  "reasoning": "Both outputs correctly show the command without an output path and confirm the .xlsx is written next to the input. Output A (new version) adds genuinely useful operational context about the OpenMetadata auto-fetch behavior, the --no-openmetadata escape hatch, and the full list of expected workbook tabs — all information drawn from the new Gotchas and Notes sections. Output B (old version) is correct but minimal, omitting context a real user would need to act confidently."
+}

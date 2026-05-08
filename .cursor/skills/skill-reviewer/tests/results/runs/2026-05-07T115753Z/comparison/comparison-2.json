@@ -1,0 +1,6 @@
+{
+  "eval_id": 2,
+  "previous_snapshot": "2026-05-07T114058Z",
+  "verdict": "B_WINS",
+  "reason": "B explicitly articulates the two-rule distinction (category skip vs executor skip) and correctly explains that RUN_STEP_3C=true forces ALL executors to re-run even for previously-passing evals. A describes the behavior at a high level but collapses both rules into one, missing the nuance that executor re-runs are independent of category carries."
+}

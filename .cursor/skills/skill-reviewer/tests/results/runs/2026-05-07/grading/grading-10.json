@@ -1,0 +1,22 @@
+{
+  "eval_id": 10,
+  "prompt_short": "Use the grader agent \u2014 what file defines its contract?",
+  "overall_result": "PASS",
+  "assertions": [
+    {
+      "text": "Response mentions agents/grader.md OR grader.md",
+      "passed": true,
+      "evidence": "Names **`agents/grader.md`** as the contract file."
+    },
+    {
+      "text": "Response mentions passed AND evidence OR overall_result in relation to grading",
+      "passed": true,
+      "evidence": "Describes **`passed`**, **`evidence`**, and **`overall_result`** in the JSON shape."
+    },
+    {
+      "text": "Response mentions grading JSON OR eval_id OR assertion",
+      "passed": true,
+      "evidence": "Mentions **`assertions[]`**, **`eval_id`**, and grading JSON structure."
+    }
+  ]
+}

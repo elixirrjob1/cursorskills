@@ -1,0 +1,22 @@
+{
+  "eval_id": 2,
+  "prompt_short": "We have a prior review in tests/results/review-meetingintroskill-2026-05-07.md \u2014",
+  "overall_result": "PASS",
+  "assertions": [
+    {
+      "text": "Response mentions incremental, prior review, or carry forward",
+      "passed": true,
+      "evidence": "States **prior review** baseline and incremental workflow."
+    },
+    {
+      "text": "Response mentions re-running only failed tests or failed categories",
+      "passed": true,
+      "evidence": "**PASS rows were carried**; only **failed** items re-checked."
+    },
+    {
+      "text": "Response does NOT claim there is no prior review without checking",
+      "passed": true,
+      "evidence": "Does not deny prior review\u2014explicitly loads `review-meetingintroskill-2026-05-07.md`."
+    }
+  ]
+}

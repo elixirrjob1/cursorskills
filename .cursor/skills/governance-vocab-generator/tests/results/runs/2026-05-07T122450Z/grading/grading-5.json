@@ -1,0 +1,22 @@
+{
+  "eval_id": 5,
+  "prompt_short": "Apply the Privacy and ComplianceLegal governance tags to all the tables in our O",
+  "overall_result": "PASS",
+  "assertions": [
+    {
+      "text": "Response does NOT produce a governance-vocabularies/ file path as the main deliverable",
+      "passed": true,
+      "evidence": "Response routes away from vocab generation entirely \u2014 no file path produced"
+    },
+    {
+      "text": "Response references catalog assignment, catalog-glossary-tagger, catalog-sync, or OpenMetadata tag assignment",
+      "passed": true,
+      "evidence": "Response: 'use the catalog-glossary-tagger or stm-to-catalog-enricher skill'"
+    },
+    {
+      "text": "Response does NOT output classification dimensions with level headings as the primary content",
+      "passed": true,
+      "evidence": "Response is a routing explanation only \u2014 no vocabulary structure"
+    }
+  ]
+}

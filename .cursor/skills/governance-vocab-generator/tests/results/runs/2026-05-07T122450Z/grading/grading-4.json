@@ -1,0 +1,22 @@
+{
+  "eval_id": 4,
+  "prompt_short": "Produce a governance vocabulary for a legal document management system.",
+  "overall_result": "FAIL",
+  "assertions": [
+    {
+      "text": "Response includes ComplianceLegal classification or notes it as applicable to legal domain",
+      "passed": false,
+      "evidence": "Response is path-only; ComplianceLegal selection unverifiable from response alone"
+    },
+    {
+      "text": "Response does NOT include Architecture, OR explicitly notes Architecture is omitted because no staged processing pipeline exists",
+      "passed": false,
+      "evidence": "Response is path-only; no explanation of Architecture decision given"
+    },
+    {
+      "text": "Response returns a file path",
+      "passed": true,
+      "evidence": "Response: 'governance-vocabularies/legal-document-management-governance-vocab.md'"
+    }
+  ]
+}

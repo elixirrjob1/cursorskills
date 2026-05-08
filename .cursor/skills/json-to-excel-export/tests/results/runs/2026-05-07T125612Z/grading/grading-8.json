@@ -1,0 +1,10 @@
+{
+  "eval_id": 8,
+  "prompt_short": "Convert my Python script to an Excel file",
+  "overall_result": "PASS",
+  "assertions": [
+    { "text": "Response does NOT run json_to_excel.py", "passed": true, "evidence": "Agent correctly declined and did not invoke json_to_excel.py" },
+    { "text": "Response does not treat Python script as a schema JSON input", "passed": true, "evidence": "\"A Python script is source code, not schema metadata, so there's no meaningful way to convert it through this skill\"" },
+    { "text": "Response declines or answers from general knowledge", "passed": true, "evidence": "Agent declined and offered alternative approaches (documenting functions, exporting script output data)" }
+  ]
+}

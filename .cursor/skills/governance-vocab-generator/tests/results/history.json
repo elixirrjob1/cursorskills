@@ -1,0 +1,36 @@
+{
+  "history": [
+    {
+      "reviewed_at": "2026-05-07T12:24:50Z",
+      "date": "2026-05-07",
+      "run_slug": "2026-05-07T122450Z",
+      "skill_version": "baa69d9",
+      "unit_tests": {
+        "passed": 3,
+        "total": 8,
+        "pass_rate": 0.38
+      },
+      "assertions": {
+        "passed": 17,
+        "total": 24,
+        "pass_rate": 0.71
+      },
+      "categories": {
+        "passed": 9,
+        "total": 13,
+        "pass_rate": 0.69
+      },
+      "verdict": "FAIL",
+      "high_failures": [
+        "Testability: output quality unverifiable from path-only response",
+        "Testability: instruction-following (3-condition test, Architecture rule) unverifiable"
+      ],
+      "review_file": "runs/2026-05-07T122450Z/review-governance-vocab-generator-2026-05-07T122450Z.md",
+      "timing_file": "runs/2026-05-07T122450Z/timing.json",
+      "benchmark_md": "runs/2026-05-07T122450Z/benchmark-governance-vocab-generator-2026-05-07T122450Z.md",
+      "benchmark_html": "runs/2026-05-07T122450Z/benchmark-governance-vocab-generator-2026-05-07T122450Z.html",
+      "snapshot_dir": "snapshots/governance-vocab-generator/2026-05-07T122450Z",
+      "comparison_file": null
+    }
+  ]
+}

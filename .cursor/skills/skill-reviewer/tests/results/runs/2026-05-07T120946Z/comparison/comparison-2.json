@@ -1,0 +1,6 @@
+{
+  "eval_id": 2,
+  "previous_snapshot": "2026-05-07T115753Z",
+  "verdict": "B_WINS",
+  "reason": "B articulates two distinct skip rules (category skip and executor skip) and correctly notes that RUN_STEP_3C=true forces all executors to re-run. A only describes a single undifferentiated skip rule with no mention of the RUN_STEP_3C flag or the two-rule distinction."
+}

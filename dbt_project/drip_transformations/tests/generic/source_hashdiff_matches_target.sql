@@ -8,15 +8,23 @@
 
     Operational usage
     -----------------
-    1) Run test (dbt prints PASS/FAIL/WARN/ERROR/SKIP summary):
-       dbt test --select "test_name:source_hashdiff_matches_target" --target dev --store-failures
+    1) Run locally in DEV (default, no failure-table writes):
+       dbt test --select "test_name:source_hashdiff_matches_target" --target dev
 
-    2) If failures occur, dbt prints failure table names in DBT_DEV_dbt_test__audit.
+    2) Store failure tables only when explicitly requested:
+       dbt test --select "test_name:source_hashdiff_matches_target" --target dev --vars "store_hashdiff_failures: true" --store-failures
+
+    3) If failures are stored, dbt prints failure table names in DBT_DEV_dbt_test__audit.
        Query one example row per failed table to investigate quickly.
 
     Cursor prompt template
     ----------------------
-    "Run source_hashdiff_matches_target locally in dev, then return:
+    Execution policy:
+    - Default to read-only output.
+    - Use --store-failures only when the user explicitly requests it.
+
+    "Run source_hashdiff_matches_target locally in dev in read-only mode
+     (do NOT use --store-failures unless the user explicitly asks), then return:
      - per-table status/counts
      - one example mismatch row for each failed table
        (PK, source hash, target hash, failure_reason, source_row, target_row)."
@@ -31,7 +39,7 @@
     target_pk_column=none
 ) %}
 
-    {{ config(store_failures = true) }}
+    {{ config(store_failures = var('store_hashdiff_failures', false)) }}
 
     {%- set tgt_pk = target_pk_column if target_pk_column is not none else column_name -%}
     {%- set src_pk_q = adapter.quote(column_name) -%}

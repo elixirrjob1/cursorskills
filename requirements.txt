@@ -21,3 +21,5 @@ openai>=1.40
 psycopg2-binary>=2.9   # PostgreSQL
 pyodbc>=5.1         # MSSQL (requires ODBC Driver)
 # oracledb          # Oracle
+snowflake-connector-python>=3.10
+snowflake-sqlalchemy>=1.5

@@ -1,0 +1,5 @@
+{
+  "exclude_schemas": [],
+  "exclude_tables": [],
+  "max_row_limit": 5000
+}

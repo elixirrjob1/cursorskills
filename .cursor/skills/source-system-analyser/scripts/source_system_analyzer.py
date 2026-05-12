@@ -1457,12 +1457,14 @@ _TZ_AWARE_TYPES = {
     "mysql": ("timestamp",),
     "mssql": ("datetimeoffset",),
     "oracle": ("timestamp with time zone", "timestamp with local time zone"),
+    "snowflake": ("timestamp_tz", "timestamp_ltz", "timestamptz", "timestamp with time zone"),
 }
 _TZ_AWARE_INTERPRETATION = {
     "postgresql": "UTC",
     "mysql": "UTC",
     "mssql": "offset_embedded",
     "oracle": "UTC",
+    "snowflake": "UTC",
 }
 
 
@@ -1491,7 +1493,7 @@ def fetch_schema_metadata(engine: Engine, schema: Optional[str] = None, config: 
 
     target_tables: Dict[str, str] = {}
     for sch in schemas_to_check:
-        if schema and sch != schema:
+        if schema and str(sch).upper() != str(schema).upper():
             continue
         if should_exclude_schema(sch, config):
             continue
@@ -3932,7 +3934,10 @@ def build_source_system_document(
 
             logger.info(f"Data quality: {len(all_findings)} finding(s) (critical: {severity_counts.get('critical', 0)}, warning: {severity_counts.get('warning', 0)}, info: {severity_counts.get('info', 0)})")
         else:
-            logger.info(f"Data quality checks skipped (dialect {dialect} not supported; use postgresql, mssql, or oracle)")
+            logger.info(
+                f"Data quality checks skipped (dialect {dialect} not supported; "
+                "use postgresql, mssql, oracle, or snowflake)"
+            )
 
         # Build final document
         total_findings = sum(len(tbl.get("data_quality", {}).get("findings", [])) for tbl in enriched_tables)
@@ -4034,8 +4039,12 @@ if __name__ == "__main__":
     )
     parser.add_argument("output_json_path", help="Path for schema.json output")
     parser.add_argument("schema", nargs="?", default=None, help="Schema to analyze (default: from DATABASE_SCHEMA/SCHEMA env or dialect default)")
-    parser.add_argument("--dialect", choices=["postgresql", "mssql", "oracle"], default=None,
-                        help="Override dialect (default: inferred from URL)")
+    parser.add_argument(
+        "--dialect",
+        choices=["postgresql", "mssql", "oracle", "snowflake"],
+        default=None,
+        help="Override dialect (default: inferred from URL)",
+    )
     parser.add_argument(
         "--database-url-secret",
         default=None,
@@ -4069,6 +4078,8 @@ if __name__ == "__main__":
         keyvault_name=args.keyvault_name,
     )
     schema = args.schema or os.environ.get("DATABASE_SCHEMA") or os.environ.get("SCHEMA")
+    if args.dialect == "snowflake" and schema:
+        schema = str(schema).upper()
     result = analyze_source_system(
         database_url,
         args.output_json_path,

@@ -13,9 +13,25 @@ fi
 
 VENDOR_DIR="$ROOT_DIR/vendor"
 FALLBACK_VENDOR_DIR="$PROJECT_ROOT/tools/fivetran_mcp/vendor"
+# shellcheck source=/dev/null
+source "$ROOT_DIR/../mcp_resolve_python.inc.sh"
+
+_pick_and_run() {
+  local vdir="$1"
+  local py
+  py="$(mcp_resolve_python "$vdir")" || return 1
+  PYTHONPATH="${vdir}${PYTHONPATH:+:$PYTHONPATH}" exec "$py" "$ROOT_DIR/server.py"
+}
 
 if [[ -d "$VENDOR_DIR" ]]; then
-  PYTHONPATH="$VENDOR_DIR${PYTHONPATH:+:$PYTHONPATH}" exec python3 "$ROOT_DIR/server.py"
+  _pick_and_run "$VENDOR_DIR" || true
 fi
 
-PYTHONPATH="$FALLBACK_VENDOR_DIR${PYTHONPATH:+:$PYTHONPATH}" exec python3 "$ROOT_DIR/server.py"
+if [[ -d "$FALLBACK_VENDOR_DIR" ]]; then
+  echo "OpenMetadata MCP: using Fivetran vendor fallback — run  bash scripts/install_openmetadata_mcp_deps.sh  for a dedicated vendor tree" >&2
+  _pick_and_run "$FALLBACK_VENDOR_DIR" || true
+fi
+
+echo "OpenMetadata MCP: no working vendor. Run:" >&2
+echo "  bash scripts/install_openmetadata_mcp_deps.sh" >&2
+exit 1

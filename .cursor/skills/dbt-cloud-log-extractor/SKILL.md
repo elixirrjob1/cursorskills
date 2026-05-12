@@ -8,6 +8,7 @@ description: Query the dbt Cloud MCP server to extract model run history, pass/f
 Extract full model and test execution logs from dbt Cloud.
 
 **Full log (default)** → run the Python script `scripts/fetch_dbt_logs.py` — one shot, no MCP spam.  
+**Warehouse landing (runs, step console/debug logs, run_results nodes)** → `scripts/sync_dbt_observability_to_snowflake.py` and `scripts/dbt_observability/README.md`.  
 **Scoped / ad-hoc query** → use the `project-0-cursorskills-dbt` MCP tools directly.
 
 ## Prerequisites

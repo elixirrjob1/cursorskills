@@ -13,4 +13,11 @@ if [[ -f "$PROJECT_ROOT/.env" ]]; then
 fi
 
 VENDOR_DIR="$ROOT_DIR/vendor"
-PYTHONPATH="${VENDOR_DIR}${PYTHONPATH:+:$PYTHONPATH}" exec python3 "$ROOT_DIR/server.py"
+# shellcheck source=/dev/null
+source "$ROOT_DIR/../mcp_resolve_python.inc.sh"
+PYTHON_EXE="$(mcp_resolve_python "$VENDOR_DIR")" || {
+  echo "Fivetran MCP: no Python could import vendor deps under $VENDOR_DIR" >&2
+  echo "Fix: run  bash scripts/install_fivetran_mcp_deps.sh  (use same Python you want Cursor to run), or set MCP_SERVER_PYTHON=/path/to/python" >&2
+  exit 1
+}
+PYTHONPATH="${VENDOR_DIR}${PYTHONPATH:+:$PYTHONPATH}" exec "$PYTHON_EXE" "$ROOT_DIR/server.py"

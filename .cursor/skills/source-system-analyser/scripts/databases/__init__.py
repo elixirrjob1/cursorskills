@@ -8,11 +8,13 @@ from .base import DialectAdapter
 from .mssql import MssqlAdapter
 from .oracle import OracleAdapter
 from .postgresql import PostgresqlAdapter
+from .snowflake import SnowflakeAdapter
 
 _ADAPTERS = {
     "postgresql": PostgresqlAdapter,
     "mssql": MssqlAdapter,
     "oracle": OracleAdapter,
+    "snowflake": SnowflakeAdapter,
 }
 
 

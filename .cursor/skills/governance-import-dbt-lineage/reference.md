@@ -14,6 +14,12 @@
 6. Writes lineage edges with:
    - `PUT /api/v1/lineage`
 
+Optional:
+
+- Include dbt view nodes in lineage (`--include-views`).
+- Add same-name column mappings under `lineageDetails.columnsLineage`
+  (`--include-column-lineage`).
+
 ## Supported dbt resource types for lineage sources
 
 - `model`
@@ -22,6 +28,31 @@
 - `snapshot`
 
 Other dependency types are skipped and counted as unsupported.
+
+## View handling
+
+Default behavior skips view-model targets and flattens through view dependencies.
+
+When `--include-views` is provided:
+
+- view models are kept as lineage nodes
+- edges like `source -> vw_* -> enriched_table` are written when resolvable
+
+This requires matching view entities to exist in OpenMetadata.
+
+## Column-level lineage support
+
+OpenMetadata supports column lineage in `PUT /api/v1/lineage` under
+`edge.lineageDetails.columnsLineage`.
+
+When `--include-column-lineage` is provided, this importer adds case-insensitive,
+same-name mappings using table column metadata returned by OpenMetadata:
+
+- `fromColumns`: `<from-table-fqn>.<column>`
+- `toColumn`: `<to-table-fqn>.<column>`
+
+If there are no overlapping column names, the importer keeps table-level lineage
+and reports the skip in summary counters.
 
 ## Idempotency
 

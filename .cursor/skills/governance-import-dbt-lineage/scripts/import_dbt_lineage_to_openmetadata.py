@@ -189,6 +189,9 @@ class Counts:
     created_or_updated_edges: int = 0
     skipped_missing_entities: int = 0
     skipped_unsupported_dependencies: int = 0
+    edges_with_column_lineage: int = 0
+    column_lineage_mappings: int = 0
+    skipped_column_lineage_no_column_overlap: int = 0
     errors: int = 0
 
 
@@ -202,6 +205,21 @@ def _upper(value: str) -> str:
 
 def _table_fqn(service: str, ref: TableRef) -> str:
     return f"{service}.{ref.database}.{ref.schema}.{ref.table}"
+
+
+def _is_view_model(node: dict[str, Any]) -> bool:
+    if str(node.get("resource_type") or "") != "model":
+        return False
+    name = str(node.get("name") or "")
+    alias = str(node.get("alias") or "")
+    config = node.get("config") or {}
+    unrendered_config = node.get("unrendered_config") or {}
+    materialized = str(
+        config.get("materialized") or unrendered_config.get("materialized") or ""
+    ).strip()
+    if materialized.lower() == "view":
+        return True
+    return name.lower().startswith("vw_") or alias.lower().startswith("vw_")
 
 
 def _parse_schema_map(raw: str | None) -> dict[str, str]:
@@ -295,16 +313,10 @@ def _build_lineage_edges(
     *,
     default_database: str | None,
     schema_map: dict[str, str],
+    include_views: bool,
 ) -> list[tuple[str, TableRef, TableRef]]:
     collected = _collect_nodes(manifest)
     edges: list[tuple[str, TableRef, TableRef]] = []
-
-    def _is_view_model(node: dict[str, Any]) -> bool:
-        if str(node.get("resource_type") or "") != "model":
-            return False
-        name = str(node.get("name") or "")
-        alias = str(node.get("alias") or "")
-        return name.lower().startswith("vw_") or alias.lower().startswith("vw_")
 
     def _upstream_refs(node_id: str, seen: set[str]) -> list[TableRef]:
         node = collected.get(node_id) or {}
@@ -318,7 +330,7 @@ def _build_lineage_edges(
             dep_type = str(dep.get("resource_type") or "")
             if dep_type not in {"model", "source", "seed", "snapshot"}:
                 continue
-            if dep_type == "model" and _is_view_model(dep):
+            if dep_type == "model" and (not include_views) and _is_view_model(dep):
                 refs.extend(_upstream_refs(dep_id, seen | {dep_id}))
                 continue
             dep_ref = _table_from_dbt_node(
@@ -339,7 +351,7 @@ def _build_lineage_edges(
     for node_id, node in (manifest.get("nodes") or {}).items():
         if str(node.get("resource_type")) != "model":
             continue
-        if _is_view_model(node):
+        if (not include_views) and _is_view_model(node):
             # OM currently catalogs enriched physical tables; skip intermediary vw_* targets.
             continue
         to_ref = _table_from_dbt_node(
@@ -350,6 +362,44 @@ def _build_lineage_edges(
         for from_ref in _upstream_refs(node_id, {node_id}):
             edges.append((node_id, from_ref, to_ref))
     return edges
+
+
+def _build_column_lineage_details(
+    from_entity: dict[str, Any],
+    to_entity: dict[str, Any],
+) -> tuple[dict[str, Any] | None, int]:
+    from_columns = [
+        str(c.get("name") or "").strip()
+        for c in (from_entity.get("columns") or [])
+        if str(c.get("name") or "").strip()
+    ]
+    to_columns = [
+        str(c.get("name") or "").strip()
+        for c in (to_entity.get("columns") or [])
+        if str(c.get("name") or "").strip()
+    ]
+    from_lookup = {c.lower(): c for c in from_columns}
+    to_lookup = {c.lower(): c for c in to_columns}
+    shared = sorted(set(from_lookup) & set(to_lookup))
+    if not shared:
+        return None, 0
+    from_fqn_base = str(from_entity.get("fullyQualifiedName") or "").strip()
+    to_fqn_base = str(to_entity.get("fullyQualifiedName") or "").strip()
+    if not from_fqn_base or not to_fqn_base:
+        return None, 0
+    mappings = []
+    for key in shared:
+        src_col = from_lookup[key]
+        dst_col = to_lookup[key]
+        mappings.append(
+            {
+                "fromColumns": [f"{from_fqn_base}.{src_col}"],
+                "toColumn": f"{to_fqn_base}.{dst_col}",
+            }
+        )
+    if not mappings:
+        return None, 0
+    return {"columnsLineage": mappings}, len(mappings)
 
 
 def main() -> None:
@@ -383,6 +433,16 @@ def main() -> None:
         help="Schema remap as FROM:TO pairs (comma-separated), e.g. DBT_DEV:DBT_PROD,DBT_DEV_ENRICHED:DBT_PROD_ENRICHED",
     )
     parser.add_argument(
+        "--include-views",
+        action="store_true",
+        help="Include dbt view models in lineage edges (default behavior flattens through view dependencies).",
+    )
+    parser.add_argument(
+        "--include-column-lineage",
+        action="store_true",
+        help="Attach simple same-name column mappings to lineage edges when OpenMetadata entities expose columns.",
+    )
+    parser.add_argument(
         "--env-file",
         help="Load this dotenv file before reading OPENMETADATA_* (overrides OPENMETADATA_ENV_FILE for this run)",
     )
@@ -411,6 +471,7 @@ def main() -> None:
         manifest,
         default_database=args.default_database,
         schema_map=schema_map,
+        include_views=args.include_views,
     )
     counts.total_edges_from_manifest = len(planned)
 
@@ -442,13 +503,30 @@ def main() -> None:
                 "description": f"Imported from dbt manifest dependency ({node_id})",
             }
         }
+        if args.include_column_lineage:
+            details, mapping_count = _build_column_lineage_details(from_entity, to_entity)
+            if details:
+                edge["edge"]["lineageDetails"] = details
+                counts.edges_with_column_lineage += 1
+                counts.column_lineage_mappings += mapping_count
+            else:
+                counts.skipped_column_lineage_no_column_overlap += 1
 
         counts.attempted_edges += 1
         if args.dry_run:
-            print(
+            dry_line = (
                 "[DRY] "
                 f"{from_entity.get('fullyQualifiedName')} -> {to_entity.get('fullyQualifiedName')}"
             )
+            if args.include_column_lineage:
+                mapping_count = len(
+                    (
+                        (edge.get("edge") or {}).get("lineageDetails") or {}
+                    ).get("columnsLineage")
+                    or []
+                )
+                dry_line += f" (column mappings: {mapping_count})"
+            print(dry_line)
             continue
 
         try:
@@ -475,6 +553,13 @@ def main() -> None:
         print(f"- write errors: {counts.errors}")
     print(f"- skipped (missing OM entities): {counts.skipped_missing_entities}")
     print(f"- skipped (unsupported deps): {counts.skipped_unsupported_dependencies}")
+    if args.include_column_lineage:
+        print(f"- edges with column lineage: {counts.edges_with_column_lineage}")
+        print(f"- column lineage mappings: {counts.column_lineage_mappings}")
+        print(
+            "- skipped column lineage (no overlapping columns): "
+            f"{counts.skipped_column_lineage_no_column_overlap}"
+        )
 
     if counts.errors:
         raise SystemExit(1)

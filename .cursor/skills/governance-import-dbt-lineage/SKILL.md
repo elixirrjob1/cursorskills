@@ -8,6 +8,12 @@ description: Import dbt model dependency lineage into OpenMetadata using dbt man
 Imports lineage from dbt artifacts into OpenMetadata so upstream/downstream
 dependencies in dbt are visible in the catalog lineage graph.
 
+Supports:
+
+- table-level lineage edges (default)
+- optional inclusion of view-model nodes (`--include-views`)
+- optional same-name column lineage mappings (`--include-column-lineage`)
+
 ## When to use
 
 - User asks to add dbt lineage to OpenMetadata
@@ -63,6 +69,8 @@ python .cursor/skills/governance-import-dbt-lineage/scripts/import_dbt_lineage_t
   --service snowflake_fivetran \
   --default-database DRIP_DATA_INTELLIGENCE \
   --schema-map DBT_DEV:DBT_PROD,DBT_DEV_ENRICHED:DBT_PROD_ENRICHED \
+  --include-views \
+  --include-column-lineage \
   --dry-run
 ```
 
@@ -70,6 +78,8 @@ Review output:
 
 - `[DRY]` rows are valid lineage edges that can be written
 - `[SKIP] unresolved entity` rows must be fixed before write mode
+- When `--include-column-lineage` is enabled, each dry line includes
+  `column mappings: <n>`
 
 ### Step 3 — Write lineage
 
@@ -78,11 +88,20 @@ python .cursor/skills/governance-import-dbt-lineage/scripts/import_dbt_lineage_t
   --manifest dbt_project/drip_transformations/target/manifest.json \
   --service snowflake_fivetran \
   --default-database DRIP_DATA_INTELLIGENCE \
-  --schema-map DBT_DEV:DBT_PROD,DBT_DEV_ENRICHED:DBT_PROD_ENRICHED
+  --schema-map DBT_DEV:DBT_PROD,DBT_DEV_ENRICHED:DBT_PROD_ENRICHED \
+  --include-views \
+  --include-column-lineage
 ```
 
 The script writes lineage with `PUT /api/v1/lineage` and prints `[OK]`/`[ERR]`
 per edge plus a final summary.
+
+Column lineage behavior:
+
+- Generated only when `--include-column-lineage` is enabled.
+- Uses case-insensitive same-name matching between upstream and downstream
+  OpenMetadata table columns.
+- If a table pair has no overlapping names, table-level lineage is still written.
 
 ## Guardrails
 
@@ -90,6 +109,8 @@ per edge plus a final summary.
 - Do not ignore unresolved entities; fix ingestion/mapping first.
 - Run dry-run before write mode unless the user explicitly asks to skip it.
 - Treat the run as incomplete if write errors remain.
+- If you use `--include-views`, ensure view entities are also ingested in
+  OpenMetadata.
 - Prefer HTTPS for `OPENMETADATA_BASE_URL`; use `OPENMETADATA_ALLOW_INSECURE_HTTP=true` only when you knowingly accept HTTP.
 
 - Detailed behavior and troubleshooting: [reference.md](reference.md)

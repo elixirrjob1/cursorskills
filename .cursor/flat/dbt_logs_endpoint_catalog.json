@@ -1,0 +1,6403 @@
+{
+  "metadata": {
+    "source": "dbt-cloud-openapi-spec",
+    "version": "v2",
+    "endpoint_count": 52,
+    "table_blueprint_count": 43
+  },
+  "how_to_use": {
+    "objective": "Map each endpoint response shape to staging tables for custom connectors.",
+    "mapping_rule": "One endpoint to one staging table; flatten nested fields into child columns as needed."
+  },
+  "log_focus_endpoints": [
+    {
+      "operation_id": "List Jobs",
+      "method": "GET",
+      "path": "/api/v2/accounts/{account_id}/jobs/",
+      "proposed_table": "stg_dbt_list_jobs",
+      "parameters": [
+        {
+          "name": "account_id",
+          "in": "path",
+          "required": true,
+          "type": "integer",
+          "description": ""
+        },
+        {
+          "name": "dbt_version__in",
+          "in": "query",
+          "required": false,
+          "type": "array",
+          "description": ""
+        },
+        {
+          "name": "environment_id",
+          "in": "query",
+          "required": false,
+          "type": "integer",
+          "description": ""
+        },
+        {
+          "name": "include_related",
+          "in": "query",
+          "required": false,
+          "type": "string",
+          "description": "A list of related objects to include in the response. Valid values are `environment`, `custom_environment_variables`, `most_recent_run`, `most_recent_completed_run`, and `fusion_readiness`."
+        },
+        {
+          "name": "is_fusion_ready",
+          "in": "query",
+          "required": false,
+          "type": "boolean",
+          "description": "Filters jobs by fusion readiness. When true, returns conformant or override-ready jobs. When false, returns non-ready jobs."
+        },
+        {
+          "name": "is_system",
+          "in": "query",
+          "required": false,
+          "type": "boolean",
+          "description": ""
+        },
+        {
+          "name": "limit",
+          "in": "query",
+          "required": false,
+          "type": "integer",
+          "description": ""
+        },
+        {
+          "name": "name__icontains",
+          "in": "query",
+          "required": false,
+          "type": "string",
+          "description": ""
+        },
+        {
+          "name": "offset",
+          "in": "query",
+          "required": false,
+          "type": "integer",
+          "description": ""
+        },
+        {
+          "name": "order_by",
+          "in": "query",
+          "required": false,
+          "type": "string",
+          "description": "Field to order the results by. Use `-` to reverse the order."
+        },
+        {
+          "name": "pk",
+          "in": "query",
+          "required": false,
+          "type": "integer",
+          "description": ""
+        },
+        {
+          "name": "project_id",
+          "in": "query",
+          "required": false,
+          "type": "integer",
+          "description": "Filters the results to a specific Project"
+        },
+        {
+          "name": "project_id__in",
+          "in": "query",
+          "required": false,
+          "type": "array",
+          "description": ""
+        },
+        {
+          "name": "state",
+          "in": "query",
+          "required": false,
+          "type": "string",
+          "description": "Filters by soft deletion state.\n            <ul>\n                <li>\n                    <strong>\"active\"</strong> / <strong>1</strong>: Only active resources\n                </li>\n                <li>\n                    <strong>\"deleted\"</strong> / <strong>2</strong>: Only deleted resources\n                </li>\n                <li>\n                    <strong>\"all\"</strong>: All resources\n                </li>\n            </ul>\n            "
+        },
+        {
+          "name": "triggers_schedule",
+          "in": "query",
+          "required": false,
+          "type": "boolean",
+          "description": ""
+        }
+      ]
+    },
+    {
+      "operation_id": "Create Job",
+      "method": "POST",
+      "path": "/api/v2/accounts/{account_id}/jobs/",
+      "proposed_table": "stg_dbt_create_job",
+      "parameters": [
+        {
+          "name": "account_id",
+          "in": "path",
+          "required": true,
+          "type": "integer",
+          "description": ""
+        }
+      ]
+    },
+    {
+      "operation_id": "Retrieve Job",
+      "method": "GET",
+      "path": "/api/v2/accounts/{account_id}/jobs/{id}/",
+      "proposed_table": "stg_dbt_retrieve_job",
+      "parameters": [
+        {
+          "name": "account_id",
+          "in": "path",
+          "required": true,
+          "type": "integer",
+          "description": ""
+        },
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "type": "integer",
+          "description": ""
+        },
+        {
+          "name": "include_related",
+          "in": "query",
+          "required": false,
+          "type": "string",
+          "description": "A list of related objects to include in the response. Valid values are `environment`, `custom_environment_variables`, `most_recent_run`, `most_recent_completed_run`, and `fusion_readiness`."
+        }
+      ]
+    },
+    {
+      "operation_id": "Update Job",
+      "method": "POST",
+      "path": "/api/v2/accounts/{account_id}/jobs/{id}/",
+      "proposed_table": "stg_dbt_update_job",
+      "parameters": [
+        {
+          "name": "account_id",
+          "in": "path",
+          "required": true,
+          "type": "integer",
+          "description": ""
+        },
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "type": "integer",
+          "description": ""
+        }
+      ]
+    },
+    {
+      "operation_id": "Destroy Job",
+      "method": "DELETE",
+      "path": "/api/v2/accounts/{account_id}/jobs/{id}/",
+      "proposed_table": "stg_dbt_destroy_job",
+      "parameters": [
+        {
+          "name": "account_id",
+          "in": "path",
+          "required": true,
+          "type": "integer",
+          "description": ""
+        },
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "type": "integer",
+          "description": ""
+        }
+      ]
+    },
+    {
+      "operation_id": "Retrieve Job Artifact",
+      "method": "GET",
+      "path": "/api/v2/accounts/{account_id}/jobs/{job_id}/artifacts/{remainder}",
+      "proposed_table": "stg_dbt_retrieve_job_artifact",
+      "parameters": [
+        {
+          "name": "account_id",
+          "in": "path",
+          "required": true,
+          "type": "integer",
+          "description": ""
+        },
+        {
+          "name": "include_related",
+          "in": "query",
+          "required": false,
+          "type": "string",
+          "description": "Comma-separated list of related objects to include in the response."
+        },
+        {
+          "name": "job_id",
+          "in": "path",
+          "required": true,
+          "type": "integer",
+          "description": ""
+        },
+        {
+          "name": "remainder",
+          "in": "path",
+          "required": true,
+          "type": "string",
+          "description": ""
+        }
+      ]
+    },
+    {
+      "operation_id": "Retry Failed Job",
+      "method": "POST",
+      "path": "/api/v2/accounts/{account_id}/jobs/{job_id}/rerun/",
+      "proposed_table": "stg_dbt_retry_failed_job",
+      "parameters": [
+        {
+          "name": "account_id",
+          "in": "path",
+          "required": true,
+          "type": "integer",
+          "description": ""
+        },
+        {
+          "name": "job_id",
+          "in": "path",
+          "required": true,
+          "type": "integer",
+          "description": ""
+        }
+      ]
+    },
+    {
+      "operation_id": "Trigger Job Run",
+      "method": "POST",
+      "path": "/api/v2/accounts/{account_id}/jobs/{job_id}/run/",
+      "proposed_table": "stg_dbt_trigger_job_run",
+      "parameters": [
+        {
+          "name": "account_id",
+          "in": "path",
+          "required": true,
+          "type": "integer",
+          "description": ""
+        },
+        {
+          "name": "job_id",
+          "in": "path",
+          "required": true,
+          "type": "integer",
+          "description": ""
+        }
+      ]
+    },
+    {
+      "operation_id": "List Runs",
+      "method": "GET",
+      "path": "/api/v2/accounts/{account_id}/runs/",
+      "proposed_table": "stg_dbt_list_runs",
+      "parameters": [
+        {
+          "name": "account_id",
+          "in": "path",
+          "required": true,
+          "type": "integer",
+          "description": ""
+        },
+        {
+          "name": "created_at__range",
+          "in": "query",
+          "required": false,
+          "type": "array",
+          "description": ""
+        },
+        {
+          "name": "dbt_version",
+          "in": "query",
+          "required": false,
+          "type": "string",
+          "description": ""
+        },
+        {
+          "name": "dbt_version__in",
+          "in": "query",
+          "required": false,
+          "type": "array",
+          "description": ""
+        },
+        {
+          "name": "deferring_run_id",
+          "in": "query",
+          "required": false,
+          "type": "integer",
+          "description": ""
+        },
+        {
+          "name": "environment_id",
+          "in": "query",
+          "required": false,
+          "type": "integer",
+          "description": ""
+        },
+        {
+          "name": "finished_at__range",
+          "in": "query",
+          "required": false,
+          "type": "array",
+          "description": ""
+        },
+        {
+          "name": "has_docs_generated",
+          "in": "query",
+          "required": false,
+          "type": "boolean",
+          "description": ""
+        },
+        {
+          "name": "has_sources_generated",
+          "in": "query",
+          "required": false,
+          "type": "boolean",
+          "description": ""
+        },
+        {
+          "name": "id__gt",
+          "in": "query",
+          "required": false,
+          "type": "integer",
+          "description": ""
+        },
+        {
+          "name": "include_related",
+          "in": "query",
+          "required": false,
+          "type": "string",
+          "description": "A list of related objects to include in the response. Valid values are `trigger`, `job`, `audit`, and `debug_logs`. If `debug_logs` is not provided, then the included debug logs will be truncated to the last 1,000 lines of the debug log output file."
+        },
+        {
+          "name": "job_definition_id",
+          "in": "query",
+          "required": false,
+          "type": "integer",
+          "description": "Filters the results to a specific Job"
+        },
+        {
+          "name": "limit",
+          "in": "query",
+          "required": false,
+          "type": "integer",
+          "description": "Pagination limit"
+        },
+        {
+          "name": "offset",
+          "in": "query",
+          "required": false,
+          "type": "integer",
+          "description": "Pagination offset"
+        },
+        {
+          "name": "order_by",
+          "in": "query",
+          "required": false,
+          "type": "string",
+          "description": "Field to order the results by. Use `-` to reverse the order. Options are `id`, `created_at`, and `finished_at`"
+        },
+        {
+          "name": "pk",
+          "in": "query",
+          "required": false,
+          "type": "integer",
+          "description": ""
+        },
+        {
+          "name": "pk__in",
+          "in": "query",
+          "required": false,
+          "type": "array",
+          "description": ""
+        },
+        {
+          "name": "project_id",
+          "in": "query",
+          "required": false,
+          "type": "integer",
+          "description": "Filters the results to a specific Project"
+        },
+        {
+          "name": "project_id__in",
+          "in": "query",
+          "required": false,
+          "type": "array",
+          "description": ""
+        },
+        {
+          "name": "state",
+          "in": "query",
+          "required": false,
+          "type": "string",
+          "description": ""
+        },
+        {
+          "name": "status",
+          "in": "query",
+          "required": false,
+          "type": "integer",
+          "description": "Filters the results to a specific run status"
+        },
+        {
+          "name": "status__in",
+          "in": "query",
+          "required": false,
+          "type": "array",
+          "description": "Filters the results to a specific set of run statuses. `1: Queued`, `2: Starting`, `3: Running`, `10: Success`, `20: Error`, `30: Cancelled`"
+        }
+      ]
+    },
+    {
+      "operation_id": "Retrieve Run",
+      "method": "GET",
+      "path": "/api/v2/accounts/{account_id}/runs/{id}/",
+      "proposed_table": "stg_dbt_retrieve_run",
+      "parameters": [
+        {
+          "name": "account_id",
+          "in": "path",
+          "required": true,
+          "type": "integer",
+          "description": ""
+        },
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "type": "integer",
+          "description": ""
+        },
+        {
+          "name": "include_related",
+          "in": "query",
+          "required": false,
+          "type": "string",
+          "description": "A list of related objects to include in the response. Valid values are `trigger`, `job`, `environment`, `repository`, `run_steps`, `run_retries`, `used_repo_cache`, `repo_cache_restore`, `audit`, and `debug_logs`. If `debug_logs` is not provided, then the included debug logs will be truncated to the last 1,000 lines of the debug log output file."
+        }
+      ]
+    },
+    {
+      "operation_id": "List Run Artifacts",
+      "method": "GET",
+      "path": "/api/v2/accounts/{account_id}/runs/{run_id}/artifacts/",
+      "proposed_table": "stg_dbt_list_run_artifacts",
+      "parameters": [
+        {
+          "name": "account_id",
+          "in": "path",
+          "required": true,
+          "type": "integer",
+          "description": ""
+        },
+        {
+          "name": "include_related",
+          "in": "query",
+          "required": false,
+          "type": "string",
+          "description": "Comma-separated list of related objects to include in the response."
+        },
+        {
+          "name": "run_id",
+          "in": "path",
+          "required": true,
+          "type": "integer",
+          "description": ""
+        }
+      ]
+    },
+    {
+      "operation_id": "Retrieve Run Artifact",
+      "method": "GET",
+      "path": "/api/v2/accounts/{account_id}/runs/{run_id}/artifacts/{remainder}",
+      "proposed_table": "stg_dbt_retrieve_run_artifact",
+      "parameters": [
+        {
+          "name": "account_id",
+          "in": "path",
+          "required": true,
+          "type": "integer",
+          "description": ""
+        },
+        {
+          "name": "include_related",
+          "in": "query",
+          "required": false,
+          "type": "string",
+          "description": "Comma-separated list of related objects to include in the response."
+        },
+        {
+          "name": "remainder",
+          "in": "path",
+          "required": true,
+          "type": "string",
+          "description": ""
+        },
+        {
+          "name": "run_id",
+          "in": "path",
+          "required": true,
+          "type": "integer",
+          "description": ""
+        },
+        {
+          "name": "step",
+          "in": "query",
+          "required": false,
+          "type": "integer",
+          "description": "The index of the Step in the Run to query for artifacts. The first step in the run has the index `1`. If the `step` parameter is omitted, then this endpoint will return the artifacts compiled for the last step in the run."
+        }
+      ]
+    },
+    {
+      "operation_id": "Cancel Run",
+      "method": "POST",
+      "path": "/api/v2/accounts/{account_id}/runs/{run_id}/cancel/",
+      "proposed_table": "stg_dbt_cancel_run",
+      "parameters": [
+        {
+          "name": "account_id",
+          "in": "path",
+          "required": true,
+          "type": "integer",
+          "description": ""
+        },
+        {
+          "name": "run_id",
+          "in": "path",
+          "required": true,
+          "type": "integer",
+          "description": ""
+        }
+      ]
+    },
+    {
+      "operation_id": "Retrieve Run Failure Details",
+      "method": "GET",
+      "path": "/api/v2/accounts/{account_id}/runs/{run_id}/retry/",
+      "proposed_table": "stg_dbt_retrieve_run_failure_details",
+      "parameters": [
+        {
+          "name": "account_id",
+          "in": "path",
+          "required": true,
+          "type": "integer",
+          "description": ""
+        },
+        {
+          "name": "include_related",
+          "in": "query",
+          "required": false,
+          "type": "string",
+          "description": "Comma-separated list of related objects to include in the response."
+        },
+        {
+          "name": "run_id",
+          "in": "path",
+          "required": true,
+          "type": "integer",
+          "description": ""
+        }
+      ]
+    },
+    {
+      "operation_id": "Retry Run",
+      "method": "POST",
+      "path": "/api/v2/accounts/{account_id}/runs/{run_id}/retry/",
+      "proposed_table": "stg_dbt_retry_run",
+      "parameters": [
+        {
+          "name": "account_id",
+          "in": "path",
+          "required": true,
+          "type": "integer",
+          "description": ""
+        },
+        {
+          "name": "run_id",
+          "in": "path",
+          "required": true,
+          "type": "integer",
+          "description": ""
+        }
+      ]
+    },
+    {
+      "operation_id": "Retrieve Run Step",
+      "method": "GET",
+      "path": "/api/v2/accounts/{account_id}/steps/{id}/",
+      "proposed_table": "stg_dbt_retrieve_run_step",
+      "parameters": [
+        {
+          "name": "account_id",
+          "in": "path",
+          "required": true,
+          "type": "integer",
+          "description": ""
+        },
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "type": "integer",
+          "description": ""
+        },
+        {
+          "name": "include_related",
+          "in": "query",
+          "required": false,
+          "type": "string",
+          "description": "A list of related objects to include in the response. Valid values are `trigger`, `job`, and `debug_logs`. If `debug_logs` is not provided, then the included debug logs will be truncated to the last 1,000 lines of the debug log output file."
+        }
+      ]
+    }
+  ],
+  "endpoints": [
+    {
+      "endpoint_id": "list_accounts",
+      "operation_id": "List Accounts",
+      "method": "GET",
+      "path": "/api/v2/accounts/",
+      "full_path_template": "/api/v2/accounts/",
+      "summary": "",
+      "description": "Deprecated. Consider using the v3 API instead.",
+      "tags": [
+        "Accounts"
+      ],
+      "parameters": [
+        {
+          "name": "include_related",
+          "in": "query",
+          "required": false,
+          "type": "string",
+          "description": "Comma-separated list of related objects to include in the response."
+        }
+      ],
+      "request_body": null,
+      "responses": {
+        "200": {
+          "description": "",
+          "schema": {
+            "type": "object",
+            "fields": [
+              {
+                "name": "data",
+                "type": "array<ref:AccountResponse>",
+                "required": true,
+                "description": ""
+              },
+              {
+                "name": "extra",
+                "type": "ref:Extra",
+                "required": true,
+                "description": ""
+              },
+              {
+                "name": "status",
+                "type": "ref:ResponseStatus",
+                "required": true,
+                "description": ""
+              }
+            ],
+            "item_fields": [],
+            "notes": [
+              "ref:AccountListEnveloped"
+            ]
+          }
+        }
+      },
+      "proposed_table": "stg_dbt_list_accounts",
+      "proposed_key_inputs": []
+    },
+    {
+      "endpoint_id": "retrieve_account",
+      "operation_id": "Retrieve Account",
+      "method": "GET",
+      "path": "/api/v2/accounts/{account_id}/",
+      "full_path_template": "/api/v2/accounts/{account_id}/",
+      "summary": "",
+      "description": "Retrieve an Account",
+      "tags": [
+        "Accounts"
+      ],
+      "parameters": [
+        {
+          "name": "account_id",
+          "in": "path",
+          "required": true,
+          "type": "integer",
+          "description": ""
+        },
+        {
+          "name": "include_related",
+          "in": "query",
+          "required": false,
+          "type": "string",
+          "description": "Comma-separated list of related objects to include in the response."
+        }
+      ],
+      "request_body": null,
+      "responses": {
+        "200": {
+          "description": "",
+          "schema": {
+            "type": "object",
+            "fields": [
+              {
+                "name": "data",
+                "type": "ref:AccountResponse",
+                "required": true,
+                "description": ""
+              },
+              {
+                "name": "status",
+                "type": "ref:ResponseStatus",
+                "required": true,
+                "description": ""
+              }
+            ],
+            "item_fields": [],
+            "notes": [
+              "ref:AccountEnveloped"
+            ]
+          }
+        }
+      },
+      "proposed_table": "stg_dbt_retrieve_account",
+      "proposed_key_inputs": [
+        "account_id"
+      ]
+    },
+    {
+      "endpoint_id": "update_account",
+      "operation_id": "Update Account",
+      "method": "POST",
+      "path": "/api/v2/accounts/{account_id}/",
+      "full_path_template": "/api/v2/accounts/{account_id}/",
+      "summary": "",
+      "description": "Update an account",
+      "tags": [
+        "Accounts"
+      ],
+      "parameters": [
+        {
+          "name": "account_id",
+          "in": "path",
+          "required": true,
+          "type": "integer",
+          "description": ""
+        }
+      ],
+      "request_body": {
+        "content_type": "application/json",
+        "schema_type": "object",
+        "fields": [
+          {
+            "name": "name",
+            "type": "string",
+            "required": true,
+            "description": "The name of the account"
+          },
+          {
+            "name": "state",
+            "type": "integer",
+            "required": true,
+            "description": "A value of 1 means this entity is active and a value of 2 means this entity is deleted"
+          },
+          {
+            "name": "docs_job_id",
+            "type": "integer",
+            "required": false,
+            "description": "(Deprecated)"
+          },
+          {
+            "name": "freshness_job_id",
+            "type": "integer",
+            "required": false,
+            "description": "(Deprecated)"
+          }
+        ],
+        "notes": [
+          "ref:AccountRequest"
+        ]
+      },
+      "responses": {
+        "200": {
+          "description": "",
+          "schema": {
+            "type": "object",
+            "fields": [
+              {
+                "name": "data",
+                "type": "ref:AccountResponse",
+                "required": true,
+                "description": ""
+              },
+              {
+                "name": "status",
+                "type": "ref:ResponseStatus",
+                "required": true,
+                "description": ""
+              }
+            ],
+            "item_fields": [],
+            "notes": [
+              "ref:AccountEnveloped"
+            ]
+          }
+        }
+      },
+      "proposed_table": "stg_dbt_update_account",
+      "proposed_key_inputs": [
+        "account_id"
+      ]
+    },
+    {
+      "endpoint_id": "partial_update_account",
+      "operation_id": "Partial Update Account",
+      "method": "PATCH",
+      "path": "/api/v2/accounts/{account_id}/",
+      "full_path_template": "/api/v2/accounts/{account_id}/",
+      "summary": "",
+      "description": "Partial Account update",
+      "tags": [
+        "Accounts"
+      ],
+      "parameters": [
+        {
+          "name": "account_id",
+          "in": "path",
+          "required": true,
+          "type": "integer",
+          "description": ""
+        }
+      ],
+      "request_body": {
+        "content_type": "application/json",
+        "schema_type": "object",
+        "fields": [
+          {
+            "name": "name",
+            "type": "string",
+            "required": true,
+            "description": "The name of the account"
+          },
+          {
+            "name": "state",
+            "type": "integer",
+            "required": true,
+            "description": "A value of 1 means this entity is active and a value of 2 means this entity is deleted"
+          },
+          {
+            "name": "docs_job_id",
+            "type": "integer",
+            "required": false,
+            "description": "(Deprecated)"
+          },
+          {
+            "name": "freshness_job_id",
+            "type": "integer",
+            "required": false,
+            "description": "(Deprecated)"
+          }
+        ],
+        "notes": [
+          "ref:AccountRequest"
+        ]
+      },
+      "responses": {
+        "200": {
+          "description": "",
+          "schema": {
+            "type": "object",
+            "fields": [
+              {
+                "name": "data",
+                "type": "ref:AccountResponse",
+                "required": true,
+                "description": ""
+              },
+              {
+                "name": "status",
+                "type": "ref:ResponseStatus",
+                "required": true,
+                "description": ""
+              }
+            ],
+            "item_fields": [],
+            "notes": [
+              "ref:AccountEnveloped"
+            ]
+          }
+        }
+      },
+      "proposed_table": "stg_dbt_partial_update_account",
+      "proposed_key_inputs": [
+        "account_id"
+      ]
+    },
+    {
+      "endpoint_id": "list_ssh_tunnels",
+      "operation_id": "List SSH Tunnels",
+      "method": "GET",
+      "path": "/api/v2/accounts/{account_id}/encryptions/",
+      "full_path_template": "/api/v2/accounts/{account_id}/encryptions/",
+      "summary": "",
+      "description": "List SSH tunnels",
+      "tags": [
+        "Connections"
+      ],
+      "parameters": [
+        {
+          "name": "account_id",
+          "in": "path",
+          "required": true,
+          "type": "integer",
+          "description": ""
+        },
+        {
+          "name": "connection_id",
+          "in": "query",
+          "required": false,
+          "type": "integer",
+          "description": ""
+        },
+        {
+          "name": "include_related",
+          "in": "query",
+          "required": false,
+          "type": "string",
+          "description": "Comma-separated list of related objects to include in the response."
+        },
+        {
+          "name": "limit",
+          "in": "query",
+          "required": false,
+          "type": "integer",
+          "description": ""
+        },
+        {
+          "name": "offset",
+          "in": "query",
+          "required": false,
+          "type": "integer",
+          "description": ""
+        },
+        {
+          "name": "order_by",
+          "in": "query",
+          "required": false,
+          "type": "string",
+          "description": "Field to order results by. Prefix with '-' for descending order."
+        },
+        {
+          "name": "pk",
+          "in": "query",
+          "required": false,
+          "type": "integer",
+          "description": ""
+        },
+        {
+          "name": "state",
+          "in": "query",
+          "required": false,
+          "type": "string",
+          "description": "Filters by soft deletion state.\n            <ul>\n                <li>\n                    <strong>\"active\"</strong> / <strong>1</strong>: Only active resources\n                </li>\n                <li>\n                    <strong>\"deleted\"</strong> / <strong>2</strong>: Only deleted resources\n                </li>\n                <li>\n                    <strong>\"all\"</strong>: All resources\n                </li>\n            </ul>\n            "
+        }
+      ],
+      "request_body": null,
+      "responses": {
+        "200": {
+          "description": "",
+          "schema": {
+            "type": "object",
+            "fields": [
+              {
+                "name": "data",
+                "type": "array<ref:ConnectionEncryptionResponse>",
+                "required": true,
+                "description": ""
+              },
+              {
+                "name": "extra",
+                "type": "ref:Extra",
+                "required": true,
+                "description": ""
+              },
+              {
+                "name": "status",
+                "type": "ref:ResponseStatus",
+                "required": true,
+                "description": ""
+              }
+            ],
+            "item_fields": [],
+            "notes": [
+              "ref:ConnectionEncryptionListEnveloped"
+            ]
+          }
+        }
+      },
+      "proposed_table": "stg_dbt_list_ssh_tunnels",
+      "proposed_key_inputs": [
+        "account_id"
+      ]
+    },
+    {
+      "endpoint_id": "create_ssh_tunnel",
+      "operation_id": "Create SSH Tunnel",
+      "method": "POST",
+      "path": "/api/v2/accounts/{account_id}/encryptions/",
+      "full_path_template": "/api/v2/accounts/{account_id}/encryptions/",
+      "summary": "",
+      "description": "Create a new SSH tunnel to encrypt traffic for a given connection",
+      "tags": [
+        "Connections"
+      ],
+      "parameters": [
+        {
+          "name": "account_id",
+          "in": "path",
+          "required": true,
+          "type": "integer",
+          "description": ""
+        }
+      ],
+      "request_body": {
+        "content_type": "application/json",
+        "schema_type": "object",
+        "fields": [
+          {
+            "name": "account_id",
+            "type": "integer",
+            "required": true,
+            "description": "The account the connection is associated with"
+          },
+          {
+            "name": "connection_id",
+            "type": "integer",
+            "required": true,
+            "description": "The connection to use the SSH tunnel with"
+          },
+          {
+            "name": "username",
+            "type": "string",
+            "required": true,
+            "description": "SSH username"
+          },
+          {
+            "name": "port",
+            "type": "integer",
+            "required": true,
+            "description": "SSH port"
+          },
+          {
+            "name": "hostname",
+            "type": "string",
+            "required": true,
+            "description": "SSH hostname"
+          },
+          {
+            "name": "public_key",
+            "type": "string",
+            "required": false,
+            "description": "SSH Public key"
+          },
+          {
+            "name": "private_key",
+            "type": "string",
+            "required": false,
+            "description": "SSH private key"
+          },
+          {
+            "name": "state",
+            "type": "integer",
+            "required": true,
+            "description": "A value of 1 means this entity is active and a value of 2 means this entity is deleted"
+          }
+        ],
+        "notes": [
+          "ref:ConnectionEncryptionRequest"
+        ]
+      },
+      "responses": {
+        "200": {
+          "description": "",
+          "schema": {
+            "type": "object",
+            "fields": [
+              {
+                "name": "data",
+                "type": "ref:ConnectionEncryptionResponse",
+                "required": true,
+                "description": ""
+              },
+              {
+                "name": "status",
+                "type": "ref:ResponseStatus",
+                "required": true,
+                "description": ""
+              }
+            ],
+            "item_fields": [],
+            "notes": [
+              "ref:ConnectionEncryptionEnveloped"
+            ]
+          }
+        }
+      },
+      "proposed_table": "stg_dbt_create_ssh_tunnel",
+      "proposed_key_inputs": [
+        "account_id"
+      ]
+    },
+    {
+      "endpoint_id": "retrieve_ssh_tunnel",
+      "operation_id": "Retrieve SSH Tunnel",
+      "method": "GET",
+      "path": "/api/v2/accounts/{account_id}/encryptions/{id}/",
+      "full_path_template": "/api/v2/accounts/{account_id}/encryptions/{id}/",
+      "summary": "",
+      "description": "Retrieve an SSH tunnel",
+      "tags": [
+        "Connections"
+      ],
+      "parameters": [
+        {
+          "name": "account_id",
+          "in": "path",
+          "required": true,
+          "type": "integer",
+          "description": ""
+        },
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "type": "integer",
+          "description": ""
+        },
+        {
+          "name": "include_related",
+          "in": "query",
+          "required": false,
+          "type": "string",
+          "description": "Comma-separated list of related objects to include in the response."
+        }
+      ],
+      "request_body": null,
+      "responses": {
+        "200": {
+          "description": "",
+          "schema": {
+            "type": "object",
+            "fields": [
+              {
+                "name": "data",
+                "type": "ref:ConnectionEncryptionResponse",
+                "required": true,
+                "description": ""
+              },
+              {
+                "name": "status",
+                "type": "ref:ResponseStatus",
+                "required": true,
+                "description": ""
+              }
+            ],
+            "item_fields": [],
+            "notes": [
+              "ref:ConnectionEncryptionEnveloped"
+            ]
+          }
+        }
+      },
+      "proposed_table": "stg_dbt_retrieve_ssh_tunnel",
+      "proposed_key_inputs": [
+        "account_id",
+        "id"
+      ]
+    },
+    {
+      "endpoint_id": "update_ssh_tunnel",
+      "operation_id": "Update SSH Tunnel",
+      "method": "POST",
+      "path": "/api/v2/accounts/{account_id}/encryptions/{id}/",
+      "full_path_template": "/api/v2/accounts/{account_id}/encryptions/{id}/",
+      "summary": "",
+      "description": "Update an SSH tunnel",
+      "tags": [
+        "Connections"
+      ],
+      "parameters": [
+        {
+          "name": "account_id",
+          "in": "path",
+          "required": true,
+          "type": "integer",
+          "description": ""
+        },
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "type": "integer",
+          "description": ""
+        }
+      ],
+      "request_body": {
+        "content_type": "application/json",
+        "schema_type": "object",
+        "fields": [
+          {
+            "name": "account_id",
+            "type": "integer",
+            "required": true,
+            "description": "The account the connection is associated with"
+          },
+          {
+            "name": "connection_id",
+            "type": "integer",
+            "required": true,
+            "description": "The connection to use the SSH tunnel with"
+          },
+          {
+            "name": "username",
+            "type": "string",
+            "required": true,
+            "description": "SSH username"
+          },
+          {
+            "name": "port",
+            "type": "integer",
+            "required": true,
+            "description": "SSH port"
+          },
+          {
+            "name": "hostname",
+            "type": "string",
+            "required": true,
+            "description": "SSH hostname"
+          },
+          {
+            "name": "public_key",
+            "type": "string",
+            "required": false,
+            "description": "SSH Public key"
+          },
+          {
+            "name": "private_key",
+            "type": "string",
+            "required": false,
+            "description": "SSH private key"
+          },
+          {
+            "name": "state",
+            "type": "integer",
+            "required": true,
+            "description": "A value of 1 means this entity is active and a value of 2 means this entity is deleted"
+          }
+        ],
+        "notes": [
+          "ref:ConnectionEncryptionRequest"
+        ]
+      },
+      "responses": {
+        "200": {
+          "description": "",
+          "schema": {
+            "type": "object",
+            "fields": [
+              {
+                "name": "data",
+                "type": "ref:ConnectionEncryptionResponse",
+                "required": true,
+                "description": ""
+              },
+              {
+                "name": "status",
+                "type": "ref:ResponseStatus",
+                "required": true,
+                "description": ""
+              }
+            ],
+            "item_fields": [],
+            "notes": [
+              "ref:ConnectionEncryptionEnveloped"
+            ]
+          }
+        }
+      },
+      "proposed_table": "stg_dbt_update_ssh_tunnel",
+      "proposed_key_inputs": [
+        "account_id",
+        "id"
+      ]
+    },
+    {
+      "endpoint_id": "destroy_ssh_tunnel",
+      "operation_id": "Destroy SSH Tunnel",
+      "method": "DELETE",
+      "path": "/api/v2/accounts/{account_id}/encryptions/{id}/",
+      "full_path_template": "/api/v2/accounts/{account_id}/encryptions/{id}/",
+      "summary": "",
+      "description": "Delete an SSH tunnel",
+      "tags": [
+        "Connections"
+      ],
+      "parameters": [
+        {
+          "name": "account_id",
+          "in": "path",
+          "required": true,
+          "type": "integer",
+          "description": ""
+        },
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "type": "integer",
+          "description": ""
+        }
+      ],
+      "request_body": null,
+      "responses": {
+        "204": {
+          "description": "No response body",
+          "schema": null
+        }
+      },
+      "proposed_table": "stg_dbt_destroy_ssh_tunnel",
+      "proposed_key_inputs": [
+        "account_id",
+        "id"
+      ]
+    },
+    {
+      "endpoint_id": "list_environments",
+      "operation_id": "List Environments",
+      "method": "GET",
+      "path": "/api/v2/accounts/{account_id}/environments/",
+      "full_path_template": "/api/v2/accounts/{account_id}/environments/",
+      "summary": "",
+      "description": "Deprecated. Consider using the v3 API instead.",
+      "tags": [
+        "Environments"
+      ],
+      "parameters": [
+        {
+          "name": "account_id",
+          "in": "path",
+          "required": true,
+          "type": "integer",
+          "description": ""
+        },
+        {
+          "name": "dbt_version",
+          "in": "query",
+          "required": false,
+          "type": "string",
+          "description": ""
+        },
+        {
+          "name": "dbt_version__in",
+          "in": "query",
+          "required": false,
+          "type": "array",
+          "description": ""
+        },
+        {
+          "name": "include_related",
+          "in": "query",
+          "required": false,
+          "type": "string",
+          "description": "Comma-separated list of related objects to include in the response. Available: repository, connection."
+        },
+        {
+          "name": "limit",
+          "in": "query",
+          "required": false,
+          "type": "integer",
+          "description": ""
+        },
+        {
+          "name": "offset",
+          "in": "query",
+          "required": false,
+          "type": "integer",
+          "description": ""
+        },
+        {
+          "name": "order_by",
+          "in": "query",
+          "required": false,
+          "type": "string",
+          "description": "Field to order results by. Prefix with '-' for descending order."
+        },
+        {
+          "name": "pk",
+          "in": "query",
+          "required": false,
+          "type": "integer",
+          "description": ""
+        },
+        {
+          "name": "project_id",
+          "in": "query",
+          "required": false,
+          "type": "integer",
+          "description": ""
+        },
+        {
+          "name": "project_id__in",
+          "in": "query",
+          "required": false,
+          "type": "array",
+          "description": ""
+        },
+        {
+          "name": "state",
+          "in": "query",
+          "required": false,
+          "type": "string",
+          "description": "Filters by soft deletion state.\n            <ul>\n                <li>\n                    <strong>\"active\"</strong> / <strong>1</strong>: Only active resources\n                </li>\n                <li>\n                    <strong>\"deleted\"</strong> / <strong>2</strong>: Only deleted resources\n                </li>\n                <li>\n                    <strong>\"all\"</strong>: All resources\n                </li>\n            </ul>\n            "
+        }
+      ],
+      "request_body": null,
+      "responses": {
+        "200": {
+          "description": "",
+          "schema": {
+            "type": "object",
+            "fields": [
+              {
+                "name": "data",
+                "type": "array<ref:EnvironmentV2Response>",
+                "required": true,
+                "description": ""
+              },
+              {
+                "name": "extra",
+                "type": "ref:Extra",
+                "required": true,
+                "description": ""
+              },
+              {
+                "name": "status",
+                "type": "ref:ResponseStatus",
+                "required": true,
+                "description": ""
+              }
+            ],
+            "item_fields": [],
+            "notes": [
+              "ref:EnvironmentV2ListEnveloped"
+            ]
+          }
+        }
+      },
+      "proposed_table": "stg_dbt_list_environments",
+      "proposed_key_inputs": [
+        "account_id"
+      ]
+    },
+    {
+      "endpoint_id": "create_environment",
+      "operation_id": "Create Environment",
+      "method": "POST",
+      "path": "/api/v2/accounts/{account_id}/environments/",
+      "full_path_template": "/api/v2/accounts/{account_id}/environments/",
+      "summary": "",
+      "description": "Deprecated. Consider using the v3 API instead.",
+      "tags": [
+        "Environments"
+      ],
+      "parameters": [
+        {
+          "name": "account_id",
+          "in": "path",
+          "required": true,
+          "type": "integer",
+          "description": ""
+        }
+      ],
+      "request_body": {
+        "content_type": "application/json",
+        "schema_type": "object",
+        "fields": [
+          {
+            "name": "account_id",
+            "type": "integer",
+            "required": true,
+            "description": ""
+          },
+          {
+            "name": "project_id",
+            "type": "integer",
+            "required": true,
+            "description": ""
+          },
+          {
+            "name": "name",
+            "type": "string",
+            "required": true,
+            "description": ""
+          },
+          {
+            "name": "connection_id",
+            "type": "integer",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "credentials_id",
+            "type": "integer",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "repository_id",
+            "type": "integer",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "extended_attributes_id",
+            "type": "integer",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "custom_branch",
+            "type": "string",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "use_custom_branch",
+            "type": "boolean",
+            "required": true,
+            "description": ""
+          },
+          {
+            "name": "dbt_project_subdirectory",
+            "type": "string",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "dbt_version",
+            "type": "string",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "supports_docs",
+            "type": "boolean",
+            "required": true,
+            "description": ""
+          },
+          {
+            "name": "deployment_type",
+            "type": "ref:DeploymentTypeEnum",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "type",
+            "type": "ref:Type76eEnum",
+            "required": true,
+            "description": ""
+          },
+          {
+            "name": "created_by_id",
+            "type": "integer",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "state",
+            "type": "integer",
+            "required": true,
+            "description": "A value of 1 means this entity is active and a value of 2 means this entity is deleted"
+          }
+        ],
+        "notes": [
+          "ref:EnvironmentV2Request"
+        ]
+      },
+      "responses": {
+        "200": {
+          "description": "",
+          "schema": {
+            "type": "object",
+            "fields": [
+              {
+                "name": "data",
+                "type": "ref:EnvironmentV2Response",
+                "required": true,
+                "description": ""
+              },
+              {
+                "name": "status",
+                "type": "ref:ResponseStatus",
+                "required": true,
+                "description": ""
+              }
+            ],
+            "item_fields": [],
+            "notes": [
+              "ref:EnvironmentV2Enveloped"
+            ]
+          }
+        }
+      },
+      "proposed_table": "stg_dbt_create_environment",
+      "proposed_key_inputs": [
+        "account_id"
+      ]
+    },
+    {
+      "endpoint_id": "retrieve_environment",
+      "operation_id": "Retrieve Environment",
+      "method": "GET",
+      "path": "/api/v2/accounts/{account_id}/environments/{id}/",
+      "full_path_template": "/api/v2/accounts/{account_id}/environments/{id}/",
+      "summary": "",
+      "description": "Deprecated. Consider using the v3 API instead.",
+      "tags": [
+        "Environments"
+      ],
+      "parameters": [
+        {
+          "name": "account_id",
+          "in": "path",
+          "required": true,
+          "type": "integer",
+          "description": ""
+        },
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "type": "integer",
+          "description": ""
+        },
+        {
+          "name": "include_related",
+          "in": "query",
+          "required": false,
+          "type": "string",
+          "description": "Comma-separated list of related objects to include in the response. Available: repository, connection."
+        }
+      ],
+      "request_body": null,
+      "responses": {
+        "200": {
+          "description": "",
+          "schema": {
+            "type": "object",
+            "fields": [
+              {
+                "name": "data",
+                "type": "ref:EnvironmentV2Response",
+                "required": true,
+                "description": ""
+              },
+              {
+                "name": "status",
+                "type": "ref:ResponseStatus",
+                "required": true,
+                "description": ""
+              }
+            ],
+            "item_fields": [],
+            "notes": [
+              "ref:EnvironmentV2Enveloped"
+            ]
+          }
+        }
+      },
+      "proposed_table": "stg_dbt_retrieve_environment",
+      "proposed_key_inputs": [
+        "account_id",
+        "id"
+      ]
+    },
+    {
+      "endpoint_id": "update_environment",
+      "operation_id": "Update Environment",
+      "method": "POST",
+      "path": "/api/v2/accounts/{account_id}/environments/{id}/",
+      "full_path_template": "/api/v2/accounts/{account_id}/environments/{id}/",
+      "summary": "",
+      "description": "Deprecated. Consider using the v3 API instead.",
+      "tags": [
+        "Environments"
+      ],
+      "parameters": [
+        {
+          "name": "account_id",
+          "in": "path",
+          "required": true,
+          "type": "integer",
+          "description": ""
+        },
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "type": "integer",
+          "description": ""
+        }
+      ],
+      "request_body": {
+        "content_type": "application/json",
+        "schema_type": "object",
+        "fields": [
+          {
+            "name": "account_id",
+            "type": "integer",
+            "required": true,
+            "description": ""
+          },
+          {
+            "name": "project_id",
+            "type": "integer",
+            "required": true,
+            "description": ""
+          },
+          {
+            "name": "name",
+            "type": "string",
+            "required": true,
+            "description": ""
+          },
+          {
+            "name": "connection_id",
+            "type": "integer",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "credentials_id",
+            "type": "integer",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "repository_id",
+            "type": "integer",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "extended_attributes_id",
+            "type": "integer",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "custom_branch",
+            "type": "string",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "use_custom_branch",
+            "type": "boolean",
+            "required": true,
+            "description": ""
+          },
+          {
+            "name": "dbt_project_subdirectory",
+            "type": "string",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "dbt_version",
+            "type": "string",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "supports_docs",
+            "type": "boolean",
+            "required": true,
+            "description": ""
+          },
+          {
+            "name": "deployment_type",
+            "type": "ref:DeploymentTypeEnum",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "type",
+            "type": "ref:Type76eEnum",
+            "required": true,
+            "description": ""
+          },
+          {
+            "name": "created_by_id",
+            "type": "integer",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "state",
+            "type": "integer",
+            "required": true,
+            "description": "A value of 1 means this entity is active and a value of 2 means this entity is deleted"
+          }
+        ],
+        "notes": [
+          "ref:EnvironmentV2Request"
+        ]
+      },
+      "responses": {
+        "200": {
+          "description": "",
+          "schema": {
+            "type": "object",
+            "fields": [
+              {
+                "name": "data",
+                "type": "ref:EnvironmentV2Response",
+                "required": true,
+                "description": ""
+              },
+              {
+                "name": "status",
+                "type": "ref:ResponseStatus",
+                "required": true,
+                "description": ""
+              }
+            ],
+            "item_fields": [],
+            "notes": [
+              "ref:EnvironmentV2Enveloped"
+            ]
+          }
+        }
+      },
+      "proposed_table": "stg_dbt_update_environment",
+      "proposed_key_inputs": [
+        "account_id",
+        "id"
+      ]
+    },
+    {
+      "endpoint_id": "destroy_environment",
+      "operation_id": "Destroy Environment",
+      "method": "DELETE",
+      "path": "/api/v2/accounts/{account_id}/environments/{id}/",
+      "full_path_template": "/api/v2/accounts/{account_id}/environments/{id}/",
+      "summary": "",
+      "description": "Deprecated. Consider using the v3 API instead.",
+      "tags": [
+        "Environments"
+      ],
+      "parameters": [
+        {
+          "name": "account_id",
+          "in": "path",
+          "required": true,
+          "type": "integer",
+          "description": ""
+        },
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "type": "integer",
+          "description": ""
+        }
+      ],
+      "request_body": null,
+      "responses": {
+        "204": {
+          "description": "No response body",
+          "schema": null
+        }
+      },
+      "proposed_table": "stg_dbt_destroy_environment",
+      "proposed_key_inputs": [
+        "account_id",
+        "id"
+      ]
+    },
+    {
+      "endpoint_id": "list_invites",
+      "operation_id": "List Invites",
+      "method": "GET",
+      "path": "/api/v2/accounts/{account_id}/invites/",
+      "full_path_template": "/api/v2/accounts/{account_id}/invites/",
+      "summary": "",
+      "description": "",
+      "tags": [
+        "Invites"
+      ],
+      "parameters": [
+        {
+          "name": "account_id",
+          "in": "path",
+          "required": true,
+          "type": "integer",
+          "description": ""
+        },
+        {
+          "name": "include_related",
+          "in": "query",
+          "required": false,
+          "type": "string",
+          "description": "Comma-separated list of related objects to include in the response."
+        }
+      ],
+      "request_body": null,
+      "responses": {
+        "200": {
+          "description": "",
+          "schema": {
+            "type": "object",
+            "fields": [
+              {
+                "name": "data",
+                "type": "array<ref:InviteResponse>",
+                "required": true,
+                "description": ""
+              },
+              {
+                "name": "extra",
+                "type": "ref:Extra",
+                "required": true,
+                "description": ""
+              },
+              {
+                "name": "status",
+                "type": "ref:ResponseStatus",
+                "required": true,
+                "description": ""
+              }
+            ],
+            "item_fields": [],
+            "notes": [
+              "ref:InviteListEnveloped"
+            ]
+          }
+        }
+      },
+      "proposed_table": "stg_dbt_list_invites",
+      "proposed_key_inputs": [
+        "account_id"
+      ]
+    },
+    {
+      "endpoint_id": "retrieve_invite",
+      "operation_id": "Retrieve Invite",
+      "method": "GET",
+      "path": "/api/v2/accounts/{account_id}/invites/{id}/",
+      "full_path_template": "/api/v2/accounts/{account_id}/invites/{id}/",
+      "summary": "",
+      "description": "",
+      "tags": [
+        "Invites"
+      ],
+      "parameters": [
+        {
+          "name": "account_id",
+          "in": "path",
+          "required": true,
+          "type": "integer",
+          "description": ""
+        },
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "type": "integer",
+          "description": ""
+        },
+        {
+          "name": "include_related",
+          "in": "query",
+          "required": false,
+          "type": "string",
+          "description": "Comma-separated list of related objects to include in the response."
+        }
+      ],
+      "request_body": null,
+      "responses": {
+        "200": {
+          "description": "",
+          "schema": {
+            "type": "object",
+            "fields": [
+              {
+                "name": "data",
+                "type": "ref:InviteResponse",
+                "required": true,
+                "description": ""
+              },
+              {
+                "name": "status",
+                "type": "ref:ResponseStatus",
+                "required": true,
+                "description": ""
+              }
+            ],
+            "item_fields": [],
+            "notes": [
+              "ref:InviteEnveloped"
+            ]
+          }
+        }
+      },
+      "proposed_table": "stg_dbt_retrieve_invite",
+      "proposed_key_inputs": [
+        "account_id",
+        "id"
+      ]
+    },
+    {
+      "endpoint_id": "list_jobs",
+      "operation_id": "List Jobs",
+      "method": "GET",
+      "path": "/api/v2/accounts/{account_id}/jobs/",
+      "full_path_template": "/api/v2/accounts/{account_id}/jobs/",
+      "summary": "",
+      "description": "List jobs for the given account",
+      "tags": [
+        "Jobs"
+      ],
+      "parameters": [
+        {
+          "name": "account_id",
+          "in": "path",
+          "required": true,
+          "type": "integer",
+          "description": ""
+        },
+        {
+          "name": "dbt_version__in",
+          "in": "query",
+          "required": false,
+          "type": "array",
+          "description": ""
+        },
+        {
+          "name": "environment_id",
+          "in": "query",
+          "required": false,
+          "type": "integer",
+          "description": ""
+        },
+        {
+          "name": "include_related",
+          "in": "query",
+          "required": false,
+          "type": "string",
+          "description": "A list of related objects to include in the response. Valid values are `environment`, `custom_environment_variables`, `most_recent_run`, `most_recent_completed_run`, and `fusion_readiness`."
+        },
+        {
+          "name": "is_fusion_ready",
+          "in": "query",
+          "required": false,
+          "type": "boolean",
+          "description": "Filters jobs by fusion readiness. When true, returns conformant or override-ready jobs. When false, returns non-ready jobs."
+        },
+        {
+          "name": "is_system",
+          "in": "query",
+          "required": false,
+          "type": "boolean",
+          "description": ""
+        },
+        {
+          "name": "limit",
+          "in": "query",
+          "required": false,
+          "type": "integer",
+          "description": ""
+        },
+        {
+          "name": "name__icontains",
+          "in": "query",
+          "required": false,
+          "type": "string",
+          "description": ""
+        },
+        {
+          "name": "offset",
+          "in": "query",
+          "required": false,
+          "type": "integer",
+          "description": ""
+        },
+        {
+          "name": "order_by",
+          "in": "query",
+          "required": false,
+          "type": "string",
+          "description": "Field to order the results by. Use `-` to reverse the order."
+        },
+        {
+          "name": "pk",
+          "in": "query",
+          "required": false,
+          "type": "integer",
+          "description": ""
+        },
+        {
+          "name": "project_id",
+          "in": "query",
+          "required": false,
+          "type": "integer",
+          "description": "Filters the results to a specific Project"
+        },
+        {
+          "name": "project_id__in",
+          "in": "query",
+          "required": false,
+          "type": "array",
+          "description": ""
+        },
+        {
+          "name": "state",
+          "in": "query",
+          "required": false,
+          "type": "string",
+          "description": "Filters by soft deletion state.\n            <ul>\n                <li>\n                    <strong>\"active\"</strong> / <strong>1</strong>: Only active resources\n                </li>\n                <li>\n                    <strong>\"deleted\"</strong> / <strong>2</strong>: Only deleted resources\n                </li>\n                <li>\n                    <strong>\"all\"</strong>: All resources\n                </li>\n            </ul>\n            "
+        },
+        {
+          "name": "triggers_schedule",
+          "in": "query",
+          "required": false,
+          "type": "boolean",
+          "description": ""
+        }
+      ],
+      "request_body": null,
+      "responses": {
+        "200": {
+          "description": "",
+          "schema": {
+            "type": "object",
+            "fields": [
+              {
+                "name": "data",
+                "type": "array<ref:HumanReadableJobDefinitionResponse>",
+                "required": true,
+                "description": ""
+              },
+              {
+                "name": "extra",
+                "type": "ref:Extra",
+                "required": true,
+                "description": ""
+              },
+              {
+                "name": "status",
+                "type": "ref:ResponseStatus",
+                "required": true,
+                "description": ""
+              }
+            ],
+            "item_fields": [],
+            "notes": [
+              "ref:HumanReadableJobDefinitionListEnveloped"
+            ]
+          }
+        }
+      },
+      "proposed_table": "stg_dbt_list_jobs",
+      "proposed_key_inputs": [
+        "account_id"
+      ]
+    },
+    {
+      "endpoint_id": "create_job",
+      "operation_id": "Create Job",
+      "method": "POST",
+      "path": "/api/v2/accounts/{account_id}/jobs/",
+      "full_path_template": "/api/v2/accounts/{account_id}/jobs/",
+      "summary": "",
+      "description": "Create a new job.",
+      "tags": [
+        "Jobs"
+      ],
+      "parameters": [
+        {
+          "name": "account_id",
+          "in": "path",
+          "required": true,
+          "type": "integer",
+          "description": ""
+        }
+      ],
+      "request_body": {
+        "content_type": "application/json",
+        "schema_type": "object",
+        "fields": [
+          {
+            "name": "account_id",
+            "type": "integer",
+            "required": true,
+            "description": ""
+          },
+          {
+            "name": "project_id",
+            "type": "integer",
+            "required": true,
+            "description": ""
+          },
+          {
+            "name": "environment_id",
+            "type": "integer",
+            "required": true,
+            "description": ""
+          },
+          {
+            "name": "name",
+            "type": "string",
+            "required": true,
+            "description": "The name of the job"
+          },
+          {
+            "name": "dbt_version",
+            "type": "string",
+            "required": false,
+            "description": "When set, overrides the dbt_version specified in the Job's Environment"
+          },
+          {
+            "name": "deferring_environment_id",
+            "type": "integer",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "deferring_job_definition_id",
+            "type": "integer",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "description",
+            "type": "string",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "execute_steps",
+            "type": "array<string>",
+            "required": false,
+            "description": "A list of dbt commands to run"
+          },
+          {
+            "name": "execution",
+            "type": "ref:JobDefinitionExecutionRequest",
+            "required": true,
+            "description": ""
+          },
+          {
+            "name": "generate_docs",
+            "type": "boolean",
+            "required": true,
+            "description": "When true, `dbt docs generate` will be run at the end of all runs for this Job"
+          },
+          {
+            "name": "job_type",
+            "type": "ref:JobTypeEnum",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "lifecycle_webhooks",
+            "type": "boolean",
+            "required": true,
+            "description": ""
+          },
+          {
+            "name": "run_compare_changes",
+            "type": "boolean",
+            "required": true,
+            "description": ""
+          },
+          {
+            "name": "compare_changes_flags",
+            "type": "string",
+            "required": false,
+            "description": "dbt syntax flags to be used for compare changes"
+          },
+          {
+            "name": "run_generate_sources",
+            "type": "boolean",
+            "required": true,
+            "description": ""
+          },
+          {
+            "name": "run_lint",
+            "type": "boolean",
+            "required": true,
+            "description": ""
+          },
+          {
+            "name": "errors_on_lint_failure",
+            "type": "boolean",
+            "required": true,
+            "description": ""
+          },
+          {
+            "name": "cost_optimization_features",
+            "type": "array<string>",
+            "required": false,
+            "description": "<b>[Private Beta]</b> List of cost optimization features to enable for this job.\n            Requires job to be running on a fusion dbt_version.\n            <br/><br/>\n            <b>Valid values:</b>\n            <ul>\n              <li>\"state_aware_orchestration\" - Enable orchestration that adapts to state changes</li>\n              <li>\"efficient_testing\" - Aggregate generic tests into a single query and reuse redundant tests across lineage</li>\n            </ul>\n            <b>Example:</b> [\"state_aware_orchestration\", \"efficient_testing\"]\n            "
+          },
+          {
+            "name": "settings",
+            "type": "ref:JobDefinitionSettingsRequest",
+            "required": true,
+            "description": ""
+          },
+          {
+            "name": "state",
+            "type": "integer",
+            "required": true,
+            "description": "A value of 1 means this entity is active and a value of 2 means this entity is deleted"
+          },
+          {
+            "name": "triggers_on_draft_pr",
+            "type": "boolean",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "triggers",
+            "type": "ref:JobDefinitionTriggersRequest",
+            "required": true,
+            "description": ""
+          },
+          {
+            "name": "schedule",
+            "type": "ref:HumanReadableScheduleRequest",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "generate_sources",
+            "type": "boolean",
+            "required": false,
+            "description": ""
+          }
+        ],
+        "notes": [
+          "ref:HumanReadableJobDefinitionRequest"
+        ]
+      },
+      "responses": {
+        "200": {
+          "description": "",
+          "schema": {
+            "type": "object",
+            "fields": [
+              {
+                "name": "data",
+                "type": "ref:HumanReadableJobDefinitionResponse",
+                "required": true,
+                "description": ""
+              },
+              {
+                "name": "status",
+                "type": "ref:ResponseStatus",
+                "required": true,
+                "description": ""
+              }
+            ],
+            "item_fields": [],
+            "notes": [
+              "ref:HumanReadableJobDefinitionEnveloped"
+            ]
+          }
+        }
+      },
+      "proposed_table": "stg_dbt_create_job",
+      "proposed_key_inputs": [
+        "account_id"
+      ]
+    },
+    {
+      "endpoint_id": "retrieve_job",
+      "operation_id": "Retrieve Job",
+      "method": "GET",
+      "path": "/api/v2/accounts/{account_id}/jobs/{id}/",
+      "full_path_template": "/api/v2/accounts/{account_id}/jobs/{id}/",
+      "summary": "",
+      "description": "Retrieve the details of a job.",
+      "tags": [
+        "Jobs"
+      ],
+      "parameters": [
+        {
+          "name": "account_id",
+          "in": "path",
+          "required": true,
+          "type": "integer",
+          "description": ""
+        },
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "type": "integer",
+          "description": ""
+        },
+        {
+          "name": "include_related",
+          "in": "query",
+          "required": false,
+          "type": "string",
+          "description": "A list of related objects to include in the response. Valid values are `environment`, `custom_environment_variables`, `most_recent_run`, `most_recent_completed_run`, and `fusion_readiness`."
+        }
+      ],
+      "request_body": null,
+      "responses": {
+        "200": {
+          "description": "",
+          "schema": {
+            "type": "object",
+            "fields": [
+              {
+                "name": "data",
+                "type": "ref:HumanReadableJobDefinitionResponse",
+                "required": true,
+                "description": ""
+              },
+              {
+                "name": "status",
+                "type": "ref:ResponseStatus",
+                "required": true,
+                "description": ""
+              }
+            ],
+            "item_fields": [],
+            "notes": [
+              "ref:HumanReadableJobDefinitionEnveloped"
+            ]
+          }
+        }
+      },
+      "proposed_table": "stg_dbt_retrieve_job",
+      "proposed_key_inputs": [
+        "account_id",
+        "id"
+      ]
+    },
+    {
+      "endpoint_id": "update_job",
+      "operation_id": "Update Job",
+      "method": "POST",
+      "path": "/api/v2/accounts/{account_id}/jobs/{id}/",
+      "full_path_template": "/api/v2/accounts/{account_id}/jobs/{id}/",
+      "summary": "",
+      "description": "Update a job.",
+      "tags": [
+        "Jobs"
+      ],
+      "parameters": [
+        {
+          "name": "account_id",
+          "in": "path",
+          "required": true,
+          "type": "integer",
+          "description": ""
+        },
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "type": "integer",
+          "description": ""
+        }
+      ],
+      "request_body": {
+        "content_type": "application/json",
+        "schema_type": "object",
+        "fields": [
+          {
+            "name": "account_id",
+            "type": "integer",
+            "required": true,
+            "description": ""
+          },
+          {
+            "name": "project_id",
+            "type": "integer",
+            "required": true,
+            "description": ""
+          },
+          {
+            "name": "environment_id",
+            "type": "integer",
+            "required": true,
+            "description": ""
+          },
+          {
+            "name": "name",
+            "type": "string",
+            "required": true,
+            "description": "The name of the job"
+          },
+          {
+            "name": "dbt_version",
+            "type": "string",
+            "required": false,
+            "description": "When set, overrides the dbt_version specified in the Job's Environment"
+          },
+          {
+            "name": "deferring_environment_id",
+            "type": "integer",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "deferring_job_definition_id",
+            "type": "integer",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "description",
+            "type": "string",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "execute_steps",
+            "type": "array<string>",
+            "required": false,
+            "description": "A list of dbt commands to run"
+          },
+          {
+            "name": "execution",
+            "type": "ref:JobDefinitionExecutionRequest",
+            "required": true,
+            "description": ""
+          },
+          {
+            "name": "generate_docs",
+            "type": "boolean",
+            "required": true,
+            "description": "When true, `dbt docs generate` will be run at the end of all runs for this Job"
+          },
+          {
+            "name": "job_type",
+            "type": "ref:JobTypeEnum",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "lifecycle_webhooks",
+            "type": "boolean",
+            "required": true,
+            "description": ""
+          },
+          {
+            "name": "run_compare_changes",
+            "type": "boolean",
+            "required": true,
+            "description": ""
+          },
+          {
+            "name": "compare_changes_flags",
+            "type": "string",
+            "required": false,
+            "description": "dbt syntax flags to be used for compare changes"
+          },
+          {
+            "name": "run_generate_sources",
+            "type": "boolean",
+            "required": true,
+            "description": ""
+          },
+          {
+            "name": "run_lint",
+            "type": "boolean",
+            "required": true,
+            "description": ""
+          },
+          {
+            "name": "errors_on_lint_failure",
+            "type": "boolean",
+            "required": true,
+            "description": ""
+          },
+          {
+            "name": "cost_optimization_features",
+            "type": "array<string>",
+            "required": false,
+            "description": "<b>[Private Beta]</b> List of cost optimization features to enable for this job.\n            Requires job to be running on a fusion dbt_version.\n            <br/><br/>\n            <b>Valid values:</b>\n            <ul>\n              <li>\"state_aware_orchestration\" - Enable orchestration that adapts to state changes</li>\n              <li>\"efficient_testing\" - Aggregate generic tests into a single query and reuse redundant tests across lineage</li>\n            </ul>\n            <b>Example:</b> [\"state_aware_orchestration\", \"efficient_testing\"]\n            "
+          },
+          {
+            "name": "settings",
+            "type": "ref:JobDefinitionSettingsRequest",
+            "required": true,
+            "description": ""
+          },
+          {
+            "name": "state",
+            "type": "integer",
+            "required": true,
+            "description": "A value of 1 means this entity is active and a value of 2 means this entity is deleted"
+          },
+          {
+            "name": "triggers_on_draft_pr",
+            "type": "boolean",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "triggers",
+            "type": "ref:JobDefinitionTriggersRequest",
+            "required": true,
+            "description": ""
+          },
+          {
+            "name": "schedule",
+            "type": "ref:HumanReadableScheduleRequest",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "generate_sources",
+            "type": "boolean",
+            "required": false,
+            "description": ""
+          }
+        ],
+        "notes": [
+          "ref:HumanReadableJobDefinitionRequest"
+        ]
+      },
+      "responses": {
+        "200": {
+          "description": "",
+          "schema": {
+            "type": "object",
+            "fields": [
+              {
+                "name": "data",
+                "type": "ref:HumanReadableJobDefinitionResponse",
+                "required": true,
+                "description": ""
+              },
+              {
+                "name": "status",
+                "type": "ref:ResponseStatus",
+                "required": true,
+                "description": ""
+              }
+            ],
+            "item_fields": [],
+            "notes": [
+              "ref:HumanReadableJobDefinitionEnveloped"
+            ]
+          }
+        }
+      },
+      "proposed_table": "stg_dbt_update_job",
+      "proposed_key_inputs": [
+        "account_id",
+        "id"
+      ]
+    },
+    {
+      "endpoint_id": "destroy_job",
+      "operation_id": "Destroy Job",
+      "method": "DELETE",
+      "path": "/api/v2/accounts/{account_id}/jobs/{id}/",
+      "full_path_template": "/api/v2/accounts/{account_id}/jobs/{id}/",
+      "summary": "",
+      "description": "Delete a job",
+      "tags": [
+        "Jobs"
+      ],
+      "parameters": [
+        {
+          "name": "account_id",
+          "in": "path",
+          "required": true,
+          "type": "integer",
+          "description": ""
+        },
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "type": "integer",
+          "description": ""
+        }
+      ],
+      "request_body": null,
+      "responses": {
+        "204": {
+          "description": "No response body",
+          "schema": null
+        }
+      },
+      "proposed_table": "stg_dbt_destroy_job",
+      "proposed_key_inputs": [
+        "account_id",
+        "id"
+      ]
+    },
+    {
+      "endpoint_id": "retrieve_job_artifact",
+      "operation_id": "Retrieve Job Artifact",
+      "method": "GET",
+      "path": "/api/v2/accounts/{account_id}/jobs/{job_id}/artifacts/{remainder}",
+      "full_path_template": "/api/v2/accounts/{account_id}/jobs/{job_id}/artifacts/{remainder}",
+      "summary": "",
+      "description": "Given a job id and *a set of Run filters* return the latest matching artifact for that job.",
+      "tags": [
+        "Jobs"
+      ],
+      "parameters": [
+        {
+          "name": "account_id",
+          "in": "path",
+          "required": true,
+          "type": "integer",
+          "description": ""
+        },
+        {
+          "name": "include_related",
+          "in": "query",
+          "required": false,
+          "type": "string",
+          "description": "Comma-separated list of related objects to include in the response."
+        },
+        {
+          "name": "job_id",
+          "in": "path",
+          "required": true,
+          "type": "integer",
+          "description": ""
+        },
+        {
+          "name": "remainder",
+          "in": "path",
+          "required": true,
+          "type": "string",
+          "description": ""
+        }
+      ],
+      "request_body": null,
+      "responses": {
+        "200": {
+          "description": "A run artifact file",
+          "schema": null
+        }
+      },
+      "proposed_table": "stg_dbt_retrieve_job_artifact",
+      "proposed_key_inputs": [
+        "account_id",
+        "job_id",
+        "remainder"
+      ]
+    },
+    {
+      "endpoint_id": "retry_failed_job",
+      "operation_id": "Retry Failed Job",
+      "method": "POST",
+      "path": "/api/v2/accounts/{account_id}/jobs/{job_id}/rerun/",
+      "full_path_template": "/api/v2/accounts/{account_id}/jobs/{job_id}/rerun/",
+      "summary": "",
+      "description": "Use this endpoint to retry a failed run for a job from the point of failure, if the run failed. Otherwise trigger a new run. When this endpoint returns a successful response, a new run will be enqueued for the account. Users can poll the Get run endpoint to poll the run until it completes. After the run has completed, users can use the Get run artifact endpoint to download artifacts generated by the run.",
+      "tags": [
+        "Jobs"
+      ],
+      "parameters": [
+        {
+          "name": "account_id",
+          "in": "path",
+          "required": true,
+          "type": "integer",
+          "description": ""
+        },
+        {
+          "name": "job_id",
+          "in": "path",
+          "required": true,
+          "type": "integer",
+          "description": ""
+        }
+      ],
+      "request_body": null,
+      "responses": {
+        "200": {
+          "description": "",
+          "schema": {
+            "type": "object",
+            "fields": [
+              {
+                "name": "data",
+                "type": "ref:RunResponse",
+                "required": true,
+                "description": ""
+              },
+              {
+                "name": "status",
+                "type": "ref:ResponseStatus",
+                "required": true,
+                "description": ""
+              }
+            ],
+            "item_fields": [],
+            "notes": [
+              "ref:RunResponseEnveloped"
+            ]
+          }
+        }
+      },
+      "proposed_table": "stg_dbt_retry_failed_job",
+      "proposed_key_inputs": [
+        "account_id",
+        "job_id"
+      ]
+    },
+    {
+      "endpoint_id": "trigger_job_run",
+      "operation_id": "Trigger Job Run",
+      "method": "POST",
+      "path": "/api/v2/accounts/{account_id}/jobs/{job_id}/run/",
+      "full_path_template": "/api/v2/accounts/{account_id}/jobs/{job_id}/run/",
+      "summary": "",
+      "description": "Use this endpoint to kick off a run for a job. When this endpoint returns a successful response, a new run will be enqueued for the account. Users can poll the Get run endpoint to poll the run until it completes. After the run has completed, users can use the Get run artifact endpoint to download artifacts generated by the run.",
+      "tags": [
+        "Jobs"
+      ],
+      "parameters": [
+        {
+          "name": "account_id",
+          "in": "path",
+          "required": true,
+          "type": "integer",
+          "description": ""
+        },
+        {
+          "name": "job_id",
+          "in": "path",
+          "required": true,
+          "type": "integer",
+          "description": ""
+        }
+      ],
+      "request_body": {
+        "content_type": "application/json",
+        "schema_type": "object",
+        "fields": [
+          {
+            "name": "cause",
+            "type": "string",
+            "required": true,
+            "description": "A text description of the reason for running"
+          },
+          {
+            "name": "git_sha",
+            "type": "string",
+            "required": false,
+            "description": "The git sha to checkout before running"
+          },
+          {
+            "name": "git_branch",
+            "type": "string",
+            "required": false,
+            "description": "The git branch to checkout before running"
+          },
+          {
+            "name": "azure_pull_request_id",
+            "type": "integer",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "github_pull_request_id",
+            "type": "integer",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "gitlab_merge_request_id",
+            "type": "integer",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "non_native_pull_request_id",
+            "type": "integer",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "schema_override",
+            "type": "string",
+            "required": false,
+            "description": "Overrides the destination schema in the configured target"
+          },
+          {
+            "name": "dbt_version_override",
+            "type": "string",
+            "required": false,
+            "description": "Overrides the version of dbt. Allowed values are: "
+          },
+          {
+            "name": "threads_override",
+            "type": "integer",
+            "required": false,
+            "description": "Overrides the number of threads used"
+          },
+          {
+            "name": "target_name_override",
+            "type": "string",
+            "required": false,
+            "description": "Overrides the `target.name` context variable"
+          },
+          {
+            "name": "generate_docs_override",
+            "type": "boolean",
+            "required": false,
+            "description": "Overrides whether or not to generate docs"
+          },
+          {
+            "name": "timeout_seconds_override",
+            "type": "integer",
+            "required": false,
+            "description": "Overrides the timeout in seconds"
+          },
+          {
+            "name": "steps_override",
+            "type": "array<string>",
+            "required": false,
+            "description": "Overrides the list of dbt commands"
+          }
+        ],
+        "notes": [
+          "ref:TriggerRunRequestRequest"
+        ]
+      },
+      "responses": {
+        "200": {
+          "description": "",
+          "schema": {
+            "type": "object",
+            "fields": [
+              {
+                "name": "data",
+                "type": "ref:RunResponse",
+                "required": true,
+                "description": ""
+              },
+              {
+                "name": "status",
+                "type": "ref:ResponseStatus",
+                "required": true,
+                "description": ""
+              }
+            ],
+            "item_fields": [],
+            "notes": [
+              "ref:RunResponseEnveloped"
+            ]
+          }
+        }
+      },
+      "proposed_table": "stg_dbt_trigger_job_run",
+      "proposed_key_inputs": [
+        "account_id",
+        "job_id"
+      ]
+    },
+    {
+      "endpoint_id": "list_account_license_allocations",
+      "operation_id": "List Account License Allocations",
+      "method": "GET",
+      "path": "/api/v2/accounts/{account_id}/licenses/",
+      "full_path_template": "/api/v2/accounts/{account_id}/licenses/",
+      "summary": "",
+      "description": "",
+      "tags": [
+        "Licenses"
+      ],
+      "parameters": [
+        {
+          "name": "account_id",
+          "in": "path",
+          "required": true,
+          "type": "integer",
+          "description": ""
+        },
+        {
+          "name": "include_related",
+          "in": "query",
+          "required": false,
+          "type": "string",
+          "description": "Comma-separated list of related objects to include in the response."
+        }
+      ],
+      "request_body": null,
+      "responses": {
+        "200": {
+          "description": "",
+          "schema": {
+            "type": "object",
+            "fields": [
+              {
+                "name": "data",
+                "type": "array<ref:LicenseAllocationResponse>",
+                "required": true,
+                "description": ""
+              },
+              {
+                "name": "extra",
+                "type": "ref:Extra",
+                "required": true,
+                "description": ""
+              },
+              {
+                "name": "status",
+                "type": "ref:ResponseStatus",
+                "required": true,
+                "description": ""
+              }
+            ],
+            "item_fields": [],
+            "notes": [
+              "ref:LicenseAllocationListEnveloped"
+            ]
+          }
+        }
+      },
+      "proposed_table": "stg_dbt_list_account_license_allocations",
+      "proposed_key_inputs": [
+        "account_id"
+      ]
+    },
+    {
+      "endpoint_id": "list_notifications",
+      "operation_id": "List Notifications",
+      "method": "GET",
+      "path": "/api/v2/accounts/{account_id}/notifications/",
+      "full_path_template": "/api/v2/accounts/{account_id}/notifications/",
+      "summary": "",
+      "description": "List notification configurations",
+      "tags": [
+        "Notifications"
+      ],
+      "parameters": [
+        {
+          "name": "account_id",
+          "in": "path",
+          "required": true,
+          "type": "integer",
+          "description": ""
+        },
+        {
+          "name": "external_email",
+          "in": "query",
+          "required": false,
+          "type": "string",
+          "description": ""
+        },
+        {
+          "name": "include_related",
+          "in": "query",
+          "required": false,
+          "type": "string",
+          "description": "Comma-separated list of related objects to include in the response."
+        },
+        {
+          "name": "limit",
+          "in": "query",
+          "required": false,
+          "type": "integer",
+          "description": ""
+        },
+        {
+          "name": "offset",
+          "in": "query",
+          "required": false,
+          "type": "integer",
+          "description": ""
+        },
+        {
+          "name": "order_by",
+          "in": "query",
+          "required": false,
+          "type": "string",
+          "description": "Field to order results by. Prefix with '-' for descending order."
+        },
+        {
+          "name": "pk",
+          "in": "query",
+          "required": false,
+          "type": "integer",
+          "description": ""
+        },
+        {
+          "name": "slack_channel_id",
+          "in": "query",
+          "required": false,
+          "type": "string",
+          "description": ""
+        },
+        {
+          "name": "state",
+          "in": "query",
+          "required": false,
+          "type": "string",
+          "description": "Filters by soft deletion state.\n            <ul>\n                <li>\n                    <strong>\"active\"</strong> / <strong>1</strong>: Only active resources\n                </li>\n                <li>\n                    <strong>\"deleted\"</strong> / <strong>2</strong>: Only deleted resources\n                </li>\n                <li>\n                    <strong>\"all\"</strong>: All resources\n                </li>\n            </ul>\n            "
+        },
+        {
+          "name": "type",
+          "in": "query",
+          "required": false,
+          "type": "integer",
+          "description": ""
+        },
+        {
+          "name": "user_id",
+          "in": "query",
+          "required": false,
+          "type": "integer",
+          "description": ""
+        }
+      ],
+      "request_body": null,
+      "responses": {
+        "200": {
+          "description": "",
+          "schema": {
+            "type": "object",
+            "fields": [
+              {
+                "name": "data",
+                "type": "array<ref:JobNotificationSettingsResponse>",
+                "required": true,
+                "description": ""
+              },
+              {
+                "name": "extra",
+                "type": "ref:Extra",
+                "required": true,
+                "description": ""
+              },
+              {
+                "name": "status",
+                "type": "ref:ResponseStatus",
+                "required": true,
+                "description": ""
+              }
+            ],
+            "item_fields": [],
+            "notes": [
+              "ref:JobNotificationSettingsListEnveloped"
+            ]
+          }
+        }
+      },
+      "proposed_table": "stg_dbt_list_notifications",
+      "proposed_key_inputs": [
+        "account_id"
+      ]
+    },
+    {
+      "endpoint_id": "create_notification",
+      "operation_id": "Create Notification",
+      "method": "POST",
+      "path": "/api/v2/accounts/{account_id}/notifications/",
+      "full_path_template": "/api/v2/accounts/{account_id}/notifications/",
+      "summary": "",
+      "description": "Create a new Job Notification configuration to trigger notifications for job successes, failures, or cancelations. Notifications can be sent to a dbt Cloud user, an external email address, or a Slack channel.",
+      "tags": [
+        "Notifications"
+      ],
+      "parameters": [
+        {
+          "name": "account_id",
+          "in": "path",
+          "required": true,
+          "type": "integer",
+          "description": ""
+        }
+      ],
+      "request_body": {
+        "content_type": "application/json",
+        "schema_type": "object",
+        "fields": [
+          {
+            "name": "account_id",
+            "type": "integer",
+            "required": true,
+            "description": "The account the job notification setting is associated with"
+          },
+          {
+            "name": "user_id",
+            "type": "integer",
+            "required": true,
+            "description": "For internal email notifications, the ID of the user to send notifications to. For all other notifications, the ID of the user who created the configuration."
+          },
+          {
+            "name": "type",
+            "type": "object",
+            "required": true,
+            "description": "\n                The destination type.\n                1: Internal Email\n                2: Slack\n                3: Deprecated - do not use\n                4: External Email\n            \n\n* `1` - EMAIL\n* `2` - SLACK\n* `3` - WEBHOOK\n* `4` - EXTERNAL_EMAIL\n* `5` - SLACK_V2"
+          },
+          {
+            "name": "external_email",
+            "type": "string",
+            "required": false,
+            "description": "The external email to send notifications to. Required for External Email types."
+          },
+          {
+            "name": "slack_channel_id",
+            "type": "string",
+            "required": false,
+            "description": "The ID of the Slack channel to send notifications to. Required for Slack notification types."
+          },
+          {
+            "name": "slack_channel_name",
+            "type": "string",
+            "required": false,
+            "description": "The name of the Slack channel to send notifications to. Required for Slack notification types."
+          },
+          {
+            "name": "on_cancel",
+            "type": "array<integer>",
+            "required": true,
+            "description": "List of job IDs to send notifications for when the job is cancelled."
+          },
+          {
+            "name": "on_failure",
+            "type": "array<integer>",
+            "required": true,
+            "description": "List of job IDs to send notifications for when the job fails."
+          },
+          {
+            "name": "on_success",
+            "type": "array<integer>",
+            "required": true,
+            "description": "List of job IDs to send notifications for when the job succeeds."
+          },
+          {
+            "name": "on_warning",
+            "type": "array<integer>",
+            "required": true,
+            "description": "List of job IDs to send notifications for when the job warns."
+          },
+          {
+            "name": "state",
+            "type": "integer",
+            "required": true,
+            "description": "A value of 1 means this entity is active and a value of 2 means this entity is deleted"
+          }
+        ],
+        "notes": [
+          "ref:JobNotificationSettingsRequest"
+        ]
+      },
+      "responses": {
+        "200": {
+          "description": "",
+          "schema": {
+            "type": "object",
+            "fields": [
+              {
+                "name": "data",
+                "type": "ref:JobNotificationSettingsResponse",
+                "required": true,
+                "description": ""
+              },
+              {
+                "name": "status",
+                "type": "ref:ResponseStatus",
+                "required": true,
+                "description": ""
+              }
+            ],
+            "item_fields": [],
+            "notes": [
+              "ref:JobNotificationSettingsEnveloped"
+            ]
+          }
+        }
+      },
+      "proposed_table": "stg_dbt_create_notification",
+      "proposed_key_inputs": [
+        "account_id"
+      ]
+    },
+    {
+      "endpoint_id": "retrieve_notification",
+      "operation_id": "Retrieve Notification",
+      "method": "GET",
+      "path": "/api/v2/accounts/{account_id}/notifications/{id}/",
+      "full_path_template": "/api/v2/accounts/{account_id}/notifications/{id}/",
+      "summary": "",
+      "description": "Fetch notification configurations",
+      "tags": [
+        "Notifications"
+      ],
+      "parameters": [
+        {
+          "name": "account_id",
+          "in": "path",
+          "required": true,
+          "type": "integer",
+          "description": ""
+        },
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "type": "integer",
+          "description": ""
+        },
+        {
+          "name": "include_related",
+          "in": "query",
+          "required": false,
+          "type": "string",
+          "description": "Comma-separated list of related objects to include in the response."
+        }
+      ],
+      "request_body": null,
+      "responses": {
+        "200": {
+          "description": "",
+          "schema": {
+            "type": "object",
+            "fields": [
+              {
+                "name": "data",
+                "type": "ref:JobNotificationSettingsResponse",
+                "required": true,
+                "description": ""
+              },
+              {
+                "name": "status",
+                "type": "ref:ResponseStatus",
+                "required": true,
+                "description": ""
+              }
+            ],
+            "item_fields": [],
+            "notes": [
+              "ref:JobNotificationSettingsEnveloped"
+            ]
+          }
+        }
+      },
+      "proposed_table": "stg_dbt_retrieve_notification",
+      "proposed_key_inputs": [
+        "account_id",
+        "id"
+      ]
+    },
+    {
+      "endpoint_id": "update_notification",
+      "operation_id": "Update Notification",
+      "method": "POST",
+      "path": "/api/v2/accounts/{account_id}/notifications/{id}/",
+      "full_path_template": "/api/v2/accounts/{account_id}/notifications/{id}/",
+      "summary": "",
+      "description": "Update an existing Job Notification configuration.",
+      "tags": [
+        "Notifications"
+      ],
+      "parameters": [
+        {
+          "name": "account_id",
+          "in": "path",
+          "required": true,
+          "type": "integer",
+          "description": ""
+        },
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "type": "integer",
+          "description": ""
+        }
+      ],
+      "request_body": {
+        "content_type": "application/json",
+        "schema_type": "object",
+        "fields": [
+          {
+            "name": "account_id",
+            "type": "integer",
+            "required": true,
+            "description": "The account the job notification setting is associated with"
+          },
+          {
+            "name": "user_id",
+            "type": "integer",
+            "required": true,
+            "description": "For internal email notifications, the ID of the user to send notifications to. For all other notifications, the ID of the user who created the configuration."
+          },
+          {
+            "name": "type",
+            "type": "object",
+            "required": true,
+            "description": "\n                The destination type.\n                1: Internal Email\n                2: Slack\n                3: Deprecated - do not use\n                4: External Email\n            \n\n* `1` - EMAIL\n* `2` - SLACK\n* `3` - WEBHOOK\n* `4` - EXTERNAL_EMAIL\n* `5` - SLACK_V2"
+          },
+          {
+            "name": "external_email",
+            "type": "string",
+            "required": false,
+            "description": "The external email to send notifications to. Required for External Email types."
+          },
+          {
+            "name": "slack_channel_id",
+            "type": "string",
+            "required": false,
+            "description": "The ID of the Slack channel to send notifications to. Required for Slack notification types."
+          },
+          {
+            "name": "slack_channel_name",
+            "type": "string",
+            "required": false,
+            "description": "The name of the Slack channel to send notifications to. Required for Slack notification types."
+          },
+          {
+            "name": "on_cancel",
+            "type": "array<integer>",
+            "required": true,
+            "description": "List of job IDs to send notifications for when the job is cancelled."
+          },
+          {
+            "name": "on_failure",
+            "type": "array<integer>",
+            "required": true,
+            "description": "List of job IDs to send notifications for when the job fails."
+          },
+          {
+            "name": "on_success",
+            "type": "array<integer>",
+            "required": true,
+            "description": "List of job IDs to send notifications for when the job succeeds."
+          },
+          {
+            "name": "on_warning",
+            "type": "array<integer>",
+            "required": true,
+            "description": "List of job IDs to send notifications for when the job warns."
+          },
+          {
+            "name": "state",
+            "type": "integer",
+            "required": true,
+            "description": "A value of 1 means this entity is active and a value of 2 means this entity is deleted"
+          }
+        ],
+        "notes": [
+          "ref:JobNotificationSettingsRequest"
+        ]
+      },
+      "responses": {
+        "200": {
+          "description": "",
+          "schema": {
+            "type": "object",
+            "fields": [
+              {
+                "name": "data",
+                "type": "ref:JobNotificationSettingsResponse",
+                "required": true,
+                "description": ""
+              },
+              {
+                "name": "status",
+                "type": "ref:ResponseStatus",
+                "required": true,
+                "description": ""
+              }
+            ],
+            "item_fields": [],
+            "notes": [
+              "ref:JobNotificationSettingsEnveloped"
+            ]
+          }
+        }
+      },
+      "proposed_table": "stg_dbt_update_notification",
+      "proposed_key_inputs": [
+        "account_id",
+        "id"
+      ]
+    },
+    {
+      "endpoint_id": "destroy_notification",
+      "operation_id": "Destroy Notification",
+      "method": "DELETE",
+      "path": "/api/v2/accounts/{account_id}/notifications/{id}/",
+      "full_path_template": "/api/v2/accounts/{account_id}/notifications/{id}/",
+      "summary": "",
+      "description": "",
+      "tags": [
+        "Notifications"
+      ],
+      "parameters": [
+        {
+          "name": "account_id",
+          "in": "path",
+          "required": true,
+          "type": "integer",
+          "description": ""
+        },
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "type": "integer",
+          "description": ""
+        }
+      ],
+      "request_body": null,
+      "responses": {
+        "204": {
+          "description": "No response body",
+          "schema": null
+        }
+      },
+      "proposed_table": "stg_dbt_destroy_notification",
+      "proposed_key_inputs": [
+        "account_id",
+        "id"
+      ]
+    },
+    {
+      "endpoint_id": "update_license_permissions",
+      "operation_id": "Update License Permissions",
+      "method": "POST",
+      "path": "/api/v2/accounts/{account_id}/permissions/{id}/",
+      "full_path_template": "/api/v2/accounts/{account_id}/permissions/{id}/",
+      "summary": "",
+      "description": "",
+      "tags": [
+        "Permissions"
+      ],
+      "parameters": [
+        {
+          "name": "account_id",
+          "in": "path",
+          "required": true,
+          "type": "integer",
+          "description": ""
+        },
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "type": "integer",
+          "description": ""
+        }
+      ],
+      "request_body": {
+        "content_type": "application/json",
+        "schema_type": "object",
+        "fields": [
+          {
+            "name": "license_type",
+            "type": "string",
+            "required": true,
+            "description": "The type of license, e.g. `developer` or `read_only`"
+          },
+          {
+            "name": "state",
+            "type": "integer",
+            "required": true,
+            "description": "A value of 1 means this entity is active and a value of 2 means this entity is deleted"
+          }
+        ],
+        "notes": [
+          "ref:UserLicenseRequest"
+        ]
+      },
+      "responses": {
+        "200": {
+          "description": "",
+          "schema": {
+            "type": "object",
+            "fields": [
+              {
+                "name": "data",
+                "type": "ref:UserLicenseResponse",
+                "required": true,
+                "description": ""
+              },
+              {
+                "name": "status",
+                "type": "ref:ResponseStatus",
+                "required": true,
+                "description": ""
+              }
+            ],
+            "item_fields": [],
+            "notes": [
+              "ref:UserLicenseEnveloped"
+            ]
+          }
+        }
+      },
+      "proposed_table": "stg_dbt_update_license_permissions",
+      "proposed_key_inputs": [
+        "account_id",
+        "id"
+      ]
+    },
+    {
+      "endpoint_id": "list_projects",
+      "operation_id": "List Projects",
+      "method": "GET",
+      "path": "/api/v2/accounts/{account_id}/projects/",
+      "full_path_template": "/api/v2/accounts/{account_id}/projects/",
+      "summary": "",
+      "description": "Deprecated. Consider using the v3 API instead.",
+      "tags": [
+        "Projects"
+      ],
+      "parameters": [
+        {
+          "name": "account_id",
+          "in": "path",
+          "required": true,
+          "type": "integer",
+          "description": ""
+        },
+        {
+          "name": "include_related",
+          "in": "query",
+          "required": false,
+          "type": "string",
+          "description": "Comma-separated list of related objects to include in the response. Available: repository, connection, group_permissions, docs_job, freshness_job."
+        },
+        {
+          "name": "limit",
+          "in": "query",
+          "required": false,
+          "type": "integer",
+          "description": ""
+        },
+        {
+          "name": "name__icontains",
+          "in": "query",
+          "required": false,
+          "type": "string",
+          "description": ""
+        },
+        {
+          "name": "offset",
+          "in": "query",
+          "required": false,
+          "type": "integer",
+          "description": ""
+        },
+        {
+          "name": "order_by",
+          "in": "query",
+          "required": false,
+          "type": "string",
+          "description": "Field to order results by. Prefix with '-' for descending order."
+        },
+        {
+          "name": "pk",
+          "in": "query",
+          "required": false,
+          "type": "integer",
+          "description": ""
+        },
+        {
+          "name": "pk__gt",
+          "in": "query",
+          "required": false,
+          "type": "integer",
+          "description": ""
+        },
+        {
+          "name": "pk__in",
+          "in": "query",
+          "required": false,
+          "type": "array",
+          "description": ""
+        },
+        {
+          "name": "state",
+          "in": "query",
+          "required": false,
+          "type": "string",
+          "description": "Filters by soft deletion state.\n            <ul>\n                <li>\n                    <strong>\"active\"</strong> / <strong>1</strong>: Only active resources\n                </li>\n                <li>\n                    <strong>\"deleted\"</strong> / <strong>2</strong>: Only deleted resources\n                </li>\n                <li>\n                    <strong>\"all\"</strong>: All resources\n                </li>\n            </ul>\n            "
+        }
+      ],
+      "request_body": null,
+      "responses": {
+        "200": {
+          "description": "",
+          "schema": {
+            "type": "object",
+            "fields": [
+              {
+                "name": "data",
+                "type": "array<ref:ProjectResponse>",
+                "required": true,
+                "description": ""
+              },
+              {
+                "name": "extra",
+                "type": "ref:Extra",
+                "required": true,
+                "description": ""
+              },
+              {
+                "name": "status",
+                "type": "ref:ResponseStatus",
+                "required": true,
+                "description": ""
+              }
+            ],
+            "item_fields": [],
+            "notes": [
+              "ref:ProjectListEnveloped"
+            ]
+          }
+        }
+      },
+      "proposed_table": "stg_dbt_list_projects",
+      "proposed_key_inputs": [
+        "account_id"
+      ]
+    },
+    {
+      "endpoint_id": "create_project",
+      "operation_id": "Create Project",
+      "method": "POST",
+      "path": "/api/v2/accounts/{account_id}/projects/",
+      "full_path_template": "/api/v2/accounts/{account_id}/projects/",
+      "summary": "",
+      "description": "Deprecated. Consider using the v3 API instead.",
+      "tags": [
+        "Projects"
+      ],
+      "parameters": [
+        {
+          "name": "account_id",
+          "in": "path",
+          "required": true,
+          "type": "integer",
+          "description": ""
+        }
+      ],
+      "request_body": {
+        "content_type": "application/json",
+        "schema_type": "object",
+        "fields": [
+          {
+            "name": "name",
+            "type": "string",
+            "required": true,
+            "description": "The name of the project"
+          },
+          {
+            "name": "account_id",
+            "type": "integer",
+            "required": true,
+            "description": "The account the project is associated with"
+          },
+          {
+            "name": "description",
+            "type": "string",
+            "required": false,
+            "description": "The description of the project"
+          },
+          {
+            "name": "connection_id",
+            "type": "integer",
+            "required": false,
+            "description": "The active connection"
+          },
+          {
+            "name": "repository_id",
+            "type": "integer",
+            "required": false,
+            "description": "The active repository"
+          },
+          {
+            "name": "semantic_layer_config_id",
+            "type": "integer",
+            "required": false,
+            "description": "The active semantic layer configuration"
+          },
+          {
+            "name": "state",
+            "type": "integer",
+            "required": true,
+            "description": "A value of 1 means this entity is active and a value of 2 means this entity is deleted"
+          },
+          {
+            "name": "dbt_project_subdirectory",
+            "type": "string",
+            "required": false,
+            "description": "The path in the associated repository where a dbt project can be found"
+          },
+          {
+            "name": "docs_job_id",
+            "type": "integer",
+            "required": false,
+            "description": "The job used for docs generation"
+          },
+          {
+            "name": "freshness_job_id",
+            "type": "integer",
+            "required": false,
+            "description": "The job used for source freshness generation"
+          },
+          {
+            "name": "type",
+            "type": "object",
+            "required": true,
+            "description": "The type of the project\n\n* `0` - DEFAULT\n* `1` - HYBRID"
+          }
+        ],
+        "notes": [
+          "ref:ProjectRequest"
+        ]
+      },
+      "responses": {
+        "200": {
+          "description": "",
+          "schema": {
+            "type": "object",
+            "fields": [
+              {
+                "name": "data",
+                "type": "ref:ProjectResponse",
+                "required": true,
+                "description": ""
+              },
+              {
+                "name": "status",
+                "type": "ref:ResponseStatus",
+                "required": true,
+                "description": ""
+              }
+            ],
+            "item_fields": [],
+            "notes": [
+              "ref:ProjectEnveloped"
+            ]
+          }
+        }
+      },
+      "proposed_table": "stg_dbt_create_project",
+      "proposed_key_inputs": [
+        "account_id"
+      ]
+    },
+    {
+      "endpoint_id": "retrieve_project",
+      "operation_id": "Retrieve Project",
+      "method": "GET",
+      "path": "/api/v2/accounts/{account_id}/projects/{id}/",
+      "full_path_template": "/api/v2/accounts/{account_id}/projects/{id}/",
+      "summary": "",
+      "description": "Deprecated. Consider using the v3 API instead.",
+      "tags": [
+        "Projects"
+      ],
+      "parameters": [
+        {
+          "name": "account_id",
+          "in": "path",
+          "required": true,
+          "type": "integer",
+          "description": ""
+        },
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "type": "integer",
+          "description": ""
+        },
+        {
+          "name": "include_related",
+          "in": "query",
+          "required": false,
+          "type": "string",
+          "description": "Comma-separated list of related objects to include in the response. Available: repository, connection, group_permissions, docs_job, freshness_job."
+        }
+      ],
+      "request_body": null,
+      "responses": {
+        "200": {
+          "description": "",
+          "schema": {
+            "type": "object",
+            "fields": [
+              {
+                "name": "data",
+                "type": "ref:ProjectResponse",
+                "required": true,
+                "description": ""
+              },
+              {
+                "name": "status",
+                "type": "ref:ResponseStatus",
+                "required": true,
+                "description": ""
+              }
+            ],
+            "item_fields": [],
+            "notes": [
+              "ref:ProjectEnveloped"
+            ]
+          }
+        }
+      },
+      "proposed_table": "stg_dbt_retrieve_project",
+      "proposed_key_inputs": [
+        "account_id",
+        "id"
+      ]
+    },
+    {
+      "endpoint_id": "update_project",
+      "operation_id": "Update Project",
+      "method": "POST",
+      "path": "/api/v2/accounts/{account_id}/projects/{id}/",
+      "full_path_template": "/api/v2/accounts/{account_id}/projects/{id}/",
+      "summary": "",
+      "description": "Deprecated. Consider using the v3 API instead.",
+      "tags": [
+        "Projects"
+      ],
+      "parameters": [
+        {
+          "name": "account_id",
+          "in": "path",
+          "required": true,
+          "type": "integer",
+          "description": ""
+        },
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "type": "integer",
+          "description": ""
+        }
+      ],
+      "request_body": {
+        "content_type": "application/json",
+        "schema_type": "object",
+        "fields": [
+          {
+            "name": "name",
+            "type": "string",
+            "required": true,
+            "description": "The name of the project"
+          },
+          {
+            "name": "account_id",
+            "type": "integer",
+            "required": true,
+            "description": "The account the project is associated with"
+          },
+          {
+            "name": "description",
+            "type": "string",
+            "required": false,
+            "description": "The description of the project"
+          },
+          {
+            "name": "connection_id",
+            "type": "integer",
+            "required": false,
+            "description": "The active connection"
+          },
+          {
+            "name": "repository_id",
+            "type": "integer",
+            "required": false,
+            "description": "The active repository"
+          },
+          {
+            "name": "semantic_layer_config_id",
+            "type": "integer",
+            "required": false,
+            "description": "The active semantic layer configuration"
+          },
+          {
+            "name": "state",
+            "type": "integer",
+            "required": true,
+            "description": "A value of 1 means this entity is active and a value of 2 means this entity is deleted"
+          },
+          {
+            "name": "dbt_project_subdirectory",
+            "type": "string",
+            "required": false,
+            "description": "The path in the associated repository where a dbt project can be found"
+          },
+          {
+            "name": "docs_job_id",
+            "type": "integer",
+            "required": false,
+            "description": "The job used for docs generation"
+          },
+          {
+            "name": "freshness_job_id",
+            "type": "integer",
+            "required": false,
+            "description": "The job used for source freshness generation"
+          },
+          {
+            "name": "type",
+            "type": "object",
+            "required": true,
+            "description": "The type of the project\n\n* `0` - DEFAULT\n* `1` - HYBRID"
+          }
+        ],
+        "notes": [
+          "ref:ProjectRequest"
+        ]
+      },
+      "responses": {
+        "200": {
+          "description": "",
+          "schema": {
+            "type": "object",
+            "fields": [
+              {
+                "name": "data",
+                "type": "ref:ProjectResponse",
+                "required": true,
+                "description": ""
+              },
+              {
+                "name": "status",
+                "type": "ref:ResponseStatus",
+                "required": true,
+                "description": ""
+              }
+            ],
+            "item_fields": [],
+            "notes": [
+              "ref:ProjectEnveloped"
+            ]
+          }
+        }
+      },
+      "proposed_table": "stg_dbt_update_project",
+      "proposed_key_inputs": [
+        "account_id",
+        "id"
+      ]
+    },
+    {
+      "endpoint_id": "destroy_project",
+      "operation_id": "Destroy Project",
+      "method": "DELETE",
+      "path": "/api/v2/accounts/{account_id}/projects/{id}/",
+      "full_path_template": "/api/v2/accounts/{account_id}/projects/{id}/",
+      "summary": "",
+      "description": "Deprecated. Consider using the v3 API instead.",
+      "tags": [
+        "Projects"
+      ],
+      "parameters": [
+        {
+          "name": "account_id",
+          "in": "path",
+          "required": true,
+          "type": "integer",
+          "description": ""
+        },
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "type": "integer",
+          "description": ""
+        }
+      ],
+      "request_body": null,
+      "responses": {
+        "204": {
+          "description": "No response body",
+          "schema": null
+        }
+      },
+      "proposed_table": "stg_dbt_destroy_project",
+      "proposed_key_inputs": [
+        "account_id",
+        "id"
+      ]
+    },
+    {
+      "endpoint_id": "list_repositories",
+      "operation_id": "List Repositories",
+      "method": "GET",
+      "path": "/api/v2/accounts/{account_id}/repositories/",
+      "full_path_template": "/api/v2/accounts/{account_id}/repositories/",
+      "summary": "",
+      "description": "Deprecated. Consider using the v3 API instead.",
+      "tags": [
+        "Repositories"
+      ],
+      "parameters": [
+        {
+          "name": "account_id",
+          "in": "path",
+          "required": true,
+          "type": "integer",
+          "description": ""
+        },
+        {
+          "name": "include_related",
+          "in": "query",
+          "required": false,
+          "type": "string",
+          "description": "Comma-separated list of related objects to include in the response. Available: deploy_key."
+        },
+        {
+          "name": "limit",
+          "in": "query",
+          "required": false,
+          "type": "integer",
+          "description": ""
+        },
+        {
+          "name": "offset",
+          "in": "query",
+          "required": false,
+          "type": "integer",
+          "description": ""
+        },
+        {
+          "name": "order_by",
+          "in": "query",
+          "required": false,
+          "type": "string",
+          "description": "Field to order results by. Prefix with '-' for descending order."
+        },
+        {
+          "name": "pk",
+          "in": "query",
+          "required": false,
+          "type": "integer",
+          "description": ""
+        },
+        {
+          "name": "project_id",
+          "in": "query",
+          "required": false,
+          "type": "integer",
+          "description": ""
+        },
+        {
+          "name": "project_id__in",
+          "in": "query",
+          "required": false,
+          "type": "array",
+          "description": ""
+        },
+        {
+          "name": "remote_url",
+          "in": "query",
+          "required": false,
+          "type": "string",
+          "description": ""
+        },
+        {
+          "name": "state",
+          "in": "query",
+          "required": false,
+          "type": "string",
+          "description": "Filters by soft deletion state.\n            <ul>\n                <li>\n                    <strong>\"active\"</strong> / <strong>1</strong>: Only active resources\n                </li>\n                <li>\n                    <strong>\"deleted\"</strong> / <strong>2</strong>: Only deleted resources\n                </li>\n                <li>\n                    <strong>\"all\"</strong>: All resources\n                </li>\n            </ul>\n            "
+        }
+      ],
+      "request_body": null,
+      "responses": {
+        "200": {
+          "description": "",
+          "schema": {
+            "type": "object",
+            "fields": [
+              {
+                "name": "data",
+                "type": "array<ref:RepositoryV2Response>",
+                "required": true,
+                "description": ""
+              },
+              {
+                "name": "extra",
+                "type": "ref:Extra",
+                "required": true,
+                "description": ""
+              },
+              {
+                "name": "status",
+                "type": "ref:ResponseStatus",
+                "required": true,
+                "description": ""
+              }
+            ],
+            "item_fields": [],
+            "notes": [
+              "ref:RepositoryV2ListEnveloped"
+            ]
+          }
+        }
+      },
+      "proposed_table": "stg_dbt_list_repositories",
+      "proposed_key_inputs": [
+        "account_id"
+      ]
+    },
+    {
+      "endpoint_id": "create_repository",
+      "operation_id": "Create Repository",
+      "method": "POST",
+      "path": "/api/v2/accounts/{account_id}/repositories/",
+      "full_path_template": "/api/v2/accounts/{account_id}/repositories/",
+      "summary": "",
+      "description": "Deprecated. Consider using the v3 API instead.",
+      "tags": [
+        "Repositories"
+      ],
+      "parameters": [
+        {
+          "name": "account_id",
+          "in": "path",
+          "required": true,
+          "type": "integer",
+          "description": ""
+        }
+      ],
+      "request_body": {
+        "content_type": "application/json",
+        "schema_type": "object",
+        "fields": [
+          {
+            "name": "account_id",
+            "type": "integer",
+            "required": true,
+            "description": "The account the repo is associated with"
+          },
+          {
+            "name": "project_id",
+            "type": "integer",
+            "required": false,
+            "description": "The project the repo is associated with"
+          },
+          {
+            "name": "full_name",
+            "type": "string",
+            "required": false,
+            "description": "The name of the repo\u26a0\ufe0f If not set to the correct values, CI jobs may not trigger and the branch link from the dbt Cloud IDE may not work.For example, if the remote URL is 'git://github.com/your_org/your_repo_name.git',the correct full_name is 'your_org/your_repo_name'."
+          },
+          {
+            "name": "remote_backend",
+            "type": "object",
+            "required": false,
+            "description": "The associated git provider\u26a0\ufe0f If not set to the correct values, CI jobs may not trigger and the branch link from the dbt Cloud IDE may not work.\n\n* `ado` - ado\n* `azure_active_directory` - azure_active_directory\n* `github` - github\n* `managed` - managed\n* `gitlab` - gitlab\n* `manual_config` - manual_config"
+          },
+          {
+            "name": "git_clone_strategy",
+            "type": "object",
+            "required": false,
+            "description": "The strategy to use when cloning the repo\n\n* `azure_active_directory_app` - azure_active_directory_app\n* `deploy_key` - deploy_key\n* `deploy_token` - deploy_token\n* `github_app` - github_app\n* `git_token` - git_token"
+          },
+          {
+            "name": "deploy_key_id",
+            "type": "integer",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "repository_credentials_id",
+            "type": "integer",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "github_installation_id",
+            "type": "integer",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "github_webhook_id",
+            "type": "integer",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "state",
+            "type": "integer",
+            "required": true,
+            "description": "A value of 1 means this entity is active and a value of 2 means this entity is deleted"
+          },
+          {
+            "name": "git_provider_id",
+            "type": "integer",
+            "required": false,
+            "description": ""
+          },
+          {
+            "name": "private_link_endpoint_id",
+            "type": "string",
+            "required": false,
+            "description": ""
+          }
+        ],
+        "notes": [
+          "ref:RepositoryV2Request"
+        ]
+      },
+      "responses": {
+        "200": {
+          "description": "",
+          "schema": {
+            "type": "object",
+            "fields": [
+              {
+                "name": "data",
+                "type": "ref:RepositoryV2Response",
+                "required": true,
+                "description": ""
+              },
+              {
+                "name": "status",
+                "type": "ref:ResponseStatus",
+                "required": true,
+                "description": ""
+              }
+            ],
+            "item_fields": [],
+            "notes": [
+              "ref:RepositoryV2Enveloped"
+            ]
+          }
+        }
+      },
+      "proposed_table": "stg_dbt_create_repository",
+      "proposed_key_inputs": [
+        "account_id"
+      ]
+    },
+    {
+      "endpoint_id": "retrieve_repository",
+      "operation_id": "Retrieve Repository",
+      "method": "GET",
+      "path": "/api/v2/accounts/{account_id}/repositories/{id}/",
+      "full_path_template": "/api/v2/accounts/{account_id}/repositories/{id}/",
+      "summary": "",
+      "description": "Deprecated. Consider using the v3 API instead.",
+      "tags": [
+        "Repositories"
+      ],
+      "parameters": [
+        {
+          "name": "account_id",
+          "in": "path",
+          "required": true,
+          "type": "integer",
+          "description": ""
+        },
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "type": "integer",
+          "description": ""
+        },
+        {
+          "name": "include_related",
+          "in": "query",
+          "required": false,
+          "type": "string",
+          "description": "Comma-separated list of related objects to include in the response. Available: deploy_key."
+        }
+      ],
+      "request_body": null,
+      "responses": {
+        "200": {
+          "description": "",
+          "schema": {
+            "type": "object",
+            "fields": [
+              {
+                "name": "data",
+                "type": "ref:RepositoryV2Response",
+                "required": true,
+                "description": ""
+              },
+              {
+                "name": "status",
+                "type": "ref:ResponseStatus",
+                "required": true,
+                "description": ""
+              }
+            ],
+            "item_fields": [],
+            "notes": [
+              "ref:RepositoryV2Enveloped"
+            ]
+          }
+        }
+      },
+      "proposed_table": "stg_dbt_retrieve_repository",
+      "proposed_key_inputs": [
+        "account_id",
+        "id"
+      ]
+    },
+    {
+      "endpoint_id": "destroy_repository",
+      "operation_id": "Destroy Repository",
+      "method": "DELETE",
+      "path": "/api/v2/accounts/{account_id}/repositories/{id}/",
+      "full_path_template": "/api/v2/accounts/{account_id}/repositories/{id}/",
+      "summary": "",
+      "description": "Deprecated. Consider using the v3 API instead.",
+      "tags": [
+        "Repositories"
+      ],
+      "parameters": [
+        {
+          "name": "account_id",
+          "in": "path",
+          "required": true,
+          "type": "integer",
+          "description": ""
+        },
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "type": "integer",
+          "description": ""
+        }
+      ],
+      "request_body": null,
+      "responses": {
+        "204": {
+          "description": "No response body",
+          "schema": null
+        }
+      },
+      "proposed_table": "stg_dbt_destroy_repository",
+      "proposed_key_inputs": [
+        "account_id",
+        "id"
+      ]
+    },
+    {
+      "endpoint_id": "list_runs",
+      "operation_id": "List Runs",
+      "method": "GET",
+      "path": "/api/v2/accounts/{account_id}/runs/",
+      "full_path_template": "/api/v2/accounts/{account_id}/runs/",
+      "summary": "",
+      "description": "List runs for an account.",
+      "tags": [
+        "Runs"
+      ],
+      "parameters": [
+        {
+          "name": "account_id",
+          "in": "path",
+          "required": true,
+          "type": "integer",
+          "description": ""
+        },
+        {
+          "name": "created_at__range",
+          "in": "query",
+          "required": false,
+          "type": "array",
+          "description": ""
+        },
+        {
+          "name": "dbt_version",
+          "in": "query",
+          "required": false,
+          "type": "string",
+          "description": ""
+        },
+        {
+          "name": "dbt_version__in",
+          "in": "query",
+          "required": false,
+          "type": "array",
+          "description": ""
+        },
+        {
+          "name": "deferring_run_id",
+          "in": "query",
+          "required": false,
+          "type": "integer",
+          "description": ""
+        },
+        {
+          "name": "environment_id",
+          "in": "query",
+          "required": false,
+          "type": "integer",
+          "description": ""
+        },
+        {
+          "name": "finished_at__range",
+          "in": "query",
+          "required": false,
+          "type": "array",
+          "description": ""
+        },
+        {
+          "name": "has_docs_generated",
+          "in": "query",
+          "required": false,
+          "type": "boolean",
+          "description": ""
+        },
+        {
+          "name": "has_sources_generated",
+          "in": "query",
+          "required": false,
+          "type": "boolean",
+          "description": ""
+        },
+        {
+          "name": "id__gt",
+          "in": "query",
+          "required": false,
+          "type": "integer",
+          "description": ""
+        },
+        {
+          "name": "include_related",
+          "in": "query",
+          "required": false,
+          "type": "string",
+          "description": "A list of related objects to include in the response. Valid values are `trigger`, `job`, `audit`, and `debug_logs`. If `debug_logs` is not provided, then the included debug logs will be truncated to the last 1,000 lines of the debug log output file."
+        },
+        {
+          "name": "job_definition_id",
+          "in": "query",
+          "required": false,
+          "type": "integer",
+          "description": "Filters the results to a specific Job"
+        },
+        {
+          "name": "limit",
+          "in": "query",
+          "required": false,
+          "type": "integer",
+          "description": "Pagination limit"
+        },
+        {
+          "name": "offset",
+          "in": "query",
+          "required": false,
+          "type": "integer",
+          "description": "Pagination offset"
+        },
+        {
+          "name": "order_by",
+          "in": "query",
+          "required": false,
+          "type": "string",
+          "description": "Field to order the results by. Use `-` to reverse the order. Options are `id`, `created_at`, and `finished_at`"
+        },
+        {
+          "name": "pk",
+          "in": "query",
+          "required": false,
+          "type": "integer",
+          "description": ""
+        },
+        {
+          "name": "pk__in",
+          "in": "query",
+          "required": false,
+          "type": "array",
+          "description": ""
+        },
+        {
+          "name": "project_id",
+          "in": "query",
+          "required": false,
+          "type": "integer",
+          "description": "Filters the results to a specific Project"
+        },
+        {
+          "name": "project_id__in",
+          "in": "query",
+          "required": false,
+          "type": "array",
+          "description": ""
+        },
+        {
+          "name": "state",
+          "in": "query",
+          "required": false,
+          "type": "string",
+          "description": ""
+        },
+        {
+          "name": "status",
+          "in": "query",
+          "required": false,
+          "type": "integer",
+          "description": "Filters the results to a specific run status"
+        },
+        {
+          "name": "status__in",
+          "in": "query",
+          "required": false,
+          "type": "array",
+          "description": "Filters the results to a specific set of run statuses. `1: Queued`, `2: Starting`, `3: Running`, `10: Success`, `20: Error`, `30: Cancelled`"
+        }
+      ],
+      "request_body": null,
+      "responses": {
+        "200": {
+          "description": "",
+          "schema": {
+            "type": "object",
+            "fields": [
+              {
+                "name": "data",
+                "type": "array<ref:RunResponse>",
+                "required": true,
+                "description": ""
+              },
+              {
+                "name": "extra",
+                "type": "ref:Extra",
+                "required": true,
+                "description": ""
+              },
+              {
+                "name": "status",
+                "type": "ref:ResponseStatus",
+                "required": true,
+                "description": ""
+              }
+            ],
+            "item_fields": [],
+            "notes": [
+              "ref:RunResponseListEnveloped"
+            ]
+          }
+        }
+      },
+      "proposed_table": "stg_dbt_list_runs",
+      "proposed_key_inputs": [
+        "account_id"
+      ]
+    },
+    {
+      "endpoint_id": "retrieve_run",
+      "operation_id": "Retrieve Run",
+      "method": "GET",
+      "path": "/api/v2/accounts/{account_id}/runs/{id}/",
+      "full_path_template": "/api/v2/accounts/{account_id}/runs/{id}/",
+      "summary": "",
+      "description": "Retrieve details of a run.",
+      "tags": [
+        "Runs"
+      ],
+      "parameters": [
+        {
+          "name": "account_id",
+          "in": "path",
+          "required": true,
+          "type": "integer",
+          "description": ""
+        },
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "type": "integer",
+          "description": ""
+        },
+        {
+          "name": "include_related",
+          "in": "query",
+          "required": false,
+          "type": "string",
+          "description": "A list of related objects to include in the response. Valid values are `trigger`, `job`, `environment`, `repository`, `run_steps`, `run_retries`, `used_repo_cache`, `repo_cache_restore`, `audit`, and `debug_logs`. If `debug_logs` is not provided, then the included debug logs will be truncated to the last 1,000 lines of the debug log output file."
+        }
+      ],
+      "request_body": null,
+      "responses": {
+        "200": {
+          "description": "",
+          "schema": {
+            "type": "object",
+            "fields": [
+              {
+                "name": "data",
+                "type": "ref:RunResponse",
+                "required": true,
+                "description": ""
+              },
+              {
+                "name": "status",
+                "type": "ref:ResponseStatus",
+                "required": true,
+                "description": ""
+              }
+            ],
+            "item_fields": [],
+            "notes": [
+              "ref:RunResponseEnveloped"
+            ]
+          }
+        }
+      },
+      "proposed_table": "stg_dbt_retrieve_run",
+      "proposed_key_inputs": [
+        "account_id",
+        "id"
+      ]
+    },
+    {
+      "endpoint_id": "list_run_artifacts",
+      "operation_id": "List Run Artifacts",
+      "method": "GET",
+      "path": "/api/v2/accounts/{account_id}/runs/{run_id}/artifacts/",
+      "full_path_template": "/api/v2/accounts/{account_id}/runs/{run_id}/artifacts/",
+      "summary": "",
+      "description": "Retrieve the list of artifacts generated for a run.",
+      "tags": [
+        "Runs"
+      ],
+      "parameters": [
+        {
+          "name": "account_id",
+          "in": "path",
+          "required": true,
+          "type": "integer",
+          "description": ""
+        },
+        {
+          "name": "include_related",
+          "in": "query",
+          "required": false,
+          "type": "string",
+          "description": "Comma-separated list of related objects to include in the response."
+        },
+        {
+          "name": "run_id",
+          "in": "path",
+          "required": true,
+          "type": "integer",
+          "description": ""
+        }
+      ],
+      "request_body": null,
+      "responses": {
+        "200": {
+          "description": "",
+          "schema": {
+            "type": "object",
+            "fields": [
+              {
+                "name": "data",
+                "type": "array<string>",
+                "required": true,
+                "description": "List of artifact paths. Can be used to fetch individual artifacts via the Retrieve Run Artifact endpoint."
+              },
+              {
+                "name": "status",
+                "type": "ref:ResponseStatus",
+                "required": true,
+                "description": ""
+              }
+            ],
+            "item_fields": [],
+            "notes": [
+              "ref:ListOfStringsEnveloped"
+            ]
+          }
+        }
+      },
+      "proposed_table": "stg_dbt_list_run_artifacts",
+      "proposed_key_inputs": [
+        "account_id",
+        "run_id"
+      ]
+    },
+    {
+      "endpoint_id": "retrieve_run_artifact",
+      "operation_id": "Retrieve Run Artifact",
+      "method": "GET",
+      "path": "/api/v2/accounts/{account_id}/runs/{run_id}/artifacts/{remainder}",
+      "full_path_template": "/api/v2/accounts/{account_id}/runs/{run_id}/artifacts/{remainder}",
+      "summary": "",
+      "description": "Use this endpoint to fetch artifacts from a completed run. Once a run has been completed, you can use this endpoint to download the `manifest.json`, `run_results.json`, or `catalog.json` files from dbt Cloud. These artifacts contain information about the models in your dbt project, timing information around their execution, and a status message indicating the result of the model build. By default, this endpoint returns artifacts from the last step in the run. To list artifacts from other steps in the run, use the step query parameter described below.",
+      "tags": [
+        "Runs"
+      ],
+      "parameters": [
+        {
+          "name": "account_id",
+          "in": "path",
+          "required": true,
+          "type": "integer",
+          "description": ""
+        },
+        {
+          "name": "include_related",
+          "in": "query",
+          "required": false,
+          "type": "string",
+          "description": "Comma-separated list of related objects to include in the response."
+        },
+        {
+          "name": "remainder",
+          "in": "path",
+          "required": true,
+          "type": "string",
+          "description": ""
+        },
+        {
+          "name": "run_id",
+          "in": "path",
+          "required": true,
+          "type": "integer",
+          "description": ""
+        },
+        {
+          "name": "step",
+          "in": "query",
+          "required": false,
+          "type": "integer",
+          "description": "The index of the Step in the Run to query for artifacts. The first step in the run has the index `1`. If the `step` parameter is omitted, then this endpoint will return the artifacts compiled for the last step in the run."
+        }
+      ],
+      "request_body": null,
+      "responses": {
+        "200": {
+          "description": "A run artifact file",
+          "schema": null
+        }
+      },
+      "proposed_table": "stg_dbt_retrieve_run_artifact",
+      "proposed_key_inputs": [
+        "account_id",
+        "remainder",
+        "run_id"
+      ]
+    },
+    {
+      "endpoint_id": "cancel_run",
+      "operation_id": "Cancel Run",
+      "method": "POST",
+      "path": "/api/v2/accounts/{account_id}/runs/{run_id}/cancel/",
+      "full_path_template": "/api/v2/accounts/{account_id}/runs/{run_id}/cancel/",
+      "summary": "",
+      "description": "Cancel a run.",
+      "tags": [
+        "Runs"
+      ],
+      "parameters": [
+        {
+          "name": "account_id",
+          "in": "path",
+          "required": true,
+          "type": "integer",
+          "description": ""
+        },
+        {
+          "name": "run_id",
+          "in": "path",
+          "required": true,
+          "type": "integer",
+          "description": ""
+        }
+      ],
+      "request_body": null,
+      "responses": {
+        "200": {
+          "description": "",
+          "schema": {
+            "type": "object",
+            "fields": [
+              {
+                "name": "data",
+                "type": "ref:RunResponse",
+                "required": true,
+                "description": ""
+              },
+              {
+                "name": "status",
+                "type": "ref:ResponseStatus",
+                "required": true,
+                "description": ""
+              }
+            ],
+            "item_fields": [],
+            "notes": [
+              "ref:RunResponseEnveloped"
+            ]
+          }
+        }
+      },
+      "proposed_table": "stg_dbt_cancel_run",
+      "proposed_key_inputs": [
+        "account_id",
+        "run_id"
+      ]
+    },
+    {
+      "endpoint_id": "retrieve_run_failure_details",
+      "operation_id": "Retrieve Run Failure Details",
+      "method": "GET",
+      "path": "/api/v2/accounts/{account_id}/runs/{run_id}/retry/",
+      "full_path_template": "/api/v2/accounts/{account_id}/runs/{run_id}/retry/",
+      "summary": "",
+      "description": "Use this endpoint to get details about a retryable run that has failed.",
+      "tags": [
+        "Runs"
+      ],
+      "parameters": [
+        {
+          "name": "account_id",
+          "in": "path",
+          "required": true,
+          "type": "integer",
+          "description": ""
+        },
+        {
+          "name": "include_related",
+          "in": "query",
+          "required": false,
+          "type": "string",
+          "description": "Comma-separated list of related objects to include in the response."
+        },
+        {
+          "name": "run_id",
+          "in": "path",
+          "required": true,
+          "type": "integer",
+          "description": ""
+        }
+      ],
+      "request_body": null,
+      "responses": {
+        "200": {
+          "description": "",
+          "schema": {
+            "type": "object",
+            "fields": [
+              {
+                "name": "data",
+                "type": "ref:RunFailureDetailsResponse",
+                "required": true,
+                "description": ""
+              },
+              {
+                "name": "status",
+                "type": "ref:ResponseStatus",
+                "required": true,
+                "description": ""
+              }
+            ],
+            "item_fields": [],
+            "notes": [
+              "ref:RunFailureDetailsEnveloped"
+            ]
+          }
+        }
+      },
+      "proposed_table": "stg_dbt_retrieve_run_failure_details",
+      "proposed_key_inputs": [
+        "account_id",
+        "run_id"
+      ]
+    },
+    {
+      "endpoint_id": "retry_run",
+      "operation_id": "Retry Run",
+      "method": "POST",
+      "path": "/api/v2/accounts/{account_id}/runs/{run_id}/retry/",
+      "full_path_template": "/api/v2/accounts/{account_id}/runs/{run_id}/retry/",
+      "summary": "",
+      "description": "Use this endpoint to retry a failed run. When this endpoint returns a successful response, a new run will be enqueued. Users can poll the Get Run endpoint until it completes. After the run has completed, users can use the Get Run Artifact endpoint to download artifacts generated by the run.",
+      "tags": [
+        "Runs"
+      ],
+      "parameters": [
+        {
+          "name": "account_id",
+          "in": "path",
+          "required": true,
+          "type": "integer",
+          "description": ""
+        },
+        {
+          "name": "run_id",
+          "in": "path",
+          "required": true,
+          "type": "integer",
+          "description": ""
+        }
+      ],
+      "request_body": null,
+      "responses": {
+        "200": {
+          "description": "",
+          "schema": {
+            "type": "object",
+            "fields": [
+              {
+                "name": "data",
+                "type": "ref:RunResponse",
+                "required": true,
+                "description": ""
+              },
+              {
+                "name": "status",
+                "type": "ref:ResponseStatus",
+                "required": true,
+                "description": ""
+              }
+            ],
+            "item_fields": [],
+            "notes": [
+              "ref:RunResponseEnveloped"
+            ]
+          }
+        }
+      },
+      "proposed_table": "stg_dbt_retry_run",
+      "proposed_key_inputs": [
+        "account_id",
+        "run_id"
+      ]
+    },
+    {
+      "endpoint_id": "retrieve_run_step",
+      "operation_id": "Retrieve Run Step",
+      "method": "GET",
+      "path": "/api/v2/accounts/{account_id}/steps/{id}/",
+      "full_path_template": "/api/v2/accounts/{account_id}/steps/{id}/",
+      "summary": "",
+      "description": "Retrieve the details of a specific step of a run.",
+      "tags": [
+        "Runs"
+      ],
+      "parameters": [
+        {
+          "name": "account_id",
+          "in": "path",
+          "required": true,
+          "type": "integer",
+          "description": ""
+        },
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "type": "integer",
+          "description": ""
+        },
+        {
+          "name": "include_related",
+          "in": "query",
+          "required": false,
+          "type": "string",
+          "description": "A list of related objects to include in the response. Valid values are `trigger`, `job`, and `debug_logs`. If `debug_logs` is not provided, then the included debug logs will be truncated to the last 1,000 lines of the debug log output file."
+        }
+      ],
+      "request_body": null,
+      "responses": {
+        "200": {
+          "description": "",
+          "schema": {
+            "type": "object",
+            "fields": [
+              {
+                "name": "data",
+                "type": "ref:RunStepResponse",
+                "required": true,
+                "description": ""
+              },
+              {
+                "name": "status",
+                "type": "ref:ResponseStatus",
+                "required": true,
+                "description": ""
+              }
+            ],
+            "item_fields": [],
+            "notes": [
+              "ref:RunStepEnveloped"
+            ]
+          }
+        }
+      },
+      "proposed_table": "stg_dbt_retrieve_run_step",
+      "proposed_key_inputs": [
+        "account_id",
+        "id"
+      ]
+    },
+    {
+      "endpoint_id": "list_users",
+      "operation_id": "List Users",
+      "method": "GET",
+      "path": "/api/v2/accounts/{account_id}/users/",
+      "full_path_template": "/api/v2/accounts/{account_id}/users/",
+      "summary": "",
+      "description": "List the Users associated with the specified Account.",
+      "tags": [
+        "Users"
+      ],
+      "parameters": [
+        {
+          "name": "account_id",
+          "in": "path",
+          "required": true,
+          "type": "integer",
+          "description": ""
+        },
+        {
+          "name": "include_related",
+          "in": "query",
+          "required": false,
+          "type": "string",
+          "description": "Comma-separated list of related objects to include in the response."
+        }
+      ],
+      "request_body": null,
+      "responses": {
+        "200": {
+          "description": "",
+          "schema": {
+            "type": "object",
+            "fields": [
+              {
+                "name": "data",
+                "type": "array<ref:UserResponse>",
+                "required": true,
+                "description": ""
+              },
+              {
+                "name": "extra",
+                "type": "ref:Extra",
+                "required": true,
+                "description": ""
+              },
+              {
+                "name": "status",
+                "type": "ref:ResponseStatus",
+                "required": true,
+                "description": ""
+              }
+            ],
+            "item_fields": [],
+            "notes": [
+              "ref:UserListEnveloped"
+            ]
+          }
+        }
+      },
+      "proposed_table": "stg_dbt_list_users",
+      "proposed_key_inputs": [
+        "account_id"
+      ]
+    },
+    {
+      "endpoint_id": "unsubscribe_from_notifications",
+      "operation_id": "Unsubscribe from Notifications",
+      "method": "POST",
+      "path": "/api/v2/notifications/unsubscribe/",
+      "full_path_template": "/api/v2/notifications/unsubscribe/",
+      "summary": "",
+      "description": "Clear out all email notification configurations for the user making the request.",
+      "tags": [
+        "Notifications"
+      ],
+      "parameters": [],
+      "request_body": null,
+      "responses": {
+        "200": {
+          "description": "No response body",
+          "schema": null
+        }
+      },
+      "proposed_table": "stg_dbt_unsubscribe_from_notifications",
+      "proposed_key_inputs": []
+    },
+    {
+      "endpoint_id": "retrieve_user",
+      "operation_id": "Retrieve User",
+      "method": "GET",
+      "path": "/api/v2/users/{id}/",
+      "full_path_template": "/api/v2/users/{id}/",
+      "summary": "",
+      "description": "",
+      "tags": [
+        "Users"
+      ],
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "type": "integer",
+          "description": ""
+        },
+        {
+          "name": "include_related",
+          "in": "query",
+          "required": false,
+          "type": "string",
+          "description": "Comma-separated list of related objects to include in the response."
+        }
+      ],
+      "request_body": null,
+      "responses": {
+        "200": {
+          "description": "",
+          "schema": {
+            "type": "object",
+            "fields": [
+              {
+                "name": "data",
+                "type": "ref:UserResponse",
+                "required": true,
+                "description": ""
+              },
+              {
+                "name": "status",
+                "type": "ref:ResponseStatus",
+                "required": true,
+                "description": ""
+              }
+            ],
+            "item_fields": [],
+            "notes": [
+              "ref:UserEnveloped"
+            ]
+          }
+        }
+      },
+      "proposed_table": "stg_dbt_retrieve_user",
+      "proposed_key_inputs": [
+        "id"
+      ]
+    },
+    {
+      "endpoint_id": "update_user",
+      "operation_id": "Update User",
+      "method": "POST",
+      "path": "/api/v2/users/{id}/",
+      "full_path_template": "/api/v2/users/{id}/",
+      "summary": "",
+      "description": "",
+      "tags": [
+        "Users"
+      ],
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "type": "integer",
+          "description": ""
+        }
+      ],
+      "request_body": {
+        "content_type": "application/json",
+        "schema_type": "object",
+        "fields": [
+          {
+            "name": "first_name",
+            "type": "string",
+            "required": true,
+            "description": ""
+          },
+          {
+            "name": "last_name",
+            "type": "string",
+            "required": true,
+            "description": ""
+          }
+        ],
+        "notes": [
+          "ref:UserRequest"
+        ]
+      },
+      "responses": {
+        "200": {
+          "description": "",
+          "schema": {
+            "type": "object",
+            "fields": [
+              {
+                "name": "data",
+                "type": "ref:UserResponse",
+                "required": true,
+                "description": ""
+              },
+              {
+                "name": "status",
+                "type": "ref:ResponseStatus",
+                "required": true,
+                "description": ""
+              }
+            ],
+            "item_fields": [],
+            "notes": [
+              "ref:UserEnveloped"
+            ]
+          }
+        }
+      },
+      "proposed_table": "stg_dbt_update_user",
+      "proposed_key_inputs": [
+        "id"
+      ]
+    }
+  ],
+  "table_blueprints": [
+    {
+      "table": "stg_dbt_list_accounts",
+      "source_endpoint": "GET /api/v2/accounts/",
+      "columns": [
+        {
+          "name": "data",
+          "type": "array<ref:AccountResponse>",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "extra",
+          "type": "ref:Extra",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "status",
+          "type": "ref:ResponseStatus",
+          "required": true,
+          "description": ""
+        }
+      ],
+      "raw_payload_column": "_raw_payload",
+      "notes": [
+        "ref:AccountListEnveloped"
+      ]
+    },
+    {
+      "table": "stg_dbt_retrieve_account",
+      "source_endpoint": "GET /api/v2/accounts/{account_id}/",
+      "columns": [
+        {
+          "name": "data",
+          "type": "ref:AccountResponse",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "status",
+          "type": "ref:ResponseStatus",
+          "required": true,
+          "description": ""
+        }
+      ],
+      "raw_payload_column": "_raw_payload",
+      "notes": [
+        "ref:AccountEnveloped"
+      ]
+    },
+    {
+      "table": "stg_dbt_update_account",
+      "source_endpoint": "POST /api/v2/accounts/{account_id}/",
+      "columns": [
+        {
+          "name": "data",
+          "type": "ref:AccountResponse",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "status",
+          "type": "ref:ResponseStatus",
+          "required": true,
+          "description": ""
+        }
+      ],
+      "raw_payload_column": "_raw_payload",
+      "notes": [
+        "ref:AccountEnveloped"
+      ]
+    },
+    {
+      "table": "stg_dbt_partial_update_account",
+      "source_endpoint": "PATCH /api/v2/accounts/{account_id}/",
+      "columns": [
+        {
+          "name": "data",
+          "type": "ref:AccountResponse",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "status",
+          "type": "ref:ResponseStatus",
+          "required": true,
+          "description": ""
+        }
+      ],
+      "raw_payload_column": "_raw_payload",
+      "notes": [
+        "ref:AccountEnveloped"
+      ]
+    },
+    {
+      "table": "stg_dbt_list_ssh_tunnels",
+      "source_endpoint": "GET /api/v2/accounts/{account_id}/encryptions/",
+      "columns": [
+        {
+          "name": "data",
+          "type": "array<ref:ConnectionEncryptionResponse>",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "extra",
+          "type": "ref:Extra",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "status",
+          "type": "ref:ResponseStatus",
+          "required": true,
+          "description": ""
+        }
+      ],
+      "raw_payload_column": "_raw_payload",
+      "notes": [
+        "ref:ConnectionEncryptionListEnveloped"
+      ]
+    },
+    {
+      "table": "stg_dbt_create_ssh_tunnel",
+      "source_endpoint": "POST /api/v2/accounts/{account_id}/encryptions/",
+      "columns": [
+        {
+          "name": "data",
+          "type": "ref:ConnectionEncryptionResponse",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "status",
+          "type": "ref:ResponseStatus",
+          "required": true,
+          "description": ""
+        }
+      ],
+      "raw_payload_column": "_raw_payload",
+      "notes": [
+        "ref:ConnectionEncryptionEnveloped"
+      ]
+    },
+    {
+      "table": "stg_dbt_retrieve_ssh_tunnel",
+      "source_endpoint": "GET /api/v2/accounts/{account_id}/encryptions/{id}/",
+      "columns": [
+        {
+          "name": "data",
+          "type": "ref:ConnectionEncryptionResponse",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "status",
+          "type": "ref:ResponseStatus",
+          "required": true,
+          "description": ""
+        }
+      ],
+      "raw_payload_column": "_raw_payload",
+      "notes": [
+        "ref:ConnectionEncryptionEnveloped"
+      ]
+    },
+    {
+      "table": "stg_dbt_update_ssh_tunnel",
+      "source_endpoint": "POST /api/v2/accounts/{account_id}/encryptions/{id}/",
+      "columns": [
+        {
+          "name": "data",
+          "type": "ref:ConnectionEncryptionResponse",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "status",
+          "type": "ref:ResponseStatus",
+          "required": true,
+          "description": ""
+        }
+      ],
+      "raw_payload_column": "_raw_payload",
+      "notes": [
+        "ref:ConnectionEncryptionEnveloped"
+      ]
+    },
+    {
+      "table": "stg_dbt_list_environments",
+      "source_endpoint": "GET /api/v2/accounts/{account_id}/environments/",
+      "columns": [
+        {
+          "name": "data",
+          "type": "array<ref:EnvironmentV2Response>",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "extra",
+          "type": "ref:Extra",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "status",
+          "type": "ref:ResponseStatus",
+          "required": true,
+          "description": ""
+        }
+      ],
+      "raw_payload_column": "_raw_payload",
+      "notes": [
+        "ref:EnvironmentV2ListEnveloped"
+      ]
+    },
+    {
+      "table": "stg_dbt_create_environment",
+      "source_endpoint": "POST /api/v2/accounts/{account_id}/environments/",
+      "columns": [
+        {
+          "name": "data",
+          "type": "ref:EnvironmentV2Response",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "status",
+          "type": "ref:ResponseStatus",
+          "required": true,
+          "description": ""
+        }
+      ],
+      "raw_payload_column": "_raw_payload",
+      "notes": [
+        "ref:EnvironmentV2Enveloped"
+      ]
+    },
+    {
+      "table": "stg_dbt_retrieve_environment",
+      "source_endpoint": "GET /api/v2/accounts/{account_id}/environments/{id}/",
+      "columns": [
+        {
+          "name": "data",
+          "type": "ref:EnvironmentV2Response",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "status",
+          "type": "ref:ResponseStatus",
+          "required": true,
+          "description": ""
+        }
+      ],
+      "raw_payload_column": "_raw_payload",
+      "notes": [
+        "ref:EnvironmentV2Enveloped"
+      ]
+    },
+    {
+      "table": "stg_dbt_update_environment",
+      "source_endpoint": "POST /api/v2/accounts/{account_id}/environments/{id}/",
+      "columns": [
+        {
+          "name": "data",
+          "type": "ref:EnvironmentV2Response",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "status",
+          "type": "ref:ResponseStatus",
+          "required": true,
+          "description": ""
+        }
+      ],
+      "raw_payload_column": "_raw_payload",
+      "notes": [
+        "ref:EnvironmentV2Enveloped"
+      ]
+    },
+    {
+      "table": "stg_dbt_list_invites",
+      "source_endpoint": "GET /api/v2/accounts/{account_id}/invites/",
+      "columns": [
+        {
+          "name": "data",
+          "type": "array<ref:InviteResponse>",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "extra",
+          "type": "ref:Extra",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "status",
+          "type": "ref:ResponseStatus",
+          "required": true,
+          "description": ""
+        }
+      ],
+      "raw_payload_column": "_raw_payload",
+      "notes": [
+        "ref:InviteListEnveloped"
+      ]
+    },
+    {
+      "table": "stg_dbt_retrieve_invite",
+      "source_endpoint": "GET /api/v2/accounts/{account_id}/invites/{id}/",
+      "columns": [
+        {
+          "name": "data",
+          "type": "ref:InviteResponse",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "status",
+          "type": "ref:ResponseStatus",
+          "required": true,
+          "description": ""
+        }
+      ],
+      "raw_payload_column": "_raw_payload",
+      "notes": [
+        "ref:InviteEnveloped"
+      ]
+    },
+    {
+      "table": "stg_dbt_list_jobs",
+      "source_endpoint": "GET /api/v2/accounts/{account_id}/jobs/",
+      "columns": [
+        {
+          "name": "data",
+          "type": "array<ref:HumanReadableJobDefinitionResponse>",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "extra",
+          "type": "ref:Extra",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "status",
+          "type": "ref:ResponseStatus",
+          "required": true,
+          "description": ""
+        }
+      ],
+      "raw_payload_column": "_raw_payload",
+      "notes": [
+        "ref:HumanReadableJobDefinitionListEnveloped"
+      ]
+    },
+    {
+      "table": "stg_dbt_create_job",
+      "source_endpoint": "POST /api/v2/accounts/{account_id}/jobs/",
+      "columns": [
+        {
+          "name": "data",
+          "type": "ref:HumanReadableJobDefinitionResponse",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "status",
+          "type": "ref:ResponseStatus",
+          "required": true,
+          "description": ""
+        }
+      ],
+      "raw_payload_column": "_raw_payload",
+      "notes": [
+        "ref:HumanReadableJobDefinitionEnveloped"
+      ]
+    },
+    {
+      "table": "stg_dbt_retrieve_job",
+      "source_endpoint": "GET /api/v2/accounts/{account_id}/jobs/{id}/",
+      "columns": [
+        {
+          "name": "data",
+          "type": "ref:HumanReadableJobDefinitionResponse",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "status",
+          "type": "ref:ResponseStatus",
+          "required": true,
+          "description": ""
+        }
+      ],
+      "raw_payload_column": "_raw_payload",
+      "notes": [
+        "ref:HumanReadableJobDefinitionEnveloped"
+      ]
+    },
+    {
+      "table": "stg_dbt_update_job",
+      "source_endpoint": "POST /api/v2/accounts/{account_id}/jobs/{id}/",
+      "columns": [
+        {
+          "name": "data",
+          "type": "ref:HumanReadableJobDefinitionResponse",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "status",
+          "type": "ref:ResponseStatus",
+          "required": true,
+          "description": ""
+        }
+      ],
+      "raw_payload_column": "_raw_payload",
+      "notes": [
+        "ref:HumanReadableJobDefinitionEnveloped"
+      ]
+    },
+    {
+      "table": "stg_dbt_retry_failed_job",
+      "source_endpoint": "POST /api/v2/accounts/{account_id}/jobs/{job_id}/rerun/",
+      "columns": [
+        {
+          "name": "data",
+          "type": "ref:RunResponse",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "status",
+          "type": "ref:ResponseStatus",
+          "required": true,
+          "description": ""
+        }
+      ],
+      "raw_payload_column": "_raw_payload",
+      "notes": [
+        "ref:RunResponseEnveloped"
+      ]
+    },
+    {
+      "table": "stg_dbt_trigger_job_run",
+      "source_endpoint": "POST /api/v2/accounts/{account_id}/jobs/{job_id}/run/",
+      "columns": [
+        {
+          "name": "data",
+          "type": "ref:RunResponse",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "status",
+          "type": "ref:ResponseStatus",
+          "required": true,
+          "description": ""
+        }
+      ],
+      "raw_payload_column": "_raw_payload",
+      "notes": [
+        "ref:RunResponseEnveloped"
+      ]
+    },
+    {
+      "table": "stg_dbt_list_account_license_allocations",
+      "source_endpoint": "GET /api/v2/accounts/{account_id}/licenses/",
+      "columns": [
+        {
+          "name": "data",
+          "type": "array<ref:LicenseAllocationResponse>",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "extra",
+          "type": "ref:Extra",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "status",
+          "type": "ref:ResponseStatus",
+          "required": true,
+          "description": ""
+        }
+      ],
+      "raw_payload_column": "_raw_payload",
+      "notes": [
+        "ref:LicenseAllocationListEnveloped"
+      ]
+    },
+    {
+      "table": "stg_dbt_list_notifications",
+      "source_endpoint": "GET /api/v2/accounts/{account_id}/notifications/",
+      "columns": [
+        {
+          "name": "data",
+          "type": "array<ref:JobNotificationSettingsResponse>",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "extra",
+          "type": "ref:Extra",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "status",
+          "type": "ref:ResponseStatus",
+          "required": true,
+          "description": ""
+        }
+      ],
+      "raw_payload_column": "_raw_payload",
+      "notes": [
+        "ref:JobNotificationSettingsListEnveloped"
+      ]
+    },
+    {
+      "table": "stg_dbt_create_notification",
+      "source_endpoint": "POST /api/v2/accounts/{account_id}/notifications/",
+      "columns": [
+        {
+          "name": "data",
+          "type": "ref:JobNotificationSettingsResponse",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "status",
+          "type": "ref:ResponseStatus",
+          "required": true,
+          "description": ""
+        }
+      ],
+      "raw_payload_column": "_raw_payload",
+      "notes": [
+        "ref:JobNotificationSettingsEnveloped"
+      ]
+    },
+    {
+      "table": "stg_dbt_retrieve_notification",
+      "source_endpoint": "GET /api/v2/accounts/{account_id}/notifications/{id}/",
+      "columns": [
+        {
+          "name": "data",
+          "type": "ref:JobNotificationSettingsResponse",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "status",
+          "type": "ref:ResponseStatus",
+          "required": true,
+          "description": ""
+        }
+      ],
+      "raw_payload_column": "_raw_payload",
+      "notes": [
+        "ref:JobNotificationSettingsEnveloped"
+      ]
+    },
+    {
+      "table": "stg_dbt_update_notification",
+      "source_endpoint": "POST /api/v2/accounts/{account_id}/notifications/{id}/",
+      "columns": [
+        {
+          "name": "data",
+          "type": "ref:JobNotificationSettingsResponse",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "status",
+          "type": "ref:ResponseStatus",
+          "required": true,
+          "description": ""
+        }
+      ],
+      "raw_payload_column": "_raw_payload",
+      "notes": [
+        "ref:JobNotificationSettingsEnveloped"
+      ]
+    },
+    {
+      "table": "stg_dbt_update_license_permissions",
+      "source_endpoint": "POST /api/v2/accounts/{account_id}/permissions/{id}/",
+      "columns": [
+        {
+          "name": "data",
+          "type": "ref:UserLicenseResponse",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "status",
+          "type": "ref:ResponseStatus",
+          "required": true,
+          "description": ""
+        }
+      ],
+      "raw_payload_column": "_raw_payload",
+      "notes": [
+        "ref:UserLicenseEnveloped"
+      ]
+    },
+    {
+      "table": "stg_dbt_list_projects",
+      "source_endpoint": "GET /api/v2/accounts/{account_id}/projects/",
+      "columns": [
+        {
+          "name": "data",
+          "type": "array<ref:ProjectResponse>",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "extra",
+          "type": "ref:Extra",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "status",
+          "type": "ref:ResponseStatus",
+          "required": true,
+          "description": ""
+        }
+      ],
+      "raw_payload_column": "_raw_payload",
+      "notes": [
+        "ref:ProjectListEnveloped"
+      ]
+    },
+    {
+      "table": "stg_dbt_create_project",
+      "source_endpoint": "POST /api/v2/accounts/{account_id}/projects/",
+      "columns": [
+        {
+          "name": "data",
+          "type": "ref:ProjectResponse",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "status",
+          "type": "ref:ResponseStatus",
+          "required": true,
+          "description": ""
+        }
+      ],
+      "raw_payload_column": "_raw_payload",
+      "notes": [
+        "ref:ProjectEnveloped"
+      ]
+    },
+    {
+      "table": "stg_dbt_retrieve_project",
+      "source_endpoint": "GET /api/v2/accounts/{account_id}/projects/{id}/",
+      "columns": [
+        {
+          "name": "data",
+          "type": "ref:ProjectResponse",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "status",
+          "type": "ref:ResponseStatus",
+          "required": true,
+          "description": ""
+        }
+      ],
+      "raw_payload_column": "_raw_payload",
+      "notes": [
+        "ref:ProjectEnveloped"
+      ]
+    },
+    {
+      "table": "stg_dbt_update_project",
+      "source_endpoint": "POST /api/v2/accounts/{account_id}/projects/{id}/",
+      "columns": [
+        {
+          "name": "data",
+          "type": "ref:ProjectResponse",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "status",
+          "type": "ref:ResponseStatus",
+          "required": true,
+          "description": ""
+        }
+      ],
+      "raw_payload_column": "_raw_payload",
+      "notes": [
+        "ref:ProjectEnveloped"
+      ]
+    },
+    {
+      "table": "stg_dbt_list_repositories",
+      "source_endpoint": "GET /api/v2/accounts/{account_id}/repositories/",
+      "columns": [
+        {
+          "name": "data",
+          "type": "array<ref:RepositoryV2Response>",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "extra",
+          "type": "ref:Extra",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "status",
+          "type": "ref:ResponseStatus",
+          "required": true,
+          "description": ""
+        }
+      ],
+      "raw_payload_column": "_raw_payload",
+      "notes": [
+        "ref:RepositoryV2ListEnveloped"
+      ]
+    },
+    {
+      "table": "stg_dbt_create_repository",
+      "source_endpoint": "POST /api/v2/accounts/{account_id}/repositories/",
+      "columns": [
+        {
+          "name": "data",
+          "type": "ref:RepositoryV2Response",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "status",
+          "type": "ref:ResponseStatus",
+          "required": true,
+          "description": ""
+        }
+      ],
+      "raw_payload_column": "_raw_payload",
+      "notes": [
+        "ref:RepositoryV2Enveloped"
+      ]
+    },
+    {
+      "table": "stg_dbt_retrieve_repository",
+      "source_endpoint": "GET /api/v2/accounts/{account_id}/repositories/{id}/",
+      "columns": [
+        {
+          "name": "data",
+          "type": "ref:RepositoryV2Response",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "status",
+          "type": "ref:ResponseStatus",
+          "required": true,
+          "description": ""
+        }
+      ],
+      "raw_payload_column": "_raw_payload",
+      "notes": [
+        "ref:RepositoryV2Enveloped"
+      ]
+    },
+    {
+      "table": "stg_dbt_list_runs",
+      "source_endpoint": "GET /api/v2/accounts/{account_id}/runs/",
+      "columns": [
+        {
+          "name": "data",
+          "type": "array<ref:RunResponse>",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "extra",
+          "type": "ref:Extra",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "status",
+          "type": "ref:ResponseStatus",
+          "required": true,
+          "description": ""
+        }
+      ],
+      "raw_payload_column": "_raw_payload",
+      "notes": [
+        "ref:RunResponseListEnveloped"
+      ]
+    },
+    {
+      "table": "stg_dbt_retrieve_run",
+      "source_endpoint": "GET /api/v2/accounts/{account_id}/runs/{id}/",
+      "columns": [
+        {
+          "name": "data",
+          "type": "ref:RunResponse",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "status",
+          "type": "ref:ResponseStatus",
+          "required": true,
+          "description": ""
+        }
+      ],
+      "raw_payload_column": "_raw_payload",
+      "notes": [
+        "ref:RunResponseEnveloped"
+      ]
+    },
+    {
+      "table": "stg_dbt_list_run_artifacts",
+      "source_endpoint": "GET /api/v2/accounts/{account_id}/runs/{run_id}/artifacts/",
+      "columns": [
+        {
+          "name": "data",
+          "type": "array<string>",
+          "required": true,
+          "description": "List of artifact paths. Can be used to fetch individual artifacts via the Retrieve Run Artifact endpoint."
+        },
+        {
+          "name": "status",
+          "type": "ref:ResponseStatus",
+          "required": true,
+          "description": ""
+        }
+      ],
+      "raw_payload_column": "_raw_payload",
+      "notes": [
+        "ref:ListOfStringsEnveloped"
+      ]
+    },
+    {
+      "table": "stg_dbt_cancel_run",
+      "source_endpoint": "POST /api/v2/accounts/{account_id}/runs/{run_id}/cancel/",
+      "columns": [
+        {
+          "name": "data",
+          "type": "ref:RunResponse",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "status",
+          "type": "ref:ResponseStatus",
+          "required": true,
+          "description": ""
+        }
+      ],
+      "raw_payload_column": "_raw_payload",
+      "notes": [
+        "ref:RunResponseEnveloped"
+      ]
+    },
+    {
+      "table": "stg_dbt_retrieve_run_failure_details",
+      "source_endpoint": "GET /api/v2/accounts/{account_id}/runs/{run_id}/retry/",
+      "columns": [
+        {
+          "name": "data",
+          "type": "ref:RunFailureDetailsResponse",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "status",
+          "type": "ref:ResponseStatus",
+          "required": true,
+          "description": ""
+        }
+      ],
+      "raw_payload_column": "_raw_payload",
+      "notes": [
+        "ref:RunFailureDetailsEnveloped"
+      ]
+    },
+    {
+      "table": "stg_dbt_retry_run",
+      "source_endpoint": "POST /api/v2/accounts/{account_id}/runs/{run_id}/retry/",
+      "columns": [
+        {
+          "name": "data",
+          "type": "ref:RunResponse",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "status",
+          "type": "ref:ResponseStatus",
+          "required": true,
+          "description": ""
+        }
+      ],
+      "raw_payload_column": "_raw_payload",
+      "notes": [
+        "ref:RunResponseEnveloped"
+      ]
+    },
+    {
+      "table": "stg_dbt_retrieve_run_step",
+      "source_endpoint": "GET /api/v2/accounts/{account_id}/steps/{id}/",
+      "columns": [
+        {
+          "name": "data",
+          "type": "ref:RunStepResponse",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "status",
+          "type": "ref:ResponseStatus",
+          "required": true,
+          "description": ""
+        }
+      ],
+      "raw_payload_column": "_raw_payload",
+      "notes": [
+        "ref:RunStepEnveloped"
+      ]
+    },
+    {
+      "table": "stg_dbt_list_users",
+      "source_endpoint": "GET /api/v2/accounts/{account_id}/users/",
+      "columns": [
+        {
+          "name": "data",
+          "type": "array<ref:UserResponse>",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "extra",
+          "type": "ref:Extra",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "status",
+          "type": "ref:ResponseStatus",
+          "required": true,
+          "description": ""
+        }
+      ],
+      "raw_payload_column": "_raw_payload",
+      "notes": [
+        "ref:UserListEnveloped"
+      ]
+    },
+    {
+      "table": "stg_dbt_retrieve_user",
+      "source_endpoint": "GET /api/v2/users/{id}/",
+      "columns": [
+        {
+          "name": "data",
+          "type": "ref:UserResponse",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "status",
+          "type": "ref:ResponseStatus",
+          "required": true,
+          "description": ""
+        }
+      ],
+      "raw_payload_column": "_raw_payload",
+      "notes": [
+        "ref:UserEnveloped"
+      ]
+    },
+    {
+      "table": "stg_dbt_update_user",
+      "source_endpoint": "POST /api/v2/users/{id}/",
+      "columns": [
+        {
+          "name": "data",
+          "type": "ref:UserResponse",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "status",
+          "type": "ref:ResponseStatus",
+          "required": true,
+          "description": ""
+        }
+      ],
+      "raw_payload_column": "_raw_payload",
+      "notes": [
+        "ref:UserEnveloped"
+      ]
+    }
+  ]
+}

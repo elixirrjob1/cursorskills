@@ -61,9 +61,38 @@ Before starting database analysis:
 
 This preflight applies only to database sources. API and flat-file workflows should not ask these questions.
 
+## API Preflight
+
+Before starting API analysis, run this preflight to produce the scoping config used by `references/apis/generic/endpoint-scoping.md`.
+
+1. Check whether `api-scope-config.json` already exists in the working directory.
+2. If it exists, reuse it silently — do not ask the user questions again.
+3. If it does not exist, ask the user:
+   - Base URL of the API (e.g. `https://api.example.com`)
+   - Whether an OpenAPI/Swagger spec is available: provide a URL or local file path, or `none`
+   - Auth type: `bearer`, `api_key`, or `none`
+   - If bearer or api_key: the **variable name** (env var name or Key Vault secret name) — never ask for the value itself
+   - Any path prefixes to exclude from scoping (e.g. `/admin`, `/internal`)
+4. Create `api-scope-config.json` in the working directory:
+
+```json
+{
+  "base_url": "https://...",
+  "openapi_spec_url": null,
+  "auth_type": "bearer",
+  "auth_env_var": "MY_API_TOKEN",
+  "exclude_path_prefixes": [],
+  "methods_to_scope": ["GET"]
+}
+```
+
+5. Route to `references/apis/generic/endpoint-scoping.md` for the full scoping procedure.
+
+This preflight applies only to API sources. Database and flat-file workflows should not ask these questions.
+
 ## Description Enrichment Continuation
 
-After database analysis writes `schema.json`, check whether any table has an empty `table_description` or any column has an empty `column_description`.
+After any analysis writes `schema.json` — whether from a database, API, or flat file source — check whether any table has an empty `table_description` or any column has an empty `column_description`.
 
 If any descriptions are missing:
 

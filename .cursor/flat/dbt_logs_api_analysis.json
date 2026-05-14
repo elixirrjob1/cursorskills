@@ -1,0 +1,731 @@
+{
+  "metadata": {
+    "generated_at": "2026-05-12T11:10:03.295572+00:00",
+    "source_type": "api",
+    "source_name": "dbt_cloud_logs_api",
+    "provider": "dbt Cloud Administrative API v2",
+    "account_id": "70471823557094",
+    "base_url": "https://kd329.us1.dbt.com/api/v2/accounts/70471823557094",
+    "entity_total": 5,
+    "table_total": 5,
+    "finding_totals": {
+      "errors": 0,
+      "required_endpoints": 4,
+      "optional_endpoints": 1
+    }
+  },
+  "connection": {
+    "endpoint_summary": {
+      "base_path": "/api/v2/accounts/{account_id}",
+      "auth_type": "Bearer token (OAuth access token from mcp.yml or DBT_PAT fallback)",
+      "content_type": "application/json"
+    },
+    "driver_provider": "requests via scripts/dbt_cloud_client.py",
+    "timezone": "UTC"
+  },
+  "source_system_context": {
+    "contacts": [],
+    "delete_management_instruction": "API source; deletions represented by endpoint availability and artifact lifecycle, not row deletes in source system.",
+    "restrictions": [
+      "Token scope may block /jobs/ (observed in script fallback handling).",
+      "run_results artifact may be unavailable for some runs."
+    ]
+  },
+  "data_quality_summary": {
+    "severity_counts": {
+      "high": 0,
+      "medium": 0,
+      "low": 0
+    },
+    "per_check_totals": {
+      "endpoint_reachable": 5,
+      "endpoint_failed": 0,
+      "sample_schema_captured": 5
+    }
+  },
+  "concept_registry": {
+    "concepts": [
+      {
+        "concept_id": "dbt.run",
+        "description": "Execution-level metadata for a dbt job invocation.",
+        "supporting_endpoints": [
+          "runs_list",
+          "run_detail_with_steps"
+        ]
+      },
+      {
+        "concept_id": "dbt.step_log",
+        "description": "Per-step console and debug logs within a run.",
+        "supporting_endpoints": [
+          "run_detail_with_steps",
+          "step_detail_with_debug_logs"
+        ]
+      },
+      {
+        "concept_id": "dbt.node_result",
+        "description": "Model/test/snapshot execution results from run_results artifact.",
+        "supporting_endpoints": [
+          "run_results_artifact"
+        ]
+      }
+    ]
+  },
+  "tables": [
+    {
+      "table": "jobs_list",
+      "schema": "api_v2",
+      "table_description": "List dbt jobs for mapping job_definition_id to human-readable job names.",
+      "columns": [
+        {
+          "column": "method",
+          "type": "string",
+          "nullable": false,
+          "column_description": "HTTP method."
+        },
+        {
+          "column": "path_template",
+          "type": "string",
+          "nullable": false,
+          "column_description": "Endpoint path with placeholders."
+        },
+        {
+          "column": "query_params",
+          "type": "array<string>",
+          "nullable": true,
+          "column_description": "Supported query parameters used by current scripts."
+        },
+        {
+          "column": "required_for_logs_flow",
+          "type": "boolean",
+          "nullable": false,
+          "column_description": "Whether endpoint is required by dbt logs extraction flow."
+        },
+        {
+          "column": "sample_status",
+          "type": "integer",
+          "nullable": true,
+          "column_description": "HTTP status observed during this scoping run."
+        },
+        {
+          "column": "sample_error",
+          "type": "string",
+          "nullable": true,
+          "column_description": "Captured probe error if request failed."
+        },
+        {
+          "column": "sample_response_keys",
+          "type": "array<string>",
+          "nullable": true,
+          "column_description": "Top-level object keys detected in sample payload item."
+        },
+        {
+          "column": "source_script_refs",
+          "type": "array<string>",
+          "nullable": false,
+          "column_description": "Local scripts where endpoint usage is implemented."
+        }
+      ],
+      "primary_keys": [
+        "path_template"
+      ],
+      "foreign_keys": [],
+      "row_count": 1,
+      "data_quality": {
+        "findings": [],
+        "nullable_but_never_null": [],
+        "format_inconsistency": [],
+        "range_violations": [],
+        "timezone": {
+          "value": "UTC"
+        },
+        "delete_management": {
+          "strategy": "not_applicable_for_api_inventory"
+        },
+        "late_arriving_data": {
+          "risk": "run artifacts may lag run completion"
+        }
+      },
+      "endpoint_inventory": {
+        "endpoint_name": "jobs_list",
+        "method": "GET",
+        "path_template": "/api/v2/accounts/{account_id}/jobs/",
+        "purpose": "List dbt jobs for mapping job_definition_id to human-readable job names.",
+        "query_params": [
+          "limit"
+        ],
+        "source_script_refs": [
+          "scripts/fetch_dbt_logs.py",
+          "scripts/sync_dbt_observability_to_snowflake.py"
+        ],
+        "sample_status": 200,
+        "sample_error": null,
+        "sample_response_keys": [
+          "account",
+          "account_id",
+          "compare_changes_flags",
+          "cost_optimization_features",
+          "created_at",
+          "cron_humanized",
+          "dbt_version",
+          "deactivated",
+          "deferring_environment_id",
+          "deferring_job_definition_id",
+          "description",
+          "environment",
+          "environment_id",
+          "errors_on_lint_failure",
+          "execute_steps",
+          "execution",
+          "force_node_selection",
+          "fusion_readiness",
+          "generate_docs",
+          "generate_sources",
+          "id",
+          "is_deferrable",
+          "is_fusion_ready_override",
+          "is_system",
+          "job_completion_trigger_condition",
+          "job_type",
+          "lifecycle_webhooks",
+          "lifecycle_webhooks_url",
+          "most_recent_completed_run",
+          "most_recent_run",
+          "name",
+          "next_run",
+          "next_run_humanized",
+          "project",
+          "project_id",
+          "raw_dbt_version",
+          "run_compare_changes",
+          "run_failure_count",
+          "run_generate_sources",
+          "run_lint",
+          "schedule",
+          "settings",
+          "state",
+          "triggers",
+          "triggers_on_draft_pr",
+          "updated_at"
+        ],
+        "required_for_logs_flow": false
+      }
+    },
+    {
+      "table": "runs_list",
+      "schema": "api_v2",
+      "table_description": "List recent runs to drive observability sync and log extraction.",
+      "columns": [
+        {
+          "column": "method",
+          "type": "string",
+          "nullable": false,
+          "column_description": "HTTP method."
+        },
+        {
+          "column": "path_template",
+          "type": "string",
+          "nullable": false,
+          "column_description": "Endpoint path with placeholders."
+        },
+        {
+          "column": "query_params",
+          "type": "array<string>",
+          "nullable": true,
+          "column_description": "Supported query parameters used by current scripts."
+        },
+        {
+          "column": "required_for_logs_flow",
+          "type": "boolean",
+          "nullable": false,
+          "column_description": "Whether endpoint is required by dbt logs extraction flow."
+        },
+        {
+          "column": "sample_status",
+          "type": "integer",
+          "nullable": true,
+          "column_description": "HTTP status observed during this scoping run."
+        },
+        {
+          "column": "sample_error",
+          "type": "string",
+          "nullable": true,
+          "column_description": "Captured probe error if request failed."
+        },
+        {
+          "column": "sample_response_keys",
+          "type": "array<string>",
+          "nullable": true,
+          "column_description": "Top-level object keys detected in sample payload item."
+        },
+        {
+          "column": "source_script_refs",
+          "type": "array<string>",
+          "nullable": false,
+          "column_description": "Local scripts where endpoint usage is implemented."
+        }
+      ],
+      "primary_keys": [
+        "path_template"
+      ],
+      "foreign_keys": [],
+      "row_count": 1,
+      "data_quality": {
+        "findings": [],
+        "nullable_but_never_null": [],
+        "format_inconsistency": [],
+        "range_violations": [],
+        "timezone": {
+          "value": "UTC"
+        },
+        "delete_management": {
+          "strategy": "not_applicable_for_api_inventory"
+        },
+        "late_arriving_data": {
+          "risk": "run artifacts may lag run completion"
+        }
+      },
+      "endpoint_inventory": {
+        "endpoint_name": "runs_list",
+        "method": "GET",
+        "path_template": "/api/v2/accounts/{account_id}/runs/",
+        "purpose": "List recent runs to drive observability sync and log extraction.",
+        "query_params": [
+          "limit",
+          "order_by",
+          "include_related",
+          "job_definition_id"
+        ],
+        "source_script_refs": [
+          "scripts/fetch_dbt_logs.py",
+          "scripts/sync_dbt_observability_to_snowflake.py"
+        ],
+        "sample_status": 200,
+        "sample_error": null,
+        "sample_response_keys": [
+          "account_id",
+          "artifact_s3_path",
+          "artifacts_saved",
+          "audit",
+          "blocked_by",
+          "can_retry",
+          "created_at",
+          "created_at_humanized",
+          "dbt_version",
+          "deferring_run_id",
+          "deprecation",
+          "dequeued_at",
+          "duration",
+          "duration_humanized",
+          "environment",
+          "environment_id",
+          "executed_by_thread_id",
+          "finished_at",
+          "finished_at_humanized",
+          "git_branch",
+          "git_sha",
+          "has_docs_generated",
+          "has_sources_generated",
+          "href",
+          "id",
+          "in_progress",
+          "is_cancelled",
+          "is_complete",
+          "is_error",
+          "is_running",
+          "is_success",
+          "job",
+          "job_definition_id",
+          "job_id",
+          "last_checked_at",
+          "last_heartbeat_at",
+          "notifications_sent",
+          "owner_thread_id",
+          "project_id",
+          "queued_duration",
+          "queued_duration_humanized",
+          "retry_not_supported_reason",
+          "retrying_run_id",
+          "run_duration",
+          "run_duration_humanized",
+          "run_steps",
+          "should_start_at",
+          "started_at",
+          "status",
+          "status_humanized",
+          "status_message",
+          "trigger",
+          "trigger_id",
+          "updated_at",
+          "used_repo_cache"
+        ],
+        "required_for_logs_flow": true
+      }
+    },
+    {
+      "table": "run_detail_with_steps",
+      "schema": "api_v2",
+      "table_description": "Fetch run-level metadata and run_steps using include_related=[\"run_steps\"].",
+      "columns": [
+        {
+          "column": "method",
+          "type": "string",
+          "nullable": false,
+          "column_description": "HTTP method."
+        },
+        {
+          "column": "path_template",
+          "type": "string",
+          "nullable": false,
+          "column_description": "Endpoint path with placeholders."
+        },
+        {
+          "column": "query_params",
+          "type": "array<string>",
+          "nullable": true,
+          "column_description": "Supported query parameters used by current scripts."
+        },
+        {
+          "column": "required_for_logs_flow",
+          "type": "boolean",
+          "nullable": false,
+          "column_description": "Whether endpoint is required by dbt logs extraction flow."
+        },
+        {
+          "column": "sample_status",
+          "type": "integer",
+          "nullable": true,
+          "column_description": "HTTP status observed during this scoping run."
+        },
+        {
+          "column": "sample_error",
+          "type": "string",
+          "nullable": true,
+          "column_description": "Captured probe error if request failed."
+        },
+        {
+          "column": "sample_response_keys",
+          "type": "array<string>",
+          "nullable": true,
+          "column_description": "Top-level object keys detected in sample payload item."
+        },
+        {
+          "column": "source_script_refs",
+          "type": "array<string>",
+          "nullable": false,
+          "column_description": "Local scripts where endpoint usage is implemented."
+        }
+      ],
+      "primary_keys": [
+        "path_template"
+      ],
+      "foreign_keys": [],
+      "row_count": 1,
+      "data_quality": {
+        "findings": [],
+        "nullable_but_never_null": [],
+        "format_inconsistency": [],
+        "range_violations": [],
+        "timezone": {
+          "value": "UTC"
+        },
+        "delete_management": {
+          "strategy": "not_applicable_for_api_inventory"
+        },
+        "late_arriving_data": {
+          "risk": "run artifacts may lag run completion"
+        }
+      },
+      "endpoint_inventory": {
+        "endpoint_name": "run_detail_with_steps",
+        "method": "GET",
+        "path_template": "/api/v2/accounts/{account_id}/runs/{run_id}/",
+        "purpose": "Fetch run-level metadata and run_steps using include_related=[\"run_steps\"].",
+        "query_params": [
+          "include_related"
+        ],
+        "source_script_refs": [
+          "scripts/dbt_cloud_client.py",
+          "scripts/sync_dbt_observability_to_snowflake.py"
+        ],
+        "sample_status": 200,
+        "sample_error": null,
+        "sample_response_keys": [
+          "account_id",
+          "artifact_s3_path",
+          "artifacts_saved",
+          "audit",
+          "blocked_by",
+          "can_retry",
+          "created_at",
+          "created_at_humanized",
+          "dbt_version",
+          "deferring_run_id",
+          "deprecation",
+          "dequeued_at",
+          "duration",
+          "duration_humanized",
+          "environment",
+          "environment_id",
+          "executed_by_thread_id",
+          "finished_at",
+          "finished_at_humanized",
+          "git_branch",
+          "git_sha",
+          "has_docs_generated",
+          "has_sources_generated",
+          "href",
+          "id",
+          "in_progress",
+          "is_cancelled",
+          "is_complete",
+          "is_error",
+          "is_running",
+          "is_success",
+          "job",
+          "job_definition_id",
+          "job_id",
+          "last_checked_at",
+          "last_heartbeat_at",
+          "notifications_sent",
+          "owner_thread_id",
+          "project_id",
+          "queued_duration",
+          "queued_duration_humanized",
+          "retry_not_supported_reason",
+          "retrying_run_id",
+          "run_duration",
+          "run_duration_humanized",
+          "run_steps",
+          "should_start_at",
+          "started_at",
+          "status",
+          "status_humanized",
+          "status_message",
+          "trigger",
+          "trigger_id",
+          "updated_at",
+          "used_repo_cache"
+        ],
+        "required_for_logs_flow": true
+      }
+    },
+    {
+      "table": "step_detail_with_debug_logs",
+      "schema": "api_v2",
+      "table_description": "Fetch per-step logs and debug_logs using include_related=[\"debug_logs\"].",
+      "columns": [
+        {
+          "column": "method",
+          "type": "string",
+          "nullable": false,
+          "column_description": "HTTP method."
+        },
+        {
+          "column": "path_template",
+          "type": "string",
+          "nullable": false,
+          "column_description": "Endpoint path with placeholders."
+        },
+        {
+          "column": "query_params",
+          "type": "array<string>",
+          "nullable": true,
+          "column_description": "Supported query parameters used by current scripts."
+        },
+        {
+          "column": "required_for_logs_flow",
+          "type": "boolean",
+          "nullable": false,
+          "column_description": "Whether endpoint is required by dbt logs extraction flow."
+        },
+        {
+          "column": "sample_status",
+          "type": "integer",
+          "nullable": true,
+          "column_description": "HTTP status observed during this scoping run."
+        },
+        {
+          "column": "sample_error",
+          "type": "string",
+          "nullable": true,
+          "column_description": "Captured probe error if request failed."
+        },
+        {
+          "column": "sample_response_keys",
+          "type": "array<string>",
+          "nullable": true,
+          "column_description": "Top-level object keys detected in sample payload item."
+        },
+        {
+          "column": "source_script_refs",
+          "type": "array<string>",
+          "nullable": false,
+          "column_description": "Local scripts where endpoint usage is implemented."
+        }
+      ],
+      "primary_keys": [
+        "path_template"
+      ],
+      "foreign_keys": [],
+      "row_count": 1,
+      "data_quality": {
+        "findings": [],
+        "nullable_but_never_null": [],
+        "format_inconsistency": [],
+        "range_violations": [],
+        "timezone": {
+          "value": "UTC"
+        },
+        "delete_management": {
+          "strategy": "not_applicable_for_api_inventory"
+        },
+        "late_arriving_data": {
+          "risk": "run artifacts may lag run completion"
+        }
+      },
+      "endpoint_inventory": {
+        "endpoint_name": "step_detail_with_debug_logs",
+        "method": "GET",
+        "path_template": "/api/v2/accounts/{account_id}/steps/{step_id}/",
+        "purpose": "Fetch per-step logs and debug_logs using include_related=[\"debug_logs\"].",
+        "query_params": [
+          "include_related"
+        ],
+        "source_script_refs": [
+          "scripts/dbt_cloud_client.py",
+          "scripts/sync_dbt_observability_to_snowflake.py"
+        ],
+        "sample_status": 200,
+        "sample_error": null,
+        "sample_response_keys": [
+          "account_id",
+          "created_at",
+          "debug_log_path",
+          "debug_logs",
+          "duration",
+          "duration_humanized",
+          "finished_at",
+          "id",
+          "index",
+          "log_path",
+          "logs",
+          "name",
+          "run_id",
+          "run_step_command",
+          "run_step_invocation",
+          "started_at",
+          "status",
+          "status_color",
+          "status_humanized",
+          "structured_debug_logs",
+          "structured_debug_logs_path",
+          "structured_logs",
+          "structured_logs_path",
+          "truncated_debug_logs",
+          "truncated_structured_debug_logs",
+          "updated_at"
+        ],
+        "required_for_logs_flow": true
+      }
+    },
+    {
+      "table": "run_results_artifact",
+      "schema": "api_v2",
+      "table_description": "Fetch run_results artifact for model/test node status and adapter_response metrics.",
+      "columns": [
+        {
+          "column": "method",
+          "type": "string",
+          "nullable": false,
+          "column_description": "HTTP method."
+        },
+        {
+          "column": "path_template",
+          "type": "string",
+          "nullable": false,
+          "column_description": "Endpoint path with placeholders."
+        },
+        {
+          "column": "query_params",
+          "type": "array<string>",
+          "nullable": true,
+          "column_description": "Supported query parameters used by current scripts."
+        },
+        {
+          "column": "required_for_logs_flow",
+          "type": "boolean",
+          "nullable": false,
+          "column_description": "Whether endpoint is required by dbt logs extraction flow."
+        },
+        {
+          "column": "sample_status",
+          "type": "integer",
+          "nullable": true,
+          "column_description": "HTTP status observed during this scoping run."
+        },
+        {
+          "column": "sample_error",
+          "type": "string",
+          "nullable": true,
+          "column_description": "Captured probe error if request failed."
+        },
+        {
+          "column": "sample_response_keys",
+          "type": "array<string>",
+          "nullable": true,
+          "column_description": "Top-level object keys detected in sample payload item."
+        },
+        {
+          "column": "source_script_refs",
+          "type": "array<string>",
+          "nullable": false,
+          "column_description": "Local scripts where endpoint usage is implemented."
+        }
+      ],
+      "primary_keys": [
+        "path_template"
+      ],
+      "foreign_keys": [],
+      "row_count": 1,
+      "data_quality": {
+        "findings": [],
+        "nullable_but_never_null": [],
+        "format_inconsistency": [],
+        "range_violations": [],
+        "timezone": {
+          "value": "UTC"
+        },
+        "delete_management": {
+          "strategy": "not_applicable_for_api_inventory"
+        },
+        "late_arriving_data": {
+          "risk": "run artifacts may lag run completion"
+        }
+      },
+      "endpoint_inventory": {
+        "endpoint_name": "run_results_artifact",
+        "method": "GET",
+        "path_template": "/api/v2/accounts/{account_id}/runs/{run_id}/artifacts/run_results.json",
+        "purpose": "Fetch run_results artifact for model/test node status and adapter_response metrics.",
+        "query_params": [],
+        "source_script_refs": [
+          "scripts/fetch_dbt_logs.py",
+          "scripts/sync_dbt_observability_to_snowflake.py"
+        ],
+        "sample_status": 200,
+        "sample_error": null,
+        "sample_response_keys": [
+          "adapter_response",
+          "execution_time",
+          "message",
+          "relation_name",
+          "status",
+          "thread_id",
+          "timing",
+          "unique_id"
+        ],
+        "required_for_logs_flow": true
+      }
+    }
+  ]
+}

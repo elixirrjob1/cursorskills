@@ -1,0 +1,6 @@
+{
+  "_comment": "TEMPLATE ONLY — do not deploy this file directly. Run deploy.sh which resolves env vars into a temp file.",
+  "base_url": "https://kd329.us1.dbt.com",
+  "account_id": "${DBT_ACCOUNT_ID}",
+  "dbt_service_token": "${DBT_SERVICE_TOKEN}"
+}

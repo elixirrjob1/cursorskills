@@ -1,0 +1,11 @@
+{
+  "base_url": "https://kd329.us1.dbt.com/api",
+  "openapi_spec_url": null,
+  "auth_type": "bearer",
+  "auth_env_var": "DBT_SERVICE_TOKEN",
+  "exclude_path_prefixes": [],
+  "methods_to_scope": ["GET"],
+  "known_path_params": {
+    "account_id": "DBT_ACCOUNT_ID"
+  }
+}

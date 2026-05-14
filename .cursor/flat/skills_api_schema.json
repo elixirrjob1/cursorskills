@@ -1,0 +1,886 @@
+{
+  "metadata": {
+    "generated_at": "2026-05-14T07:54:15Z",
+    "source_type": "api",
+    "source_name": "skills-sim-api",
+    "provider": "Azure Function (MSSQL backend)",
+    "base_url": "https://skillssimapifilip20260218.azurewebsites.net",
+    "entity_total": 10,
+    "table_total": 10,
+    "finding_totals": {
+      "errors": 0,
+      "probe_failed": 0,
+      "probe_skipped": 1
+    }
+  },
+  "connection": {
+    "endpoint_summary": {
+      "base_path": "https://skillssimapifilip20260218.azurewebsites.net",
+      "auth_type": "bearer",
+      "content_type": "application/json"
+    },
+    "driver_provider": "HTTP REST API (Azure Function)",
+    "timezone": "UTC"
+  },
+  "source_system_context": {
+    "contacts": [],
+    "delete_management_instruction": "API source; no soft-delete observed \u2014 use full-refresh or rely on updated_at for incremental.",
+    "restrictions": []
+  },
+  "data_quality_summary": {
+    "severity_counts": {
+      "high": 0,
+      "medium": 0,
+      "low": 0
+    },
+    "per_check_totals": {
+      "endpoint_reachable": 14,
+      "endpoint_failed": 0,
+      "sample_schema_captured": 10
+    }
+  },
+  "concept_registry": {
+    "concepts": []
+  },
+  "tables": [
+    {
+      "table": "stg_customers",
+      "schema": "api",
+      "table_description": "Staging table for customers entity from free-sql-db-3300567.dbo.",
+      "columns": [
+        {
+          "name": "customer_id",
+          "type": "bigint",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "first_name",
+          "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "last_name",
+          "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "email",
+          "type": "nvarchar(450) collate \"sql_latin1_general_cp1_ci_as\"",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "phone",
+          "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "created_at",
+          "type": "datetime2",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "updated_at",
+          "type": "datetime2",
+          "required": true,
+          "description": ""
+        }
+      ],
+      "primary_keys": [
+        "customer_id"
+      ],
+      "foreign_keys": [],
+      "row_count": 100,
+      "data_quality": {
+        "findings": [],
+        "delete_management": {
+          "strategy": "not_applicable_for_api"
+        },
+        "late_arriving_data": {
+          "risk": "low"
+        },
+        "timezone": {
+          "value": "UTC"
+        }
+      }
+    },
+    {
+      "table": "stg_employees",
+      "schema": "api",
+      "table_description": "Staging table for employees entity from free-sql-db-3300567.dbo.",
+      "columns": [
+        {
+          "name": "employee_id",
+          "type": "bigint",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "store_id",
+          "type": "bigint",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "first_name",
+          "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "last_name",
+          "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "email",
+          "type": "nvarchar(450) collate \"sql_latin1_general_cp1_ci_as\"",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "role",
+          "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "hire_date",
+          "type": "date",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "created_at",
+          "type": "datetime2",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "updated_at",
+          "type": "datetime2",
+          "required": true,
+          "description": ""
+        }
+      ],
+      "primary_keys": [
+        "employee_id"
+      ],
+      "foreign_keys": [
+        "store_id"
+      ],
+      "row_count": 20,
+      "data_quality": {
+        "findings": [],
+        "delete_management": {
+          "strategy": "not_applicable_for_api"
+        },
+        "late_arriving_data": {
+          "risk": "low"
+        },
+        "timezone": {
+          "value": "UTC"
+        }
+      }
+    },
+    {
+      "table": "stg_inventory",
+      "schema": "api",
+      "table_description": "Current stock levels with normalized stock unit representation.",
+      "columns": [
+        {
+          "name": "inventory_id",
+          "type": "bigint",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "store_id",
+          "type": "bigint",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "product_id",
+          "type": "bigint",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "quantity_on_hand",
+          "type": "integer",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "reorder_level",
+          "type": "integer",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "last_restocked_at",
+          "type": "datetime2",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "created_at",
+          "type": "datetime2",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "updated_at",
+          "type": "datetime2",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "stock_value",
+          "type": "decimal(10, 2)",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "stock_unit",
+          "type": "nvarchar(16) collate \"sql_latin1_general_cp1_ci_as\"",
+          "required": false,
+          "description": "Current stock unit label."
+        }
+      ],
+      "primary_keys": [
+        "inventory_id"
+      ],
+      "foreign_keys": [
+        "store_id",
+        "product_id"
+      ],
+      "row_count": 100,
+      "data_quality": {
+        "findings": [],
+        "delete_management": {
+          "strategy": "not_applicable_for_api"
+        },
+        "late_arriving_data": {
+          "risk": "low"
+        },
+        "timezone": {
+          "value": "UTC"
+        }
+      }
+    },
+    {
+      "table": "stg_products",
+      "schema": "api",
+      "table_description": "Master product catalog including physical units for analyzer unit-context testing.",
+      "columns": [
+        {
+          "name": "product_id",
+          "type": "bigint",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "supplier_id",
+          "type": "bigint",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "sku",
+          "type": "nvarchar(450) collate \"sql_latin1_general_cp1_ci_as\"",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "name",
+          "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "category",
+          "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "unit_price",
+          "type": "decimal(10, 2)",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "cost_price",
+          "type": "decimal(10, 2)",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "active",
+          "type": "bit",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "created_at",
+          "type": "datetime2",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "updated_at",
+          "type": "datetime2",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "weight_unit",
+          "type": "nvarchar(16) collate \"sql_latin1_general_cp1_ci_as\"",
+          "required": false,
+          "description": "Source weight unit (kg/lb) used for unit inference testing."
+        },
+        {
+          "name": "weight_value",
+          "type": "decimal(10, 2)",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "length_value",
+          "type": "decimal(10, 2)",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "length_unit",
+          "type": "nvarchar(16) collate \"sql_latin1_general_cp1_ci_as\"",
+          "required": false,
+          "description": "Source length unit (cm/in) used for unit inference testing."
+        },
+        {
+          "name": "product_description",
+          "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "primary_supplier_id",
+          "type": "bigint",
+          "required": false,
+          "description": "Primary supplier relationship used for join candidate detection."
+        }
+      ],
+      "primary_keys": [
+        "product_id"
+      ],
+      "foreign_keys": [
+        "supplier_id",
+        "primary_supplier_id"
+      ],
+      "row_count": 50,
+      "data_quality": {
+        "findings": [],
+        "delete_management": {
+          "strategy": "not_applicable_for_api"
+        },
+        "late_arriving_data": {
+          "risk": "low"
+        },
+        "timezone": {
+          "value": "UTC"
+        }
+      }
+    },
+    {
+      "table": "stg_purchase_order_items",
+      "schema": "api",
+      "table_description": "Line items with order quantities and explicit unit labels.",
+      "columns": [
+        {
+          "name": "po_item_id",
+          "type": "bigint",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "po_id",
+          "type": "bigint",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "product_id",
+          "type": "bigint",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "quantity",
+          "type": "integer",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "unit_cost",
+          "type": "decimal(10, 2)",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "created_at",
+          "type": "datetime2",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "updated_at",
+          "type": "datetime2",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "ordered_qty_value",
+          "type": "decimal(10, 2)",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "ordered_qty_unit",
+          "type": "nvarchar(16) collate \"sql_latin1_general_cp1_ci_as\"",
+          "required": false,
+          "description": "Ordered quantity unit (ea/box)."
+        }
+      ],
+      "primary_keys": [
+        "po_item_id"
+      ],
+      "foreign_keys": [
+        "po_id",
+        "product_id"
+      ],
+      "row_count": 246,
+      "data_quality": {
+        "findings": [],
+        "delete_management": {
+          "strategy": "not_applicable_for_api"
+        },
+        "late_arriving_data": {
+          "risk": "low"
+        },
+        "timezone": {
+          "value": "UTC"
+        }
+      }
+    },
+    {
+      "table": "stg_purchase_orders",
+      "schema": "api",
+      "table_description": "Procurement headers including approver employee relationship.",
+      "columns": [
+        {
+          "name": "po_id",
+          "type": "bigint",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "supplier_id",
+          "type": "bigint",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "store_id",
+          "type": "bigint",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "status",
+          "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "order_date",
+          "type": "date",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "expected_date",
+          "type": "date",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "created_at",
+          "type": "datetime2",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "updated_at",
+          "type": "datetime2",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "approver_employee_id",
+          "type": "bigint",
+          "required": false,
+          "description": "Approver employee foreign key for procurement workflow."
+        }
+      ],
+      "primary_keys": [
+        "po_id"
+      ],
+      "foreign_keys": [
+        "supplier_id",
+        "store_id",
+        "approver_employee_id"
+      ],
+      "row_count": 125,
+      "data_quality": {
+        "findings": [],
+        "delete_management": {
+          "strategy": "not_applicable_for_api"
+        },
+        "late_arriving_data": {
+          "risk": "low"
+        },
+        "timezone": {
+          "value": "UTC"
+        }
+      }
+    },
+    {
+      "table": "stg_sales_order_items",
+      "schema": "api",
+      "table_description": "Sales line items with sold quantity and explicit unit labels.",
+      "columns": [
+        {
+          "name": "sales_order_item_id",
+          "type": "bigint",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "sales_order_id",
+          "type": "bigint",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "product_id",
+          "type": "bigint",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "quantity",
+          "type": "integer",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "unit_price",
+          "type": "numeric(15, 2)",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "created_at",
+          "type": "datetime2",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "updated_at",
+          "type": "datetime2",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "sold_qty_value",
+          "type": "decimal(10, 2)",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "sold_qty_unit",
+          "type": "nvarchar(16) collate \"sql_latin1_general_cp1_ci_as\"",
+          "required": false,
+          "description": "Sold quantity unit (ea/box)."
+        }
+      ],
+      "primary_keys": [
+        "sales_order_item_id"
+      ],
+      "foreign_keys": [
+        "sales_order_id",
+        "product_id"
+      ],
+      "row_count": 508,
+      "data_quality": {
+        "findings": [],
+        "delete_management": {
+          "strategy": "not_applicable_for_api"
+        },
+        "late_arriving_data": {
+          "risk": "low"
+        },
+        "timezone": {
+          "value": "UTC"
+        }
+      }
+    },
+    {
+      "table": "stg_sales_orders",
+      "schema": "api",
+      "table_description": "Sales headers including assigned sales representative relationship.",
+      "columns": [
+        {
+          "name": "sales_order_id",
+          "type": "bigint",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "store_id",
+          "type": "bigint",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "customer_id",
+          "type": "bigint",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "employee_id",
+          "type": "bigint",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "order_date",
+          "type": "datetime2",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "status",
+          "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "total_amount",
+          "type": "decimal(12, 2)",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "created_at",
+          "type": "datetime2",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "updated_at",
+          "type": "datetime2",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "sales_rep_employee_id",
+          "type": "bigint",
+          "required": false,
+          "description": "Sales representative foreign key for order ownership."
+        }
+      ],
+      "primary_keys": [
+        "sales_order_id"
+      ],
+      "foreign_keys": [
+        "store_id",
+        "customer_id",
+        "employee_id",
+        "sales_rep_employee_id"
+      ],
+      "row_count": 200,
+      "data_quality": {
+        "findings": [],
+        "delete_management": {
+          "strategy": "not_applicable_for_api"
+        },
+        "late_arriving_data": {
+          "risk": "low"
+        },
+        "timezone": {
+          "value": "UTC"
+        }
+      }
+    },
+    {
+      "table": "stg_stores",
+      "schema": "api",
+      "table_description": "Staging table for stores entity from free-sql-db-3300567.dbo.",
+      "columns": [
+        {
+          "name": "store_id",
+          "type": "bigint",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "name",
+          "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "code",
+          "type": "nvarchar(450) collate \"sql_latin1_general_cp1_ci_as\"",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "address",
+          "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "city",
+          "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "state",
+          "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "postal_code",
+          "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "phone",
+          "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "created_at",
+          "type": "datetime2",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "updated_at",
+          "type": "datetime2",
+          "required": true,
+          "description": ""
+        }
+      ],
+      "primary_keys": [
+        "store_id"
+      ],
+      "foreign_keys": [],
+      "row_count": 5,
+      "data_quality": {
+        "findings": [],
+        "delete_management": {
+          "strategy": "not_applicable_for_api"
+        },
+        "late_arriving_data": {
+          "risk": "low"
+        },
+        "timezone": {
+          "value": "UTC"
+        }
+      }
+    },
+    {
+      "table": "stg_suppliers",
+      "schema": "api",
+      "table_description": "Staging table for suppliers entity from free-sql-db-3300567.dbo.",
+      "columns": [
+        {
+          "name": "supplier_id",
+          "type": "bigint",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "name",
+          "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "contact_name",
+          "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "email",
+          "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "phone",
+          "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "created_at",
+          "type": "datetime2",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "updated_at",
+          "type": "datetime2",
+          "required": true,
+          "description": ""
+        }
+      ],
+      "primary_keys": [
+        "supplier_id"
+      ],
+      "foreign_keys": [],
+      "row_count": 10,
+      "data_quality": {
+        "findings": [],
+        "delete_management": {
+          "strategy": "not_applicable_for_api"
+        },
+        "late_arriving_data": {
+          "risk": "low"
+        },
+        "timezone": {
+          "value": "UTC"
+        }
+      }
+    }
+  ]
+}

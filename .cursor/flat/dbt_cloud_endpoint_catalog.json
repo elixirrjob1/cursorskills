@@ -1,0 +1,2082 @@
+{
+  "metadata": {
+    "source": "dbt Cloud Administrative API v2",
+    "version": "v2 (live_probe_no_spec)",
+    "generated_at": "2026-05-14T08:11:06Z",
+    "endpoint_count": 26,
+    "table_blueprint_count": 9,
+    "base_url": "https://kd329.us1.dbt.com/api",
+    "auth_type": "bearer",
+    "auth_env_var": "DBT_SERVICE_TOKEN (env variable name)",
+    "known_path_params": {
+      "account_id": "DBT_ACCOUNT_ID"
+    }
+  },
+  "how_to_use": {
+    "objective": "Map each dbt Cloud API entity to staging tables for custom connectors.",
+    "mapping_rule": "List + detail endpoint pairs collapse to one table per entity. Artifact endpoints return file paths, not structured entities."
+  },
+  "endpoints": [
+    {
+      "endpoint_id": "get_accounts",
+      "method": "GET",
+      "path": "/api/v2/accounts/",
+      "summary": "List dbt Cloud accounts",
+      "proposed_table": "stg_dbt_accounts",
+      "probe_status": "ok",
+      "probe_status_code": 200
+    },
+    {
+      "endpoint_id": "get_account",
+      "method": "GET",
+      "path": "/api/v2/accounts/{account_id}/",
+      "summary": "Retrieve a single account",
+      "proposed_table": "stg_dbt_accounts",
+      "probe_status": "ok",
+      "probe_status_code": 200
+    },
+    {
+      "endpoint_id": "get_projects",
+      "method": "GET",
+      "path": "/api/v2/accounts/{account_id}/projects/",
+      "summary": "List projects in an account",
+      "proposed_table": "stg_dbt_projects",
+      "probe_status": "ok",
+      "probe_status_code": 200
+    },
+    {
+      "endpoint_id": "get_project",
+      "method": "GET",
+      "path": "/api/v2/accounts/{account_id}/projects/{id}/",
+      "summary": "Retrieve a single project",
+      "proposed_table": "stg_dbt_projects",
+      "probe_status": "ok",
+      "probe_status_code": 200
+    },
+    {
+      "endpoint_id": "get_environments",
+      "method": "GET",
+      "path": "/api/v2/accounts/{account_id}/environments/",
+      "summary": "List environments in an account",
+      "proposed_table": "stg_dbt_environments",
+      "probe_status": "ok",
+      "probe_status_code": 200
+    },
+    {
+      "endpoint_id": "get_environment",
+      "method": "GET",
+      "path": "/api/v2/accounts/{account_id}/environments/{id}/",
+      "summary": "Retrieve a single environment",
+      "proposed_table": "stg_dbt_environments",
+      "probe_status": "ok",
+      "probe_status_code": 200
+    },
+    {
+      "endpoint_id": "get_jobs",
+      "method": "GET",
+      "path": "/api/v2/accounts/{account_id}/jobs/",
+      "summary": "List job definitions in an account",
+      "proposed_table": "stg_dbt_jobs",
+      "probe_status": "ok",
+      "probe_status_code": 200
+    },
+    {
+      "endpoint_id": "get_job",
+      "method": "GET",
+      "path": "/api/v2/accounts/{account_id}/jobs/{id}/",
+      "summary": "Retrieve a single job definition",
+      "proposed_table": "stg_dbt_jobs",
+      "probe_status": "ok",
+      "probe_status_code": 200
+    },
+    {
+      "endpoint_id": "get_runs",
+      "method": "GET",
+      "path": "/api/v2/accounts/{account_id}/runs/",
+      "summary": "List job runs in an account",
+      "proposed_table": "stg_dbt_runs",
+      "probe_status": "ok",
+      "probe_status_code": 200
+    },
+    {
+      "endpoint_id": "get_run",
+      "method": "GET",
+      "path": "/api/v2/accounts/{account_id}/runs/{id}/",
+      "summary": "Retrieve a single job run",
+      "proposed_table": "stg_dbt_runs",
+      "probe_status": "ok",
+      "probe_status_code": 200
+    },
+    {
+      "endpoint_id": "get_run_step",
+      "method": "GET",
+      "path": "/api/v2/accounts/{account_id}/steps/{id}/",
+      "summary": "Retrieve a single run step with logs",
+      "proposed_table": "stg_dbt_run_steps",
+      "probe_status": "ok",
+      "probe_status_code": 200
+    },
+    {
+      "endpoint_id": "get_repositories",
+      "method": "GET",
+      "path": "/api/v2/accounts/{account_id}/repositories/",
+      "summary": "List repositories connected to account",
+      "proposed_table": "stg_dbt_repositories",
+      "probe_status": "ok",
+      "probe_status_code": 200
+    },
+    {
+      "endpoint_id": "get_repository",
+      "method": "GET",
+      "path": "/api/v2/accounts/{account_id}/repositories/{id}/",
+      "summary": "Retrieve a single repository",
+      "proposed_table": "stg_dbt_repositories",
+      "probe_status": "ok",
+      "probe_status_code": 200
+    },
+    {
+      "endpoint_id": "get_users",
+      "method": "GET",
+      "path": "/api/v2/accounts/{account_id}/users/",
+      "summary": "List users with access to account",
+      "proposed_table": "stg_dbt_users",
+      "probe_status": "ok",
+      "probe_status_code": 200
+    },
+    {
+      "endpoint_id": "get_licenses",
+      "method": "GET",
+      "path": "/api/v2/accounts/{account_id}/licenses/",
+      "summary": "Retrieve account licence seat counts",
+      "proposed_table": null,
+      "probe_status": "ok",
+      "probe_status_code": 200,
+      "probe_error": "Returns a seat-count summary object \u2014 not a list entity; excluded from table blueprints."
+    },
+    {
+      "endpoint_id": "get_notifications",
+      "method": "GET",
+      "path": "/api/v2/accounts/{account_id}/notifications/",
+      "summary": "List account notification rules",
+      "proposed_table": null,
+      "probe_status": "ok",
+      "probe_status_code": 200,
+      "probe_error": "Empty on this account \u2014 no notification rules configured."
+    },
+    {
+      "endpoint_id": "get_invites",
+      "method": "GET",
+      "path": "/api/v2/accounts/{account_id}/invites/",
+      "summary": "List pending user invitations",
+      "proposed_table": null,
+      "probe_status": "ok",
+      "probe_status_code": 200,
+      "probe_error": "Empty on this account \u2014 no pending invites."
+    },
+    {
+      "endpoint_id": "get_encryptions",
+      "method": "GET",
+      "path": "/api/v2/accounts/{account_id}/encryptions/",
+      "summary": "List SSH tunnel encryption configs",
+      "proposed_table": null,
+      "probe_status": "ok",
+      "probe_status_code": 200,
+      "probe_error": "Empty on this account \u2014 no SSH tunnels configured."
+    },
+    {
+      "endpoint_id": "get_run_artifacts",
+      "method": "GET",
+      "path": "/api/v2/accounts/{account_id}/runs/{run_id}/artifacts/",
+      "summary": "List artifact paths produced by a run",
+      "proposed_table": "stg_dbt_run_artifacts",
+      "probe_status": "ok",
+      "probe_status_code": 200
+    },
+    {
+      "endpoint_id": "get_job_artifacts",
+      "method": "GET",
+      "path": "/api/v2/accounts/{account_id}/jobs/{job_id}/artifacts/{remainder}",
+      "summary": "Retrieve a specific artifact from a job",
+      "proposed_table": null,
+      "probe_status": "skipped",
+      "probe_error": "Returns binary/text file content; not a structured JSON entity."
+    },
+    {
+      "endpoint_id": "get_run_artifact",
+      "method": "GET",
+      "path": "/api/v2/accounts/{account_id}/runs/{run_id}/artifacts/{remainder}",
+      "summary": "Retrieve a specific artifact from a run",
+      "proposed_table": null,
+      "probe_status": "skipped",
+      "probe_error": "Returns binary/text file content; not a structured JSON entity."
+    },
+    {
+      "endpoint_id": "get_run_retry",
+      "method": "GET",
+      "path": "/api/v2/accounts/{account_id}/runs/{run_id}/retry/",
+      "summary": "Check retry eligibility for a run",
+      "proposed_table": null,
+      "probe_status": "skipped",
+      "probe_error": "Not a data-bearing GET endpoint; action-oriented."
+    },
+    {
+      "endpoint_id": "get_user",
+      "method": "GET",
+      "path": "/api/v2/users/{id}/",
+      "summary": "Retrieve a single user by ID",
+      "proposed_table": "stg_dbt_users",
+      "probe_status": "skipped",
+      "probe_error": "Merged into stg_dbt_users from list endpoint; detail schema matches."
+    },
+    {
+      "endpoint_id": "get_notification",
+      "method": "GET",
+      "path": "/api/v2/accounts/{account_id}/notifications/{id}/",
+      "summary": "Retrieve a single notification rule",
+      "proposed_table": null,
+      "probe_status": "skipped",
+      "probe_error": "No notification rules exist on this account."
+    },
+    {
+      "endpoint_id": "get_invite",
+      "method": "GET",
+      "path": "/api/v2/accounts/{account_id}/invites/{id}/",
+      "summary": "Retrieve a single invite",
+      "proposed_table": null,
+      "probe_status": "skipped",
+      "probe_error": "No invites exist on this account."
+    },
+    {
+      "endpoint_id": "get_encryption",
+      "method": "GET",
+      "path": "/api/v2/accounts/{account_id}/encryptions/{id}/",
+      "summary": "Retrieve a single SSH tunnel config",
+      "proposed_table": null,
+      "probe_status": "skipped",
+      "probe_error": "No SSH tunnels exist on this account."
+    }
+  ],
+  "table_blueprints": [
+    {
+      "table": "stg_dbt_accounts",
+      "source_endpoints": [
+        "get_accounts",
+        "get_account"
+      ],
+      "columns": [
+        {
+          "name": "id",
+          "type": "integer",
+          "required": false,
+          "description": "Unique numeric identifier for the record."
+        },
+        {
+          "name": "name",
+          "type": "string",
+          "required": false,
+          "description": "Display name of the record."
+        },
+        {
+          "name": "plan",
+          "type": "string",
+          "required": false,
+          "description": "Billing plan tier of the account."
+        },
+        {
+          "name": "run_slots",
+          "type": "integer",
+          "required": false,
+          "description": "Number of concurrent run slots available on the account."
+        },
+        {
+          "name": "developer_seats",
+          "type": "integer",
+          "required": false,
+          "description": "Value of the developer_seats field on the stg_dbt_accounts record."
+        },
+        {
+          "name": "it_seats",
+          "type": "integer",
+          "required": false,
+          "description": "Value of the it_seats field on the stg_dbt_accounts record."
+        },
+        {
+          "name": "explorer_seats",
+          "type": "integer",
+          "required": false,
+          "description": "Value of the explorer_seats field on the stg_dbt_accounts record."
+        },
+        {
+          "name": "analyst_seats",
+          "type": "integer",
+          "required": false,
+          "description": "Value of the analyst_seats field on the stg_dbt_accounts record."
+        },
+        {
+          "name": "read_only_seats",
+          "type": "integer",
+          "required": false,
+          "description": "Value of the read_only_seats field on the stg_dbt_accounts record."
+        },
+        {
+          "name": "locked",
+          "type": "integer",
+          "required": false,
+          "description": "Value of the locked field on the stg_dbt_accounts record."
+        },
+        {
+          "name": "lock_reason",
+          "type": "text",
+          "required": false,
+          "description": "Value of the lock_reason field on the stg_dbt_accounts record."
+        },
+        {
+          "name": "lock_cause",
+          "type": "text",
+          "required": false,
+          "description": "Value of the lock_cause field on the stg_dbt_accounts record."
+        },
+        {
+          "name": "unlocked_at",
+          "type": "text",
+          "required": false,
+          "description": "Value of the unlocked_at field on the stg_dbt_accounts record."
+        },
+        {
+          "name": "unlock_if_subscription_renewed",
+          "type": "integer",
+          "required": false,
+          "description": "Value of the unlock_if_subscription_renewed field on the stg_dbt_accounts record."
+        },
+        {
+          "name": "pending_cancel",
+          "type": "integer",
+          "required": false,
+          "description": "Value of the pending_cancel field on the stg_dbt_accounts record."
+        },
+        {
+          "name": "billing_email_address",
+          "type": "text",
+          "required": false,
+          "description": "Value of the billing_email_address field on the stg_dbt_accounts record."
+        },
+        {
+          "name": "pod_memory_request_mebibytes",
+          "type": "integer",
+          "required": false,
+          "description": "Value of the pod_memory_request_mebibytes field on the stg_dbt_accounts record."
+        },
+        {
+          "name": "develop_pod_memory_request_mebibytes",
+          "type": "integer",
+          "required": false,
+          "description": "Value of the develop_pod_memory_request_mebibytes field on the stg_dbt_accounts record."
+        },
+        {
+          "name": "run_duration_limit_seconds",
+          "type": "integer",
+          "required": false,
+          "description": "Value of the run_duration_limit_seconds field on the stg_dbt_accounts record."
+        },
+        {
+          "name": "queue_limit",
+          "type": "integer",
+          "required": false,
+          "description": "Value of the queue_limit field on the stg_dbt_accounts record."
+        },
+        {
+          "name": "metronome_customer_id",
+          "type": "string",
+          "required": false,
+          "description": "Value of the metronome_customer_id field on the stg_dbt_accounts record."
+        },
+        {
+          "name": "salesforce_customer_id",
+          "type": "text",
+          "required": false,
+          "description": "Value of the salesforce_customer_id field on the stg_dbt_accounts record."
+        },
+        {
+          "name": "third_party_billing",
+          "type": "text",
+          "required": false,
+          "description": "Value of the third_party_billing field on the stg_dbt_accounts record."
+        },
+        {
+          "name": "develop_file_system",
+          "type": "integer",
+          "required": false,
+          "description": "Value of the develop_file_system field on the stg_dbt_accounts record."
+        },
+        {
+          "name": "enterprise_authentication_method",
+          "type": "text",
+          "required": false,
+          "description": "Value of the enterprise_authentication_method field on the stg_dbt_accounts record."
+        },
+        {
+          "name": "enterprise_login_slug",
+          "type": "text",
+          "required": false,
+          "description": "Value of the enterprise_login_slug field on the stg_dbt_accounts record."
+        },
+        {
+          "name": "enterprise_unique_identifier",
+          "type": "text",
+          "required": false,
+          "description": "Value of the enterprise_unique_identifier field on the stg_dbt_accounts record."
+        },
+        {
+          "name": "business_critical",
+          "type": "integer",
+          "required": false,
+          "description": "Value of the business_critical field on the stg_dbt_accounts record."
+        },
+        {
+          "name": "dbt_release_fallback_enabled",
+          "type": "integer",
+          "required": false,
+          "description": "Value of the dbt_release_fallback_enabled field on the stg_dbt_accounts record."
+        },
+        {
+          "name": "dbt_fusion_release_fallback_enabled",
+          "type": "integer",
+          "required": false,
+          "description": "Value of the dbt_fusion_release_fallback_enabled field on the stg_dbt_accounts record."
+        },
+        {
+          "name": "starter_repo_url",
+          "type": "text",
+          "required": false,
+          "description": "Value of the starter_repo_url field on the stg_dbt_accounts record."
+        },
+        {
+          "name": "git_auth_level",
+          "type": "string",
+          "required": false,
+          "description": "Value of the git_auth_level field on the stg_dbt_accounts record."
+        },
+        {
+          "name": "identifier",
+          "type": "string",
+          "required": false,
+          "description": "Value of the identifier field on the stg_dbt_accounts record."
+        },
+        {
+          "name": "trial_end_date",
+          "type": "string",
+          "required": false,
+          "description": "Value of the trial_end_date field on the stg_dbt_accounts record."
+        },
+        {
+          "name": "static_subdomain",
+          "type": "string",
+          "required": false,
+          "description": "Value of the static_subdomain field on the stg_dbt_accounts record."
+        },
+        {
+          "name": "vanity_subdomain",
+          "type": "text",
+          "required": false,
+          "description": "Value of the vanity_subdomain field on the stg_dbt_accounts record."
+        },
+        {
+          "name": "run_locked_until",
+          "type": "text",
+          "required": false,
+          "description": "Value of the run_locked_until field on the stg_dbt_accounts record."
+        },
+        {
+          "name": "migration_scheduled_at",
+          "type": "text",
+          "required": false,
+          "description": "Value of the migration_scheduled_at field on the stg_dbt_accounts record."
+        },
+        {
+          "name": "state",
+          "type": "integer",
+          "required": false,
+          "description": "Value of the state field on the stg_dbt_accounts record."
+        },
+        {
+          "name": "docs_job_id",
+          "type": "text",
+          "required": false,
+          "description": "Value of the docs_job_id field on the stg_dbt_accounts record."
+        },
+        {
+          "name": "freshness_job_id",
+          "type": "text",
+          "required": false,
+          "description": "Value of the freshness_job_id field on the stg_dbt_accounts record."
+        },
+        {
+          "name": "copilot_locked_until",
+          "type": "text",
+          "required": false,
+          "description": "Value of the copilot_locked_until field on the stg_dbt_accounts record."
+        },
+        {
+          "name": "agent_credit_locked",
+          "type": "integer",
+          "required": false,
+          "description": "Value of the agent_credit_locked field on the stg_dbt_accounts record."
+        },
+        {
+          "name": "account_migration_events",
+          "type": "text",
+          "required": false,
+          "description": "Value of the account_migration_events field on the stg_dbt_accounts record."
+        },
+        {
+          "name": "groups",
+          "type": "text",
+          "required": false,
+          "description": "Value of the groups field on the stg_dbt_accounts record."
+        },
+        {
+          "name": "created_at",
+          "type": "string",
+          "required": false,
+          "description": "Timestamp when the record was created."
+        },
+        {
+          "name": "updated_at",
+          "type": "string",
+          "required": false,
+          "description": "Timestamp of the most recent update to the record."
+        },
+        {
+          "name": "static_url",
+          "type": "string",
+          "required": false,
+          "description": "Value of the static_url field on the stg_dbt_accounts record."
+        },
+        {
+          "name": "semantic_layer_url",
+          "type": "string",
+          "required": false,
+          "description": "Value of the semantic_layer_url field on the stg_dbt_accounts record."
+        },
+        {
+          "name": "semantic_layer_graphql_api_url",
+          "type": "string",
+          "required": false,
+          "description": "Value of the semantic_layer_graphql_api_url field on the stg_dbt_accounts record."
+        },
+        {
+          "name": "semantic_layer_jdbc_url",
+          "type": "string",
+          "required": false,
+          "description": "Value of the semantic_layer_jdbc_url field on the stg_dbt_accounts record."
+        },
+        {
+          "name": "discovery_api_url",
+          "type": "string",
+          "required": false,
+          "description": "Value of the discovery_api_url field on the stg_dbt_accounts record."
+        }
+      ],
+      "primary_keys": [
+        "id"
+      ],
+      "foreign_keys": [],
+      "table_description": "dbt Cloud account records. Each row represents a dbt Cloud account with billing, seat, and configuration details.",
+      "row_count_estimate": null
+    },
+    {
+      "table": "stg_dbt_projects",
+      "source_endpoints": [
+        "get_projects",
+        "get_project"
+      ],
+      "columns": [
+        {
+          "name": "id",
+          "type": "integer",
+          "required": false,
+          "description": "Unique numeric identifier for the record."
+        },
+        {
+          "name": "name",
+          "type": "string",
+          "required": false,
+          "description": "Display name of the record."
+        },
+        {
+          "name": "account_id",
+          "type": "integer",
+          "required": false,
+          "description": "Foreign key referencing the dbt Cloud account."
+        },
+        {
+          "name": "description",
+          "type": "text",
+          "required": false,
+          "description": "Optional free-text description."
+        },
+        {
+          "name": "connection_id",
+          "type": "integer",
+          "required": false,
+          "description": "Value of the connection_id field on the stg_dbt_projects record."
+        },
+        {
+          "name": "repository_id",
+          "type": "integer",
+          "required": false,
+          "description": "Value of the repository_id field on the stg_dbt_projects record."
+        },
+        {
+          "name": "semantic_layer_config_id",
+          "type": "text",
+          "required": false,
+          "description": "Value of the semantic_layer_config_id field on the stg_dbt_projects record."
+        },
+        {
+          "name": "skipped_setup",
+          "type": "integer",
+          "required": false,
+          "description": "Value of the skipped_setup field on the stg_dbt_projects record."
+        },
+        {
+          "name": "state",
+          "type": "integer",
+          "required": false,
+          "description": "Value of the state field on the stg_dbt_projects record."
+        },
+        {
+          "name": "dbt_project_subdirectory",
+          "type": "text",
+          "required": false,
+          "description": "Value of the dbt_project_subdirectory field on the stg_dbt_projects record."
+        },
+        {
+          "name": "docs_job_id",
+          "type": "text",
+          "required": false,
+          "description": "Value of the docs_job_id field on the stg_dbt_projects record."
+        },
+        {
+          "name": "freshness_job_id",
+          "type": "text",
+          "required": false,
+          "description": "Value of the freshness_job_id field on the stg_dbt_projects record."
+        },
+        {
+          "name": "fusion_migration_enabled",
+          "type": "integer",
+          "required": false,
+          "description": "Value of the fusion_migration_enabled field on the stg_dbt_projects record."
+        },
+        {
+          "name": "type",
+          "type": "integer",
+          "required": false,
+          "description": "Value of the type field on the stg_dbt_projects record."
+        },
+        {
+          "name": "created_at",
+          "type": "string",
+          "required": false,
+          "description": "Timestamp when the record was created."
+        },
+        {
+          "name": "updated_at",
+          "type": "string",
+          "required": false,
+          "description": "Timestamp of the most recent update to the record."
+        },
+        {
+          "name": "connection",
+          "type": "text",
+          "required": false,
+          "description": "Value of the connection field on the stg_dbt_projects record."
+        },
+        {
+          "name": "environments",
+          "type": "text",
+          "required": false,
+          "description": "Value of the environments field on the stg_dbt_projects record."
+        },
+        {
+          "name": "repository",
+          "type": "text",
+          "required": false,
+          "description": "Value of the repository field on the stg_dbt_projects record."
+        },
+        {
+          "name": "group_permissions",
+          "type": "text",
+          "required": false,
+          "description": "Value of the group_permissions field on the stg_dbt_projects record."
+        },
+        {
+          "name": "docs_job",
+          "type": "text",
+          "required": false,
+          "description": "Value of the docs_job field on the stg_dbt_projects record."
+        },
+        {
+          "name": "freshness_job",
+          "type": "text",
+          "required": false,
+          "description": "Value of the freshness_job field on the stg_dbt_projects record."
+        },
+        {
+          "name": "fusion_readiness",
+          "type": "text",
+          "required": false,
+          "description": "Value of the fusion_readiness field on the stg_dbt_projects record."
+        },
+        {
+          "name": "default_version",
+          "type": "string",
+          "required": false,
+          "description": "Value of the default_version field on the stg_dbt_projects record."
+        }
+      ],
+      "primary_keys": [
+        "id"
+      ],
+      "foreign_keys": [
+        "account_id",
+        "connection_id",
+        "repository_id"
+      ],
+      "table_description": "dbt Cloud projects within an account. Each row represents a project linking a repository, connection, and environments.",
+      "row_count_estimate": null
+    },
+    {
+      "table": "stg_dbt_environments",
+      "source_endpoints": [
+        "get_environments",
+        "get_environment"
+      ],
+      "columns": [
+        {
+          "name": "id",
+          "type": "integer",
+          "required": false,
+          "description": "Unique numeric identifier for the record."
+        },
+        {
+          "name": "account_id",
+          "type": "integer",
+          "required": false,
+          "description": "Foreign key referencing the dbt Cloud account."
+        },
+        {
+          "name": "project_id",
+          "type": "integer",
+          "required": false,
+          "description": "Foreign key referencing the dbt Cloud project."
+        },
+        {
+          "name": "name",
+          "type": "string",
+          "required": false,
+          "description": "Display name of the record."
+        },
+        {
+          "name": "connection_id",
+          "type": "integer",
+          "required": false,
+          "description": "Value of the connection_id field on the stg_dbt_environments record."
+        },
+        {
+          "name": "credentials_id",
+          "type": "text",
+          "required": false,
+          "description": "Value of the credentials_id field on the stg_dbt_environments record."
+        },
+        {
+          "name": "repository_id",
+          "type": "integer",
+          "required": false,
+          "description": "Value of the repository_id field on the stg_dbt_environments record."
+        },
+        {
+          "name": "extended_attributes_id",
+          "type": "text",
+          "required": false,
+          "description": "Value of the extended_attributes_id field on the stg_dbt_environments record."
+        },
+        {
+          "name": "custom_branch",
+          "type": "text",
+          "required": false,
+          "description": "Value of the custom_branch field on the stg_dbt_environments record."
+        },
+        {
+          "name": "use_custom_branch",
+          "type": "integer",
+          "required": false,
+          "description": "Value of the use_custom_branch field on the stg_dbt_environments record."
+        },
+        {
+          "name": "dbt_project_subdirectory",
+          "type": "text",
+          "required": false,
+          "description": "Value of the dbt_project_subdirectory field on the stg_dbt_environments record."
+        },
+        {
+          "name": "dbt_version",
+          "type": "string",
+          "required": false,
+          "description": "dbt version used for this run or environment."
+        },
+        {
+          "name": "raw_dbt_version",
+          "type": "string",
+          "required": false,
+          "description": "Value of the raw_dbt_version field on the stg_dbt_environments record."
+        },
+        {
+          "name": "supports_docs",
+          "type": "integer",
+          "required": false,
+          "description": "Value of the supports_docs field on the stg_dbt_environments record."
+        },
+        {
+          "name": "deployment_type",
+          "type": "text",
+          "required": false,
+          "description": "Deployment type of the environment (production or staging)."
+        },
+        {
+          "name": "type",
+          "type": "string",
+          "required": false,
+          "description": "Value of the type field on the stg_dbt_environments record."
+        },
+        {
+          "name": "created_by_id",
+          "type": "text",
+          "required": false,
+          "description": "Value of the created_by_id field on the stg_dbt_environments record."
+        },
+        {
+          "name": "state",
+          "type": "integer",
+          "required": false,
+          "description": "Value of the state field on the stg_dbt_environments record."
+        },
+        {
+          "name": "created_at",
+          "type": "text",
+          "required": false,
+          "description": "Timestamp when the record was created."
+        },
+        {
+          "name": "updated_at",
+          "type": "string",
+          "required": false,
+          "description": "Timestamp of the most recent update to the record."
+        },
+        {
+          "name": "repository",
+          "type": "text",
+          "required": false,
+          "description": "Value of the repository field on the stg_dbt_environments record."
+        },
+        {
+          "name": "connection",
+          "type": "text",
+          "required": false,
+          "description": "Value of the connection field on the stg_dbt_environments record."
+        },
+        {
+          "name": "jobs",
+          "type": "text",
+          "required": false,
+          "description": "Value of the jobs field on the stg_dbt_environments record."
+        },
+        {
+          "name": "custom_environment_variables",
+          "type": "text",
+          "required": false,
+          "description": "Value of the custom_environment_variables field on the stg_dbt_environments record."
+        }
+      ],
+      "primary_keys": [
+        "id"
+      ],
+      "foreign_keys": [
+        "account_id",
+        "project_id",
+        "connection_id",
+        "repository_id"
+      ],
+      "table_description": "dbt Cloud environments (dev, staging, prod) within a project. Each row holds the dbt version, deployment type, and connection references.",
+      "row_count_estimate": null
+    },
+    {
+      "table": "stg_dbt_jobs",
+      "source_endpoints": [
+        "get_jobs",
+        "get_job"
+      ],
+      "columns": [
+        {
+          "name": "id",
+          "type": "integer",
+          "required": false,
+          "description": "Unique numeric identifier for the record."
+        },
+        {
+          "name": "account_id",
+          "type": "integer",
+          "required": false,
+          "description": "Foreign key referencing the dbt Cloud account."
+        },
+        {
+          "name": "project_id",
+          "type": "integer",
+          "required": false,
+          "description": "Foreign key referencing the dbt Cloud project."
+        },
+        {
+          "name": "environment_id",
+          "type": "integer",
+          "required": false,
+          "description": "Foreign key referencing the dbt Cloud environment."
+        },
+        {
+          "name": "name",
+          "type": "string",
+          "required": false,
+          "description": "Display name of the record."
+        },
+        {
+          "name": "dbt_version",
+          "type": "text",
+          "required": false,
+          "description": "dbt version used for this run or environment."
+        },
+        {
+          "name": "deactivated",
+          "type": "integer",
+          "required": false,
+          "description": "Whether the job definition has been deactivated."
+        },
+        {
+          "name": "deferring_environment_id",
+          "type": "text",
+          "required": false,
+          "description": "Value of the deferring_environment_id field on the stg_dbt_jobs record."
+        },
+        {
+          "name": "deferring_job_definition_id",
+          "type": "text",
+          "required": false,
+          "description": "Value of the deferring_job_definition_id field on the stg_dbt_jobs record."
+        },
+        {
+          "name": "description",
+          "type": "string",
+          "required": false,
+          "description": "Optional free-text description."
+        },
+        {
+          "name": "execute_steps",
+          "type": "text",
+          "required": false,
+          "description": "List of dbt CLI command steps configured for the job."
+        },
+        {
+          "name": "execution",
+          "type": "text",
+          "required": false,
+          "description": "Value of the execution field on the stg_dbt_jobs record."
+        },
+        {
+          "name": "generate_docs",
+          "type": "integer",
+          "required": false,
+          "description": "Whether the job is configured to generate dbt docs."
+        },
+        {
+          "name": "is_system",
+          "type": "integer",
+          "required": false,
+          "description": "Value of the is_system field on the stg_dbt_jobs record."
+        },
+        {
+          "name": "is_deferrable",
+          "type": "integer",
+          "required": false,
+          "description": "Value of the is_deferrable field on the stg_dbt_jobs record."
+        },
+        {
+          "name": "job_type",
+          "type": "string",
+          "required": false,
+          "description": "Type of job (e.g. scheduled, ci, merge)."
+        },
+        {
+          "name": "lifecycle_webhooks_url",
+          "type": "text",
+          "required": false,
+          "description": "Value of the lifecycle_webhooks_url field on the stg_dbt_jobs record."
+        },
+        {
+          "name": "lifecycle_webhooks",
+          "type": "integer",
+          "required": false,
+          "description": "Value of the lifecycle_webhooks field on the stg_dbt_jobs record."
+        },
+        {
+          "name": "raw_dbt_version",
+          "type": "text",
+          "required": false,
+          "description": "Value of the raw_dbt_version field on the stg_dbt_jobs record."
+        },
+        {
+          "name": "run_compare_changes",
+          "type": "integer",
+          "required": false,
+          "description": "Value of the run_compare_changes field on the stg_dbt_jobs record."
+        },
+        {
+          "name": "compare_changes_flags",
+          "type": "string",
+          "required": false,
+          "description": "Value of the compare_changes_flags field on the stg_dbt_jobs record."
+        },
+        {
+          "name": "run_failure_count",
+          "type": "integer",
+          "required": false,
+          "description": "Value of the run_failure_count field on the stg_dbt_jobs record."
+        },
+        {
+          "name": "run_generate_sources",
+          "type": "integer",
+          "required": false,
+          "description": "Value of the run_generate_sources field on the stg_dbt_jobs record."
+        },
+        {
+          "name": "run_lint",
+          "type": "integer",
+          "required": false,
+          "description": "Value of the run_lint field on the stg_dbt_jobs record."
+        },
+        {
+          "name": "errors_on_lint_failure",
+          "type": "integer",
+          "required": false,
+          "description": "Value of the errors_on_lint_failure field on the stg_dbt_jobs record."
+        },
+        {
+          "name": "force_node_selection",
+          "type": "integer",
+          "required": false,
+          "description": "Value of the force_node_selection field on the stg_dbt_jobs record."
+        },
+        {
+          "name": "cost_optimization_features",
+          "type": "text",
+          "required": false,
+          "description": "Value of the cost_optimization_features field on the stg_dbt_jobs record."
+        },
+        {
+          "name": "is_fusion_ready_override",
+          "type": "integer",
+          "required": false,
+          "description": "Value of the is_fusion_ready_override field on the stg_dbt_jobs record."
+        },
+        {
+          "name": "settings",
+          "type": "text",
+          "required": false,
+          "description": "Value of the settings field on the stg_dbt_jobs record."
+        },
+        {
+          "name": "state",
+          "type": "integer",
+          "required": false,
+          "description": "Value of the state field on the stg_dbt_jobs record."
+        },
+        {
+          "name": "triggers_on_draft_pr",
+          "type": "integer",
+          "required": false,
+          "description": "Value of the triggers_on_draft_pr field on the stg_dbt_jobs record."
+        },
+        {
+          "name": "triggers",
+          "type": "text",
+          "required": false,
+          "description": "Value of the triggers field on the stg_dbt_jobs record."
+        },
+        {
+          "name": "job_completion_trigger_condition",
+          "type": "text",
+          "required": false,
+          "description": "Value of the job_completion_trigger_condition field on the stg_dbt_jobs record."
+        },
+        {
+          "name": "created_at",
+          "type": "string",
+          "required": false,
+          "description": "Timestamp when the record was created."
+        },
+        {
+          "name": "updated_at",
+          "type": "string",
+          "required": false,
+          "description": "Timestamp of the most recent update to the record."
+        },
+        {
+          "name": "account",
+          "type": "text",
+          "required": false,
+          "description": "Value of the account field on the stg_dbt_jobs record."
+        },
+        {
+          "name": "project",
+          "type": "text",
+          "required": false,
+          "description": "Value of the project field on the stg_dbt_jobs record."
+        },
+        {
+          "name": "environment",
+          "type": "text",
+          "required": false,
+          "description": "Value of the environment field on the stg_dbt_jobs record."
+        },
+        {
+          "name": "most_recent_run",
+          "type": "text",
+          "required": false,
+          "description": "Value of the most_recent_run field on the stg_dbt_jobs record."
+        },
+        {
+          "name": "most_recent_completed_run",
+          "type": "text",
+          "required": false,
+          "description": "Value of the most_recent_completed_run field on the stg_dbt_jobs record."
+        },
+        {
+          "name": "fusion_readiness",
+          "type": "text",
+          "required": false,
+          "description": "Value of the fusion_readiness field on the stg_dbt_jobs record."
+        },
+        {
+          "name": "schedule",
+          "type": "text",
+          "required": false,
+          "description": "Value of the schedule field on the stg_dbt_jobs record."
+        },
+        {
+          "name": "generate_sources",
+          "type": "integer",
+          "required": false,
+          "description": "Value of the generate_sources field on the stg_dbt_jobs record."
+        },
+        {
+          "name": "cron_humanized",
+          "type": "string",
+          "required": false,
+          "description": "Value of the cron_humanized field on the stg_dbt_jobs record."
+        },
+        {
+          "name": "next_run_humanized",
+          "type": "text",
+          "required": false,
+          "description": "Value of the next_run_humanized field on the stg_dbt_jobs record."
+        },
+        {
+          "name": "next_run",
+          "type": "text",
+          "required": false,
+          "description": "Value of the next_run field on the stg_dbt_jobs record."
+        }
+      ],
+      "primary_keys": [
+        "id"
+      ],
+      "foreign_keys": [
+        "account_id",
+        "project_id",
+        "environment_id"
+      ],
+      "table_description": "dbt Cloud job definitions including schedule, execution steps, dbt version, and trigger configuration.",
+      "row_count_estimate": null
+    },
+    {
+      "table": "stg_dbt_runs",
+      "source_endpoints": [
+        "get_runs",
+        "get_run"
+      ],
+      "columns": [
+        {
+          "name": "id",
+          "type": "integer",
+          "required": false,
+          "description": "Unique numeric identifier for the record."
+        },
+        {
+          "name": "trigger_id",
+          "type": "integer",
+          "required": false,
+          "description": "Foreign key referencing the trigger that initiated the run."
+        },
+        {
+          "name": "account_id",
+          "type": "integer",
+          "required": false,
+          "description": "Foreign key referencing the dbt Cloud account."
+        },
+        {
+          "name": "environment_id",
+          "type": "integer",
+          "required": false,
+          "description": "Foreign key referencing the dbt Cloud environment."
+        },
+        {
+          "name": "project_id",
+          "type": "integer",
+          "required": false,
+          "description": "Foreign key referencing the dbt Cloud project."
+        },
+        {
+          "name": "job_definition_id",
+          "type": "integer",
+          "required": false,
+          "description": "Foreign key referencing the job definition that triggered this run."
+        },
+        {
+          "name": "status",
+          "type": "integer",
+          "required": false,
+          "description": "Current status of the record (e.g. 1=Success, 2=Error, 3=Running)."
+        },
+        {
+          "name": "dbt_version",
+          "type": "string",
+          "required": false,
+          "description": "dbt version used for this run or environment."
+        },
+        {
+          "name": "git_branch",
+          "type": "string",
+          "required": false,
+          "description": "Git branch checked out for the run."
+        },
+        {
+          "name": "git_sha",
+          "type": "string",
+          "required": false,
+          "description": "Git commit SHA used for the run."
+        },
+        {
+          "name": "status_message",
+          "type": "string",
+          "required": false,
+          "description": "Human-readable message describing the current status."
+        },
+        {
+          "name": "owner_thread_id",
+          "type": "text",
+          "required": false,
+          "description": "Value of the owner_thread_id field on the stg_dbt_runs record."
+        },
+        {
+          "name": "executed_by_thread_id",
+          "type": "string",
+          "required": false,
+          "description": "Value of the executed_by_thread_id field on the stg_dbt_runs record."
+        },
+        {
+          "name": "deferring_run_id",
+          "type": "text",
+          "required": false,
+          "description": "Value of the deferring_run_id field on the stg_dbt_runs record."
+        },
+        {
+          "name": "artifacts_saved",
+          "type": "integer",
+          "required": false,
+          "description": "Whether run artifacts were saved to storage."
+        },
+        {
+          "name": "artifact_s3_path",
+          "type": "string",
+          "required": false,
+          "description": "S3 path prefix where run artifacts are stored."
+        },
+        {
+          "name": "has_docs_generated",
+          "type": "integer",
+          "required": false,
+          "description": "Whether dbt docs were generated for this run."
+        },
+        {
+          "name": "has_sources_generated",
+          "type": "integer",
+          "required": false,
+          "description": "Value of the has_sources_generated field on the stg_dbt_runs record."
+        },
+        {
+          "name": "notifications_sent",
+          "type": "integer",
+          "required": false,
+          "description": "Value of the notifications_sent field on the stg_dbt_runs record."
+        },
+        {
+          "name": "blocked_by",
+          "type": "text",
+          "required": false,
+          "description": "Value of the blocked_by field on the stg_dbt_runs record."
+        },
+        {
+          "name": "created_at",
+          "type": "string",
+          "required": false,
+          "description": "Timestamp when the record was created."
+        },
+        {
+          "name": "updated_at",
+          "type": "string",
+          "required": false,
+          "description": "Timestamp of the most recent update to the record."
+        },
+        {
+          "name": "dequeued_at",
+          "type": "string",
+          "required": false,
+          "description": "Value of the dequeued_at field on the stg_dbt_runs record."
+        },
+        {
+          "name": "started_at",
+          "type": "string",
+          "required": false,
+          "description": "Timestamp when the run or step started executing."
+        },
+        {
+          "name": "finished_at",
+          "type": "string",
+          "required": false,
+          "description": "Timestamp when the run or step finished executing."
+        },
+        {
+          "name": "last_checked_at",
+          "type": "text",
+          "required": false,
+          "description": "Value of the last_checked_at field on the stg_dbt_runs record."
+        },
+        {
+          "name": "last_heartbeat_at",
+          "type": "string",
+          "required": false,
+          "description": "Value of the last_heartbeat_at field on the stg_dbt_runs record."
+        },
+        {
+          "name": "should_start_at",
+          "type": "text",
+          "required": false,
+          "description": "Value of the should_start_at field on the stg_dbt_runs record."
+        },
+        {
+          "name": "trigger",
+          "type": "text",
+          "required": false,
+          "description": "Value of the trigger field on the stg_dbt_runs record."
+        },
+        {
+          "name": "job",
+          "type": "text",
+          "required": false,
+          "description": "Value of the job field on the stg_dbt_runs record."
+        },
+        {
+          "name": "environment",
+          "type": "text",
+          "required": false,
+          "description": "Value of the environment field on the stg_dbt_runs record."
+        },
+        {
+          "name": "run_steps",
+          "type": "text",
+          "required": false,
+          "description": "Value of the run_steps field on the stg_dbt_runs record."
+        },
+        {
+          "name": "deprecation",
+          "type": "text",
+          "required": false,
+          "description": "Value of the deprecation field on the stg_dbt_runs record."
+        },
+        {
+          "name": "status_humanized",
+          "type": "string",
+          "required": false,
+          "description": "Value of the status_humanized field on the stg_dbt_runs record."
+        },
+        {
+          "name": "in_progress",
+          "type": "integer",
+          "required": false,
+          "description": "Value of the in_progress field on the stg_dbt_runs record."
+        },
+        {
+          "name": "is_complete",
+          "type": "integer",
+          "required": false,
+          "description": "Value of the is_complete field on the stg_dbt_runs record."
+        },
+        {
+          "name": "is_success",
+          "type": "integer",
+          "required": false,
+          "description": "Value of the is_success field on the stg_dbt_runs record."
+        },
+        {
+          "name": "is_error",
+          "type": "integer",
+          "required": false,
+          "description": "Value of the is_error field on the stg_dbt_runs record."
+        },
+        {
+          "name": "is_cancelled",
+          "type": "integer",
+          "required": false,
+          "description": "Value of the is_cancelled field on the stg_dbt_runs record."
+        },
+        {
+          "name": "duration",
+          "type": "string",
+          "required": false,
+          "description": "Value of the duration field on the stg_dbt_runs record."
+        },
+        {
+          "name": "queued_duration",
+          "type": "string",
+          "required": false,
+          "description": "Value of the queued_duration field on the stg_dbt_runs record."
+        },
+        {
+          "name": "run_duration",
+          "type": "string",
+          "required": false,
+          "description": "Value of the run_duration field on the stg_dbt_runs record."
+        },
+        {
+          "name": "duration_humanized",
+          "type": "string",
+          "required": false,
+          "description": "Value of the duration_humanized field on the stg_dbt_runs record."
+        },
+        {
+          "name": "queued_duration_humanized",
+          "type": "string",
+          "required": false,
+          "description": "Value of the queued_duration_humanized field on the stg_dbt_runs record."
+        },
+        {
+          "name": "run_duration_humanized",
+          "type": "string",
+          "required": false,
+          "description": "Value of the run_duration_humanized field on the stg_dbt_runs record."
+        },
+        {
+          "name": "created_at_humanized",
+          "type": "string",
+          "required": false,
+          "description": "Value of the created_at_humanized field on the stg_dbt_runs record."
+        },
+        {
+          "name": "finished_at_humanized",
+          "type": "string",
+          "required": false,
+          "description": "Value of the finished_at_humanized field on the stg_dbt_runs record."
+        },
+        {
+          "name": "retrying_run_id",
+          "type": "text",
+          "required": false,
+          "description": "Value of the retrying_run_id field on the stg_dbt_runs record."
+        },
+        {
+          "name": "can_retry",
+          "type": "integer",
+          "required": false,
+          "description": "Value of the can_retry field on the stg_dbt_runs record."
+        },
+        {
+          "name": "retry_not_supported_reason",
+          "type": "string",
+          "required": false,
+          "description": "Value of the retry_not_supported_reason field on the stg_dbt_runs record."
+        },
+        {
+          "name": "job_id",
+          "type": "integer",
+          "required": false,
+          "description": "Value of the job_id field on the stg_dbt_runs record."
+        },
+        {
+          "name": "is_running",
+          "type": "text",
+          "required": false,
+          "description": "Value of the is_running field on the stg_dbt_runs record."
+        },
+        {
+          "name": "href",
+          "type": "string",
+          "required": false,
+          "description": "Value of the href field on the stg_dbt_runs record."
+        },
+        {
+          "name": "used_repo_cache",
+          "type": "text",
+          "required": false,
+          "description": "Value of the used_repo_cache field on the stg_dbt_runs record."
+        },
+        {
+          "name": "audit",
+          "type": "text",
+          "required": false,
+          "description": "Value of the audit field on the stg_dbt_runs record."
+        }
+      ],
+      "primary_keys": [
+        "id"
+      ],
+      "foreign_keys": [
+        "account_id",
+        "project_id",
+        "environment_id",
+        "job_definition_id",
+        "trigger_id"
+      ],
+      "table_description": "dbt Cloud job run history. Each row is a single execution of a job, with status, timing, git context, and artifact metadata.",
+      "row_count_estimate": null
+    },
+    {
+      "table": "stg_dbt_run_steps",
+      "source_endpoints": [
+        "get_run_step"
+      ],
+      "columns": [
+        {
+          "name": "id",
+          "type": "integer",
+          "required": false,
+          "description": "Unique numeric identifier for the record."
+        },
+        {
+          "name": "run_id",
+          "type": "integer",
+          "required": false,
+          "description": "Foreign key referencing the parent run."
+        },
+        {
+          "name": "account_id",
+          "type": "integer",
+          "required": false,
+          "description": "Foreign key referencing the dbt Cloud account."
+        },
+        {
+          "name": "index",
+          "type": "integer",
+          "required": false,
+          "description": "Ordered position of this step within the run."
+        },
+        {
+          "name": "status",
+          "type": "integer",
+          "required": false,
+          "description": "Current status of the record (e.g. 1=Success, 2=Error, 3=Running)."
+        },
+        {
+          "name": "name",
+          "type": "string",
+          "required": false,
+          "description": "Display name of the record."
+        },
+        {
+          "name": "logs",
+          "type": "string",
+          "required": false,
+          "description": "Raw log output from the run step."
+        },
+        {
+          "name": "debug_logs",
+          "type": "string",
+          "required": false,
+          "description": "Detailed debug log output from the run step."
+        },
+        {
+          "name": "log_path",
+          "type": "string",
+          "required": false,
+          "description": "Value of the log_path field on the stg_dbt_run_steps record."
+        },
+        {
+          "name": "debug_log_path",
+          "type": "string",
+          "required": false,
+          "description": "Value of the debug_log_path field on the stg_dbt_run_steps record."
+        },
+        {
+          "name": "truncated_debug_logs",
+          "type": "string",
+          "required": false,
+          "description": "Value of the truncated_debug_logs field on the stg_dbt_run_steps record."
+        },
+        {
+          "name": "structured_logs_path",
+          "type": "text",
+          "required": false,
+          "description": "Value of the structured_logs_path field on the stg_dbt_run_steps record."
+        },
+        {
+          "name": "structured_logs",
+          "type": "text",
+          "required": false,
+          "description": "Value of the structured_logs field on the stg_dbt_run_steps record."
+        },
+        {
+          "name": "structured_debug_logs_path",
+          "type": "text",
+          "required": false,
+          "description": "Value of the structured_debug_logs_path field on the stg_dbt_run_steps record."
+        },
+        {
+          "name": "structured_debug_logs",
+          "type": "text",
+          "required": false,
+          "description": "Value of the structured_debug_logs field on the stg_dbt_run_steps record."
+        },
+        {
+          "name": "truncated_structured_debug_logs",
+          "type": "text",
+          "required": false,
+          "description": "Value of the truncated_structured_debug_logs field on the stg_dbt_run_steps record."
+        },
+        {
+          "name": "started_at",
+          "type": "string",
+          "required": false,
+          "description": "Timestamp when the run or step started executing."
+        },
+        {
+          "name": "finished_at",
+          "type": "string",
+          "required": false,
+          "description": "Timestamp when the run or step finished executing."
+        },
+        {
+          "name": "status_color",
+          "type": "string",
+          "required": false,
+          "description": "Value of the status_color field on the stg_dbt_run_steps record."
+        },
+        {
+          "name": "status_humanized",
+          "type": "string",
+          "required": false,
+          "description": "Value of the status_humanized field on the stg_dbt_run_steps record."
+        },
+        {
+          "name": "duration",
+          "type": "string",
+          "required": false,
+          "description": "Value of the duration field on the stg_dbt_run_steps record."
+        },
+        {
+          "name": "duration_humanized",
+          "type": "string",
+          "required": false,
+          "description": "Value of the duration_humanized field on the stg_dbt_run_steps record."
+        },
+        {
+          "name": "created_at",
+          "type": "string",
+          "required": false,
+          "description": "Timestamp when the record was created."
+        },
+        {
+          "name": "updated_at",
+          "type": "string",
+          "required": false,
+          "description": "Timestamp of the most recent update to the record."
+        },
+        {
+          "name": "run_step_command",
+          "type": "text",
+          "required": false,
+          "description": "Value of the run_step_command field on the stg_dbt_run_steps record."
+        },
+        {
+          "name": "run_step_invocation",
+          "type": "text",
+          "required": false,
+          "description": "Value of the run_step_invocation field on the stg_dbt_run_steps record."
+        }
+      ],
+      "primary_keys": [
+        "id"
+      ],
+      "foreign_keys": [
+        "run_id",
+        "account_id"
+      ],
+      "table_description": "Individual command steps within a dbt run (e.g. dbt run, dbt test, dbt source freshness). Each row contains the step log, status, and timing.",
+      "row_count_estimate": null
+    },
+    {
+      "table": "stg_dbt_repositories",
+      "source_endpoints": [
+        "get_repositories",
+        "get_repository"
+      ],
+      "columns": [
+        {
+          "name": "id",
+          "type": "integer",
+          "required": false,
+          "description": "Unique numeric identifier for the record."
+        },
+        {
+          "name": "account_id",
+          "type": "integer",
+          "required": false,
+          "description": "Foreign key referencing the dbt Cloud account."
+        },
+        {
+          "name": "project_id",
+          "type": "integer",
+          "required": false,
+          "description": "Foreign key referencing the dbt Cloud project."
+        },
+        {
+          "name": "full_name",
+          "type": "string",
+          "required": false,
+          "description": "Full repository name (org/repo format)."
+        },
+        {
+          "name": "remote_url",
+          "type": "string",
+          "required": false,
+          "description": "Remote git clone URL for the repository."
+        },
+        {
+          "name": "remote_backend",
+          "type": "string",
+          "required": false,
+          "description": "Git hosting provider (e.g. github, gitlab)."
+        },
+        {
+          "name": "git_clone_strategy",
+          "type": "string",
+          "required": false,
+          "description": "Authentication strategy used for git clone."
+        },
+        {
+          "name": "deploy_key_id",
+          "type": "integer",
+          "required": false,
+          "description": "Value of the deploy_key_id field on the stg_dbt_repositories record."
+        },
+        {
+          "name": "repository_credentials_id",
+          "type": "text",
+          "required": false,
+          "description": "Value of the repository_credentials_id field on the stg_dbt_repositories record."
+        },
+        {
+          "name": "github_installation_id",
+          "type": "integer",
+          "required": false,
+          "description": "Value of the github_installation_id field on the stg_dbt_repositories record."
+        },
+        {
+          "name": "github_webhook_id",
+          "type": "text",
+          "required": false,
+          "description": "Value of the github_webhook_id field on the stg_dbt_repositories record."
+        },
+        {
+          "name": "pull_request_url_template",
+          "type": "string",
+          "required": false,
+          "description": "Value of the pull_request_url_template field on the stg_dbt_repositories record."
+        },
+        {
+          "name": "state",
+          "type": "integer",
+          "required": false,
+          "description": "Value of the state field on the stg_dbt_repositories record."
+        },
+        {
+          "name": "git_provider_id",
+          "type": "text",
+          "required": false,
+          "description": "Value of the git_provider_id field on the stg_dbt_repositories record."
+        },
+        {
+          "name": "private_link_endpoint_id",
+          "type": "text",
+          "required": false,
+          "description": "Value of the private_link_endpoint_id field on the stg_dbt_repositories record."
+        },
+        {
+          "name": "created_at",
+          "type": "string",
+          "required": false,
+          "description": "Timestamp when the record was created."
+        },
+        {
+          "name": "updated_at",
+          "type": "string",
+          "required": false,
+          "description": "Timestamp of the most recent update to the record."
+        },
+        {
+          "name": "deploy_key",
+          "type": "text",
+          "required": false,
+          "description": "Value of the deploy_key field on the stg_dbt_repositories record."
+        },
+        {
+          "name": "github_repo",
+          "type": "string",
+          "required": false,
+          "description": "Value of the github_repo field on the stg_dbt_repositories record."
+        },
+        {
+          "name": "name",
+          "type": "string",
+          "required": false,
+          "description": "Display name of the record."
+        }
+      ],
+      "primary_keys": [
+        "id"
+      ],
+      "foreign_keys": [
+        "account_id",
+        "project_id",
+        "deploy_key_id"
+      ],
+      "table_description": "Git repositories connected to dbt Cloud projects, including clone strategy, deploy key, and GitHub/GitLab metadata.",
+      "row_count_estimate": null
+    },
+    {
+      "table": "stg_dbt_users",
+      "source_endpoints": [
+        "get_users"
+      ],
+      "columns": [
+        {
+          "name": "id",
+          "type": "integer",
+          "required": false,
+          "description": "Unique numeric identifier for the record."
+        },
+        {
+          "name": "first_name",
+          "type": "string",
+          "required": false,
+          "description": "First name of the user."
+        },
+        {
+          "name": "last_name",
+          "type": "string",
+          "required": false,
+          "description": "Last name of the user."
+        },
+        {
+          "name": "email",
+          "type": "string",
+          "required": false,
+          "description": "Email address of the user."
+        },
+        {
+          "name": "apitoken_last_used",
+          "type": "text",
+          "required": false,
+          "description": "Value of the apitoken_last_used field on the stg_dbt_users record."
+        },
+        {
+          "name": "azure_active_directory_connected",
+          "type": "text",
+          "required": false,
+          "description": "Value of the azure_active_directory_connected field on the stg_dbt_users record."
+        },
+        {
+          "name": "azure_active_directory_token_retrieval_failure",
+          "type": "text",
+          "required": false,
+          "description": "Value of the azure_active_directory_token_retrieval_failure field on the stg_dbt_users record."
+        },
+        {
+          "name": "azure_active_directory_username",
+          "type": "text",
+          "required": false,
+          "description": "Value of the azure_active_directory_username field on the stg_dbt_users record."
+        },
+        {
+          "name": "email_connected",
+          "type": "text",
+          "required": false,
+          "description": "Value of the email_connected field on the stg_dbt_users record."
+        },
+        {
+          "name": "email_verified",
+          "type": "integer",
+          "required": false,
+          "description": "Value of the email_verified field on the stg_dbt_users record."
+        },
+        {
+          "name": "enterprise_connected",
+          "type": "text",
+          "required": false,
+          "description": "Value of the enterprise_connected field on the stg_dbt_users record."
+        },
+        {
+          "name": "enterprise_authentication_method",
+          "type": "text",
+          "required": false,
+          "description": "Value of the enterprise_authentication_method field on the stg_dbt_users record."
+        },
+        {
+          "name": "github_connected",
+          "type": "text",
+          "required": false,
+          "description": "Value of the github_connected field on the stg_dbt_users record."
+        },
+        {
+          "name": "github_username",
+          "type": "text",
+          "required": false,
+          "description": "Value of the github_username field on the stg_dbt_users record."
+        },
+        {
+          "name": "gitlab_connected",
+          "type": "text",
+          "required": false,
+          "description": "Value of the gitlab_connected field on the stg_dbt_users record."
+        },
+        {
+          "name": "gitlab_username",
+          "type": "text",
+          "required": false,
+          "description": "Value of the gitlab_username field on the stg_dbt_users record."
+        },
+        {
+          "name": "is_active",
+          "type": "integer",
+          "required": false,
+          "description": "Whether the user account is active."
+        },
+        {
+          "name": "is_staff",
+          "type": "integer",
+          "required": false,
+          "description": "Value of the is_staff field on the stg_dbt_users record."
+        },
+        {
+          "name": "last_login",
+          "type": "string",
+          "required": false,
+          "description": "Value of the last_login field on the stg_dbt_users record."
+        },
+        {
+          "name": "sso_only_user",
+          "type": "text",
+          "required": false,
+          "description": "Value of the sso_only_user field on the stg_dbt_users record."
+        },
+        {
+          "name": "github_token_retrieval_failure",
+          "type": "text",
+          "required": false,
+          "description": "Value of the github_token_retrieval_failure field on the stg_dbt_users record."
+        },
+        {
+          "name": "gitlab_token_retrieval_failure",
+          "type": "text",
+          "required": false,
+          "description": "Value of the gitlab_token_retrieval_failure field on the stg_dbt_users record."
+        },
+        {
+          "name": "created_at",
+          "type": "string",
+          "required": false,
+          "description": "Timestamp when the record was created."
+        },
+        {
+          "name": "permissions",
+          "type": "text",
+          "required": false,
+          "description": "Value of the permissions field on the stg_dbt_users record."
+        },
+        {
+          "name": "auth_provider_infos",
+          "type": "text",
+          "required": false,
+          "description": "Value of the auth_provider_infos field on the stg_dbt_users record."
+        },
+        {
+          "name": "licenses",
+          "type": "text",
+          "required": false,
+          "description": "Value of the licenses field on the stg_dbt_users record."
+        },
+        {
+          "name": "avatar_url",
+          "type": "text",
+          "required": false,
+          "description": "Value of the avatar_url field on the stg_dbt_users record."
+        },
+        {
+          "name": "fullname",
+          "type": "string",
+          "required": false,
+          "description": "Value of the fullname field on the stg_dbt_users record."
+        },
+        {
+          "name": "show_existing_user_email_verification",
+          "type": "integer",
+          "required": false,
+          "description": "Value of the show_existing_user_email_verification field on the stg_dbt_users record."
+        }
+      ],
+      "primary_keys": [
+        "id"
+      ],
+      "foreign_keys": [],
+      "table_description": "Users with access to the dbt Cloud account, including SSO, email verification, and connected identity provider details.",
+      "row_count_estimate": null
+    },
+    {
+      "table": "stg_dbt_run_artifacts",
+      "source_endpoints": [
+        "get_run_artifacts"
+      ],
+      "columns": [
+        {
+          "name": "artifact_path",
+          "type": "string",
+          "required": false,
+          "description": "File path of a dbt run artifact (e.g. catalog.json, compiled SQL)."
+        }
+      ],
+      "primary_keys": [],
+      "foreign_keys": [
+        "run_id",
+        "account_id"
+      ],
+      "table_description": "List of artifact file paths produced by a dbt run (e.g. catalog.json, manifest.json, compiled SQL). Each row is a file path string.",
+      "row_count_estimate": null
+    }
+  ]
+}

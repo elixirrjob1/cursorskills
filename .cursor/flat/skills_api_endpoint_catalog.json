@@ -1,0 +1,1688 @@
+{
+  "metadata": {
+    "source": "skills-sim-api (Azure Function)",
+    "version": "live_probe_no_spec",
+    "generated_at": "2026-05-14T07:54:15Z",
+    "endpoint_count": 14,
+    "table_blueprint_count": 10,
+    "base_url": "https://skillssimapifilip20260218.azurewebsites.net",
+    "auth_type": "bearer",
+    "auth_env_var": "API-AUTH-TOKEN (Key Vault secret name)"
+  },
+  "how_to_use": {
+    "objective": "Map each endpoint response shape to staging tables for custom connectors.",
+    "mapping_rule": "One entity table to one staging table; /api/{table} endpoint maps directly via paginated GET."
+  },
+  "endpoints": [
+    {
+      "endpoint_id": "api_config",
+      "operation_id": "GetConfig",
+      "method": "GET",
+      "path": "/api/config",
+      "full_path_template": "https://skillssimapifilip20260218.azurewebsites.net/api/config",
+      "summary": "Returns active API connection details",
+      "description": "Returns the database connection metadata: schema, dialect, host, port, database name.",
+      "tags": [
+        "meta"
+      ],
+      "parameters": [],
+      "responses": {
+        "200": {
+          "description": "Connection config object",
+          "schema": {
+            "type": "object",
+            "fields": [
+              {
+                "name": "default_schema",
+                "type": "string"
+              },
+              {
+                "name": "dialect",
+                "type": "string"
+              },
+              {
+                "name": "host",
+                "type": "string"
+              },
+              {
+                "name": "port",
+                "type": "string"
+              },
+              {
+                "name": "database",
+                "type": "string"
+              }
+            ]
+          }
+        }
+      },
+      "probe_status": "ok",
+      "probe_status_code": 200,
+      "probe_sample_keys": [
+        "default_schema",
+        "dialect",
+        "host",
+        "port",
+        "database"
+      ],
+      "probe_error": null,
+      "proposed_table": "stg_api_config"
+    },
+    {
+      "endpoint_id": "api_tables",
+      "operation_id": "ListTables",
+      "method": "GET",
+      "path": "/api/tables",
+      "full_path_template": "https://skillssimapifilip20260218.azurewebsites.net/api/tables",
+      "summary": "Lists all tables with schema metadata",
+      "description": "Returns table metadata including columns, primary keys, foreign keys, row counts, and incremental hints for the given schema.",
+      "tags": [
+        "meta"
+      ],
+      "parameters": [
+        {
+          "name": "schema",
+          "in": "query",
+          "required": false,
+          "type": "string",
+          "description": "Schema to inspect. Defaults to dbo."
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "Schema and tables array",
+          "schema": {
+            "type": "object",
+            "fields": [
+              "schema",
+              "tables"
+            ]
+          }
+        }
+      },
+      "probe_status": "ok",
+      "probe_status_code": 200,
+      "probe_sample_keys": [
+        "schema",
+        "tables"
+      ],
+      "probe_error": null,
+      "proposed_table": "stg_table_catalog"
+    },
+    {
+      "endpoint_id": "api_analyze",
+      "operation_id": "AnalyzeSchema",
+      "method": "GET",
+      "path": "/api/analyze",
+      "full_path_template": "https://skillssimapifilip20260218.azurewebsites.net/api/analyze",
+      "summary": "Returns analyzer-compatible schema.json for a schema",
+      "description": "Full analyzer output: metadata, connection, source_system_context, concept_registry, data_quality_summary, and tables array. Equivalent to running source-system-analyser locally.",
+      "tags": [
+        "meta"
+      ],
+      "parameters": [
+        {
+          "name": "schema",
+          "in": "query",
+          "required": false,
+          "type": "string",
+          "description": "Schema name."
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "Full analyzer schema.json contract",
+          "schema": {
+            "type": "object",
+            "fields": [
+              "metadata",
+              "connection",
+              "source_system_context",
+              "concept_registry",
+              "data_quality_summary",
+              "tables"
+            ]
+          }
+        }
+      },
+      "probe_status": "ok",
+      "probe_status_code": 200,
+      "probe_sample_keys": [
+        "metadata",
+        "connection",
+        "source_system_context",
+        "concept_registry",
+        "data_quality_summary",
+        "tables"
+      ],
+      "probe_error": null,
+      "proposed_table": "stg_analyze_snapshot"
+    },
+    {
+      "endpoint_id": "api_customers",
+      "operation_id": "GetCustomers",
+      "method": "GET",
+      "path": "/api/customers",
+      "full_path_template": "https://skillssimapifilip20260218.azurewebsites.net/api/customers",
+      "summary": "Returns rows from the customers table",
+      "description": "Paginated read of the customers entity from schema dbo.",
+      "tags": [
+        "data"
+      ],
+      "parameters": [
+        {
+          "name": "limit",
+          "in": "query",
+          "required": false,
+          "type": "integer",
+          "description": "Max rows to return."
+        },
+        {
+          "name": "offset",
+          "in": "query",
+          "required": false,
+          "type": "integer",
+          "description": "Row offset for pagination."
+        },
+        {
+          "name": "schema",
+          "in": "query",
+          "required": false,
+          "type": "string",
+          "description": "Schema override."
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "customers rows array",
+          "schema": {
+            "type": "object",
+            "fields": [
+              "metadata",
+              "data",
+              "schema"
+            ],
+            "item_fields": [
+              "customer_id",
+              "first_name",
+              "last_name",
+              "email",
+              "phone",
+              "created_at",
+              "updated_at"
+            ]
+          }
+        }
+      },
+      "probe_status": "ok",
+      "probe_status_code": 200,
+      "probe_sample_keys": [
+        "customer_id",
+        "first_name",
+        "last_name",
+        "email",
+        "phone",
+        "created_at",
+        "updated_at"
+      ],
+      "probe_error": null,
+      "proposed_table": "stg_customers"
+    },
+    {
+      "endpoint_id": "api_employees",
+      "operation_id": "GetEmployees",
+      "method": "GET",
+      "path": "/api/employees",
+      "full_path_template": "https://skillssimapifilip20260218.azurewebsites.net/api/employees",
+      "summary": "Returns rows from the employees table",
+      "description": "Paginated read of the employees entity from schema dbo.",
+      "tags": [
+        "data"
+      ],
+      "parameters": [
+        {
+          "name": "limit",
+          "in": "query",
+          "required": false,
+          "type": "integer",
+          "description": "Max rows to return."
+        },
+        {
+          "name": "offset",
+          "in": "query",
+          "required": false,
+          "type": "integer",
+          "description": "Row offset for pagination."
+        },
+        {
+          "name": "schema",
+          "in": "query",
+          "required": false,
+          "type": "string",
+          "description": "Schema override."
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "employees rows array",
+          "schema": {
+            "type": "object",
+            "fields": [
+              "metadata",
+              "data",
+              "schema"
+            ],
+            "item_fields": [
+              "employee_id",
+              "store_id",
+              "first_name",
+              "last_name",
+              "email",
+              "role",
+              "hire_date",
+              "created_at",
+              "updated_at"
+            ]
+          }
+        }
+      },
+      "probe_status": "ok",
+      "probe_status_code": 200,
+      "probe_sample_keys": [
+        "employee_id",
+        "store_id",
+        "first_name",
+        "last_name",
+        "email",
+        "role",
+        "hire_date",
+        "created_at",
+        "updated_at"
+      ],
+      "probe_error": null,
+      "proposed_table": "stg_employees"
+    },
+    {
+      "endpoint_id": "api_fivetranconnectors",
+      "operation_id": "GetFivetranConnectors",
+      "method": "GET",
+      "path": "/api/FivetranConnectors",
+      "full_path_template": "https://skillssimapifilip20260218.azurewebsites.net/api/FivetranConnectors",
+      "summary": "Internal connector metadata table \u2014 not a business entity",
+      "description": "Returns {code, message} shape; likely internal API diagnostics.",
+      "tags": [
+        "internal"
+      ],
+      "parameters": [],
+      "responses": {
+        "200": {
+          "description": "Internal message",
+          "schema": {
+            "type": "object",
+            "fields": [
+              "code",
+              "message"
+            ]
+          }
+        }
+      },
+      "probe_status": "ok",
+      "probe_status_code": 200,
+      "probe_sample_keys": [
+        "code",
+        "message"
+      ],
+      "probe_error": "Internal table \u2014 response shape does not represent a business entity",
+      "proposed_table": null
+    },
+    {
+      "endpoint_id": "api_inventory",
+      "operation_id": "GetInventory",
+      "method": "GET",
+      "path": "/api/inventory",
+      "full_path_template": "https://skillssimapifilip20260218.azurewebsites.net/api/inventory",
+      "summary": "Returns rows from the inventory table",
+      "description": "Current stock levels with normalized stock unit representation.",
+      "tags": [
+        "data"
+      ],
+      "parameters": [
+        {
+          "name": "limit",
+          "in": "query",
+          "required": false,
+          "type": "integer",
+          "description": "Max rows to return."
+        },
+        {
+          "name": "offset",
+          "in": "query",
+          "required": false,
+          "type": "integer",
+          "description": "Row offset for pagination."
+        },
+        {
+          "name": "schema",
+          "in": "query",
+          "required": false,
+          "type": "string",
+          "description": "Schema override."
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "inventory rows array",
+          "schema": {
+            "type": "object",
+            "fields": [
+              "metadata",
+              "data",
+              "schema"
+            ],
+            "item_fields": [
+              "inventory_id",
+              "store_id",
+              "product_id",
+              "quantity_on_hand",
+              "reorder_level",
+              "last_restocked_at",
+              "created_at",
+              "updated_at",
+              "stock_value",
+              "stock_unit"
+            ]
+          }
+        }
+      },
+      "probe_status": "ok",
+      "probe_status_code": 200,
+      "probe_sample_keys": [
+        "inventory_id",
+        "store_id",
+        "product_id",
+        "quantity_on_hand",
+        "reorder_level",
+        "last_restocked_at",
+        "created_at",
+        "updated_at",
+        "stock_value",
+        "stock_unit"
+      ],
+      "probe_error": null,
+      "proposed_table": "stg_inventory"
+    },
+    {
+      "endpoint_id": "api_products",
+      "operation_id": "GetProducts",
+      "method": "GET",
+      "path": "/api/products",
+      "full_path_template": "https://skillssimapifilip20260218.azurewebsites.net/api/products",
+      "summary": "Returns rows from the products table",
+      "description": "Master product catalog including physical units for analyzer unit-context testing.",
+      "tags": [
+        "data"
+      ],
+      "parameters": [
+        {
+          "name": "limit",
+          "in": "query",
+          "required": false,
+          "type": "integer",
+          "description": "Max rows to return."
+        },
+        {
+          "name": "offset",
+          "in": "query",
+          "required": false,
+          "type": "integer",
+          "description": "Row offset for pagination."
+        },
+        {
+          "name": "schema",
+          "in": "query",
+          "required": false,
+          "type": "string",
+          "description": "Schema override."
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "products rows array",
+          "schema": {
+            "type": "object",
+            "fields": [
+              "metadata",
+              "data",
+              "schema"
+            ],
+            "item_fields": [
+              "product_id",
+              "supplier_id",
+              "sku",
+              "name",
+              "category",
+              "unit_price",
+              "cost_price",
+              "active",
+              "created_at",
+              "updated_at",
+              "weight_unit",
+              "weight_value",
+              "length_value",
+              "length_unit",
+              "product_description",
+              "primary_supplier_id"
+            ]
+          }
+        }
+      },
+      "probe_status": "ok",
+      "probe_status_code": 200,
+      "probe_sample_keys": [
+        "product_id",
+        "supplier_id",
+        "sku",
+        "name",
+        "category",
+        "unit_price",
+        "cost_price",
+        "active",
+        "created_at",
+        "updated_at",
+        "weight_unit",
+        "weight_value",
+        "length_value",
+        "length_unit",
+        "product_description",
+        "primary_supplier_id"
+      ],
+      "probe_error": null,
+      "proposed_table": "stg_products"
+    },
+    {
+      "endpoint_id": "api_purchase_order_items",
+      "operation_id": "GetPurchaseOrderItems",
+      "method": "GET",
+      "path": "/api/purchase_order_items",
+      "full_path_template": "https://skillssimapifilip20260218.azurewebsites.net/api/purchase_order_items",
+      "summary": "Returns rows from the purchase_order_items table",
+      "description": "Line items with order quantities and explicit unit labels.",
+      "tags": [
+        "data"
+      ],
+      "parameters": [
+        {
+          "name": "limit",
+          "in": "query",
+          "required": false,
+          "type": "integer",
+          "description": "Max rows to return."
+        },
+        {
+          "name": "offset",
+          "in": "query",
+          "required": false,
+          "type": "integer",
+          "description": "Row offset for pagination."
+        },
+        {
+          "name": "schema",
+          "in": "query",
+          "required": false,
+          "type": "string",
+          "description": "Schema override."
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "purchase_order_items rows array",
+          "schema": {
+            "type": "object",
+            "fields": [
+              "metadata",
+              "data",
+              "schema"
+            ],
+            "item_fields": [
+              "po_item_id",
+              "po_id",
+              "product_id",
+              "quantity",
+              "unit_cost",
+              "created_at",
+              "updated_at",
+              "ordered_qty_value",
+              "ordered_qty_unit"
+            ]
+          }
+        }
+      },
+      "probe_status": "ok",
+      "probe_status_code": 200,
+      "probe_sample_keys": [
+        "po_item_id",
+        "po_id",
+        "product_id",
+        "quantity",
+        "unit_cost",
+        "created_at",
+        "updated_at",
+        "ordered_qty_value",
+        "ordered_qty_unit"
+      ],
+      "probe_error": null,
+      "proposed_table": "stg_purchase_order_items"
+    },
+    {
+      "endpoint_id": "api_purchase_orders",
+      "operation_id": "GetPurchaseOrders",
+      "method": "GET",
+      "path": "/api/purchase_orders",
+      "full_path_template": "https://skillssimapifilip20260218.azurewebsites.net/api/purchase_orders",
+      "summary": "Returns rows from the purchase_orders table",
+      "description": "Procurement headers including approver employee relationship.",
+      "tags": [
+        "data"
+      ],
+      "parameters": [
+        {
+          "name": "limit",
+          "in": "query",
+          "required": false,
+          "type": "integer",
+          "description": "Max rows to return."
+        },
+        {
+          "name": "offset",
+          "in": "query",
+          "required": false,
+          "type": "integer",
+          "description": "Row offset for pagination."
+        },
+        {
+          "name": "schema",
+          "in": "query",
+          "required": false,
+          "type": "string",
+          "description": "Schema override."
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "purchase_orders rows array",
+          "schema": {
+            "type": "object",
+            "fields": [
+              "metadata",
+              "data",
+              "schema"
+            ],
+            "item_fields": [
+              "po_id",
+              "supplier_id",
+              "store_id",
+              "status",
+              "order_date",
+              "expected_date",
+              "created_at",
+              "updated_at",
+              "approver_employee_id"
+            ]
+          }
+        }
+      },
+      "probe_status": "ok",
+      "probe_status_code": 200,
+      "probe_sample_keys": [
+        "po_id",
+        "supplier_id",
+        "store_id",
+        "status",
+        "order_date",
+        "expected_date",
+        "created_at",
+        "updated_at",
+        "approver_employee_id"
+      ],
+      "probe_error": null,
+      "proposed_table": "stg_purchase_orders"
+    },
+    {
+      "endpoint_id": "api_sales_order_items",
+      "operation_id": "GetSalesOrderItems",
+      "method": "GET",
+      "path": "/api/sales_order_items",
+      "full_path_template": "https://skillssimapifilip20260218.azurewebsites.net/api/sales_order_items",
+      "summary": "Returns rows from the sales_order_items table",
+      "description": "Sales line items with sold quantity and explicit unit labels.",
+      "tags": [
+        "data"
+      ],
+      "parameters": [
+        {
+          "name": "limit",
+          "in": "query",
+          "required": false,
+          "type": "integer",
+          "description": "Max rows to return."
+        },
+        {
+          "name": "offset",
+          "in": "query",
+          "required": false,
+          "type": "integer",
+          "description": "Row offset for pagination."
+        },
+        {
+          "name": "schema",
+          "in": "query",
+          "required": false,
+          "type": "string",
+          "description": "Schema override."
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "sales_order_items rows array",
+          "schema": {
+            "type": "object",
+            "fields": [
+              "metadata",
+              "data",
+              "schema"
+            ],
+            "item_fields": [
+              "sales_order_item_id",
+              "sales_order_id",
+              "product_id",
+              "quantity",
+              "unit_price",
+              "created_at",
+              "updated_at",
+              "sold_qty_value",
+              "sold_qty_unit"
+            ]
+          }
+        }
+      },
+      "probe_status": "ok",
+      "probe_status_code": 200,
+      "probe_sample_keys": [
+        "sales_order_item_id",
+        "sales_order_id",
+        "product_id",
+        "quantity",
+        "unit_price",
+        "created_at",
+        "updated_at",
+        "sold_qty_value",
+        "sold_qty_unit"
+      ],
+      "probe_error": null,
+      "proposed_table": "stg_sales_order_items"
+    },
+    {
+      "endpoint_id": "api_sales_orders",
+      "operation_id": "GetSalesOrders",
+      "method": "GET",
+      "path": "/api/sales_orders",
+      "full_path_template": "https://skillssimapifilip20260218.azurewebsites.net/api/sales_orders",
+      "summary": "Returns rows from the sales_orders table",
+      "description": "Sales headers including assigned sales representative relationship.",
+      "tags": [
+        "data"
+      ],
+      "parameters": [
+        {
+          "name": "limit",
+          "in": "query",
+          "required": false,
+          "type": "integer",
+          "description": "Max rows to return."
+        },
+        {
+          "name": "offset",
+          "in": "query",
+          "required": false,
+          "type": "integer",
+          "description": "Row offset for pagination."
+        },
+        {
+          "name": "schema",
+          "in": "query",
+          "required": false,
+          "type": "string",
+          "description": "Schema override."
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "sales_orders rows array",
+          "schema": {
+            "type": "object",
+            "fields": [
+              "metadata",
+              "data",
+              "schema"
+            ],
+            "item_fields": [
+              "sales_order_id",
+              "store_id",
+              "customer_id",
+              "employee_id",
+              "order_date",
+              "status",
+              "total_amount",
+              "created_at",
+              "updated_at",
+              "sales_rep_employee_id"
+            ]
+          }
+        }
+      },
+      "probe_status": "ok",
+      "probe_status_code": 200,
+      "probe_sample_keys": [
+        "sales_order_id",
+        "store_id",
+        "customer_id",
+        "employee_id",
+        "order_date",
+        "status",
+        "total_amount",
+        "created_at",
+        "updated_at",
+        "sales_rep_employee_id"
+      ],
+      "probe_error": null,
+      "proposed_table": "stg_sales_orders"
+    },
+    {
+      "endpoint_id": "api_stores",
+      "operation_id": "GetStores",
+      "method": "GET",
+      "path": "/api/stores",
+      "full_path_template": "https://skillssimapifilip20260218.azurewebsites.net/api/stores",
+      "summary": "Returns rows from the stores table",
+      "description": "Paginated read of the stores entity from schema dbo.",
+      "tags": [
+        "data"
+      ],
+      "parameters": [
+        {
+          "name": "limit",
+          "in": "query",
+          "required": false,
+          "type": "integer",
+          "description": "Max rows to return."
+        },
+        {
+          "name": "offset",
+          "in": "query",
+          "required": false,
+          "type": "integer",
+          "description": "Row offset for pagination."
+        },
+        {
+          "name": "schema",
+          "in": "query",
+          "required": false,
+          "type": "string",
+          "description": "Schema override."
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "stores rows array",
+          "schema": {
+            "type": "object",
+            "fields": [
+              "metadata",
+              "data",
+              "schema"
+            ],
+            "item_fields": [
+              "store_id",
+              "name",
+              "code",
+              "address",
+              "city",
+              "state",
+              "postal_code",
+              "phone",
+              "created_at",
+              "updated_at"
+            ]
+          }
+        }
+      },
+      "probe_status": "ok",
+      "probe_status_code": 200,
+      "probe_sample_keys": [
+        "store_id",
+        "name",
+        "code",
+        "address",
+        "city",
+        "state",
+        "postal_code",
+        "phone",
+        "created_at",
+        "updated_at"
+      ],
+      "probe_error": null,
+      "proposed_table": "stg_stores"
+    },
+    {
+      "endpoint_id": "api_suppliers",
+      "operation_id": "GetSuppliers",
+      "method": "GET",
+      "path": "/api/suppliers",
+      "full_path_template": "https://skillssimapifilip20260218.azurewebsites.net/api/suppliers",
+      "summary": "Returns rows from the suppliers table",
+      "description": "Paginated read of the suppliers entity from schema dbo.",
+      "tags": [
+        "data"
+      ],
+      "parameters": [
+        {
+          "name": "limit",
+          "in": "query",
+          "required": false,
+          "type": "integer",
+          "description": "Max rows to return."
+        },
+        {
+          "name": "offset",
+          "in": "query",
+          "required": false,
+          "type": "integer",
+          "description": "Row offset for pagination."
+        },
+        {
+          "name": "schema",
+          "in": "query",
+          "required": false,
+          "type": "string",
+          "description": "Schema override."
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "suppliers rows array",
+          "schema": {
+            "type": "object",
+            "fields": [
+              "metadata",
+              "data",
+              "schema"
+            ],
+            "item_fields": [
+              "supplier_id",
+              "name",
+              "contact_name",
+              "email",
+              "phone",
+              "created_at",
+              "updated_at"
+            ]
+          }
+        }
+      },
+      "probe_status": "ok",
+      "probe_status_code": 200,
+      "probe_sample_keys": [
+        "supplier_id",
+        "name",
+        "contact_name",
+        "email",
+        "phone",
+        "created_at",
+        "updated_at"
+      ],
+      "probe_error": null,
+      "proposed_table": "stg_suppliers"
+    }
+  ],
+  "table_blueprints": [
+    {
+      "table": "stg_customers",
+      "source_endpoints": [
+        "api_customers"
+      ],
+      "columns": [
+        {
+          "name": "customer_id",
+          "type": "bigint",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "first_name",
+          "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "last_name",
+          "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "email",
+          "type": "nvarchar(450) collate \"sql_latin1_general_cp1_ci_as\"",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "phone",
+          "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "created_at",
+          "type": "datetime2",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "updated_at",
+          "type": "datetime2",
+          "required": true,
+          "description": ""
+        }
+      ],
+      "primary_keys": [
+        "customer_id"
+      ],
+      "foreign_keys": [],
+      "table_description": "Staging table for customers entity from free-sql-db-3300567.dbo.",
+      "row_count_estimate": 100
+    },
+    {
+      "table": "stg_employees",
+      "source_endpoints": [
+        "api_employees"
+      ],
+      "columns": [
+        {
+          "name": "employee_id",
+          "type": "bigint",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "store_id",
+          "type": "bigint",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "first_name",
+          "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "last_name",
+          "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "email",
+          "type": "nvarchar(450) collate \"sql_latin1_general_cp1_ci_as\"",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "role",
+          "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "hire_date",
+          "type": "date",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "created_at",
+          "type": "datetime2",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "updated_at",
+          "type": "datetime2",
+          "required": true,
+          "description": ""
+        }
+      ],
+      "primary_keys": [
+        "employee_id"
+      ],
+      "foreign_keys": [
+        "store_id"
+      ],
+      "table_description": "Staging table for employees entity from free-sql-db-3300567.dbo.",
+      "row_count_estimate": 20
+    },
+    {
+      "table": "stg_inventory",
+      "source_endpoints": [
+        "api_inventory"
+      ],
+      "columns": [
+        {
+          "name": "inventory_id",
+          "type": "bigint",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "store_id",
+          "type": "bigint",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "product_id",
+          "type": "bigint",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "quantity_on_hand",
+          "type": "integer",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "reorder_level",
+          "type": "integer",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "last_restocked_at",
+          "type": "datetime2",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "created_at",
+          "type": "datetime2",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "updated_at",
+          "type": "datetime2",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "stock_value",
+          "type": "decimal(10, 2)",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "stock_unit",
+          "type": "nvarchar(16) collate \"sql_latin1_general_cp1_ci_as\"",
+          "required": false,
+          "description": "Current stock unit label."
+        }
+      ],
+      "primary_keys": [
+        "inventory_id"
+      ],
+      "foreign_keys": [
+        "store_id",
+        "product_id"
+      ],
+      "table_description": "Current stock levels with normalized stock unit representation.",
+      "row_count_estimate": 100
+    },
+    {
+      "table": "stg_products",
+      "source_endpoints": [
+        "api_products"
+      ],
+      "columns": [
+        {
+          "name": "product_id",
+          "type": "bigint",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "supplier_id",
+          "type": "bigint",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "sku",
+          "type": "nvarchar(450) collate \"sql_latin1_general_cp1_ci_as\"",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "name",
+          "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "category",
+          "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "unit_price",
+          "type": "decimal(10, 2)",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "cost_price",
+          "type": "decimal(10, 2)",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "active",
+          "type": "bit",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "created_at",
+          "type": "datetime2",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "updated_at",
+          "type": "datetime2",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "weight_unit",
+          "type": "nvarchar(16) collate \"sql_latin1_general_cp1_ci_as\"",
+          "required": false,
+          "description": "Source weight unit (kg/lb) used for unit inference testing."
+        },
+        {
+          "name": "weight_value",
+          "type": "decimal(10, 2)",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "length_value",
+          "type": "decimal(10, 2)",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "length_unit",
+          "type": "nvarchar(16) collate \"sql_latin1_general_cp1_ci_as\"",
+          "required": false,
+          "description": "Source length unit (cm/in) used for unit inference testing."
+        },
+        {
+          "name": "product_description",
+          "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "primary_supplier_id",
+          "type": "bigint",
+          "required": false,
+          "description": "Primary supplier relationship used for join candidate detection."
+        }
+      ],
+      "primary_keys": [
+        "product_id"
+      ],
+      "foreign_keys": [
+        "supplier_id",
+        "primary_supplier_id"
+      ],
+      "table_description": "Master product catalog including physical units for analyzer unit-context testing.",
+      "row_count_estimate": 50
+    },
+    {
+      "table": "stg_purchase_order_items",
+      "source_endpoints": [
+        "api_purchase_order_items"
+      ],
+      "columns": [
+        {
+          "name": "po_item_id",
+          "type": "bigint",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "po_id",
+          "type": "bigint",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "product_id",
+          "type": "bigint",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "quantity",
+          "type": "integer",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "unit_cost",
+          "type": "decimal(10, 2)",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "created_at",
+          "type": "datetime2",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "updated_at",
+          "type": "datetime2",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "ordered_qty_value",
+          "type": "decimal(10, 2)",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "ordered_qty_unit",
+          "type": "nvarchar(16) collate \"sql_latin1_general_cp1_ci_as\"",
+          "required": false,
+          "description": "Ordered quantity unit (ea/box)."
+        }
+      ],
+      "primary_keys": [
+        "po_item_id"
+      ],
+      "foreign_keys": [
+        "po_id",
+        "product_id"
+      ],
+      "table_description": "Line items with order quantities and explicit unit labels.",
+      "row_count_estimate": 246
+    },
+    {
+      "table": "stg_purchase_orders",
+      "source_endpoints": [
+        "api_purchase_orders"
+      ],
+      "columns": [
+        {
+          "name": "po_id",
+          "type": "bigint",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "supplier_id",
+          "type": "bigint",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "store_id",
+          "type": "bigint",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "status",
+          "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "order_date",
+          "type": "date",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "expected_date",
+          "type": "date",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "created_at",
+          "type": "datetime2",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "updated_at",
+          "type": "datetime2",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "approver_employee_id",
+          "type": "bigint",
+          "required": false,
+          "description": "Approver employee foreign key for procurement workflow."
+        }
+      ],
+      "primary_keys": [
+        "po_id"
+      ],
+      "foreign_keys": [
+        "supplier_id",
+        "store_id",
+        "approver_employee_id"
+      ],
+      "table_description": "Procurement headers including approver employee relationship.",
+      "row_count_estimate": 125
+    },
+    {
+      "table": "stg_sales_order_items",
+      "source_endpoints": [
+        "api_sales_order_items"
+      ],
+      "columns": [
+        {
+          "name": "sales_order_item_id",
+          "type": "bigint",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "sales_order_id",
+          "type": "bigint",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "product_id",
+          "type": "bigint",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "quantity",
+          "type": "integer",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "unit_price",
+          "type": "numeric(15, 2)",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "created_at",
+          "type": "datetime2",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "updated_at",
+          "type": "datetime2",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "sold_qty_value",
+          "type": "decimal(10, 2)",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "sold_qty_unit",
+          "type": "nvarchar(16) collate \"sql_latin1_general_cp1_ci_as\"",
+          "required": false,
+          "description": "Sold quantity unit (ea/box)."
+        }
+      ],
+      "primary_keys": [
+        "sales_order_item_id"
+      ],
+      "foreign_keys": [
+        "sales_order_id",
+        "product_id"
+      ],
+      "table_description": "Sales line items with sold quantity and explicit unit labels.",
+      "row_count_estimate": 508
+    },
+    {
+      "table": "stg_sales_orders",
+      "source_endpoints": [
+        "api_sales_orders"
+      ],
+      "columns": [
+        {
+          "name": "sales_order_id",
+          "type": "bigint",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "store_id",
+          "type": "bigint",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "customer_id",
+          "type": "bigint",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "employee_id",
+          "type": "bigint",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "order_date",
+          "type": "datetime2",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "status",
+          "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "total_amount",
+          "type": "decimal(12, 2)",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "created_at",
+          "type": "datetime2",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "updated_at",
+          "type": "datetime2",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "sales_rep_employee_id",
+          "type": "bigint",
+          "required": false,
+          "description": "Sales representative foreign key for order ownership."
+        }
+      ],
+      "primary_keys": [
+        "sales_order_id"
+      ],
+      "foreign_keys": [
+        "store_id",
+        "customer_id",
+        "employee_id",
+        "sales_rep_employee_id"
+      ],
+      "table_description": "Sales headers including assigned sales representative relationship.",
+      "row_count_estimate": 200
+    },
+    {
+      "table": "stg_stores",
+      "source_endpoints": [
+        "api_stores"
+      ],
+      "columns": [
+        {
+          "name": "store_id",
+          "type": "bigint",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "name",
+          "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "code",
+          "type": "nvarchar(450) collate \"sql_latin1_general_cp1_ci_as\"",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "address",
+          "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "city",
+          "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "state",
+          "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "postal_code",
+          "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "phone",
+          "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "created_at",
+          "type": "datetime2",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "updated_at",
+          "type": "datetime2",
+          "required": true,
+          "description": ""
+        }
+      ],
+      "primary_keys": [
+        "store_id"
+      ],
+      "foreign_keys": [],
+      "table_description": "Staging table for stores entity from free-sql-db-3300567.dbo.",
+      "row_count_estimate": 5
+    },
+    {
+      "table": "stg_suppliers",
+      "source_endpoints": [
+        "api_suppliers"
+      ],
+      "columns": [
+        {
+          "name": "supplier_id",
+          "type": "bigint",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "name",
+          "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "contact_name",
+          "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "email",
+          "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "phone",
+          "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "created_at",
+          "type": "datetime2",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "updated_at",
+          "type": "datetime2",
+          "required": true,
+          "description": ""
+        }
+      ],
+      "primary_keys": [
+        "supplier_id"
+      ],
+      "foreign_keys": [],
+      "table_description": "Staging table for suppliers entity from free-sql-db-3300567.dbo.",
+      "row_count_estimate": 10
+    }
+  ]
+}

@@ -1,236 +1,1456 @@
 {
-  "base_url": "http://localhost:8000",
-  "discovery": [
+  "base_url": "https://skillssimapifilip20260218.azurewebsites.net",
+  "tables": [
     {
-      "path": "/api/tables",
-      "status_code": 401,
-      "data": {
-        "detail": "Unauthorized"
-      }
-    },
-    {
-      "path": "/api",
-      "status_code": 404,
-      "data": {
-        "detail": "Not Found"
-      }
-    },
-    {
-      "path": "/openapi.json",
-      "status_code": 200,
-      "data": {
-        "openapi": "3.1.0",
-        "info": {
-          "title": "Database JSON API",
-          "version": "0.1.0"
+      "table": "customers",
+      "schema": "dbo",
+      "table_description": null,
+      "columns": [
+        {
+          "name": "customer_id",
+          "type": "bigint",
+          "nullable": false,
+          "semantic_class": null,
+          "unit_context": null,
+          "column_description": null,
+          "is_incremental": true
         },
-        "paths": {
-          "/api/tables": {
-            "get": {
-              "tags": [
-                "data"
-              ],
-              "summary": "List Tables",
-              "description": "List table names in the configured schema.",
-              "operationId": "list_tables_api_tables_get",
-              "parameters": [
-                {
-                  "name": "authorization",
-                  "in": "header",
-                  "required": false,
-                  "schema": {
-                    "anyOf": [
-                      {
-                        "type": "string"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ],
-                    "title": "Authorization"
-                  }
-                }
-              ],
-              "responses": {
-                "200": {
-                  "description": "Successful Response",
-                  "content": {
-                    "application/json": {
-                      "schema": {}
-                    }
-                  }
-                },
-                "422": {
-                  "description": "Validation Error",
-                  "content": {
-                    "application/json": {
-                      "schema": {
-                        "$ref": "#/components/schemas/HTTPValidationError"
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "/api/{table}": {
-            "get": {
-              "tags": [
-                "data"
-              ],
-              "summary": "Get Table",
-              "description": "Return rows from the given table as JSON. Supports limit and offset.",
-              "operationId": "get_table_api__table__get",
-              "parameters": [
-                {
-                  "name": "table",
-                  "in": "path",
-                  "required": true,
-                  "schema": {
-                    "type": "string",
-                    "title": "Table"
-                  }
-                },
-                {
-                  "name": "limit",
-                  "in": "query",
-                  "required": false,
-                  "schema": {
-                    "type": "integer",
-                    "maximum": 1000,
-                    "minimum": 1,
-                    "default": 100,
-                    "title": "Limit"
-                  }
-                },
-                {
-                  "name": "offset",
-                  "in": "query",
-                  "required": false,
-                  "schema": {
-                    "type": "integer",
-                    "minimum": 0,
-                    "default": 0,
-                    "title": "Offset"
-                  }
-                },
-                {
-                  "name": "authorization",
-                  "in": "header",
-                  "required": false,
-                  "schema": {
-                    "anyOf": [
-                      {
-                        "type": "string"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ],
-                    "title": "Authorization"
-                  }
-                }
-              ],
-              "responses": {
-                "200": {
-                  "description": "Successful Response",
-                  "content": {
-                    "application/json": {
-                      "schema": {}
-                    }
-                  }
-                },
-                "422": {
-                  "description": "Validation Error",
-                  "content": {
-                    "application/json": {
-                      "schema": {
-                        "$ref": "#/components/schemas/HTTPValidationError"
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
+        {
+          "name": "first_name",
+          "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+          "nullable": false,
+          "semantic_class": null,
+          "unit_context": null,
+          "column_description": null,
+          "is_incremental": false
         },
-        "components": {
-          "schemas": {
-            "HTTPValidationError": {
-              "properties": {
-                "detail": {
-                  "items": {
-                    "$ref": "#/components/schemas/ValidationError"
-                  },
-                  "type": "array",
-                  "title": "Detail"
-                }
-              },
-              "type": "object",
-              "title": "HTTPValidationError"
-            },
-            "ValidationError": {
-              "properties": {
-                "loc": {
-                  "items": {
-                    "anyOf": [
-                      {
-                        "type": "string"
-                      },
-                      {
-                        "type": "integer"
-                      }
-                    ]
-                  },
-                  "type": "array",
-                  "title": "Location"
-                },
-                "msg": {
-                  "type": "string",
-                  "title": "Message"
-                },
-                "type": {
-                  "type": "string",
-                  "title": "Error Type"
-                },
-                "input": {
-                  "title": "Input"
-                },
-                "ctx": {
-                  "type": "object",
-                  "title": "Context"
-                }
-              },
-              "type": "object",
-              "required": [
-                "loc",
-                "msg",
-                "type"
-              ],
-              "title": "ValidationError"
-            }
-          }
+        {
+          "name": "last_name",
+          "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+          "nullable": false,
+          "semantic_class": null,
+          "unit_context": null,
+          "column_description": null,
+          "is_incremental": false
+        },
+        {
+          "name": "email",
+          "type": "nvarchar(450) collate \"sql_latin1_general_cp1_ci_as\"",
+          "nullable": true,
+          "semantic_class": null,
+          "unit_context": null,
+          "column_description": null,
+          "is_incremental": false
+        },
+        {
+          "name": "phone",
+          "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+          "nullable": true,
+          "semantic_class": null,
+          "unit_context": null,
+          "column_description": null,
+          "is_incremental": false
+        },
+        {
+          "name": "created_at",
+          "type": "datetime2",
+          "nullable": false,
+          "semantic_class": null,
+          "unit_context": null,
+          "column_description": null,
+          "is_incremental": true
+        },
+        {
+          "name": "updated_at",
+          "type": "datetime2",
+          "nullable": false,
+          "semantic_class": null,
+          "unit_context": null,
+          "column_description": null,
+          "is_incremental": true
         }
-      }
+      ],
+      "primary_keys": [
+        "customer_id"
+      ],
+      "foreign_keys": [],
+      "row_count": 100,
+      "incremental_columns": [
+        "customer_id",
+        "created_at",
+        "updated_at"
+      ],
+      "partition_columns": [
+        "created_at",
+        "updated_at"
+      ],
+      "join_candidates": [],
+      "unit_summary": {
+        "columns_with_units": 0,
+        "columns_without_units": 7,
+        "mixed_unit_groups": [],
+        "unknown_unit_columns": []
+      },
+      "cdc_enabled": false,
+      "has_primary_key": true,
+      "has_foreign_keys": false,
+      "has_sensitive_fields": false
     },
     {
-      "path": "/swagger.json",
-      "status_code": 404,
-      "data": {
-        "detail": "Not Found"
-      }
+      "table": "employees",
+      "schema": "dbo",
+      "table_description": null,
+      "columns": [
+        {
+          "name": "employee_id",
+          "type": "bigint",
+          "nullable": false,
+          "semantic_class": null,
+          "unit_context": null,
+          "column_description": null,
+          "is_incremental": true
+        },
+        {
+          "name": "store_id",
+          "type": "bigint",
+          "nullable": false,
+          "semantic_class": null,
+          "unit_context": null,
+          "column_description": null,
+          "is_incremental": false
+        },
+        {
+          "name": "first_name",
+          "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+          "nullable": false,
+          "semantic_class": null,
+          "unit_context": null,
+          "column_description": null,
+          "is_incremental": false
+        },
+        {
+          "name": "last_name",
+          "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+          "nullable": false,
+          "semantic_class": null,
+          "unit_context": null,
+          "column_description": null,
+          "is_incremental": false
+        },
+        {
+          "name": "email",
+          "type": "nvarchar(450) collate \"sql_latin1_general_cp1_ci_as\"",
+          "nullable": false,
+          "semantic_class": null,
+          "unit_context": null,
+          "column_description": null,
+          "is_incremental": false
+        },
+        {
+          "name": "role",
+          "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+          "nullable": false,
+          "semantic_class": null,
+          "unit_context": null,
+          "column_description": null,
+          "is_incremental": false
+        },
+        {
+          "name": "hire_date",
+          "type": "date",
+          "nullable": false,
+          "semantic_class": null,
+          "unit_context": null,
+          "column_description": null,
+          "is_incremental": false
+        },
+        {
+          "name": "created_at",
+          "type": "datetime2",
+          "nullable": false,
+          "semantic_class": null,
+          "unit_context": null,
+          "column_description": null,
+          "is_incremental": true
+        },
+        {
+          "name": "updated_at",
+          "type": "datetime2",
+          "nullable": false,
+          "semantic_class": null,
+          "unit_context": null,
+          "column_description": null,
+          "is_incremental": true
+        }
+      ],
+      "primary_keys": [
+        "employee_id"
+      ],
+      "foreign_keys": [
+        {
+          "column": "store_id",
+          "references": "stores.store_id"
+        }
+      ],
+      "row_count": 20,
+      "incremental_columns": [
+        "employee_id",
+        "created_at",
+        "updated_at"
+      ],
+      "partition_columns": [
+        "hire_date",
+        "created_at",
+        "updated_at"
+      ],
+      "join_candidates": [
+        {
+          "column": "store_id",
+          "target_table": "stores",
+          "target_column": "store_id",
+          "confidence": "high"
+        }
+      ],
+      "unit_summary": {
+        "columns_with_units": 0,
+        "columns_without_units": 9,
+        "mixed_unit_groups": [],
+        "unknown_unit_columns": []
+      },
+      "cdc_enabled": false,
+      "has_primary_key": true,
+      "has_foreign_keys": true,
+      "has_sensitive_fields": false
     },
     {
-      "path": "/docs",
-      "status_code": 200,
-      "data": "\n    <!DOCTYPE html>\n    <html>\n    <head>\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n    <link type=\"text/css\" rel=\"stylesheet\" href=\"https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui.css\">\n    <link rel=\"shortcut icon\" href=\"https://fastapi.tiangolo.com/img/favicon.png\">\n    <title>Database JSON API - Swagger UI</title>\n    </head>\n    <body>\n    <div id=\"swagger-ui\">\n    </div>\n    <script src=\"https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui-bundle.js\"></script>\n    <!-- `SwaggerUIBundle` is now available on the page -->\n    <script>\n    const ui = SwaggerUIBundle({\n        url: '/openapi.json',\n    \"dom_id\": \"#swagger-ui\",\n\"layout\": \"BaseLayout\",\n\"deepLinking\": true,\n\"showExtensions\": true,\n\"showCommonExtensions\": true,\noauth2RedirectUrl: window.location.origin + '/docs/oauth2-redirect',\n    presets: [\n        SwaggerUIBundle.presets.apis,\n        SwaggerUIBundle.SwaggerUIStandalonePreset\n        ],\n    })\n    </script>\n    </body>\n    </html>\n    "
+      "table": "FivetranConnectors",
+      "schema": "dbo",
+      "table_description": null,
+      "columns": [
+        {
+          "name": "code",
+          "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+          "nullable": true,
+          "semantic_class": null,
+          "unit_context": null,
+          "column_description": null,
+          "is_incremental": false
+        },
+        {
+          "name": "message",
+          "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+          "nullable": true,
+          "semantic_class": "duration",
+          "unit_context": {
+            "detected_unit": null,
+            "canonical_unit": null,
+            "unit_system": "unknown",
+            "conversion": null,
+            "detection_confidence": "low",
+            "detection_source": "name",
+            "notes": "Semantic class suggests units, but no explicit source unit token was detected."
+          },
+          "column_description": null,
+          "is_incremental": false
+        }
+      ],
+      "primary_keys": [],
+      "foreign_keys": [],
+      "row_count": 1,
+      "incremental_columns": [],
+      "partition_columns": [],
+      "join_candidates": [],
+      "unit_summary": {
+        "columns_with_units": 0,
+        "columns_without_units": 2,
+        "mixed_unit_groups": [],
+        "unknown_unit_columns": [
+          "message"
+        ]
+      },
+      "cdc_enabled": false,
+      "has_primary_key": false,
+      "has_foreign_keys": false,
+      "has_sensitive_fields": false
     },
     {
-      "path": "/",
-      "status_code": 404,
-      "data": {
-        "detail": "Not Found"
-      }
+      "table": "inventory",
+      "schema": "dbo",
+      "table_description": "Current stock levels with normalized stock unit representation.",
+      "columns": [
+        {
+          "name": "inventory_id",
+          "type": "bigint",
+          "nullable": false,
+          "semantic_class": null,
+          "unit_context": null,
+          "column_description": null,
+          "is_incremental": true
+        },
+        {
+          "name": "store_id",
+          "type": "bigint",
+          "nullable": false,
+          "semantic_class": null,
+          "unit_context": null,
+          "column_description": null,
+          "is_incremental": false
+        },
+        {
+          "name": "product_id",
+          "type": "bigint",
+          "nullable": false,
+          "semantic_class": "product_identifier",
+          "unit_context": null,
+          "column_description": null,
+          "is_incremental": false
+        },
+        {
+          "name": "quantity_on_hand",
+          "type": "integer",
+          "nullable": false,
+          "semantic_class": "quantity",
+          "unit_context": null,
+          "column_description": null,
+          "is_incremental": false
+        },
+        {
+          "name": "reorder_level",
+          "type": "integer",
+          "nullable": false,
+          "semantic_class": null,
+          "unit_context": null,
+          "column_description": null,
+          "is_incremental": false
+        },
+        {
+          "name": "last_restocked_at",
+          "type": "datetime2",
+          "nullable": true,
+          "semantic_class": null,
+          "unit_context": null,
+          "column_description": null,
+          "is_incremental": false
+        },
+        {
+          "name": "created_at",
+          "type": "datetime2",
+          "nullable": false,
+          "semantic_class": null,
+          "unit_context": null,
+          "column_description": null,
+          "is_incremental": true
+        },
+        {
+          "name": "updated_at",
+          "type": "datetime2",
+          "nullable": false,
+          "semantic_class": null,
+          "unit_context": null,
+          "column_description": null,
+          "is_incremental": true
+        },
+        {
+          "name": "stock_value",
+          "type": "decimal(10, 2)",
+          "nullable": true,
+          "semantic_class": null,
+          "unit_context": null,
+          "column_description": null,
+          "is_incremental": false
+        },
+        {
+          "name": "stock_unit",
+          "type": "nvarchar(16) collate \"sql_latin1_general_cp1_ci_as\"",
+          "nullable": true,
+          "semantic_class": null,
+          "unit_context": null,
+          "column_description": "Current stock unit label.",
+          "is_incremental": false
+        }
+      ],
+      "primary_keys": [
+        "inventory_id"
+      ],
+      "foreign_keys": [
+        {
+          "column": "product_id",
+          "references": "products.product_id"
+        },
+        {
+          "column": "store_id",
+          "references": "stores.store_id"
+        }
+      ],
+      "row_count": 100,
+      "incremental_columns": [
+        "inventory_id",
+        "created_at",
+        "updated_at"
+      ],
+      "partition_columns": [
+        "last_restocked_at",
+        "created_at",
+        "updated_at"
+      ],
+      "join_candidates": [
+        {
+          "column": "product_id",
+          "target_table": "products",
+          "target_column": "product_id",
+          "confidence": "high"
+        },
+        {
+          "column": "store_id",
+          "target_table": "stores",
+          "target_column": "store_id",
+          "confidence": "high"
+        }
+      ],
+      "unit_summary": {
+        "columns_with_units": 0,
+        "columns_without_units": 10,
+        "mixed_unit_groups": [],
+        "unknown_unit_columns": []
+      },
+      "cdc_enabled": false,
+      "has_primary_key": true,
+      "has_foreign_keys": true,
+      "has_sensitive_fields": false
+    },
+    {
+      "table": "products",
+      "schema": "dbo",
+      "table_description": "Master product catalog including physical units for analyzer unit-context testing.",
+      "columns": [
+        {
+          "name": "product_id",
+          "type": "bigint",
+          "nullable": false,
+          "semantic_class": "product_identifier",
+          "unit_context": null,
+          "column_description": null,
+          "is_incremental": true
+        },
+        {
+          "name": "supplier_id",
+          "type": "bigint",
+          "nullable": false,
+          "semantic_class": null,
+          "unit_context": null,
+          "column_description": null,
+          "is_incremental": false
+        },
+        {
+          "name": "sku",
+          "type": "nvarchar(450) collate \"sql_latin1_general_cp1_ci_as\"",
+          "nullable": false,
+          "semantic_class": "product_identifier",
+          "unit_context": null,
+          "column_description": null,
+          "is_incremental": false
+        },
+        {
+          "name": "name",
+          "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+          "nullable": false,
+          "semantic_class": null,
+          "unit_context": null,
+          "column_description": null,
+          "is_incremental": false
+        },
+        {
+          "name": "category",
+          "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+          "nullable": false,
+          "semantic_class": null,
+          "unit_context": null,
+          "column_description": null,
+          "is_incremental": false
+        },
+        {
+          "name": "unit_price",
+          "type": "decimal(10, 2)",
+          "nullable": false,
+          "semantic_class": null,
+          "unit_context": null,
+          "column_description": null,
+          "is_incremental": false
+        },
+        {
+          "name": "cost_price",
+          "type": "decimal(10, 2)",
+          "nullable": false,
+          "semantic_class": null,
+          "unit_context": null,
+          "column_description": null,
+          "is_incremental": false
+        },
+        {
+          "name": "active",
+          "type": "bit",
+          "nullable": false,
+          "semantic_class": null,
+          "unit_context": null,
+          "column_description": null,
+          "is_incremental": false
+        },
+        {
+          "name": "created_at",
+          "type": "datetime2",
+          "nullable": false,
+          "semantic_class": null,
+          "unit_context": null,
+          "column_description": null,
+          "is_incremental": true
+        },
+        {
+          "name": "updated_at",
+          "type": "datetime2",
+          "nullable": false,
+          "semantic_class": null,
+          "unit_context": null,
+          "column_description": null,
+          "is_incremental": true
+        },
+        {
+          "name": "weight_unit",
+          "type": "nvarchar(16) collate \"sql_latin1_general_cp1_ci_as\"",
+          "nullable": true,
+          "semantic_class": "mass",
+          "unit_context": {
+            "detected_unit": null,
+            "canonical_unit": null,
+            "unit_system": "unknown",
+            "conversion": null,
+            "detection_confidence": "low",
+            "detection_source": "name",
+            "notes": "Semantic class suggests units, but no explicit source unit token was detected."
+          },
+          "column_description": "Source weight unit (kg/lb) used for unit inference testing.",
+          "is_incremental": false
+        },
+        {
+          "name": "weight_value",
+          "type": "decimal(10, 2)",
+          "nullable": true,
+          "semantic_class": "mass",
+          "unit_context": {
+            "detected_unit": null,
+            "canonical_unit": null,
+            "unit_system": "unknown",
+            "conversion": null,
+            "detection_confidence": "low",
+            "detection_source": "name",
+            "notes": "Semantic class suggests units, but no explicit source unit token was detected."
+          },
+          "column_description": null,
+          "is_incremental": false
+        },
+        {
+          "name": "length_value",
+          "type": "decimal(10, 2)",
+          "nullable": true,
+          "semantic_class": "length",
+          "unit_context": {
+            "detected_unit": null,
+            "canonical_unit": null,
+            "unit_system": "unknown",
+            "conversion": null,
+            "detection_confidence": "low",
+            "detection_source": "name",
+            "notes": "Semantic class suggests units, but no explicit source unit token was detected."
+          },
+          "column_description": null,
+          "is_incremental": false
+        },
+        {
+          "name": "length_unit",
+          "type": "nvarchar(16) collate \"sql_latin1_general_cp1_ci_as\"",
+          "nullable": true,
+          "semantic_class": "length",
+          "unit_context": {
+            "detected_unit": null,
+            "canonical_unit": null,
+            "unit_system": "unknown",
+            "conversion": null,
+            "detection_confidence": "low",
+            "detection_source": "name",
+            "notes": "Semantic class suggests units, but no explicit source unit token was detected."
+          },
+          "column_description": "Source length unit (cm/in) used for unit inference testing.",
+          "is_incremental": false
+        },
+        {
+          "name": "product_description",
+          "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+          "nullable": true,
+          "semantic_class": null,
+          "unit_context": null,
+          "column_description": null,
+          "is_incremental": false
+        },
+        {
+          "name": "primary_supplier_id",
+          "type": "bigint",
+          "nullable": true,
+          "semantic_class": null,
+          "unit_context": null,
+          "column_description": "Primary supplier relationship used for join candidate detection.",
+          "is_incremental": false
+        }
+      ],
+      "primary_keys": [
+        "product_id"
+      ],
+      "foreign_keys": [
+        {
+          "column": "primary_supplier_id",
+          "references": "suppliers.supplier_id"
+        },
+        {
+          "column": "supplier_id",
+          "references": "suppliers.supplier_id"
+        }
+      ],
+      "row_count": 50,
+      "incremental_columns": [
+        "product_id",
+        "created_at",
+        "updated_at"
+      ],
+      "partition_columns": [
+        "created_at",
+        "updated_at"
+      ],
+      "join_candidates": [
+        {
+          "column": "primary_supplier_id",
+          "target_table": "suppliers",
+          "target_column": "supplier_id",
+          "confidence": "high"
+        },
+        {
+          "column": "supplier_id",
+          "target_table": "suppliers",
+          "target_column": "supplier_id",
+          "confidence": "high"
+        }
+      ],
+      "unit_summary": {
+        "columns_with_units": 0,
+        "columns_without_units": 16,
+        "mixed_unit_groups": [],
+        "unknown_unit_columns": [
+          "length_unit",
+          "length_value",
+          "weight_unit",
+          "weight_value"
+        ]
+      },
+      "cdc_enabled": false,
+      "has_primary_key": true,
+      "has_foreign_keys": true,
+      "has_sensitive_fields": false
+    },
+    {
+      "table": "purchase_order_items",
+      "schema": "dbo",
+      "table_description": "Line items with order quantities and explicit unit labels.",
+      "columns": [
+        {
+          "name": "po_item_id",
+          "type": "bigint",
+          "nullable": false,
+          "semantic_class": null,
+          "unit_context": null,
+          "column_description": null,
+          "is_incremental": true
+        },
+        {
+          "name": "po_id",
+          "type": "bigint",
+          "nullable": false,
+          "semantic_class": null,
+          "unit_context": null,
+          "column_description": null,
+          "is_incremental": false
+        },
+        {
+          "name": "product_id",
+          "type": "bigint",
+          "nullable": false,
+          "semantic_class": "product_identifier",
+          "unit_context": null,
+          "column_description": null,
+          "is_incremental": false
+        },
+        {
+          "name": "quantity",
+          "type": "integer",
+          "nullable": false,
+          "semantic_class": "quantity",
+          "unit_context": null,
+          "column_description": null,
+          "is_incremental": false
+        },
+        {
+          "name": "unit_cost",
+          "type": "decimal(10, 2)",
+          "nullable": false,
+          "semantic_class": null,
+          "unit_context": null,
+          "column_description": null,
+          "is_incremental": false
+        },
+        {
+          "name": "created_at",
+          "type": "datetime2",
+          "nullable": false,
+          "semantic_class": null,
+          "unit_context": null,
+          "column_description": null,
+          "is_incremental": true
+        },
+        {
+          "name": "updated_at",
+          "type": "datetime2",
+          "nullable": false,
+          "semantic_class": null,
+          "unit_context": null,
+          "column_description": null,
+          "is_incremental": true
+        },
+        {
+          "name": "ordered_qty_value",
+          "type": "decimal(10, 2)",
+          "nullable": true,
+          "semantic_class": "quantity",
+          "unit_context": null,
+          "column_description": null,
+          "is_incremental": false
+        },
+        {
+          "name": "ordered_qty_unit",
+          "type": "nvarchar(16) collate \"sql_latin1_general_cp1_ci_as\"",
+          "nullable": true,
+          "semantic_class": "quantity",
+          "unit_context": null,
+          "column_description": "Ordered quantity unit (ea/box).",
+          "is_incremental": false
+        }
+      ],
+      "primary_keys": [
+        "po_item_id"
+      ],
+      "foreign_keys": [
+        {
+          "column": "po_id",
+          "references": "purchase_orders.po_id"
+        },
+        {
+          "column": "product_id",
+          "references": "products.product_id"
+        }
+      ],
+      "row_count": 246,
+      "incremental_columns": [
+        "po_item_id",
+        "created_at",
+        "updated_at"
+      ],
+      "partition_columns": [
+        "created_at",
+        "updated_at"
+      ],
+      "join_candidates": [
+        {
+          "column": "po_id",
+          "target_table": "purchase_orders",
+          "target_column": "po_id",
+          "confidence": "high"
+        },
+        {
+          "column": "product_id",
+          "target_table": "products",
+          "target_column": "product_id",
+          "confidence": "high"
+        }
+      ],
+      "unit_summary": {
+        "columns_with_units": 0,
+        "columns_without_units": 9,
+        "mixed_unit_groups": [],
+        "unknown_unit_columns": []
+      },
+      "cdc_enabled": false,
+      "has_primary_key": true,
+      "has_foreign_keys": true,
+      "has_sensitive_fields": false
+    },
+    {
+      "table": "purchase_orders",
+      "schema": "dbo",
+      "table_description": "Procurement headers including approver employee relationship.",
+      "columns": [
+        {
+          "name": "po_id",
+          "type": "bigint",
+          "nullable": false,
+          "semantic_class": null,
+          "unit_context": null,
+          "column_description": null,
+          "is_incremental": true
+        },
+        {
+          "name": "supplier_id",
+          "type": "bigint",
+          "nullable": false,
+          "semantic_class": null,
+          "unit_context": null,
+          "column_description": null,
+          "is_incremental": false
+        },
+        {
+          "name": "store_id",
+          "type": "bigint",
+          "nullable": false,
+          "semantic_class": null,
+          "unit_context": null,
+          "column_description": null,
+          "is_incremental": false
+        },
+        {
+          "name": "status",
+          "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+          "nullable": false,
+          "semantic_class": null,
+          "unit_context": null,
+          "column_description": null,
+          "is_incremental": false
+        },
+        {
+          "name": "order_date",
+          "type": "date",
+          "nullable": false,
+          "semantic_class": null,
+          "unit_context": null,
+          "column_description": null,
+          "is_incremental": false
+        },
+        {
+          "name": "expected_date",
+          "type": "date",
+          "nullable": true,
+          "semantic_class": null,
+          "unit_context": null,
+          "column_description": null,
+          "is_incremental": false
+        },
+        {
+          "name": "created_at",
+          "type": "datetime2",
+          "nullable": false,
+          "semantic_class": null,
+          "unit_context": null,
+          "column_description": null,
+          "is_incremental": true
+        },
+        {
+          "name": "updated_at",
+          "type": "datetime2",
+          "nullable": false,
+          "semantic_class": null,
+          "unit_context": null,
+          "column_description": null,
+          "is_incremental": true
+        },
+        {
+          "name": "approver_employee_id",
+          "type": "bigint",
+          "nullable": true,
+          "semantic_class": null,
+          "unit_context": null,
+          "column_description": "Approver employee foreign key for procurement workflow.",
+          "is_incremental": false
+        }
+      ],
+      "primary_keys": [
+        "po_id"
+      ],
+      "foreign_keys": [
+        {
+          "column": "approver_employee_id",
+          "references": "employees.employee_id"
+        },
+        {
+          "column": "store_id",
+          "references": "stores.store_id"
+        },
+        {
+          "column": "supplier_id",
+          "references": "suppliers.supplier_id"
+        }
+      ],
+      "row_count": 125,
+      "incremental_columns": [
+        "po_id",
+        "created_at",
+        "updated_at"
+      ],
+      "partition_columns": [
+        "order_date",
+        "expected_date",
+        "created_at",
+        "updated_at"
+      ],
+      "join_candidates": [
+        {
+          "column": "approver_employee_id",
+          "target_table": "employees",
+          "target_column": "employee_id",
+          "confidence": "high"
+        },
+        {
+          "column": "store_id",
+          "target_table": "stores",
+          "target_column": "store_id",
+          "confidence": "high"
+        },
+        {
+          "column": "supplier_id",
+          "target_table": "suppliers",
+          "target_column": "supplier_id",
+          "confidence": "high"
+        }
+      ],
+      "unit_summary": {
+        "columns_with_units": 0,
+        "columns_without_units": 9,
+        "mixed_unit_groups": [],
+        "unknown_unit_columns": []
+      },
+      "cdc_enabled": false,
+      "has_primary_key": true,
+      "has_foreign_keys": true,
+      "has_sensitive_fields": false
+    },
+    {
+      "table": "sales_order_items",
+      "schema": "dbo",
+      "table_description": "Sales line items with sold quantity and explicit unit labels.",
+      "columns": [
+        {
+          "name": "sales_order_item_id",
+          "type": "bigint",
+          "nullable": false,
+          "semantic_class": null,
+          "unit_context": null,
+          "column_description": null,
+          "is_incremental": true
+        },
+        {
+          "name": "sales_order_id",
+          "type": "bigint",
+          "nullable": false,
+          "semantic_class": null,
+          "unit_context": null,
+          "column_description": null,
+          "is_incremental": false
+        },
+        {
+          "name": "product_id",
+          "type": "bigint",
+          "nullable": false,
+          "semantic_class": "product_identifier",
+          "unit_context": null,
+          "column_description": null,
+          "is_incremental": false
+        },
+        {
+          "name": "quantity",
+          "type": "integer",
+          "nullable": false,
+          "semantic_class": "quantity",
+          "unit_context": null,
+          "column_description": null,
+          "is_incremental": false
+        },
+        {
+          "name": "unit_price",
+          "type": "numeric(15, 2)",
+          "nullable": false,
+          "semantic_class": null,
+          "unit_context": null,
+          "column_description": null,
+          "is_incremental": false
+        },
+        {
+          "name": "created_at",
+          "type": "datetime2",
+          "nullable": false,
+          "semantic_class": null,
+          "unit_context": null,
+          "column_description": null,
+          "is_incremental": true
+        },
+        {
+          "name": "updated_at",
+          "type": "datetime2",
+          "nullable": false,
+          "semantic_class": null,
+          "unit_context": null,
+          "column_description": null,
+          "is_incremental": true
+        },
+        {
+          "name": "sold_qty_value",
+          "type": "decimal(10, 2)",
+          "nullable": true,
+          "semantic_class": "quantity",
+          "unit_context": null,
+          "column_description": null,
+          "is_incremental": false
+        },
+        {
+          "name": "sold_qty_unit",
+          "type": "nvarchar(16) collate \"sql_latin1_general_cp1_ci_as\"",
+          "nullable": true,
+          "semantic_class": "quantity",
+          "unit_context": null,
+          "column_description": "Sold quantity unit (ea/box).",
+          "is_incremental": false
+        }
+      ],
+      "primary_keys": [
+        "sales_order_item_id"
+      ],
+      "foreign_keys": [
+        {
+          "column": "product_id",
+          "references": "products.product_id"
+        },
+        {
+          "column": "sales_order_id",
+          "references": "sales_orders.sales_order_id"
+        }
+      ],
+      "row_count": 508,
+      "incremental_columns": [
+        "sales_order_item_id",
+        "created_at",
+        "updated_at"
+      ],
+      "partition_columns": [
+        "created_at",
+        "updated_at"
+      ],
+      "join_candidates": [
+        {
+          "column": "product_id",
+          "target_table": "products",
+          "target_column": "product_id",
+          "confidence": "high"
+        },
+        {
+          "column": "sales_order_id",
+          "target_table": "sales_orders",
+          "target_column": "sales_order_id",
+          "confidence": "high"
+        }
+      ],
+      "unit_summary": {
+        "columns_with_units": 0,
+        "columns_without_units": 9,
+        "mixed_unit_groups": [],
+        "unknown_unit_columns": []
+      },
+      "cdc_enabled": false,
+      "has_primary_key": true,
+      "has_foreign_keys": true,
+      "has_sensitive_fields": false
+    },
+    {
+      "table": "sales_orders",
+      "schema": "dbo",
+      "table_description": "Sales headers including assigned sales representative relationship.",
+      "columns": [
+        {
+          "name": "sales_order_id",
+          "type": "bigint",
+          "nullable": false,
+          "semantic_class": null,
+          "unit_context": null,
+          "column_description": null,
+          "is_incremental": true
+        },
+        {
+          "name": "store_id",
+          "type": "bigint",
+          "nullable": false,
+          "semantic_class": null,
+          "unit_context": null,
+          "column_description": null,
+          "is_incremental": false
+        },
+        {
+          "name": "customer_id",
+          "type": "bigint",
+          "nullable": true,
+          "semantic_class": null,
+          "unit_context": null,
+          "column_description": null,
+          "is_incremental": false
+        },
+        {
+          "name": "employee_id",
+          "type": "bigint",
+          "nullable": false,
+          "semantic_class": null,
+          "unit_context": null,
+          "column_description": null,
+          "is_incremental": false
+        },
+        {
+          "name": "order_date",
+          "type": "datetime2",
+          "nullable": false,
+          "semantic_class": null,
+          "unit_context": null,
+          "column_description": null,
+          "is_incremental": false
+        },
+        {
+          "name": "status",
+          "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+          "nullable": false,
+          "semantic_class": null,
+          "unit_context": null,
+          "column_description": null,
+          "is_incremental": false
+        },
+        {
+          "name": "total_amount",
+          "type": "decimal(12, 2)",
+          "nullable": false,
+          "semantic_class": null,
+          "unit_context": null,
+          "column_description": null,
+          "is_incremental": false
+        },
+        {
+          "name": "created_at",
+          "type": "datetime2",
+          "nullable": false,
+          "semantic_class": null,
+          "unit_context": null,
+          "column_description": null,
+          "is_incremental": true
+        },
+        {
+          "name": "updated_at",
+          "type": "datetime2",
+          "nullable": false,
+          "semantic_class": null,
+          "unit_context": null,
+          "column_description": null,
+          "is_incremental": true
+        },
+        {
+          "name": "sales_rep_employee_id",
+          "type": "bigint",
+          "nullable": true,
+          "semantic_class": null,
+          "unit_context": null,
+          "column_description": "Sales representative foreign key for order ownership.",
+          "is_incremental": false
+        }
+      ],
+      "primary_keys": [
+        "sales_order_id"
+      ],
+      "foreign_keys": [
+        {
+          "column": "customer_id",
+          "references": "customers.customer_id"
+        },
+        {
+          "column": "employee_id",
+          "references": "employees.employee_id"
+        },
+        {
+          "column": "sales_rep_employee_id",
+          "references": "employees.employee_id"
+        },
+        {
+          "column": "store_id",
+          "references": "stores.store_id"
+        }
+      ],
+      "row_count": 200,
+      "incremental_columns": [
+        "sales_order_id",
+        "created_at",
+        "updated_at"
+      ],
+      "partition_columns": [
+        "order_date",
+        "created_at",
+        "updated_at"
+      ],
+      "join_candidates": [
+        {
+          "column": "customer_id",
+          "target_table": "customers",
+          "target_column": "customer_id",
+          "confidence": "high"
+        },
+        {
+          "column": "employee_id",
+          "target_table": "employees",
+          "target_column": "employee_id",
+          "confidence": "high"
+        },
+        {
+          "column": "sales_rep_employee_id",
+          "target_table": "employees",
+          "target_column": "employee_id",
+          "confidence": "high"
+        },
+        {
+          "column": "store_id",
+          "target_table": "stores",
+          "target_column": "store_id",
+          "confidence": "high"
+        }
+      ],
+      "unit_summary": {
+        "columns_with_units": 0,
+        "columns_without_units": 10,
+        "mixed_unit_groups": [],
+        "unknown_unit_columns": []
+      },
+      "cdc_enabled": false,
+      "has_primary_key": true,
+      "has_foreign_keys": true,
+      "has_sensitive_fields": false
+    },
+    {
+      "table": "stores",
+      "schema": "dbo",
+      "table_description": null,
+      "columns": [
+        {
+          "name": "store_id",
+          "type": "bigint",
+          "nullable": false,
+          "semantic_class": null,
+          "unit_context": null,
+          "column_description": null,
+          "is_incremental": true
+        },
+        {
+          "name": "name",
+          "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+          "nullable": false,
+          "semantic_class": null,
+          "unit_context": null,
+          "column_description": null,
+          "is_incremental": false
+        },
+        {
+          "name": "code",
+          "type": "nvarchar(450) collate \"sql_latin1_general_cp1_ci_as\"",
+          "nullable": false,
+          "semantic_class": null,
+          "unit_context": null,
+          "column_description": null,
+          "is_incremental": false
+        },
+        {
+          "name": "address",
+          "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+          "nullable": true,
+          "semantic_class": null,
+          "unit_context": null,
+          "column_description": null,
+          "is_incremental": false
+        },
+        {
+          "name": "city",
+          "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+          "nullable": true,
+          "semantic_class": null,
+          "unit_context": null,
+          "column_description": null,
+          "is_incremental": false
+        },
+        {
+          "name": "state",
+          "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+          "nullable": true,
+          "semantic_class": null,
+          "unit_context": null,
+          "column_description": null,
+          "is_incremental": false
+        },
+        {
+          "name": "postal_code",
+          "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+          "nullable": true,
+          "semantic_class": null,
+          "unit_context": null,
+          "column_description": null,
+          "is_incremental": false
+        },
+        {
+          "name": "phone",
+          "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+          "nullable": true,
+          "semantic_class": null,
+          "unit_context": null,
+          "column_description": null,
+          "is_incremental": false
+        },
+        {
+          "name": "created_at",
+          "type": "datetime2",
+          "nullable": false,
+          "semantic_class": null,
+          "unit_context": null,
+          "column_description": null,
+          "is_incremental": true
+        },
+        {
+          "name": "updated_at",
+          "type": "datetime2",
+          "nullable": false,
+          "semantic_class": null,
+          "unit_context": null,
+          "column_description": null,
+          "is_incremental": true
+        }
+      ],
+      "primary_keys": [
+        "store_id"
+      ],
+      "foreign_keys": [],
+      "row_count": 5,
+      "incremental_columns": [
+        "store_id",
+        "created_at",
+        "updated_at"
+      ],
+      "partition_columns": [
+        "created_at",
+        "updated_at"
+      ],
+      "join_candidates": [],
+      "unit_summary": {
+        "columns_with_units": 0,
+        "columns_without_units": 10,
+        "mixed_unit_groups": [],
+        "unknown_unit_columns": []
+      },
+      "cdc_enabled": false,
+      "has_primary_key": true,
+      "has_foreign_keys": false,
+      "has_sensitive_fields": false
+    },
+    {
+      "table": "suppliers",
+      "schema": "dbo",
+      "table_description": null,
+      "columns": [
+        {
+          "name": "supplier_id",
+          "type": "bigint",
+          "nullable": false,
+          "semantic_class": null,
+          "unit_context": null,
+          "column_description": null,
+          "is_incremental": true
+        },
+        {
+          "name": "name",
+          "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+          "nullable": false,
+          "semantic_class": null,
+          "unit_context": null,
+          "column_description": null,
+          "is_incremental": false
+        },
+        {
+          "name": "contact_name",
+          "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+          "nullable": true,
+          "semantic_class": null,
+          "unit_context": null,
+          "column_description": null,
+          "is_incremental": false
+        },
+        {
+          "name": "email",
+          "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+          "nullable": true,
+          "semantic_class": null,
+          "unit_context": null,
+          "column_description": null,
+          "is_incremental": false
+        },
+        {
+          "name": "phone",
+          "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+          "nullable": true,
+          "semantic_class": null,
+          "unit_context": null,
+          "column_description": null,
+          "is_incremental": false
+        },
+        {
+          "name": "created_at",
+          "type": "datetime2",
+          "nullable": false,
+          "semantic_class": null,
+          "unit_context": null,
+          "column_description": null,
+          "is_incremental": true
+        },
+        {
+          "name": "updated_at",
+          "type": "datetime2",
+          "nullable": false,
+          "semantic_class": null,
+          "unit_context": null,
+          "column_description": null,
+          "is_incremental": true
+        }
+      ],
+      "primary_keys": [
+        "supplier_id"
+      ],
+      "foreign_keys": [],
+      "row_count": 10,
+      "incremental_columns": [
+        "supplier_id",
+        "created_at",
+        "updated_at"
+      ],
+      "partition_columns": [
+        "created_at",
+        "updated_at"
+      ],
+      "join_candidates": [],
+      "unit_summary": {
+        "columns_with_units": 0,
+        "columns_without_units": 7,
+        "mixed_unit_groups": [],
+        "unknown_unit_columns": []
+      },
+      "cdc_enabled": false,
+      "has_primary_key": true,
+      "has_foreign_keys": false,
+      "has_sensitive_fields": false
     }
   ]
 }

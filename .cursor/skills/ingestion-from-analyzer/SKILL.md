@@ -151,6 +151,12 @@ Produce a **single markdown report** with this structure:
 ## Guardrails
 
 - **Secrets**: never output secret values. Use placeholders and env/Key Vault **reference names** only.
+- **SDK connector deploy — never deploy `configuration.json` directly**: `configuration.json` must contain only placeholder strings (e.g. `${DBT_ACCOUNT_ID}`). Always use a `deploy.sh` script that:
+  1. Sources `.env` to resolve env vars
+  2. Writes a temp `configuration.resolved.json` with real values
+  3. Runs `fivetran deploy --configuration configuration.resolved.json`
+  4. Deletes the temp file on exit (use `trap 'rm -f ...' EXIT`)
+  Deploying `configuration.json` directly passes literal placeholder strings to Fivetran, causing `python_code_throwing_error` on first sync.
 - **Accuracy**: final settings depend on **Fivetran connector version**, **destination**, and **account limits**—verify in Fivetran docs or UI.
 - **Analyzer limits**: if `concept_id` is null or confidence is low, mark hashing/PII recommendations as **provisional** and suggest classification review per `references/shared/classification-review-workflow.md` in source-system-analyser.
 - **Analyzer exclusions**: if `source_system_context.db_analysis_config` lists excluded schemas or tables, preserve those exclusions in every Fivetran recommendation. Do not reintroduce excluded objects into connector scope, table plans, or rollout suggestions.

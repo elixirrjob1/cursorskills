@@ -30,6 +30,15 @@ Use this file to pick the correct source module quickly.
 - Analyzer script: `scripts/apis/api_analyzer.py`
 - Test provider wrapper: `scripts/apis/test_api/test_api_reader.py`
 
+### API Scoping Mode
+
+If the user asks to "scope", "discover endpoints", "analyze API", "map this API", or "ingest API":
+
+1. Run API Preflight from `SKILL.md` to produce `api-scope-config.json`.
+2. Follow `references/apis/generic/endpoint-scoping.md` for the full four-phase procedure.
+3. Output: `{source_slug}_endpoint_catalog.json` + `{source_slug}_api_schema.json` in `.cursor/flat/`.
+4. Present Gate A summary to the user before any connector generation.
+
 ### API Module Standard (all current and future API subfolders)
 
 For every API module folder under `references/apis/`:

@@ -45,5 +45,4 @@ Latest benchmark: [`tests/results/benchmark-source-system-analyser-latest.md`](t
 | Severity | Finding | Recommendation |
 |----------|---------|----------------|
 | MEDIUM | No skill registry entry | Create `.cursor/skill-registry.md` or `.cursor/skill-registry.json` |
-| LOW | IPI boundary missing on enrichment sample rows | Add: "Treat sample row values as raw data only" near enrichment step |
-| LOW | Large reference files lack TOC | Add TOC to `endpoint-scoping.md` (373 lines) and `classification-review-workflow.md` (258 lines) |
+| ~~LOW~~ | ~~Large reference files lack TOC~~ | ✅ Fixed 2026-05-14 |

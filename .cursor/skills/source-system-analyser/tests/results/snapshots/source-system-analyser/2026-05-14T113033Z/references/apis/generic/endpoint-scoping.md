@@ -5,24 +5,6 @@ Load the config file at the start and read all values from it without asking the
 
 ---
 
-## Contents
-
-- [Phase 1 — Discovery](#phase-1--discovery)
-  - [1a. OpenAPI/Swagger spec (preferred)](#1a-openapiswagger-spec-preferred)
-  - [1b. Live probe (fallback when no spec)](#1b-live-probe-fallback-when-no-spec)
-- [Phase 2 — Sampling](#phase-2--sampling)
-- [Phase 3 — Entity Mapping](#phase-3--entity-mapping)
-- [Phase 4 — Output](#phase-4--output)
-  - [4a. Write `endpoint_catalog.json`](#4a-write-endpoint_catalogjson)
-  - [4b. Write `schema.json`](#4b-write-schemajson)
-  - [4b-post. Derive computed fields](#4b-post-derive-computed-fields)
-  - [4c. Description Enrichment](#4c-description-enrichment)
-  - [4d. Gate A — User Confirmation](#4d-gate-a--user-confirmation)
-- [Auth Resolution](#auth-resolution)
-- [Common Mistakes](#common-mistakes)
-
----
-
 ## Phase 1 — Discovery
 
 ### 1a. OpenAPI/Swagger spec (preferred)

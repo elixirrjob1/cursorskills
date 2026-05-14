@@ -1,23 +1,5 @@
 # Classification Review Workflow
 
-## Contents
-
-- [When To Use This](#when-to-use-this)
-- [What Null Means](#what-null-means)
-- [The Review Loop](#the-review-loop)
-- [What To Fix First](#what-to-fix-first)
-  - [1. False Positives](#1-false-positives)
-  - [2. High-Value Nulls](#2-high-value-nulls)
-  - [3. Repeated Business Patterns](#3-repeated-business-patterns)
-  - [4. Low-Value Edge Cases](#4-low-value-edge-cases)
-- [Safe Order Of Rule Changes](#safe-order-of-rule-changes)
-- [Cursor Prompts](#cursor-prompts)
-- [Example Walkthrough](#example-walkthrough)
-- [How To Use The Registry](#how-to-use-the-registry)
-- [Stopping Criteria](#stopping-criteria)
-
----
-
 ## When To Use This
 
 Use this workflow when a generated `schema.json` has:

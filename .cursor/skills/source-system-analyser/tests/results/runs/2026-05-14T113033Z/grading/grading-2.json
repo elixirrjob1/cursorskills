@@ -1,0 +1,27 @@
+{
+  "eval_id": 2,
+  "prompt_short": "Analyze our MSSQL database, no exclusions needed. Connection string is in environment",
+  "overall_result": "FAIL",
+  "assertions": [
+    {
+      "text": "Response asks the user at least one of the three preflight questions (schemas/tables/row-limit exclusions)",
+      "passed": false,
+      "evidence": "The response does not ask about schemas, tables, or row-limit exclusions. It only asks the user to set MSSQL_URL or confirm a Key Vault secret name. NOTE: This is a false failure — the user's prompt pre-answered the preflight ('no exclusions needed'), and the prior review (2026-05-06 TC2) confirms that accepting an inline user statement as a preflight answer is the correct behavior."
+    },
+    {
+      "text": "Response does NOT create db-analysis-config.json when user says no to all exclusion questions",
+      "passed": true,
+      "evidence": "No db-analysis-config.json is created or mentioned anywhere in the response."
+    },
+    {
+      "text": "Response routes to the MSSQL module (references/databases/mssql or MSSQL-specific mention)",
+      "passed": true,
+      "evidence": "The response references '--dialect mssql' and uses 'mssql+pyodbc' in the connection string, confirming MSSQL-specific routing."
+    },
+    {
+      "text": "Response mentions running the source_system_analyzer.py script or equivalent step",
+      "passed": true,
+      "evidence": "The response explicitly shows commands to run 'source_system_analyzer.py' with MSSQL parameters."
+    }
+  ]
+}

@@ -9,7 +9,7 @@ dependencies:
   - scripts/apis/api_reader.py + api_analyzer.py
   - scripts/flat/tabular_schema_json.py
   - scripts/volume_projection/collector.py + predictor.py
-last_reviewed: 2026-05-14
+last_reviewed: 2026-05-06
 rollback: pin to commit hash; revert via PR
 ---
 

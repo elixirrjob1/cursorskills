@@ -1,0 +1,691 @@
+{
+  "schema": "dbo",
+  "table": "purchase_order_items",
+  "metadata": {
+    "table": "purchase_order_items",
+    "schema": "dbo",
+    "table_description": "Line items with order quantities and explicit unit labels.",
+    "columns": [
+      {
+        "name": "po_item_id",
+        "type": "bigint",
+        "nullable": false,
+        "semantic_class": null,
+        "unit_context": null,
+        "column_description": null,
+        "is_incremental": true
+      },
+      {
+        "name": "po_id",
+        "type": "bigint",
+        "nullable": false,
+        "semantic_class": null,
+        "unit_context": null,
+        "column_description": null,
+        "is_incremental": false
+      },
+      {
+        "name": "product_id",
+        "type": "bigint",
+        "nullable": false,
+        "semantic_class": "product_identifier",
+        "unit_context": null,
+        "column_description": null,
+        "is_incremental": false
+      },
+      {
+        "name": "quantity",
+        "type": "integer",
+        "nullable": false,
+        "semantic_class": "quantity",
+        "unit_context": null,
+        "column_description": null,
+        "is_incremental": false
+      },
+      {
+        "name": "unit_cost",
+        "type": "decimal(10, 2)",
+        "nullable": false,
+        "semantic_class": null,
+        "unit_context": null,
+        "column_description": null,
+        "is_incremental": false
+      },
+      {
+        "name": "created_at",
+        "type": "datetime2",
+        "nullable": false,
+        "semantic_class": null,
+        "unit_context": null,
+        "column_description": null,
+        "is_incremental": true
+      },
+      {
+        "name": "updated_at",
+        "type": "datetime2",
+        "nullable": false,
+        "semantic_class": null,
+        "unit_context": null,
+        "column_description": null,
+        "is_incremental": true
+      },
+      {
+        "name": "ordered_qty_value",
+        "type": "decimal(10, 2)",
+        "nullable": true,
+        "semantic_class": "quantity",
+        "unit_context": null,
+        "column_description": null,
+        "is_incremental": false
+      },
+      {
+        "name": "ordered_qty_unit",
+        "type": "nvarchar(16) collate \"sql_latin1_general_cp1_ci_as\"",
+        "nullable": true,
+        "semantic_class": "quantity",
+        "unit_context": null,
+        "column_description": "Ordered quantity unit (ea/box).",
+        "is_incremental": false
+      }
+    ],
+    "primary_keys": [
+      "po_item_id"
+    ],
+    "foreign_keys": [
+      {
+        "column": "po_id",
+        "references": "purchase_orders.po_id"
+      },
+      {
+        "column": "product_id",
+        "references": "products.product_id"
+      }
+    ],
+    "row_count": 246,
+    "incremental_columns": [
+      "po_item_id",
+      "created_at",
+      "updated_at"
+    ],
+    "partition_columns": [
+      "created_at",
+      "updated_at"
+    ],
+    "join_candidates": [
+      {
+        "column": "po_id",
+        "target_table": "purchase_orders",
+        "target_column": "po_id",
+        "confidence": "high"
+      },
+      {
+        "column": "product_id",
+        "target_table": "products",
+        "target_column": "product_id",
+        "confidence": "high"
+      }
+    ],
+    "unit_summary": {
+      "columns_with_units": 0,
+      "columns_without_units": 9,
+      "mixed_unit_groups": [],
+      "unknown_unit_columns": []
+    },
+    "cdc_enabled": false,
+    "has_primary_key": true,
+    "has_foreign_keys": true,
+    "has_sensitive_fields": false
+  },
+  "data": [
+    {
+      "po_item_id": 268,
+      "po_id": 128,
+      "product_id": 197,
+      "quantity": 21,
+      "unit_cost": "39.68",
+      "created_at": "2026-03-12 15:44:18.668789",
+      "updated_at": "2026-03-12 15:44:18.668794",
+      "ordered_qty_value": null,
+      "ordered_qty_unit": null
+    },
+    {
+      "po_item_id": 269,
+      "po_id": 129,
+      "product_id": 173,
+      "quantity": 19,
+      "unit_cost": "209.85",
+      "created_at": "2026-03-12 15:44:19.054745",
+      "updated_at": "2026-03-12 15:44:19.054753",
+      "ordered_qty_value": null,
+      "ordered_qty_unit": null
+    },
+    {
+      "po_item_id": 270,
+      "po_id": 129,
+      "product_id": 199,
+      "quantity": 15,
+      "unit_cost": "257.07",
+      "created_at": "2026-03-12 15:44:19.463782",
+      "updated_at": "2026-03-12 15:44:19.463791",
+      "ordered_qty_value": null,
+      "ordered_qty_unit": null
+    },
+    {
+      "po_item_id": 271,
+      "po_id": 130,
+      "product_id": 170,
+      "quantity": 50,
+      "unit_cost": "69.00",
+      "created_at": "2026-03-12 15:44:19.771715",
+      "updated_at": "2026-03-12 15:44:19.771719",
+      "ordered_qty_value": null,
+      "ordered_qty_unit": null
+    },
+    {
+      "po_item_id": 272,
+      "po_id": 131,
+      "product_id": 182,
+      "quantity": 24,
+      "unit_cost": "138.64",
+      "created_at": "2026-03-12 15:44:20.181170",
+      "updated_at": "2026-03-12 15:44:20.181176",
+      "ordered_qty_value": null,
+      "ordered_qty_unit": null
+    },
+    {
+      "po_item_id": 273,
+      "po_id": 131,
+      "product_id": 173,
+      "quantity": 41,
+      "unit_cost": "209.85",
+      "created_at": "2026-03-12 15:44:20.590258",
+      "updated_at": "2026-03-12 15:44:20.590267",
+      "ordered_qty_value": null,
+      "ordered_qty_unit": null
+    },
+    {
+      "po_item_id": 274,
+      "po_id": 132,
+      "product_id": 180,
+      "quantity": 37,
+      "unit_cost": "213.33",
+      "created_at": "2026-03-12 15:44:20.909798",
+      "updated_at": "2026-03-12 15:44:20.909803",
+      "ordered_qty_value": null,
+      "ordered_qty_unit": null
+    },
+    {
+      "po_item_id": 275,
+      "po_id": 132,
+      "product_id": 166,
+      "quantity": 46,
+      "unit_cost": "176.26",
+      "created_at": "2026-03-12 15:44:21.285522",
+      "updated_at": "2026-03-12 15:44:21.285532",
+      "ordered_qty_value": null,
+      "ordered_qty_unit": null
+    },
+    {
+      "po_item_id": 276,
+      "po_id": 133,
+      "product_id": 197,
+      "quantity": 50,
+      "unit_cost": "39.68",
+      "created_at": "2026-03-12 15:44:21.614803",
+      "updated_at": "2026-03-12 15:44:21.614810",
+      "ordered_qty_value": null,
+      "ordered_qty_unit": null
+    },
+    {
+      "po_item_id": 277,
+      "po_id": 133,
+      "product_id": 172,
+      "quantity": 38,
+      "unit_cost": "265.59",
+      "created_at": "2026-03-12 15:44:22.072749",
+      "updated_at": "2026-03-12 15:44:22.072759",
+      "ordered_qty_value": null,
+      "ordered_qty_unit": null
+    },
+    {
+      "po_item_id": 278,
+      "po_id": 133,
+      "product_id": 204,
+      "quantity": 28,
+      "unit_cost": "36.39",
+      "created_at": "2026-03-12 15:44:22.433484",
+      "updated_at": "2026-03-12 15:44:22.433494",
+      "ordered_qty_value": null,
+      "ordered_qty_unit": null
+    },
+    {
+      "po_item_id": 279,
+      "po_id": 134,
+      "product_id": 202,
+      "quantity": 48,
+      "unit_cost": "311.12",
+      "created_at": "2026-03-12 15:44:22.741523",
+      "updated_at": "2026-03-12 15:44:22.741528",
+      "ordered_qty_value": null,
+      "ordered_qty_unit": null
+    },
+    {
+      "po_item_id": 280,
+      "po_id": 135,
+      "product_id": 164,
+      "quantity": 32,
+      "unit_cost": "5.55",
+      "created_at": "2026-03-12 15:44:23.052286",
+      "updated_at": "2026-03-12 15:44:23.052291",
+      "ordered_qty_value": null,
+      "ordered_qty_unit": null
+    },
+    {
+      "po_item_id": 281,
+      "po_id": 135,
+      "product_id": 180,
+      "quantity": 31,
+      "unit_cost": "213.33",
+      "created_at": "2026-03-12 15:44:23.388310",
+      "updated_at": "2026-03-12 15:44:23.388321",
+      "ordered_qty_value": null,
+      "ordered_qty_unit": null
+    },
+    {
+      "po_item_id": 282,
+      "po_id": 136,
+      "product_id": 166,
+      "quantity": 15,
+      "unit_cost": "176.26",
+      "created_at": "2026-03-12 15:44:23.696020",
+      "updated_at": "2026-03-12 15:44:23.696025",
+      "ordered_qty_value": null,
+      "ordered_qty_unit": null
+    },
+    {
+      "po_item_id": 283,
+      "po_id": 136,
+      "product_id": 157,
+      "quantity": 19,
+      "unit_cost": "306.62",
+      "created_at": "2026-03-12 15:44:24.072426",
+      "updated_at": "2026-03-12 15:44:24.072436",
+      "ordered_qty_value": null,
+      "ordered_qty_unit": null
+    },
+    {
+      "po_item_id": 284,
+      "po_id": 137,
+      "product_id": 203,
+      "quantity": 16,
+      "unit_cost": "285.94",
+      "created_at": "2026-03-12 15:44:24.482448",
+      "updated_at": "2026-03-12 15:44:24.482454",
+      "ordered_qty_value": null,
+      "ordered_qty_unit": null
+    },
+    {
+      "po_item_id": 285,
+      "po_id": 137,
+      "product_id": 176,
+      "quantity": 42,
+      "unit_cost": "264.16",
+      "created_at": "2026-03-12 15:44:24.891266",
+      "updated_at": "2026-03-12 15:44:24.891276",
+      "ordered_qty_value": null,
+      "ordered_qty_unit": null
+    },
+    {
+      "po_item_id": 286,
+      "po_id": 137,
+      "product_id": 182,
+      "quantity": 45,
+      "unit_cost": "138.64",
+      "created_at": "2026-03-12 15:44:25.301340",
+      "updated_at": "2026-03-12 15:44:25.301349",
+      "ordered_qty_value": null,
+      "ordered_qty_unit": null
+    },
+    {
+      "po_item_id": 287,
+      "po_id": 138,
+      "product_id": 158,
+      "quantity": 28,
+      "unit_cost": "157.13",
+      "created_at": "2026-03-12 15:44:25.572623",
+      "updated_at": "2026-03-12 15:44:25.572627",
+      "ordered_qty_value": null,
+      "ordered_qty_unit": null
+    },
+    {
+      "po_item_id": 288,
+      "po_id": 139,
+      "product_id": 168,
+      "quantity": 23,
+      "unit_cost": "314.12",
+      "created_at": "2026-03-12 15:44:25.948814",
+      "updated_at": "2026-03-12 15:44:25.948819",
+      "ordered_qty_value": null,
+      "ordered_qty_unit": null
+    },
+    {
+      "po_item_id": 289,
+      "po_id": 140,
+      "product_id": 169,
+      "quantity": 42,
+      "unit_cost": "211.21",
+      "created_at": "2026-03-12 15:44:26.325771",
+      "updated_at": "2026-03-12 15:44:26.325775",
+      "ordered_qty_value": null,
+      "ordered_qty_unit": null
+    },
+    {
+      "po_item_id": 290,
+      "po_id": 140,
+      "product_id": 159,
+      "quantity": 40,
+      "unit_cost": "24.91",
+      "created_at": "2026-03-12 15:44:26.734319",
+      "updated_at": "2026-03-12 15:44:26.734329",
+      "ordered_qty_value": null,
+      "ordered_qty_unit": null
+    },
+    {
+      "po_item_id": 291,
+      "po_id": 140,
+      "product_id": 196,
+      "quantity": 22,
+      "unit_cost": "64.17",
+      "created_at": "2026-03-12 15:44:27.006105",
+      "updated_at": "2026-03-12 15:44:27.006114",
+      "ordered_qty_value": null,
+      "ordered_qty_unit": null
+    },
+    {
+      "po_item_id": 292,
+      "po_id": 141,
+      "product_id": 197,
+      "quantity": 11,
+      "unit_cost": "39.68",
+      "created_at": "2026-03-12 15:44:27.429896",
+      "updated_at": "2026-03-12 15:44:27.429902",
+      "ordered_qty_value": null,
+      "ordered_qty_unit": null
+    },
+    {
+      "po_item_id": 293,
+      "po_id": 141,
+      "product_id": 178,
+      "quantity": 37,
+      "unit_cost": "358.59",
+      "created_at": "2026-03-12 15:44:27.861094",
+      "updated_at": "2026-03-12 15:44:27.861105",
+      "ordered_qty_value": null,
+      "ordered_qty_unit": null
+    },
+    {
+      "po_item_id": 294,
+      "po_id": 142,
+      "product_id": 167,
+      "quantity": 36,
+      "unit_cost": "196.72",
+      "created_at": "2026-03-12 15:44:28.132044",
+      "updated_at": "2026-03-12 15:44:28.132051",
+      "ordered_qty_value": null,
+      "ordered_qty_unit": null
+    },
+    {
+      "po_item_id": 295,
+      "po_id": 143,
+      "product_id": 163,
+      "quantity": 34,
+      "unit_cost": "200.31",
+      "created_at": "2026-03-12 15:44:28.577974",
+      "updated_at": "2026-03-12 15:44:28.577978",
+      "ordered_qty_value": null,
+      "ordered_qty_unit": null
+    },
+    {
+      "po_item_id": 296,
+      "po_id": 143,
+      "product_id": 170,
+      "quantity": 27,
+      "unit_cost": "69.00",
+      "created_at": "2026-03-12 15:44:28.852264",
+      "updated_at": "2026-03-12 15:44:28.852273",
+      "ordered_qty_value": null,
+      "ordered_qty_unit": null
+    },
+    {
+      "po_item_id": 297,
+      "po_id": 143,
+      "product_id": 165,
+      "quantity": 17,
+      "unit_cost": "178.98",
+      "created_at": "2026-03-12 15:44:29.294417",
+      "updated_at": "2026-03-12 15:44:29.294427",
+      "ordered_qty_value": null,
+      "ordered_qty_unit": null
+    },
+    {
+      "po_item_id": 298,
+      "po_id": 144,
+      "product_id": 163,
+      "quantity": 41,
+      "unit_cost": "200.31",
+      "created_at": "2026-03-12 15:44:29.635199",
+      "updated_at": "2026-03-12 15:44:29.635204",
+      "ordered_qty_value": null,
+      "ordered_qty_unit": null
+    },
+    {
+      "po_item_id": 299,
+      "po_id": 144,
+      "product_id": 174,
+      "quantity": 40,
+      "unit_cost": "260.86",
+      "created_at": "2026-03-12 15:44:30.011323",
+      "updated_at": "2026-03-12 15:44:30.011333",
+      "ordered_qty_value": null,
+      "ordered_qty_unit": null
+    },
+    {
+      "po_item_id": 300,
+      "po_id": 144,
+      "product_id": 191,
+      "quantity": 14,
+      "unit_cost": "350.96",
+      "created_at": "2026-03-12 15:44:30.420965",
+      "updated_at": "2026-03-12 15:44:30.420975",
+      "ordered_qty_value": null,
+      "ordered_qty_unit": null
+    },
+    {
+      "po_item_id": 301,
+      "po_id": 145,
+      "product_id": 197,
+      "quantity": 14,
+      "unit_cost": "39.68",
+      "created_at": "2026-03-12 15:44:30.831062",
+      "updated_at": "2026-03-12 15:44:30.831068",
+      "ordered_qty_value": null,
+      "ordered_qty_unit": null
+    },
+    {
+      "po_item_id": 302,
+      "po_id": 145,
+      "product_id": 189,
+      "quantity": 29,
+      "unit_cost": "163.15",
+      "created_at": "2026-03-12 15:44:31.104326",
+      "updated_at": "2026-03-12 15:44:31.104339",
+      "ordered_qty_value": null,
+      "ordered_qty_unit": null
+    },
+    {
+      "po_item_id": 303,
+      "po_id": 145,
+      "product_id": 178,
+      "quantity": 19,
+      "unit_cost": "358.59",
+      "created_at": "2026-03-12 15:44:31.478270",
+      "updated_at": "2026-03-12 15:44:31.478280",
+      "ordered_qty_value": null,
+      "ordered_qty_unit": null
+    },
+    {
+      "po_item_id": 304,
+      "po_id": 146,
+      "product_id": 174,
+      "quantity": 28,
+      "unit_cost": "260.86",
+      "created_at": "2026-03-12 15:44:31.855000",
+      "updated_at": "2026-03-12 15:44:31.855007",
+      "ordered_qty_value": null,
+      "ordered_qty_unit": null
+    },
+    {
+      "po_item_id": 305,
+      "po_id": 146,
+      "product_id": 190,
+      "quantity": 11,
+      "unit_cost": "59.66",
+      "created_at": "2026-03-12 15:44:32.194655",
+      "updated_at": "2026-03-12 15:44:32.194665",
+      "ordered_qty_value": null,
+      "ordered_qty_unit": null
+    },
+    {
+      "po_item_id": 306,
+      "po_id": 147,
+      "product_id": 165,
+      "quantity": 43,
+      "unit_cost": "178.98",
+      "created_at": "2026-03-12 15:44:32.571700",
+      "updated_at": "2026-03-12 15:44:32.571705",
+      "ordered_qty_value": null,
+      "ordered_qty_unit": null
+    },
+    {
+      "po_item_id": 307,
+      "po_id": 148,
+      "product_id": 165,
+      "quantity": 30,
+      "unit_cost": "178.98",
+      "created_at": "2026-03-12 15:44:32.914373",
+      "updated_at": "2026-03-12 15:44:32.914379",
+      "ordered_qty_value": null,
+      "ordered_qty_unit": null
+    },
+    {
+      "po_item_id": 308,
+      "po_id": 149,
+      "product_id": 199,
+      "quantity": 26,
+      "unit_cost": "257.07",
+      "created_at": "2026-03-12 15:44:33.288456",
+      "updated_at": "2026-03-12 15:44:33.288462",
+      "ordered_qty_value": null,
+      "ordered_qty_unit": null
+    },
+    {
+      "po_item_id": 309,
+      "po_id": 149,
+      "product_id": 159,
+      "quantity": 49,
+      "unit_cost": "24.91",
+      "created_at": "2026-03-12 15:44:33.628400",
+      "updated_at": "2026-03-12 15:44:33.628410",
+      "ordered_qty_value": null,
+      "ordered_qty_unit": null
+    },
+    {
+      "po_item_id": 310,
+      "po_id": 150,
+      "product_id": 173,
+      "quantity": 22,
+      "unit_cost": "209.85",
+      "created_at": "2026-03-12 15:44:33.901559",
+      "updated_at": "2026-03-12 15:44:33.901566",
+      "ordered_qty_value": null,
+      "ordered_qty_unit": null
+    },
+    {
+      "po_item_id": 311,
+      "po_id": 151,
+      "product_id": 182,
+      "quantity": 32,
+      "unit_cost": "138.64",
+      "created_at": "2026-03-12 15:44:34.244417",
+      "updated_at": "2026-03-12 15:44:34.244423",
+      "ordered_qty_value": null,
+      "ordered_qty_unit": null
+    },
+    {
+      "po_item_id": 312,
+      "po_id": 152,
+      "product_id": 191,
+      "quantity": 10,
+      "unit_cost": "350.96",
+      "created_at": "2026-03-12 15:44:34.619867",
+      "updated_at": "2026-03-12 15:44:34.619873",
+      "ordered_qty_value": null,
+      "ordered_qty_unit": null
+    },
+    {
+      "po_item_id": 313,
+      "po_id": 153,
+      "product_id": 174,
+      "quantity": 11,
+      "unit_cost": "260.86",
+      "created_at": "2026-03-12 15:44:35.029209",
+      "updated_at": "2026-03-12 15:44:35.029215",
+      "ordered_qty_value": null,
+      "ordered_qty_unit": null
+    },
+    {
+      "po_item_id": 314,
+      "po_id": 153,
+      "product_id": 179,
+      "quantity": 33,
+      "unit_cost": "160.63",
+      "created_at": "2026-03-12 15:44:35.368869",
+      "updated_at": "2026-03-12 15:44:35.368879",
+      "ordered_qty_value": null,
+      "ordered_qty_unit": null
+    },
+    {
+      "po_item_id": 315,
+      "po_id": 153,
+      "product_id": 190,
+      "quantity": 47,
+      "unit_cost": "59.66",
+      "created_at": "2026-03-12 15:44:35.640252",
+      "updated_at": "2026-03-12 15:44:35.640263",
+      "ordered_qty_value": null,
+      "ordered_qty_unit": null
+    },
+    {
+      "po_item_id": 316,
+      "po_id": 154,
+      "product_id": 204,
+      "quantity": 27,
+      "unit_cost": "36.39",
+      "created_at": "2026-03-12 15:44:35.984634",
+      "updated_at": "2026-03-12 15:44:35.984639",
+      "ordered_qty_value": null,
+      "ordered_qty_unit": null
+    },
+    {
+      "po_item_id": 317,
+      "po_id": 154,
+      "product_id": 181,
+      "quantity": 43,
+      "unit_cost": "222.98",
+      "created_at": "2026-03-12 15:44:36.360675",
+      "updated_at": "2026-03-12 15:44:36.360686",
+      "ordered_qty_value": null,
+      "ordered_qty_unit": null
+    }
+  ]
+}

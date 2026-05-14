@@ -1,0 +1,191 @@
+{
+  "schema": "dbo",
+  "table": "suppliers",
+  "metadata": {
+    "table": "suppliers",
+    "schema": "dbo",
+    "table_description": null,
+    "columns": [
+      {
+        "name": "supplier_id",
+        "type": "bigint",
+        "nullable": false,
+        "semantic_class": null,
+        "unit_context": null,
+        "column_description": null,
+        "is_incremental": true
+      },
+      {
+        "name": "name",
+        "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+        "nullable": false,
+        "semantic_class": null,
+        "unit_context": null,
+        "column_description": null,
+        "is_incremental": false
+      },
+      {
+        "name": "contact_name",
+        "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+        "nullable": true,
+        "semantic_class": null,
+        "unit_context": null,
+        "column_description": null,
+        "is_incremental": false
+      },
+      {
+        "name": "email",
+        "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+        "nullable": true,
+        "semantic_class": null,
+        "unit_context": null,
+        "column_description": null,
+        "is_incremental": false
+      },
+      {
+        "name": "phone",
+        "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+        "nullable": true,
+        "semantic_class": null,
+        "unit_context": null,
+        "column_description": null,
+        "is_incremental": false
+      },
+      {
+        "name": "created_at",
+        "type": "datetime2",
+        "nullable": false,
+        "semantic_class": null,
+        "unit_context": null,
+        "column_description": null,
+        "is_incremental": true
+      },
+      {
+        "name": "updated_at",
+        "type": "datetime2",
+        "nullable": false,
+        "semantic_class": null,
+        "unit_context": null,
+        "column_description": null,
+        "is_incremental": true
+      }
+    ],
+    "primary_keys": [
+      "supplier_id"
+    ],
+    "foreign_keys": [],
+    "row_count": 10,
+    "incremental_columns": [
+      "supplier_id",
+      "created_at",
+      "updated_at"
+    ],
+    "partition_columns": [
+      "created_at",
+      "updated_at"
+    ],
+    "join_candidates": [],
+    "unit_summary": {
+      "columns_with_units": 0,
+      "columns_without_units": 7,
+      "mixed_unit_groups": [],
+      "unknown_unit_columns": []
+    },
+    "cdc_enabled": false,
+    "has_primary_key": true,
+    "has_foreign_keys": false,
+    "has_sensitive_fields": false
+  },
+  "data": [
+    {
+      "supplier_id": 33,
+      "name": "Supplier 1",
+      "contact_name": null,
+      "email": "supplier1@example.com",
+      "phone": "555-2001",
+      "created_at": "2022-01-10 15:38:57.201565",
+      "updated_at": "2022-01-10 15:38:57.201565"
+    },
+    {
+      "supplier_id": 34,
+      "name": "Supplier 2",
+      "contact_name": null,
+      "email": "supplier2@example.com",
+      "phone": "555-2002",
+      "created_at": "2021-06-17 15:38:57.201565",
+      "updated_at": "2021-06-17 15:38:57.201565"
+    },
+    {
+      "supplier_id": 35,
+      "name": "Supplier 3",
+      "contact_name": null,
+      "email": "supplier3@example.com",
+      "phone": "555-2003",
+      "created_at": "2021-12-15 15:38:57.201565",
+      "updated_at": "2021-12-15 15:38:57.201565"
+    },
+    {
+      "supplier_id": 36,
+      "name": "Supplier 4",
+      "contact_name": null,
+      "email": "supplier4@example.com",
+      "phone": "555-2004",
+      "created_at": "2023-02-24 15:38:57.201565",
+      "updated_at": "2023-02-24 15:38:57.201565"
+    },
+    {
+      "supplier_id": 37,
+      "name": "Supplier 5",
+      "contact_name": null,
+      "email": "supplier5@example.com",
+      "phone": "555-2005",
+      "created_at": "2021-08-31 15:38:57.201565",
+      "updated_at": "2021-08-31 15:38:57.201565"
+    },
+    {
+      "supplier_id": 38,
+      "name": "Supplier 6",
+      "contact_name": null,
+      "email": "supplier6@example.com",
+      "phone": "555-2006",
+      "created_at": "2021-06-20 15:38:57.201565",
+      "updated_at": "2021-06-20 15:38:57.201565"
+    },
+    {
+      "supplier_id": 39,
+      "name": "Supplier 7",
+      "contact_name": null,
+      "email": "supplier7@example.com",
+      "phone": "555-2007",
+      "created_at": "2023-07-11 15:38:57.201565",
+      "updated_at": "2023-07-11 15:38:57.201565"
+    },
+    {
+      "supplier_id": 40,
+      "name": "Supplier 8",
+      "contact_name": null,
+      "email": "supplier8@example.com",
+      "phone": "555-2008",
+      "created_at": "2024-02-25 15:38:57.201565",
+      "updated_at": "2024-02-25 15:38:57.201565"
+    },
+    {
+      "supplier_id": 41,
+      "name": "Supplier 9",
+      "contact_name": null,
+      "email": "supplier9@example.com",
+      "phone": "555-2009",
+      "created_at": "2021-03-22 15:38:57.201565",
+      "updated_at": "2021-03-22 15:38:57.201565"
+    },
+    {
+      "supplier_id": 42,
+      "name": "Supplier 10",
+      "contact_name": null,
+      "email": "supplier10@example.com",
+      "phone": "555-2010",
+      "created_at": "2022-05-18 15:38:57.201565",
+      "updated_at": "2022-05-18 15:38:57.201565"
+    }
+  ]
+}

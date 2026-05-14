@@ -1,0 +1,22 @@
+{
+  "eval_id": 7,
+  "prompt_short": "My schema.json has a lot of null concept_ids and low confidence scores. How do I fix",
+  "overall_result": "PASS",
+  "assertions": [
+    {
+      "text": "Response describes the classification review workflow (one family at a time approach)",
+      "passed": true,
+      "evidence": "Response explicitly states 'the right approach here is the classification review workflow' and instructs to 'Pick one repeated family of fields' with a loop: 'pick family → inspect evidence → smallest rule change → scoped rerun → compare → next family'."
+    },
+    {
+      "text": "Response does NOT tell the user to simply rerun source_system_analyzer.py from scratch",
+      "passed": true,
+      "evidence": "Response explicitly says 'not a full rerun of the analyzer. A full rerun won't improve things unless you've already changed the underlying rules.' No instruction to rerun from scratch is given."
+    },
+    {
+      "text": "Response mentions bucketing or grouping nulls/low-confidence columns before rerunning",
+      "passed": true,
+      "evidence": "Step 1 instructs the user to 'Triage your schema.json into three buckets': false positives, high-value nulls, and low confidence — explicitly grouping nulls and low-confidence fields before any rerun."
+    }
+  ]
+}

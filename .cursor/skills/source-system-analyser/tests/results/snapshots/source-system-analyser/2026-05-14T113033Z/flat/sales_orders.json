@@ -1,0 +1,771 @@
+{
+  "schema": "dbo",
+  "table": "sales_orders",
+  "metadata": {
+    "table": "sales_orders",
+    "schema": "dbo",
+    "table_description": "Sales headers including assigned sales representative relationship.",
+    "columns": [
+      {
+        "name": "sales_order_id",
+        "type": "bigint",
+        "nullable": false,
+        "semantic_class": null,
+        "unit_context": null,
+        "column_description": null,
+        "is_incremental": true
+      },
+      {
+        "name": "store_id",
+        "type": "bigint",
+        "nullable": false,
+        "semantic_class": null,
+        "unit_context": null,
+        "column_description": null,
+        "is_incremental": false
+      },
+      {
+        "name": "customer_id",
+        "type": "bigint",
+        "nullable": true,
+        "semantic_class": null,
+        "unit_context": null,
+        "column_description": null,
+        "is_incremental": false
+      },
+      {
+        "name": "employee_id",
+        "type": "bigint",
+        "nullable": false,
+        "semantic_class": null,
+        "unit_context": null,
+        "column_description": null,
+        "is_incremental": false
+      },
+      {
+        "name": "order_date",
+        "type": "datetime2",
+        "nullable": false,
+        "semantic_class": null,
+        "unit_context": null,
+        "column_description": null,
+        "is_incremental": false
+      },
+      {
+        "name": "status",
+        "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+        "nullable": false,
+        "semantic_class": null,
+        "unit_context": null,
+        "column_description": null,
+        "is_incremental": false
+      },
+      {
+        "name": "total_amount",
+        "type": "decimal(12, 2)",
+        "nullable": false,
+        "semantic_class": null,
+        "unit_context": null,
+        "column_description": null,
+        "is_incremental": false
+      },
+      {
+        "name": "created_at",
+        "type": "datetime2",
+        "nullable": false,
+        "semantic_class": null,
+        "unit_context": null,
+        "column_description": null,
+        "is_incremental": true
+      },
+      {
+        "name": "updated_at",
+        "type": "datetime2",
+        "nullable": false,
+        "semantic_class": null,
+        "unit_context": null,
+        "column_description": null,
+        "is_incremental": true
+      },
+      {
+        "name": "sales_rep_employee_id",
+        "type": "bigint",
+        "nullable": true,
+        "semantic_class": null,
+        "unit_context": null,
+        "column_description": "Sales representative foreign key for order ownership.",
+        "is_incremental": false
+      }
+    ],
+    "primary_keys": [
+      "sales_order_id"
+    ],
+    "foreign_keys": [
+      {
+        "column": "customer_id",
+        "references": "customers.customer_id"
+      },
+      {
+        "column": "employee_id",
+        "references": "employees.employee_id"
+      },
+      {
+        "column": "sales_rep_employee_id",
+        "references": "employees.employee_id"
+      },
+      {
+        "column": "store_id",
+        "references": "stores.store_id"
+      }
+    ],
+    "row_count": 200,
+    "incremental_columns": [
+      "sales_order_id",
+      "created_at",
+      "updated_at"
+    ],
+    "partition_columns": [
+      "order_date",
+      "created_at",
+      "updated_at"
+    ],
+    "join_candidates": [
+      {
+        "column": "customer_id",
+        "target_table": "customers",
+        "target_column": "customer_id",
+        "confidence": "high"
+      },
+      {
+        "column": "employee_id",
+        "target_table": "employees",
+        "target_column": "employee_id",
+        "confidence": "high"
+      },
+      {
+        "column": "sales_rep_employee_id",
+        "target_table": "employees",
+        "target_column": "employee_id",
+        "confidence": "high"
+      },
+      {
+        "column": "store_id",
+        "target_table": "stores",
+        "target_column": "store_id",
+        "confidence": "high"
+      }
+    ],
+    "unit_summary": {
+      "columns_with_units": 0,
+      "columns_without_units": 10,
+      "mixed_unit_groups": [],
+      "unknown_unit_columns": []
+    },
+    "cdc_enabled": false,
+    "has_primary_key": true,
+    "has_foreign_keys": true,
+    "has_sensitive_fields": false
+  },
+  "data": [
+    {
+      "sales_order_id": 375,
+      "store_id": 22,
+      "customer_id": 404,
+      "employee_id": 81,
+      "order_date": "2021-05-31 15:38:57.201565",
+      "status": "Pending",
+      "total_amount": "520.10",
+      "created_at": "2021-05-31 15:38:57.201565",
+      "updated_at": "2021-05-31 15:38:57.201565",
+      "sales_rep_employee_id": null
+    },
+    {
+      "sales_order_id": 376,
+      "store_id": 20,
+      "customer_id": 405,
+      "employee_id": 81,
+      "order_date": "2021-08-29 15:38:57.201565",
+      "status": "Completed",
+      "total_amount": "565.57",
+      "created_at": "2021-08-29 15:38:57.201565",
+      "updated_at": "2021-08-29 15:38:57.201565",
+      "sales_rep_employee_id": null
+    },
+    {
+      "sales_order_id": 377,
+      "store_id": 19,
+      "customer_id": 405,
+      "employee_id": 76,
+      "order_date": "2021-12-01 15:38:57.201565",
+      "status": "Completed",
+      "total_amount": "564.03",
+      "created_at": "2021-12-01 15:38:57.201565",
+      "updated_at": "2021-12-01 15:38:57.201565",
+      "sales_rep_employee_id": null
+    },
+    {
+      "sales_order_id": 378,
+      "store_id": 23,
+      "customer_id": 404,
+      "employee_id": 80,
+      "order_date": "2022-01-12 15:38:57.201565",
+      "status": "Completed",
+      "total_amount": "720.22",
+      "created_at": "2022-01-12 15:38:57.201565",
+      "updated_at": "2022-01-12 15:38:57.201565",
+      "sales_rep_employee_id": null
+    },
+    {
+      "sales_order_id": 379,
+      "store_id": 20,
+      "customer_id": 405,
+      "employee_id": 82,
+      "order_date": "2021-07-20 15:38:57.201565",
+      "status": "Shipped",
+      "total_amount": "593.88",
+      "created_at": "2021-07-20 15:38:57.201565",
+      "updated_at": "2021-07-20 15:38:57.201565",
+      "sales_rep_employee_id": null
+    },
+    {
+      "sales_order_id": 380,
+      "store_id": 19,
+      "customer_id": 404,
+      "employee_id": 65,
+      "order_date": "2021-08-09 15:38:57.201565",
+      "status": "Completed",
+      "total_amount": "336.47",
+      "created_at": "2021-08-09 15:38:57.201565",
+      "updated_at": "2021-08-09 15:38:57.201565",
+      "sales_rep_employee_id": null
+    },
+    {
+      "sales_order_id": 381,
+      "store_id": 23,
+      "customer_id": 407,
+      "employee_id": 67,
+      "order_date": "2021-09-06 15:38:57.201565",
+      "status": "Completed",
+      "total_amount": "793.78",
+      "created_at": "2021-09-06 15:38:57.201565",
+      "updated_at": "2021-09-06 15:38:57.201565",
+      "sales_rep_employee_id": null
+    },
+    {
+      "sales_order_id": 382,
+      "store_id": 23,
+      "customer_id": 408,
+      "employee_id": 76,
+      "order_date": "2021-06-26 15:38:57.201565",
+      "status": "Pending",
+      "total_amount": "770.50",
+      "created_at": "2021-06-26 15:38:57.201565",
+      "updated_at": "2021-06-26 15:38:57.201565",
+      "sales_rep_employee_id": null
+    },
+    {
+      "sales_order_id": 383,
+      "store_id": 22,
+      "customer_id": 411,
+      "employee_id": 65,
+      "order_date": "2021-06-06 15:38:57.201565",
+      "status": "Completed",
+      "total_amount": "261.79",
+      "created_at": "2021-06-06 15:38:57.201565",
+      "updated_at": "2021-06-06 15:38:57.201565",
+      "sales_rep_employee_id": null
+    },
+    {
+      "sales_order_id": 384,
+      "store_id": 20,
+      "customer_id": 405,
+      "employee_id": 73,
+      "order_date": "2021-09-11 15:38:57.201565",
+      "status": "Shipped",
+      "total_amount": "542.30",
+      "created_at": "2021-09-11 15:38:57.201565",
+      "updated_at": "2021-09-11 15:38:57.201565",
+      "sales_rep_employee_id": null
+    },
+    {
+      "sales_order_id": 385,
+      "store_id": 19,
+      "customer_id": 413,
+      "employee_id": 73,
+      "order_date": "2021-07-02 15:38:57.201565",
+      "status": "Pending",
+      "total_amount": "342.07",
+      "created_at": "2021-07-02 15:38:57.201565",
+      "updated_at": "2021-07-02 15:38:57.201565",
+      "sales_rep_employee_id": null
+    },
+    {
+      "sales_order_id": 386,
+      "store_id": 20,
+      "customer_id": 407,
+      "employee_id": 71,
+      "order_date": "2022-01-01 15:38:57.201565",
+      "status": "Shipped",
+      "total_amount": "910.88",
+      "created_at": "2022-01-01 15:38:57.201565",
+      "updated_at": "2022-01-01 15:38:57.201565",
+      "sales_rep_employee_id": null
+    },
+    {
+      "sales_order_id": 387,
+      "store_id": 22,
+      "customer_id": 414,
+      "employee_id": 70,
+      "order_date": "2021-03-14 15:38:57.201565",
+      "status": "Pending",
+      "total_amount": "801.53",
+      "created_at": "2021-03-14 15:38:57.201565",
+      "updated_at": "2021-03-14 15:38:57.201565",
+      "sales_rep_employee_id": null
+    },
+    {
+      "sales_order_id": 388,
+      "store_id": 23,
+      "customer_id": 408,
+      "employee_id": 76,
+      "order_date": "2021-06-13 15:38:57.201565",
+      "status": "Pending",
+      "total_amount": "768.63",
+      "created_at": "2021-06-13 15:38:57.201565",
+      "updated_at": "2021-06-13 15:38:57.201565",
+      "sales_rep_employee_id": null
+    },
+    {
+      "sales_order_id": 389,
+      "store_id": 19,
+      "customer_id": 404,
+      "employee_id": 66,
+      "order_date": "2021-05-21 15:38:57.201565",
+      "status": "Shipped",
+      "total_amount": "552.64",
+      "created_at": "2021-05-21 15:38:57.201565",
+      "updated_at": "2021-05-21 15:38:57.201565",
+      "sales_rep_employee_id": null
+    },
+    {
+      "sales_order_id": 390,
+      "store_id": 19,
+      "customer_id": 412,
+      "employee_id": 78,
+      "order_date": "2021-07-11 15:38:57.201565",
+      "status": "Completed",
+      "total_amount": "764.04",
+      "created_at": "2021-07-11 15:38:57.201565",
+      "updated_at": "2021-07-11 15:38:57.201565",
+      "sales_rep_employee_id": null
+    },
+    {
+      "sales_order_id": 391,
+      "store_id": 21,
+      "customer_id": 414,
+      "employee_id": 68,
+      "order_date": "2021-11-30 15:38:57.201565",
+      "status": "Shipped",
+      "total_amount": "159.03",
+      "created_at": "2021-11-30 15:38:57.201565",
+      "updated_at": "2021-11-30 15:38:57.201565",
+      "sales_rep_employee_id": null
+    },
+    {
+      "sales_order_id": 392,
+      "store_id": 20,
+      "customer_id": 408,
+      "employee_id": 64,
+      "order_date": "2021-07-12 15:38:57.201565",
+      "status": "Completed",
+      "total_amount": "680.65",
+      "created_at": "2021-07-12 15:38:57.201565",
+      "updated_at": "2021-07-12 15:38:57.201565",
+      "sales_rep_employee_id": null
+    },
+    {
+      "sales_order_id": 393,
+      "store_id": 23,
+      "customer_id": 406,
+      "employee_id": 83,
+      "order_date": "2021-07-14 15:38:57.201565",
+      "status": "Pending",
+      "total_amount": "464.91",
+      "created_at": "2021-07-14 15:38:57.201565",
+      "updated_at": "2021-07-14 15:38:57.201565",
+      "sales_rep_employee_id": null
+    },
+    {
+      "sales_order_id": 394,
+      "store_id": 19,
+      "customer_id": 404,
+      "employee_id": 76,
+      "order_date": "2021-12-09 15:38:57.201565",
+      "status": "Shipped",
+      "total_amount": "634.44",
+      "created_at": "2021-12-09 15:38:57.201565",
+      "updated_at": "2021-12-09 15:38:57.201565",
+      "sales_rep_employee_id": null
+    },
+    {
+      "sales_order_id": 395,
+      "store_id": 19,
+      "customer_id": 417,
+      "employee_id": 70,
+      "order_date": "2022-05-04 15:38:57.201565",
+      "status": "Pending",
+      "total_amount": "400.90",
+      "created_at": "2022-05-04 15:38:57.201565",
+      "updated_at": "2022-05-04 15:38:57.201565",
+      "sales_rep_employee_id": null
+    },
+    {
+      "sales_order_id": 396,
+      "store_id": 22,
+      "customer_id": 425,
+      "employee_id": 69,
+      "order_date": "2022-07-01 15:38:57.201565",
+      "status": "Completed",
+      "total_amount": "710.68",
+      "created_at": "2022-07-01 15:38:57.201565",
+      "updated_at": "2022-07-01 15:38:57.201565",
+      "sales_rep_employee_id": null
+    },
+    {
+      "sales_order_id": 397,
+      "store_id": 21,
+      "customer_id": 405,
+      "employee_id": 83,
+      "order_date": "2022-11-04 15:38:57.201565",
+      "status": "Shipped",
+      "total_amount": "998.76",
+      "created_at": "2022-11-04 15:38:57.201565",
+      "updated_at": "2022-11-04 15:38:57.201565",
+      "sales_rep_employee_id": null
+    },
+    {
+      "sales_order_id": 398,
+      "store_id": 19,
+      "customer_id": 410,
+      "employee_id": 78,
+      "order_date": "2022-12-07 15:38:57.201565",
+      "status": "Completed",
+      "total_amount": "433.54",
+      "created_at": "2022-12-07 15:38:57.201565",
+      "updated_at": "2022-12-07 15:38:57.201565",
+      "sales_rep_employee_id": null
+    },
+    {
+      "sales_order_id": 399,
+      "store_id": 23,
+      "customer_id": 414,
+      "employee_id": 70,
+      "order_date": "2022-05-03 15:38:57.201565",
+      "status": "Completed",
+      "total_amount": "667.71",
+      "created_at": "2022-05-03 15:38:57.201565",
+      "updated_at": "2022-05-03 15:38:57.201565",
+      "sales_rep_employee_id": null
+    },
+    {
+      "sales_order_id": 400,
+      "store_id": 22,
+      "customer_id": 411,
+      "employee_id": 64,
+      "order_date": "2023-01-29 15:38:57.201565",
+      "status": "Pending",
+      "total_amount": "721.58",
+      "created_at": "2023-01-29 15:38:57.201565",
+      "updated_at": "2023-01-29 15:38:57.201565",
+      "sales_rep_employee_id": null
+    },
+    {
+      "sales_order_id": 401,
+      "store_id": 21,
+      "customer_id": 404,
+      "employee_id": 72,
+      "order_date": "2022-04-24 15:38:57.201565",
+      "status": "Completed",
+      "total_amount": "401.57",
+      "created_at": "2022-04-24 15:38:57.201565",
+      "updated_at": "2022-04-24 15:38:57.201565",
+      "sales_rep_employee_id": null
+    },
+    {
+      "sales_order_id": 402,
+      "store_id": 23,
+      "customer_id": 431,
+      "employee_id": 69,
+      "order_date": "2022-06-15 15:38:57.201565",
+      "status": "Shipped",
+      "total_amount": "404.40",
+      "created_at": "2022-06-15 15:38:57.201565",
+      "updated_at": "2022-06-15 15:38:57.201565",
+      "sales_rep_employee_id": null
+    },
+    {
+      "sales_order_id": 403,
+      "store_id": 21,
+      "customer_id": 415,
+      "employee_id": 70,
+      "order_date": "2023-02-06 15:38:57.201565",
+      "status": "Shipped",
+      "total_amount": "859.89",
+      "created_at": "2023-02-06 15:38:57.201565",
+      "updated_at": "2023-02-06 15:38:57.201565",
+      "sales_rep_employee_id": null
+    },
+    {
+      "sales_order_id": 404,
+      "store_id": 23,
+      "customer_id": 417,
+      "employee_id": 78,
+      "order_date": "2022-04-26 15:38:57.201565",
+      "status": "Completed",
+      "total_amount": "584.09",
+      "created_at": "2022-04-26 15:38:57.201565",
+      "updated_at": "2022-04-26 15:38:57.201565",
+      "sales_rep_employee_id": null
+    },
+    {
+      "sales_order_id": 405,
+      "store_id": 21,
+      "customer_id": 417,
+      "employee_id": 77,
+      "order_date": "2023-01-26 15:38:57.201565",
+      "status": "Pending",
+      "total_amount": "997.03",
+      "created_at": "2023-01-26 15:38:57.201565",
+      "updated_at": "2023-01-26 15:38:57.201565",
+      "sales_rep_employee_id": null
+    },
+    {
+      "sales_order_id": 406,
+      "store_id": 22,
+      "customer_id": 431,
+      "employee_id": 69,
+      "order_date": "2022-05-26 15:38:57.201565",
+      "status": "Completed",
+      "total_amount": "852.95",
+      "created_at": "2022-05-26 15:38:57.201565",
+      "updated_at": "2022-05-26 15:38:57.201565",
+      "sales_rep_employee_id": null
+    },
+    {
+      "sales_order_id": 407,
+      "store_id": 23,
+      "customer_id": 420,
+      "employee_id": 70,
+      "order_date": "2022-10-06 15:38:57.201565",
+      "status": "Pending",
+      "total_amount": "805.05",
+      "created_at": "2022-10-06 15:38:57.201565",
+      "updated_at": "2022-10-06 15:38:57.201565",
+      "sales_rep_employee_id": null
+    },
+    {
+      "sales_order_id": 408,
+      "store_id": 19,
+      "customer_id": 420,
+      "employee_id": 68,
+      "order_date": "2022-05-05 15:38:57.201565",
+      "status": "Shipped",
+      "total_amount": "688.85",
+      "created_at": "2022-05-05 15:38:57.201565",
+      "updated_at": "2022-05-05 15:38:57.201565",
+      "sales_rep_employee_id": null
+    },
+    {
+      "sales_order_id": 409,
+      "store_id": 21,
+      "customer_id": 422,
+      "employee_id": 77,
+      "order_date": "2022-08-22 15:38:57.201565",
+      "status": "Pending",
+      "total_amount": "79.26",
+      "created_at": "2022-08-22 15:38:57.201565",
+      "updated_at": "2022-08-22 15:38:57.201565",
+      "sales_rep_employee_id": null
+    },
+    {
+      "sales_order_id": 410,
+      "store_id": 21,
+      "customer_id": 414,
+      "employee_id": 80,
+      "order_date": "2023-02-05 15:38:57.201565",
+      "status": "Completed",
+      "total_amount": "982.50",
+      "created_at": "2023-02-05 15:38:57.201565",
+      "updated_at": "2023-02-05 15:38:57.201565",
+      "sales_rep_employee_id": null
+    },
+    {
+      "sales_order_id": 411,
+      "store_id": 23,
+      "customer_id": 427,
+      "employee_id": 64,
+      "order_date": "2023-01-03 15:38:57.201565",
+      "status": "Shipped",
+      "total_amount": "189.73",
+      "created_at": "2023-01-03 15:38:57.201565",
+      "updated_at": "2023-01-03 15:38:57.201565",
+      "sales_rep_employee_id": null
+    },
+    {
+      "sales_order_id": 412,
+      "store_id": 21,
+      "customer_id": 415,
+      "employee_id": 81,
+      "order_date": "2022-11-24 15:38:57.201565",
+      "status": "Completed",
+      "total_amount": "943.21",
+      "created_at": "2022-11-24 15:38:57.201565",
+      "updated_at": "2022-11-24 15:38:57.201565",
+      "sales_rep_employee_id": null
+    },
+    {
+      "sales_order_id": 413,
+      "store_id": 21,
+      "customer_id": 428,
+      "employee_id": 83,
+      "order_date": "2022-07-11 15:38:57.201565",
+      "status": "Completed",
+      "total_amount": "847.34",
+      "created_at": "2022-07-11 15:38:57.201565",
+      "updated_at": "2022-07-11 15:38:57.201565",
+      "sales_rep_employee_id": null
+    },
+    {
+      "sales_order_id": 414,
+      "store_id": 19,
+      "customer_id": 415,
+      "employee_id": 65,
+      "order_date": "2022-12-17 15:38:57.201565",
+      "status": "Pending",
+      "total_amount": "342.32",
+      "created_at": "2022-12-17 15:38:57.201565",
+      "updated_at": "2022-12-17 15:38:57.201565",
+      "sales_rep_employee_id": null
+    },
+    {
+      "sales_order_id": 415,
+      "store_id": 23,
+      "customer_id": 426,
+      "employee_id": 80,
+      "order_date": "2022-03-18 15:38:57.201565",
+      "status": "Pending",
+      "total_amount": "684.03",
+      "created_at": "2022-03-18 15:38:57.201565",
+      "updated_at": "2022-03-18 15:38:57.201565",
+      "sales_rep_employee_id": null
+    },
+    {
+      "sales_order_id": 416,
+      "store_id": 20,
+      "customer_id": 427,
+      "employee_id": 64,
+      "order_date": "2022-05-25 15:38:57.201565",
+      "status": "Pending",
+      "total_amount": "332.20",
+      "created_at": "2022-05-25 15:38:57.201565",
+      "updated_at": "2022-05-25 15:38:57.201565",
+      "sales_rep_employee_id": null
+    },
+    {
+      "sales_order_id": 417,
+      "store_id": 21,
+      "customer_id": 410,
+      "employee_id": 76,
+      "order_date": "2022-11-16 15:38:57.201565",
+      "status": "Shipped",
+      "total_amount": "733.73",
+      "created_at": "2022-11-16 15:38:57.201565",
+      "updated_at": "2022-11-16 15:38:57.201565",
+      "sales_rep_employee_id": null
+    },
+    {
+      "sales_order_id": 418,
+      "store_id": 21,
+      "customer_id": 424,
+      "employee_id": 72,
+      "order_date": "2022-05-28 15:38:57.201565",
+      "status": "Pending",
+      "total_amount": "985.84",
+      "created_at": "2022-05-28 15:38:57.201565",
+      "updated_at": "2022-05-28 15:38:57.201565",
+      "sales_rep_employee_id": null
+    },
+    {
+      "sales_order_id": 419,
+      "store_id": 21,
+      "customer_id": 410,
+      "employee_id": 76,
+      "order_date": "2022-07-21 15:38:57.201565",
+      "status": "Pending",
+      "total_amount": "228.39",
+      "created_at": "2022-07-21 15:38:57.201565",
+      "updated_at": "2022-07-21 15:38:57.201565",
+      "sales_rep_employee_id": null
+    },
+    {
+      "sales_order_id": 420,
+      "store_id": 22,
+      "customer_id": 434,
+      "employee_id": 71,
+      "order_date": "2022-10-10 15:38:57.201565",
+      "status": "Completed",
+      "total_amount": "438.73",
+      "created_at": "2022-10-10 15:38:57.201565",
+      "updated_at": "2022-10-10 15:38:57.201565",
+      "sales_rep_employee_id": null
+    },
+    {
+      "sales_order_id": 421,
+      "store_id": 21,
+      "customer_id": 425,
+      "employee_id": 64,
+      "order_date": "2022-04-11 15:38:57.201565",
+      "status": "Shipped",
+      "total_amount": "942.69",
+      "created_at": "2022-04-11 15:38:57.201565",
+      "updated_at": "2022-04-11 15:38:57.201565",
+      "sales_rep_employee_id": null
+    },
+    {
+      "sales_order_id": 422,
+      "store_id": 23,
+      "customer_id": 444,
+      "employee_id": 72,
+      "order_date": "2022-08-14 15:38:57.201565",
+      "status": "Pending",
+      "total_amount": "110.76",
+      "created_at": "2022-08-14 15:38:57.201565",
+      "updated_at": "2022-08-14 15:38:57.201565",
+      "sales_rep_employee_id": null
+    },
+    {
+      "sales_order_id": 423,
+      "store_id": 22,
+      "customer_id": 409,
+      "employee_id": 81,
+      "order_date": "2022-11-25 15:38:57.201565",
+      "status": "Pending",
+      "total_amount": "479.07",
+      "created_at": "2022-11-25 15:38:57.201565",
+      "updated_at": "2022-11-25 15:38:57.201565",
+      "sales_rep_employee_id": null
+    },
+    {
+      "sales_order_id": 424,
+      "store_id": 23,
+      "customer_id": 421,
+      "employee_id": 73,
+      "order_date": "2023-02-03 15:38:57.201565",
+      "status": "Pending",
+      "total_amount": "889.05",
+      "created_at": "2023-02-03 15:38:57.201565",
+      "updated_at": "2023-02-03 15:38:57.201565",
+      "sales_rep_employee_id": null
+    }
+  ]
+}

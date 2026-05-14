@@ -1,0 +1,27 @@
+{
+  "eval_id": 1,
+  "prompt_short": "Analyze our PostgreSQL database for ingestion readiness. The db-analysis-config.jso",
+  "overall_result": "PASS",
+  "assertions": [
+    {
+      "text": "Response does NOT ask the user about schema exclusions, table exclusions, or row limits",
+      "passed": true,
+      "evidence": "The response never asks about exclusions or row limits; it states 'db-analysis-config.json is picked up automatically by the analyzer — no extra flags needed for exclusions or row limits.'"
+    },
+    {
+      "text": "Response references db-analysis-config.json as already existing and reuses it",
+      "passed": true,
+      "evidence": "The response opens with '`db-analysis-config.json` is present — preflight questions are skipped. Reusing existing exclusion and row-limit settings.'"
+    },
+    {
+      "text": "Response proceeds to run the analyzer (mentions source_system_analyzer.py or equivalent next step)",
+      "passed": true,
+      "evidence": "Step 3 explicitly shows a bash command running `scripts/source_system_analyzer.py` with the appropriate arguments."
+    },
+    {
+      "text": "Response does NOT create or overwrite db-analysis-config.json",
+      "passed": true,
+      "evidence": "No file creation or write operation targeting db-analysis-config.json appears anywhere in the response; it is only referenced as an existing file."
+    }
+  ]
+}

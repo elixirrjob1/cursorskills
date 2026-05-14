@@ -1,0 +1,25 @@
+{
+  "run_slug": "2026-05-14T113033Z",
+  "reviewed_at": "2026-05-14T11:30:33Z",
+  "skill": "source-system-analyser",
+  "git_hash": "3458072",
+  "evals": [
+    {"eval_id": 1, "type": "should-trigger", "status": "graded", "result": "PASS", "assertions_passed": 4, "assertions_total": 4},
+    {"eval_id": 2, "type": "should-trigger", "status": "graded", "result": "FAIL", "assertions_passed": 3, "assertions_total": 4, "note": "Assertion 1 false-failure: user pre-answered preflight in prompt; prior review confirms this is correct behavior"},
+    {"eval_id": 3, "type": "should-trigger", "status": "graded", "result": "PASS", "assertions_passed": 4, "assertions_total": 4, "note": "Assertion 1 marginal pass: build script implied but not named explicitly"},
+    {"eval_id": 4, "type": "should-trigger", "status": "graded", "result": "PASS", "assertions_passed": 4, "assertions_total": 4},
+    {"eval_id": 5, "type": "should-not-trigger", "status": "graded", "result": "PASS", "assertions_passed": 3, "assertions_total": 3},
+    {"eval_id": 6, "type": "edge-case", "status": "graded", "result": "PASS", "assertions_passed": 3, "assertions_total": 3},
+    {"eval_id": 7, "type": "edge-case", "status": "graded", "result": "PASS", "assertions_passed": 3, "assertions_total": 3},
+    {"eval_id": 8, "type": "edge-case", "status": "graded", "result": "PASS", "assertions_passed": 3, "assertions_total": 3}
+  ],
+  "summary": {
+    "evals_total": 8,
+    "evals_passed": 7,
+    "evals_failed": 1,
+    "assertions_total": 28,
+    "assertions_passed": 27,
+    "assertions_failed": 1,
+    "false_failures": 1
+  }
+}

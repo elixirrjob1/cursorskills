@@ -1,0 +1,4093 @@
+#!/usr/bin/env python3
+"""
+Source System Analyzer
+
+Analyzes a source database schema and assesses data quality in a single pass.
+Produces a combined schema.json with:
+- Schema metadata (tables, columns, PKs, FKs, enrichments)
+- Data quality findings (9 checks: controlled values, constraints, format, etc.)
+
+Usage:
+    python source_system_analyzer.py <database_url> <output_json_path> [schema]
+    python source_system_analyzer.py --database-url-secret AZURE-MSSQL-URL <output_json_path> [schema]
+"""
+
+import math
+import os
+import json
+import logging
+import re
+import warnings
+from pathlib import Path
+from typing import Dict, List, Optional, Any, Set
+from datetime import datetime, timezone
+from collections import Counter
+from urllib.parse import quote
+
+import requests
+
+try:
+    import yaml  # type: ignore
+except Exception:
+    yaml = None
+
+from sqlalchemy import create_engine, inspect, text, MetaData, Table, select
+from sqlalchemy.engine import Engine
+from sqlalchemy.exc import SAWarning
+
+# Import dialect adapters
+import sys
+_script_dir = Path(__file__).resolve().parent
+if str(_script_dir) not in sys.path:
+    sys.path.insert(0, str(_script_dir))
+from databases import get_adapter, get_adapter_for_engine
+from db_analysis_config import (
+    apply_sample_row_limit,
+    load_config,
+    should_exclude_schema,
+    should_exclude_table,
+)
+from volume_projection import collector, predictor
+
+
+def _load_env_file() -> None:
+    """Load .env from current working directory or script directory."""
+    for base in (Path.cwd(), Path(__file__).resolve().parent):
+        env_path = base / ".env"
+        if env_path.exists():
+            try:
+                with open(env_path, encoding="utf-8") as f:
+                    for line in f:
+                        line = line.strip()
+                        if line and not line.startswith("#") and "=" in line:
+                            key, _, value = line.partition("=")
+                            key = key.strip()
+                            value = value.strip().strip('"').strip("'")
+                            if key and key not in os.environ:
+                                os.environ[key] = value
+            except Exception:
+                pass
+            break
+
+
+def _fetch_keyvault_secret(secret_name: str, keyvault_name: Optional[str] = None) -> str:
+    """Fetch one secret from Azure Key Vault."""
+    vault_name = str(keyvault_name or os.environ.get("KEYVAULT_NAME") or "").strip()
+    if not vault_name:
+        raise ValueError("KEYVAULT_NAME is required to fetch database URL from Azure Key Vault")
+    name = str(secret_name or "").strip()
+    if not name:
+        raise ValueError("Secret name is required for Azure Key Vault lookup")
+    try:
+        from azure.identity import DefaultAzureCredential  # type: ignore
+        from azure.keyvault.secrets import SecretClient  # type: ignore
+    except Exception as e:
+        raise RuntimeError("Azure Key Vault dependencies are missing. Install azure-identity and azure-keyvault-secrets.") from e
+
+    client = SecretClient(vault_url=f"https://{vault_name}.vault.azure.net/", credential=DefaultAzureCredential())
+    secret = client.get_secret(name)
+    value = str(secret.value or "").strip()
+    if not value:
+        raise RuntimeError(f"Secret '{name}' in Key Vault '{vault_name}' is empty")
+    return value
+
+
+def _parse_keyvault_ref(database_url_arg: Optional[str]) -> Optional[str]:
+    """Parse keyvault URI references like keyvault://SECRET or kv://SECRET."""
+    raw = str(database_url_arg or "").strip()
+    if not raw:
+        return None
+    for prefix in ("keyvault://", "kv://", "secret://"):
+        if raw.lower().startswith(prefix):
+            secret_name = raw[len(prefix):].strip()
+            return secret_name or None
+    return None
+
+
+def _resolve_database_url(
+    database_url_arg: Optional[str],
+    database_url_secret: Optional[str] = None,
+    keyvault_name: Optional[str] = None,
+) -> str:
+    """
+    Resolve database URL from direct arg, Key Vault secret reference, or environment.
+    Priority:
+    1) --database-url-secret
+    2) positional keyvault://... reference
+    3) positional literal URL
+    4) DATABASE_URL env
+    5) DATABASE_URL_SECRET / DATABASE_URL_KEYVAULT_SECRET env
+    """
+    if database_url_secret:
+        return _fetch_keyvault_secret(database_url_secret, keyvault_name=keyvault_name)
+
+    ref_secret = _parse_keyvault_ref(database_url_arg)
+    if ref_secret:
+        return _fetch_keyvault_secret(ref_secret, keyvault_name=keyvault_name)
+
+    literal = str(database_url_arg or "").strip()
+    if literal:
+        return literal
+
+    env_database_url = str(os.environ.get("DATABASE_URL") or "").strip()
+    if env_database_url:
+        return env_database_url
+
+    env_secret = str(os.environ.get("DATABASE_URL_SECRET") or os.environ.get("DATABASE_URL_KEYVAULT_SECRET") or "").strip()
+    if env_secret:
+        return _fetch_keyvault_secret(env_secret, keyvault_name=keyvault_name)
+
+    raise ValueError(
+        "Database URL is missing. Provide a URL arg, --database-url-secret <secret-name>, "
+        "keyvault://<secret-name>, DATABASE_URL, or DATABASE_URL_SECRET."
+    )
+
+
+def _normalize_openmetadata_base_url(value: str) -> str:
+    base = str(value or "").strip().rstrip("/")
+    if not base:
+        raise RuntimeError("Missing OpenMetadata base URL.")
+    if base.endswith("/api"):
+        return base
+    return f"{base}/api"
+
+
+def _openmetadata_api_root() -> str:
+    return _normalize_openmetadata_base_url(os.getenv("OPENMETADATA_BASE_URL", ""))
+
+
+def _openmetadata_api_url(path: str) -> str:
+    cleaned = path.lstrip("/")
+    if not cleaned.startswith(f"{_OPENMETADATA_API_VERSION_PREFIX}/"):
+        cleaned = f"{_OPENMETADATA_API_VERSION_PREFIX}/{cleaned}"
+    return f"{_openmetadata_api_root()}/{cleaned}"
+
+
+def _openmetadata_login_payloads() -> List[Dict[str, str]]:
+    email = os.getenv("OPENMETADATA_EMAIL", "").strip()
+    password = os.getenv("OPENMETADATA_PASSWORD", "")
+    if not email or not password:
+        raise RuntimeError("Missing OpenMetadata credentials.")
+
+    encoded_password = json.dumps(password).strip('"').encode("utf-8")
+    import base64
+
+    return [
+        {"email": email, "password": base64.b64encode(encoded_password).decode("ascii")},
+        {"email": email, "password": password},
+    ]
+
+
+def _extract_openmetadata_token(payload: Any) -> str | None:
+    if isinstance(payload, str) and payload.strip():
+        return payload.strip()
+    if isinstance(payload, dict):
+        for key in ("accessToken", "jwtToken", "token", "id_token"):
+            value = payload.get(key)
+            if isinstance(value, str) and value.strip():
+                return value.strip()
+        for nested_key in ("data", "response"):
+            token = _extract_openmetadata_token(payload.get(nested_key))
+            if token:
+                return token
+    return None
+
+
+def _openmetadata_login() -> str:
+    jwt_token = os.getenv("OPENMETADATA_JWT_TOKEN", "").strip()
+    if jwt_token:
+        return jwt_token
+
+    cached = _OPENMETADATA_TOKEN_CACHE.get("token")
+    if isinstance(cached, str) and cached.strip():
+        return cached.strip()
+
+    last_error: Exception | None = None
+    for payload in _openmetadata_login_payloads():
+        try:
+            response = requests.post(
+                _openmetadata_api_url(_OPENMETADATA_LOGIN_ENDPOINT),
+                headers={
+                    "Accept": "application/json",
+                    "Content-Type": "application/json",
+                    "User-Agent": "source-system-analyzer-openmetadata",
+                },
+                json=payload,
+                timeout=_OPENMETADATA_TIMEOUT,
+            )
+            response.raise_for_status()
+            data = response.json() if response.content else {}
+            token = _extract_openmetadata_token(data)
+            if token:
+                _OPENMETADATA_TOKEN_CACHE["token"] = token
+                return token
+            last_error = RuntimeError("OpenMetadata login succeeded but no token was returned.")
+        except requests.RequestException as exc:
+            last_error = exc
+
+    raise RuntimeError(f"OpenMetadata login failed: {last_error}") from last_error
+
+
+def _openmetadata_headers() -> Dict[str, str]:
+    return {
+        "Accept": "application/json",
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {_openmetadata_login()}",
+        "User-Agent": "source-system-analyzer-openmetadata",
+    }
+
+
+def _openmetadata_request(method: str, endpoint: str, params: Optional[Dict[str, Any]] = None) -> Any:
+    response = requests.request(
+        method=method,
+        url=_openmetadata_api_url(endpoint),
+        headers=_openmetadata_headers(),
+        params=params,
+        timeout=_OPENMETADATA_TIMEOUT,
+    )
+    if response.status_code == 401 and not os.getenv("OPENMETADATA_JWT_TOKEN"):
+        _OPENMETADATA_TOKEN_CACHE["token"] = None
+        response = requests.request(
+            method=method,
+            url=_openmetadata_api_url(endpoint),
+            headers=_openmetadata_headers(),
+            params=params,
+            timeout=_OPENMETADATA_TIMEOUT,
+        )
+    response.raise_for_status()
+    if response.status_code == 204 or not response.content:
+        return {}
+    return response.json()
+
+
+def _glossary_terms_from_openmetadata_tags(tags: Any) -> List[str]:
+    glossary_terms: List[str] = []
+    for tag in tags or []:
+        if not isinstance(tag, dict):
+            continue
+        if str(tag.get("source") or "").strip() != "Glossary":
+            continue
+        tag_fqn = str(tag.get("tagFQN") or "").strip()
+        if tag_fqn and tag_fqn not in glossary_terms:
+            glossary_terms.append(tag_fqn)
+    return glossary_terms
+
+
+def _classification_tags_from_openmetadata_tags(tags: Any) -> List[str]:
+    classification_tags: List[str] = []
+    for tag in tags or []:
+        if not isinstance(tag, dict):
+            continue
+        if str(tag.get("source") or "").strip() == "Glossary":
+            continue
+        tag_fqn = str(tag.get("tagFQN") or "").strip()
+        if tag_fqn and tag_fqn not in classification_tags:
+            classification_tags.append(tag_fqn)
+    return classification_tags
+
+
+def _default_openmetadata_enrichment_status() -> Dict[str, Any]:
+    return {
+        "enabled": False,
+        "configured": False,
+        "database_service_name": str(os.getenv("OPENMETADATA_DATABASE_SERVICE_NAME") or "").strip(),
+        "schema": "",
+        "match_strategy": "",
+        "matched_tables": 0,
+        "unmatched_tables": 0,
+        "error": "",
+    }
+
+
+def _openmetadata_ref_name(value: Any) -> str:
+    if isinstance(value, dict):
+        for key in ("name", "fullyQualifiedName"):
+            candidate = str(value.get(key) or "").strip()
+            if candidate:
+                return candidate
+    return str(value or "").strip()
+
+
+def fetch_openmetadata_classification_catalog() -> List[Dict[str, Any]]:
+    """Fetch OpenMetadata classifications and their tags in a normalized analyzer shape."""
+    try:
+        classifications_response = _openmetadata_request("GET", "classifications", params={"limit": 1000})
+        tags_response = _openmetadata_request("GET", "tags", params={"limit": 1000})
+    except Exception as exc:
+        logger.warning("Could not fetch OpenMetadata classifications: %s", exc)
+        return []
+
+    raw_classifications = (classifications_response.get("data") or []) if isinstance(classifications_response, dict) else []
+    raw_tags = (tags_response.get("data") or []) if isinstance(tags_response, dict) else []
+
+    tags_by_classification: Dict[str, List[Dict[str, Any]]] = {}
+    for item in raw_tags:
+        if not isinstance(item, dict):
+            continue
+        classification_ref = item.get("classification") or {}
+        classification_name = str(
+            (classification_ref.get("fullyQualifiedName") if isinstance(classification_ref, dict) else "")
+            or (classification_ref.get("name") if isinstance(classification_ref, dict) else "")
+            or ""
+        ).strip()
+        if not classification_name:
+            fqn = str(item.get("fullyQualifiedName") or "").strip()
+            if "." in fqn:
+                classification_name = fqn.split(".", 1)[0].strip()
+        if not classification_name:
+            continue
+        tags_by_classification.setdefault(classification_name, []).append(item)
+
+    catalog: List[Dict[str, Any]] = []
+    for item in raw_classifications:
+        if not isinstance(item, dict):
+            continue
+        name = str(item.get("fullyQualifiedName") or item.get("name") or "").strip()
+        if not name:
+            continue
+        classification_tags = tags_by_classification.get(name, [])
+        catalog.append(
+            {
+                "name": name,
+                "provider": str(item.get("provider") or "").strip(),
+                "description": str(item.get("description") or "").strip(),
+                "mutually_exclusive": bool(item.get("mutuallyExclusive", False)),
+                "allowed_on": ["table", "column"],
+                "options": [
+                    {
+                        "name": str(tag.get("name") or "").strip(),
+                        "fqn": str(tag.get("fullyQualifiedName") or "").strip(),
+                        "description": str(tag.get("description") or "").strip(),
+                    }
+                    for tag in classification_tags
+                    if str(tag.get("fullyQualifiedName") or "").strip()
+                ],
+            }
+        )
+    return sorted(catalog, key=lambda item: item["name"].lower())
+
+
+def _openmetadata_table_matches(
+    payload: Dict[str, Any],
+    *,
+    target_table_name: str,
+    target_schema_name: str,
+    target_database_name: str,
+    service_name: str,
+) -> bool:
+    table_name = str(payload.get("name") or "").strip().lower()
+    if table_name != target_table_name.lower():
+        return False
+
+    schema_ref = _openmetadata_ref_name(payload.get("databaseSchema")).lower()
+    database_ref = _openmetadata_ref_name(payload.get("database")).lower()
+    service_ref = _openmetadata_ref_name(payload.get("service")).lower()
+    fqn = str(payload.get("fullyQualifiedName") or "").strip().lower()
+
+    if service_name and fqn == f"{service_name}.{target_database_name}.{target_schema_name}.{target_table_name}".lower():
+        return True
+
+    if schema_ref:
+        if schema_ref == target_schema_name.lower() or schema_ref.endswith(f".{target_schema_name.lower()}"):
+            return True
+    if database_ref:
+        if database_ref == target_database_name.lower() or database_ref.endswith(f".{target_database_name.lower()}"):
+            return True
+    if service_ref and service_name and service_ref == service_name.lower():
+        return True
+    return not schema_ref and not database_ref and not service_ref
+
+
+def _fetch_openmetadata_glossary_assignments(
+    *,
+    database_name: str,
+    schema_name: str,
+    table_names: List[str],
+) -> tuple[Dict[str, Dict[str, Any]], Dict[str, Any]]:
+    status = _default_openmetadata_enrichment_status()
+    status["schema"] = schema_name
+    service_name = status["database_service_name"]
+    if not schema_name or not table_names:
+        return {}, status
+
+    status["enabled"] = True
+    status["configured"] = True
+    assignments: Dict[str, Dict[str, Any]] = {}
+
+    try:
+        candidate_tables: List[Dict[str, Any]] = []
+        if service_name and database_name:
+            status["match_strategy"] = "exact_fqn_then_name"
+            for table_name in table_names:
+                table_fqn = f"{service_name}.{database_name}.{schema_name}.{table_name}"
+                endpoint = f"tables/name/{quote(table_fqn, safe='')}"
+                try:
+                    payload = _openmetadata_request("GET", endpoint, params={"fields": _OPENMETADATA_TABLE_FIELDS})
+                except requests.HTTPError as exc:
+                    response = exc.response
+                    if response is not None and response.status_code == 404:
+                        continue
+                    raise
+                if isinstance(payload, dict):
+                    candidate_tables.append(payload)
+        else:
+            status["match_strategy"] = "table_name"
+
+        if not candidate_tables:
+            response = _openmetadata_request(
+                "GET",
+                "tables",
+                params={"limit": max(100, len(table_names) * 20), "fields": _OPENMETADATA_TABLE_FIELDS},
+            )
+            candidate_tables = list((response.get("data") or [])) if isinstance(response, dict) else []
+
+        for table_name in table_names:
+            payload = next(
+                (
+                    item
+                    for item in candidate_tables
+                    if isinstance(item, dict)
+                    and _openmetadata_table_matches(
+                        item,
+                        target_table_name=table_name,
+                        target_schema_name=schema_name,
+                        target_database_name=database_name,
+                        service_name=service_name,
+                    )
+                ),
+                None,
+            )
+            if not payload:
+                status["unmatched_tables"] += 1
+                continue
+            table_terms = _glossary_terms_from_openmetadata_tags(payload.get("tags"))
+            table_classification_tags = _classification_tags_from_openmetadata_tags(payload.get("tags"))
+            columns = payload.get("columns") or []
+            column_terms: Dict[str, List[str]] = {}
+            column_classification_tags: Dict[str, List[str]] = {}
+            for column in columns:
+                if not isinstance(column, dict):
+                    continue
+                column_name = str(column.get("name") or "").strip()
+                if not column_name:
+                    continue
+                column_terms[column_name] = _glossary_terms_from_openmetadata_tags(column.get("tags"))
+                column_classification_tags[column_name] = _classification_tags_from_openmetadata_tags(column.get("tags"))
+
+            assignments[table_name] = {
+                "glossary_terms": table_terms,
+                "classification_tags": table_classification_tags,
+                "column_glossary_terms": column_terms,
+                "column_classification_tags": column_classification_tags,
+            }
+            status["matched_tables"] += 1
+    except Exception as exc:
+        status["error"] = str(exc)
+        status["unmatched_tables"] = len(table_names) - status["matched_tables"]
+        logger.warning("OpenMetadata enrichment failed: %s", exc)
+        return {}, status
+
+    status["unmatched_tables"] = len(table_names) - status["matched_tables"]
+    return assignments, status
+
+
+logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
+
+_RULES_CACHE: Optional[Dict[str, Any]] = None
+_DESCRIPTION_CONFIG_FILENAME = "source-system-description.json"
+_DEFAULT_AZURE_OPENAI_API_VERSION = "2024-12-01-preview"
+_OPENMETADATA_LOGIN_ENDPOINT = "users/login"
+_OPENMETADATA_API_VERSION_PREFIX = "v1"
+_OPENMETADATA_TABLE_FIELDS = "columns,tags"
+_OPENMETADATA_TIMEOUT = (10, 30)
+_OPENMETADATA_TOKEN_CACHE: Dict[str, Optional[str]] = {"token": None}
+
+
+def _humanize_identifier(value: str) -> str:
+    text = re.sub(r"[_\s]+", " ", str(value or "").strip())
+    return re.sub(r"\s+", " ", text).strip()
+
+
+def _singularize_label(value: str) -> str:
+    text = _humanize_identifier(value).lower()
+    if text.endswith("ies") and len(text) > 3:
+        return text[:-3] + "y"
+    if text.endswith("ses") and len(text) > 3:
+        return text[:-2]
+    if text.endswith("s") and not text.endswith("ss") and len(text) > 1:
+        return text[:-1]
+    return text
+
+
+def _join_phrases(values: List[str]) -> str:
+    items = [str(v).strip() for v in values if str(v).strip()]
+    if not items:
+        return ""
+    if len(items) == 1:
+        return items[0]
+    if len(items) == 2:
+        return f"{items[0]} and {items[1]}"
+    return f"{', '.join(items[:-1])}, and {items[-1]}"
+
+
+def _column_focus_label(column_name: str) -> str:
+    lowered = str(column_name or "").lower()
+    if lowered.endswith("_id") or lowered == "id":
+        return ""
+    if lowered in {"created_at", "updated_at", "deleted_at", "last_modified", "modified_at"}:
+        return ""
+    return _humanize_identifier(column_name).lower()
+
+
+def _generate_table_description(
+    table_name: str,
+    columns: List[Dict[str, Any]],
+    pk_columns: List[str],
+    fk_columns: List[Dict[str, Any]],
+    existing_description: str,
+) -> str:
+    if str(existing_description or "").strip():
+        return str(existing_description).strip()
+
+    entity_label = _singularize_label(table_name)
+    focus_fields: List[str] = []
+    for col in columns:
+        focus = _column_focus_label(col.get("name", ""))
+        if focus and focus not in focus_fields:
+            focus_fields.append(focus)
+        if len(focus_fields) >= 3:
+            break
+
+    if focus_fields:
+        return f"Stores {entity_label} records including {_join_phrases(focus_fields)}."
+    if pk_columns:
+        return f"Stores {entity_label} records identified by {_join_phrases([_humanize_identifier(c).lower() for c in pk_columns])}."
+    if fk_columns:
+        return f"Stores {entity_label} records linked to related entities for ingestion analysis."
+    return f"Stores {entity_label} records for source-system analysis."
+
+
+def _generate_column_description(
+    table_name: str,
+    column: Dict[str, Any],
+    pk_columns: List[str],
+    fk_columns: List[Dict[str, Any]],
+    existing_description: str,
+) -> str:
+    if str(existing_description or "").strip():
+        return str(existing_description).strip()
+
+    column_name = str(column.get("name") or "").strip()
+    column_type = str(column.get("type") or "").strip()
+    entity_label = _singularize_label(table_name)
+    fk_lookup = {str(fk.get("column") or ""): str(fk.get("references") or "").strip() for fk in fk_columns}
+    lowered = column_name.lower()
+
+    if column_name in pk_columns:
+        return f"Primary key for the {entity_label} record."
+    if column_name in fk_lookup and fk_lookup[column_name]:
+        return f"Foreign key referencing {fk_lookup[column_name]} for the {entity_label} record."
+    if lowered == "created_at":
+        return f"Timestamp when the {entity_label} record was created."
+    if lowered == "updated_at":
+        return f"Timestamp when the {entity_label} record was last updated."
+    if lowered in {"deleted_at", "removed_at"}:
+        return f"Timestamp when the {entity_label} record was marked as deleted."
+    if lowered in {"is_deleted", "deleted", "active", "is_active"}:
+        return f"Status flag indicating whether the {entity_label} record is active or deleted."
+
+    concept_id = str(column.get("concept_id") or "").strip()
+    if concept_id:
+        concept_label = _humanize_identifier(concept_id.split(".")[-1]).lower()
+        return f"{concept_label.capitalize()} for the {entity_label} record."
+
+    semantic_class = str(column.get("semantic_class") or "").strip()
+    if semantic_class:
+        semantic_label = _humanize_identifier(semantic_class).lower()
+        return f"{semantic_label.capitalize()} value for the {entity_label} record."
+
+    column_label = _humanize_identifier(column_name).lower()
+    if column_type:
+        return f"{column_label.capitalize()} stored for the {entity_label} record as {column_type}."
+    return f"{column_label.capitalize()} value for the {entity_label} record."
+
+
+def _resolve_system_description_config_path(config_path: Optional[str] = None) -> Path:
+    raw_path = str(
+        config_path
+        or os.environ.get("SOURCE_SYSTEM_DESCRIPTION_CONFIG")
+        or _DESCRIPTION_CONFIG_FILENAME
+    ).strip()
+    return Path(raw_path).expanduser()
+
+
+def _load_system_description_config(config_path: Optional[str] = None) -> Dict[str, Any]:
+    path = _resolve_system_description_config_path(config_path)
+    if not path.exists():
+        return {"system_description": "", "config_path": str(path)}
+
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        raise ValueError(f"Invalid system description config JSON at {path}: {exc}") from exc
+
+    if not isinstance(payload, dict):
+        raise ValueError(f"System description config at {path} must contain a JSON object")
+
+    return {
+        "system_description": str(payload.get("system_description") or "").strip(),
+        "config_path": str(path),
+    }
+
+
+def _save_system_description_config(
+    system_description: str,
+    config_path: Optional[str] = None,
+) -> Path:
+    path = _resolve_system_description_config_path(config_path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    payload = {"system_description": str(system_description or "").strip()}
+    path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+    return path
+
+
+def _prepare_sample_rows_for_prompts(
+    column_names: List[str],
+    rows: List[Any],
+    limit: int = 3,
+) -> List[Dict[str, Any]]:
+    prompt_rows: List[Dict[str, Any]] = []
+    safe_columns = [str(name) for name in column_names]
+    for row in rows[:limit]:
+        values = list(row) if isinstance(row, (list, tuple)) else [row]
+        prompt_rows.append(
+            {
+                safe_columns[idx]: (
+                    None if idx >= len(values) else str(values[idx]) if values[idx] is not None else None
+                )
+                for idx in range(len(safe_columns))
+            }
+        )
+    return prompt_rows
+
+
+def _normalize_generated_description(text: str) -> str:
+    cleaned = re.sub(r"\s+", " ", str(text or "").strip()).strip().strip('"').strip("'").strip()
+    if not cleaned:
+        return ""
+    return cleaned if cleaned.endswith((".", "!", "?")) else f"{cleaned}."
+
+
+class AzureDescriptionGenerator:
+    def __init__(self) -> None:
+        self.api_key = str(os.environ.get("AZURE_OPENAI_API_KEY") or "").strip()
+        self.endpoint = str(os.environ.get("AZURE_OPENAI_ENDPOINT") or "").strip()
+        self.deployment = str(
+            os.environ.get("AZURE_OPENAI_DEPLOYMENT")
+            or os.environ.get("AZURE_OPENAI_MODEL")
+            or ""
+        ).strip()
+        self.api_version = str(
+            os.environ.get("AZURE_OPENAI_API_VERSION") or _DEFAULT_AZURE_OPENAI_API_VERSION
+        ).strip()
+        self._client: Any = None
+        self._availability_checked = False
+        self._available = False
+        self._unavailable_reason = ""
+
+    def is_available(self) -> bool:
+        if self._availability_checked:
+            return self._available
+
+        self._availability_checked = True
+        missing: List[str] = []
+        if not self.api_key:
+            missing.append("AZURE_OPENAI_API_KEY")
+        if not self.endpoint:
+            missing.append("AZURE_OPENAI_ENDPOINT")
+        if not self.deployment:
+            missing.append("AZURE_OPENAI_DEPLOYMENT")
+        if missing:
+            self._unavailable_reason = f"missing env vars: {', '.join(missing)}"
+            logger.info("Azure description generation disabled (%s)", self._unavailable_reason)
+            self._available = False
+            return False
+
+        try:
+            from openai import AzureOpenAI  # type: ignore
+        except Exception as exc:
+            self._unavailable_reason = f"openai package unavailable: {exc}"
+            logger.warning("Azure description generation disabled (%s)", self._unavailable_reason)
+            self._available = False
+            return False
+
+        self._client = AzureOpenAI(
+            api_version=self.api_version,
+            azure_endpoint=self.endpoint,
+            api_key=self.api_key,
+        )
+        self._available = True
+        return True
+
+    def _create_completion(self, messages: List[Dict[str, str]]) -> str:
+        if not self.is_available():
+            raise RuntimeError(self._unavailable_reason or "Azure OpenAI is unavailable")
+        response = self._client.chat.completions.create(
+            model=self.deployment,
+            messages=messages,
+            temperature=0.0,
+            top_p=1.0,
+        )
+        choices = getattr(response, "choices", []) or []
+        if not choices:
+            raise RuntimeError("Azure OpenAI returned no choices")
+        message = getattr(choices[0], "message", None)
+        content = getattr(message, "content", "") if message else ""
+        normalized = _normalize_generated_description(content)
+        if not normalized:
+            raise RuntimeError("Azure OpenAI returned an empty description")
+        return normalized
+
+    def generate_column_description(
+        self,
+        *,
+        system_description: str,
+        schema_name: str,
+        table_name: str,
+        column: Dict[str, Any],
+        pk_columns: List[str],
+        fk_columns: List[Dict[str, Any]],
+        prompt_sample_rows: List[Dict[str, Any]],
+    ) -> str:
+        column_name = str(column.get("name") or "").strip()
+        fk_lookup = {str(fk.get("column") or ""): str(fk.get("references") or "").strip() for fk in fk_columns}
+        user_prompt = "\n".join(
+            [
+                "Write one concise plain-text sentence describing this database column for schema documentation.",
+                f"System description: {system_description or '(none provided)'}",
+                f"Schema: {schema_name}",
+                f"Table: {table_name}",
+                f"Column: {column_name}",
+                f"Data type: {column.get('type') or ''}",
+                f"Nullable: {bool(column.get('nullable', True))}",
+                f"Primary key: {column_name in pk_columns}",
+                f"Foreign key target: {fk_lookup.get(column_name) or '(none)'}",
+                f"Semantic class: {column.get('semantic_class') or '(unknown)'}",
+                f"Sample rows (max 3): {json.dumps(prompt_sample_rows, default=str)}",
+                "Return only the description sentence.",
+            ]
+        )
+        return self._create_completion(
+            [
+                {
+                    "role": "system",
+                    "content": "You generate accurate database metadata descriptions from schema context and sample data. Keep descriptions concise, factual, and implementation-neutral.",
+                },
+                {"role": "user", "content": user_prompt},
+            ]
+        )
+
+    def generate_table_description(
+        self,
+        *,
+        system_description: str,
+        schema_name: str,
+        table_name: str,
+        columns: List[Dict[str, Any]],
+    ) -> str:
+        column_summaries = [
+            {
+                "name": str(column.get("name") or ""),
+                "description": str(column.get("column_description") or ""),
+            }
+            for column in columns
+        ]
+        user_prompt = "\n".join(
+            [
+                "Write one concise plain-text sentence describing this database table for schema documentation.",
+                f"System description: {system_description or '(none provided)'}",
+                f"Schema: {schema_name}",
+                f"Table: {table_name}",
+                f"Columns and descriptions: {json.dumps(column_summaries, default=str)}",
+                "Return only the description sentence.",
+            ]
+        )
+        return self._create_completion(
+            [
+                {
+                    "role": "system",
+                    "content": "You generate accurate database table descriptions from existing column documentation. Keep descriptions concise, factual, and implementation-neutral.",
+                },
+                {"role": "user", "content": user_prompt},
+            ]
+        )
+
+
+def _build_description_generator() -> AzureDescriptionGenerator:
+    return AzureDescriptionGenerator()
+
+
+# ============================================================================
+# Glossary term assignment via Azure OpenAI
+# ============================================================================
+
+
+def fetch_openmetadata_glossary_terms() -> List[Dict[str, Any]]:
+    """Fetch all glossary terms from OpenMetadata and normalize to a flat list."""
+    try:
+        response = _openmetadata_request("GET", "glossaryTerms", params={"limit": 1000, "fields": "tags"})
+    except Exception as exc:
+        logger.warning("Could not fetch OpenMetadata glossary terms: %s", exc)
+        return []
+    raw_terms = (response.get("data") or []) if isinstance(response, dict) else []
+    terms: List[Dict[str, Any]] = []
+    for item in raw_terms:
+        if not isinstance(item, dict):
+            continue
+        fqn = str(item.get("fullyQualifiedName") or "").strip()
+        if not fqn:
+            continue
+        terms.append({
+            "fqn": fqn,
+            "name": str(item.get("name") or "").strip(),
+            "display_name": str(item.get("displayName") or "").strip(),
+            "description": str(item.get("description") or "").strip(),
+            "synonyms": [str(s).strip() for s in (item.get("synonyms") or []) if str(s).strip()],
+        })
+    return terms
+
+
+
+class AzureGlossaryAssigner:
+    """Assigns glossary term FQNs to tables and columns using Azure OpenAI."""
+
+    _SYSTEM_PROMPT = (
+        "You assign business glossary terms to database objects. "
+        "Choose only from the provided candidate terms. "
+        "Return only term FQNs. Return [] if uncertain. "
+        "Prefer precision over recall. "
+        "Multiple terms are allowed only when clearly justified."
+    )
+
+    def __init__(self, generator: AzureDescriptionGenerator) -> None:
+        self._generator = generator
+
+    def is_available(self) -> bool:
+        return self._generator.is_available()
+
+    def _call_llm(self, messages: List[Dict[str, str]]) -> List[str]:
+        if not self.is_available():
+            return []
+        response = self._generator._client.chat.completions.create(
+            model=self._generator.deployment,
+            messages=messages,
+            temperature=0.0,
+            top_p=1.0,
+        )
+        choices = getattr(response, "choices", []) or []
+        if not choices:
+            return []
+        message = getattr(choices[0], "message", None)
+        content = getattr(message, "content", "") if message else ""
+        content = str(content or "").strip()
+        if not content:
+            return []
+        try:
+            parsed = json.loads(content)
+        except json.JSONDecodeError:
+            match = re.search(r"\{[^}]*\}", content, re.DOTALL)
+            if match:
+                try:
+                    parsed = json.loads(match.group())
+                except json.JSONDecodeError:
+                    return []
+            else:
+                return []
+        if isinstance(parsed, dict):
+            terms = parsed.get("glossary_terms", [])
+        elif isinstance(parsed, list):
+            terms = parsed
+        else:
+            return []
+        return [str(t).strip() for t in terms if isinstance(t, str) and str(t).strip()]
+
+    @staticmethod
+    def _format_candidates(candidates: List[Dict[str, Any]]) -> str:
+        items = []
+        for c in candidates:
+            parts = [f"fqn: {c['fqn']}", f"name: {c.get('name', '')}"]
+            if c.get("display_name"):
+                parts.append(f"display_name: {c['display_name']}")
+            if c.get("description"):
+                parts.append(f"description: {c['description']}")
+            if c.get("synonyms"):
+                parts.append(f"synonyms: {', '.join(c['synonyms'])}")
+            items.append(" | ".join(parts))
+        return "\n".join(items)
+
+    def assign_table(
+        self,
+        *,
+        schema_name: str,
+        table_name: str,
+        table_description: str,
+        columns: List[Dict[str, Any]],
+        candidates: List[Dict[str, Any]],
+    ) -> List[str]:
+        if not candidates:
+            return []
+        col_summary = ", ".join(
+            f"{c.get('name', '')} ({c.get('semantic_class', '')})" for c in columns[:20]
+        )
+        user_prompt = "\n".join([
+            "Assign glossary terms to this TABLE. Return JSON: {\"glossary_terms\": [\"FQN\", ...]} or {\"glossary_terms\": []}.",
+            f"Schema: {schema_name}",
+            f"Table: {table_name}",
+            f"Description: {table_description or '(none)'}",
+            f"Columns: {col_summary}",
+            "",
+            "Candidate glossary terms:",
+            self._format_candidates(candidates),
+        ])
+        return self._call_llm([
+            {"role": "system", "content": self._SYSTEM_PROMPT},
+            {"role": "user", "content": user_prompt},
+        ])
+
+    def assign_column(
+        self,
+        *,
+        schema_name: str,
+        table_name: str,
+        table_description: str,
+        column_name: str,
+        data_type: str,
+        column_description: str,
+        semantic_class: str,
+        candidates: List[Dict[str, Any]],
+    ) -> List[str]:
+        if not candidates:
+            return []
+        user_prompt = "\n".join([
+            "Assign glossary terms to this COLUMN. Return JSON: {\"glossary_terms\": [\"FQN\", ...]} or {\"glossary_terms\": []}.",
+            f"Schema: {schema_name}",
+            f"Table: {table_name}",
+            f"Table description: {table_description or '(none)'}",
+            f"Column: {column_name}",
+            f"Data type: {data_type}",
+            f"Description: {column_description or '(none)'}",
+            f"Semantic class: {semantic_class or '(unknown)'}",
+            "",
+            "Candidate glossary terms:",
+            self._format_candidates(candidates),
+        ])
+        return self._call_llm([
+            {"role": "system", "content": self._SYSTEM_PROMPT},
+            {"role": "user", "content": user_prompt},
+        ])
+
+
+class AzureClassificationTagAssigner:
+    """Assigns OpenMetadata classification tag FQNs to tables and columns using Azure OpenAI."""
+
+    _SYSTEM_PROMPT = (
+        "You assign OpenMetadata classification tags to database objects. "
+        "Choose only from the provided candidate tags. "
+        "Return only tag FQNs. Return [] if uncertain. "
+        "You may consider any candidate for either tables or columns because scope is not authoritative here. "
+        "Respect mutually exclusive classifications by selecting at most one option per classification. "
+        "Prefer precision over recall.\n\n"
+        "CRITICAL — Layer-derived classifications (Architecture, Certification) must be "
+        "determined by the schema/layer the table physically sits in, NOT by inspecting "
+        "data content or column names:\n"
+        "  • Schema contains 'bronze', 'raw', or 'landing' → Architecture.Raw, Certification.Bronze\n"
+        "  • Schema contains 'silver', 'staging', 'cleansed' → Architecture.Enriched, Certification.Silver\n"
+        "  • Schema contains 'gold', 'enriched', 'curated', 'mart' → Architecture.Enriched, Certification.Gold\n"
+        "A table in a bronze schema is ALWAYS Architecture.Raw and Certification.Bronze, "
+        "even if its columns look structured or contain computed fields — those come from "
+        "the source system, not from platform transformations."
+    )
+
+    def __init__(self, generator: AzureDescriptionGenerator) -> None:
+        self._generator = generator
+
+    def is_available(self) -> bool:
+        return self._generator.is_available()
+
+    def _call_llm(self, messages: List[Dict[str, str]]) -> List[str]:
+        if not self.is_available():
+            return []
+        response = self._generator._client.chat.completions.create(
+            model=self._generator.deployment,
+            messages=messages,
+            temperature=0.0,
+            top_p=1.0,
+        )
+        choices = getattr(response, "choices", []) or []
+        if not choices:
+            return []
+        message = getattr(choices[0], "message", None)
+        content = str(getattr(message, "content", "") or "").strip() if message else ""
+        if not content:
+            return []
+        try:
+            parsed = json.loads(content)
+        except json.JSONDecodeError:
+            match = re.search(r"\{[^}]*\}", content, re.DOTALL)
+            if match:
+                try:
+                    parsed = json.loads(match.group())
+                except json.JSONDecodeError:
+                    return []
+            else:
+                return []
+        if isinstance(parsed, dict):
+            tags = parsed.get("classification_tags", [])
+        elif isinstance(parsed, list):
+            tags = parsed
+        else:
+            return []
+        return [str(tag).strip() for tag in tags if isinstance(tag, str) and str(tag).strip()]
+
+    @staticmethod
+    def _format_candidates(candidates: List[Dict[str, Any]]) -> str:
+        lines = []
+        for classification in candidates:
+            if not isinstance(classification, dict):
+                continue
+            header = (
+                f"classification: {classification.get('name', '')}"
+                f" | provider: {classification.get('provider', '')}"
+                f" | mutually_exclusive: {classification.get('mutually_exclusive', False)}"
+            )
+            lines.append(header)
+            for option in classification.get("options", []) or []:
+                if not isinstance(option, dict):
+                    continue
+                lines.append(
+                    f"  - fqn: {option.get('fqn', '')} | name: {option.get('name', '')}"
+                )
+        return "\n".join(lines)
+
+    @staticmethod
+    def _normalize_selected_tags(candidates: List[Dict[str, Any]], selected_tags: List[str]) -> List[str]:
+        option_to_classification: Dict[str, tuple[str, bool]] = {}
+        for classification in candidates:
+            if not isinstance(classification, dict):
+                continue
+            classification_name = str(classification.get("name") or "").strip()
+            mutually_exclusive = bool(classification.get("mutually_exclusive", False))
+            for option in classification.get("options", []) or []:
+                if not isinstance(option, dict):
+                    continue
+                fqn = str(option.get("fqn") or "").strip()
+                if fqn:
+                    option_to_classification[fqn] = (classification_name, mutually_exclusive)
+
+        normalized: List[str] = []
+        selected_by_classification: Dict[str, str] = {}
+        for tag in selected_tags:
+            fqn = str(tag or "").strip()
+            if not fqn or fqn not in option_to_classification:
+                continue
+            classification_name, mutually_exclusive = option_to_classification[fqn]
+            existing = selected_by_classification.get(classification_name)
+            if mutually_exclusive and existing and existing != fqn:
+                continue
+            if fqn not in normalized:
+                normalized.append(fqn)
+                selected_by_classification[classification_name] = fqn
+        return normalized
+
+    _SCHEMA_LAYER_RULES: Dict[str, Dict[str, str]] = {
+        "bronze": {"Architecture": "Architecture.Raw", "Certification": "Certification.Bronze"},
+        "raw": {"Architecture": "Architecture.Raw", "Certification": "Certification.Bronze"},
+        "landing": {"Architecture": "Architecture.Raw", "Certification": "Certification.Bronze"},
+        "silver": {"Architecture": "Architecture.Enriched", "Certification": "Certification.Silver"},
+        "staging": {"Architecture": "Architecture.Enriched", "Certification": "Certification.Silver"},
+        "cleansed": {"Architecture": "Architecture.Enriched", "Certification": "Certification.Silver"},
+        "gold": {"Architecture": "Architecture.Enriched", "Certification": "Certification.Gold"},
+        "enriched": {"Architecture": "Architecture.Enriched", "Certification": "Certification.Gold"},
+        "curated": {"Architecture": "Architecture.Curated", "Certification": "Certification.Gold"},
+        "mart": {"Architecture": "Architecture.Enriched", "Certification": "Certification.Gold"},
+    }
+
+    @classmethod
+    def _enforce_layer_tags(cls, schema_name: str, tags: List[str], candidates: List[Dict[str, Any]]) -> List[str]:
+        """Override Architecture and Certification tags based on schema name."""
+        schema_lower = schema_name.lower().replace("_", "").replace("-", "")
+        overrides: Dict[str, str] = {}
+        for keyword, mapping in cls._SCHEMA_LAYER_RULES.items():
+            if keyword in schema_lower:
+                overrides.update(mapping)
+                break
+        if not overrides:
+            return tags
+
+        valid_fqns = set()
+        for classification in candidates:
+            for option in classification.get("options", []) or []:
+                fqn = str(option.get("fqn") or "").strip()
+                if fqn:
+                    valid_fqns.add(fqn)
+
+        result: List[str] = []
+        for tag in tags:
+            classification_prefix = tag.split(".")[0] if "." in tag else ""
+            if classification_prefix in overrides:
+                continue
+            result.append(tag)
+        for override_fqn in overrides.values():
+            if override_fqn in valid_fqns and override_fqn not in result:
+                result.append(override_fqn)
+        return result
+
+    def assign_table(
+        self,
+        *,
+        schema_name: str,
+        table_name: str,
+        table_description: str,
+        columns: List[Dict[str, Any]],
+        candidates: List[Dict[str, Any]],
+    ) -> List[str]:
+        if not candidates:
+            return []
+        col_summary = ", ".join(
+            f"{c.get('name', '')} ({c.get('semantic_class', '') or c.get('type', '')})" for c in columns[:20]
+        )
+        user_prompt = "\n".join([
+            "Assign OpenMetadata classification tags to this TABLE. Return JSON: {\"classification_tags\": [\"FQN\", ...]} or {\"classification_tags\": []}.",
+            f"Schema: {schema_name}",
+            f"Table: {table_name}",
+            f"Description: {table_description or '(none)'}",
+            f"Columns: {col_summary}",
+            "",
+            "Candidate classifications and tags:",
+            self._format_candidates(candidates),
+        ])
+        selected = self._call_llm([
+            {"role": "system", "content": self._SYSTEM_PROMPT},
+            {"role": "user", "content": user_prompt},
+        ])
+        normalized = self._normalize_selected_tags(candidates, selected)
+        return self._enforce_layer_tags(schema_name, normalized, candidates)
+
+    def assign_column(
+        self,
+        *,
+        schema_name: str,
+        table_name: str,
+        table_description: str,
+        column_name: str,
+        data_type: str,
+        column_description: str,
+        semantic_class: str,
+        sample_values: List[Any],
+        candidates: List[Dict[str, Any]],
+    ) -> List[str]:
+        if not candidates:
+            return []
+        shown_samples = ", ".join(str(value) for value in sample_values[:3]) if sample_values else "(none)"
+        user_prompt = "\n".join([
+            "Assign OpenMetadata classification tags to this COLUMN. Return JSON: {\"classification_tags\": [\"FQN\", ...]} or {\"classification_tags\": []}.",
+            f"Schema: {schema_name}",
+            f"Table: {table_name}",
+            f"Table description: {table_description or '(none)'}",
+            f"Column: {column_name}",
+            f"Data type: {data_type}",
+            f"Description: {column_description or '(none)'}",
+            f"Semantic class: {semantic_class or '(unknown)'}",
+            f"Sample values: {shown_samples}",
+            "",
+            "Candidate classifications and tags:",
+            self._format_candidates(candidates),
+        ])
+        selected = self._call_llm([
+            {"role": "system", "content": self._SYSTEM_PROMPT},
+            {"role": "user", "content": user_prompt},
+        ])
+        return self._normalize_selected_tags(candidates, selected)
+
+
+def _default_row_count_projections(row_count: int) -> Dict[str, int]:
+    safe_row_count = int(row_count or 0)
+    return {
+        "row_count_projection_1y": safe_row_count,
+        "row_count_projection_2y": safe_row_count,
+        "row_count_projection_5y": safe_row_count,
+    }
+
+
+def _projection_lookup(engine: Engine, config: dict[str, Any]) -> Dict[tuple[str, str], Dict[str, int]]:
+    try:
+        report = predictor.build_projection_report(engine, config=config, require_config=False)
+    except Exception as exc:
+        logger.warning("Volume projections unavailable: %s", exc)
+        return {}
+
+    if report.get("error"):
+        logger.info("Volume projections skipped: %s", report["error"])
+        return {}
+
+    lookup: Dict[tuple[str, str], Dict[str, int]] = {}
+    for table_report in report.get("tables", []) or []:
+        schema_name = str(table_report.get("schema") or "").strip()
+        table_name = str(table_report.get("table") or "").strip()
+        if not schema_name or not table_name:
+            continue
+        projections = table_report.get("projections") or {}
+        lookup[(schema_name, table_name)] = {
+            "row_count_projection_1y": int((((projections.get("1_year") or {}).get("estimated_rows")) or 0)),
+            "row_count_projection_2y": int((((projections.get("2_year") or {}).get("estimated_rows")) or 0)),
+            "row_count_projection_5y": int((((projections.get("5_year") or {}).get("estimated_rows")) or 0)),
+        }
+    return lookup
+
+
+def _collect_projection_inputs(engine: Engine, schema: str, config: dict[str, Any]) -> None:
+    try:
+        collector.run_setup(engine)
+        collector.run_collect(engine, schema=schema, config=config)
+    except Exception as exc:
+        logger.warning("Volume projection collection unavailable: %s", exc)
+
+
+def _projection_ident(dialect: str, name: str) -> str:
+    if dialect == "mssql":
+        return f"[{name}]"
+    if dialect == "oracle":
+        return name
+    return f'"{name}"'
+
+
+def _projection_qualified_table(dialect: str, schema: str, table: str) -> str:
+    if dialect == "mssql":
+        return f"[{schema}].[{table}]"
+    if dialect == "oracle":
+        return f"{schema}.{table}"
+    return f'"{schema}"."{table}"'
+
+
+def _projection_history_column(conn: Any, dialect: str, schema: str, table_name: str) -> str | None:
+    candidates = ("created_at", "created_date", "inserted_at", "record_created_at", "insert_date", "insert_timestamp", "ingested_at")
+    if dialect == "oracle":
+        row = conn.execute(
+            text(
+                """
+                SELECT column_name
+                FROM all_tab_columns
+                WHERE owner = UPPER(:schema)
+                  AND table_name = UPPER(:table)
+                  AND LOWER(column_name) IN ('created_at', 'created_date', 'inserted_at', 'record_created_at', 'insert_date', 'insert_timestamp', 'ingested_at')
+                """
+            ),
+            {"schema": schema, "table": table_name},
+        ).fetchall()
+        found = {str(item[0]).lower(): str(item[0]) for item in row}
+    else:
+        row = conn.execute(
+            text(
+                """
+                SELECT column_name
+                FROM information_schema.columns
+                WHERE table_schema = :schema
+                  AND table_name = :table
+                  AND lower(column_name) IN ('created_at', 'created_date', 'inserted_at', 'record_created_at', 'insert_date', 'insert_timestamp', 'ingested_at')
+                """
+            ),
+            {"schema": schema, "table": table_name},
+        ).fetchall()
+        found = {str(item[0]).lower(): str(item[0]) for item in row}
+    for candidate in candidates:
+        if candidate in found:
+            return found[candidate]
+    return None
+
+
+def _direct_history_projection_lookup(engine: Engine, schema: str, tables: list[str], row_counts: Dict[str, int]) -> Dict[tuple[str, str], Dict[str, int]]:
+    dialect = engine.dialect.name
+    lookup: Dict[tuple[str, str], Dict[str, int]] = {}
+    with engine.connect() as conn:
+        for table_name in tables:
+            row_count = int(row_counts.get(table_name) or 0)
+            history_col = _projection_history_column(conn, dialect, schema, table_name)
+            if not history_col:
+                continue
+
+            qualified = _projection_qualified_table(dialect, schema, table_name)
+            col = _projection_ident(dialect, history_col)
+            if dialect == "postgresql":
+                query = text(
+                    f"""
+                    SELECT date_trunc('month', {col})::date AS period_start, COUNT(*) AS rows_added
+                    FROM {qualified}
+                    WHERE {col} IS NOT NULL
+                    GROUP BY date_trunc('month', {col})
+                    ORDER BY period_start
+                    """
+                )
+            elif dialect == "mssql":
+                query = text(
+                    f"""
+                    SELECT DATEFROMPARTS(YEAR({col}), MONTH({col}), 1) AS period_start, COUNT(*) AS rows_added
+                    FROM {qualified}
+                    WHERE {col} IS NOT NULL
+                    GROUP BY DATEFROMPARTS(YEAR({col}), MONTH({col}), 1)
+                    ORDER BY period_start
+                    """
+                )
+            else:
+                query = text(
+                    f"""
+                    SELECT TRUNC({col}, 'MM') AS period_start, COUNT(*) AS rows_added
+                    FROM {qualified}
+                    WHERE {col} IS NOT NULL
+                    GROUP BY TRUNC({col}, 'MM')
+                    ORDER BY period_start
+                    """
+                )
+
+            try:
+                rows = conn.execute(query).fetchall()
+            except Exception as exc:
+                logger.warning("Direct projection history unavailable for %s.%s: %s", schema, table_name, exc)
+                continue
+
+            if len(rows) < 2:
+                continue
+
+            # Calculate cumulative rows for linear regression
+            cumulative_rows = []
+            cumulative = 0
+            for row in rows:
+                cumulative += float(row[1] or 0)
+                cumulative_rows.append(cumulative)
+
+            # Calculate average monthly growth
+            avg_monthly_growth = sum(float(row[1] or 0) for row in rows) / len(rows)
+
+            # Use linear regression slope if we have sufficient data (6+ months)
+            # Otherwise fallback to simple average
+            if len(rows) >= 6:
+                # Linear regression: calculate slope from cumulative trend
+                x = [float(i) for i in range(len(rows))]
+                y = cumulative_rows
+                slope = predictor._linear_slope(x, y)
+                # Use slope as monthly growth rate for projection
+                r1y, r2y, r5y = predictor._estimate_projection_rows(row_count, slope, use_slope=True)
+            else:
+                # Simple average for short history
+                r1y, r2y, r5y = predictor._estimate_projection_rows(row_count, avg_monthly_growth, use_slope=False)
+
+            lookup[(schema, table_name)] = {
+                "row_count_projection_1y": int(r1y),
+                "row_count_projection_2y": int(r2y),
+                "row_count_projection_5y": int(r5y),
+            }
+    return lookup
+
+
+# ============================================================================
+# Database connection
+# ============================================================================
+
+def get_engine(database_url: str) -> Engine:
+    """Create a SQLAlchemy engine from a database URL with connection pooling."""
+    kwargs = dict(pool_size=5, max_overflow=10, pool_pre_ping=True, echo=False)
+    if "oracle" not in (database_url or "").lower():
+        kwargs["connect_args"] = {"connect_timeout": 10}
+    return create_engine(database_url, **kwargs)
+
+
+# ============================================================================
+# Schema analysis (from database_analyzer)
+# ============================================================================
+
+def format_type(col_type: str, col_info: dict) -> str:
+    """Format column type string from SQLAlchemy column info."""
+    if hasattr(col_type, '__name__'):
+        base_type = col_type.__name__.lower()
+    else:
+        base_type = str(col_type).lower()
+        if '(' in base_type:
+            base_type = base_type.split('(')[0].strip()
+
+    if hasattr(col_type, 'length') and col_type.length is not None:
+        length = col_type.length
+        if 'varchar' in base_type or 'char' in base_type:
+            return f"{base_type}({length})"
+        elif 'text' in base_type and length:
+            return f"{base_type}({length})"
+
+    if hasattr(col_type, 'precision') and col_type.precision is not None:
+        precision = col_type.precision
+        scale = col_type.scale if hasattr(col_type, 'scale') and col_type.scale is not None else 0
+        if 'numeric' in base_type or 'decimal' in base_type:
+            return f"numeric({precision},{scale})"
+        elif 'float' in base_type or 'double' in base_type or 'real' in base_type:
+            return f"{base_type}({precision},{scale})" if scale else f"{base_type}({precision})"
+        return f"{base_type}({precision},{scale})"
+
+    type_str = str(col_type)
+    if '(' in type_str and ')' in type_str:
+        return type_str
+    return base_type
+
+
+def is_incremental_column(col_info: dict, col_type: str) -> bool:
+    """Detect if a column is an incremental/auto-increment column."""
+    col_type_str = str(col_type).lower()
+    default_val = str(col_info.get('default', '')).lower() if col_info.get('default') else ''
+    if any(t in col_type_str for t in ['serial', 'bigserial', 'smallserial']):
+        return True
+    if 'auto_increment' in default_val or 'nextval' in default_val:
+        return True
+    if 'identity' in col_type_str or col_info.get('identity', False):
+        return True
+    if col_info.get('autoincrement', False):
+        return True
+    return False
+
+
+_DATETIME_TYPE_KEYWORDS = ("timestamp", "datetime", "date", "time", "smalldatetime", "datetimeoffset")
+_TZ_AWARE_TYPES = {
+    "postgresql": ("timestamptz", "timestamp with time zone", "timetz", "time with time zone"),
+    "mysql": ("timestamp",),
+    "mssql": ("datetimeoffset",),
+    "oracle": ("timestamp with time zone", "timestamp with local time zone"),
+    "snowflake": ("timestamp_tz", "timestamp_ltz", "timestamptz", "timestamp with time zone"),
+}
+_TZ_AWARE_INTERPRETATION = {
+    "postgresql": "UTC",
+    "mysql": "UTC",
+    "mssql": "offset_embedded",
+    "oracle": "UTC",
+    "snowflake": "UTC",
+}
+
+
+def get_column_timezone(col_type_str: str, dialect: str, server_timezone: str) -> Optional[str]:
+    """Determine the effective timezone of a date/timestamp column."""
+    col_type_lower = col_type_str.lower().strip()
+    is_datetime = any(kw in col_type_lower for kw in _DATETIME_TYPE_KEYWORDS)
+    if not is_datetime or col_type_lower == "date":
+        return None
+    aware_types = _TZ_AWARE_TYPES.get(dialect, ())
+    if any(t in col_type_lower for t in aware_types):
+        return _TZ_AWARE_INTERPRETATION.get(dialect, server_timezone)
+    if dialect == "sqlite":
+        return "unknown"
+    return server_timezone
+
+
+def fetch_schema_metadata(engine: Engine, schema: Optional[str] = None, config: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    """Fetch tables, columns, primary keys, and foreign keys in a single inspector pass.
+
+    Returns a dict with keys: 'tables', 'columns', 'primary_keys', 'foreign_keys'.
+    """
+    inspector = inspect(engine)
+    config = config or {}
+    schemas_to_check = [schema] if schema else inspector.get_schema_names()
+
+    target_tables: Dict[str, str] = {}
+    for sch in schemas_to_check:
+        if schema and str(sch).upper() != str(schema).upper():
+            continue
+        if should_exclude_schema(sch, config):
+            continue
+        for table_name in inspector.get_table_names(schema=sch):
+            if should_exclude_table(sch, table_name, config):
+                continue
+            target_tables[table_name] = sch
+
+    table_names = sorted(target_tables.keys())
+    columns_by_table: Dict[str, List[Dict]] = {}
+    pk_by_table: Dict[str, List[str]] = {}
+    fk_by_table: Dict[str, List[Dict]] = {}
+
+    with warnings.catch_warnings():
+        warnings.filterwarnings('ignore', category=SAWarning, message='Did not recognize type')
+        for table_name in table_names:
+            table_schema = target_tables[table_name]
+            try:
+                columns = inspector.get_columns(table_name, schema=table_schema)
+                columns_by_table[table_name] = [
+                    {
+                        "name": col['name'],
+                        "type": format_type(col['type'], col),
+                        "nullable": col.get('nullable', True),
+                        "default": str(col.get('default', '')) if col.get('default') is not None else None,
+                        "is_incremental": is_incremental_column(col, col['type']),
+                    }
+                    for col in columns
+                ]
+            except Exception:
+                columns_by_table[table_name] = []
+
+            try:
+                pk_constraint = inspector.get_pk_constraint(table_name, schema=table_schema)
+                if pk_constraint and pk_constraint.get('constrained_columns'):
+                    pk_by_table[table_name] = pk_constraint['constrained_columns']
+            except Exception:
+                pass
+
+            try:
+                foreign_keys = inspector.get_foreign_keys(table_name, schema=table_schema)
+                fk_by_table[table_name] = [
+                    {"column": local_col, "references": f"{fk['referred_table']}.{ref_col}"}
+                    for fk in foreign_keys
+                    for local_col, ref_col in zip(fk['constrained_columns'], fk['referred_columns'])
+                ]
+            except Exception:
+                pass
+
+    return {
+        "tables": table_names,
+        "columns": columns_by_table,
+        "primary_keys": pk_by_table,
+        "foreign_keys": fk_by_table,
+    }
+
+
+def fetch_sample_rows(engine: Engine, table: str, limit: int, schema: str = None, adapter=None):
+    """Fetch sample rows from a table."""
+    with engine.connect() as conn:
+        try:
+            metadata = MetaData()
+            table_obj = Table(table, metadata, autoload_with=engine)
+            result = conn.execute(select(table_obj).limit(limit))
+            rows = result.fetchall()
+            return list(result.keys()), rows
+        except Exception:
+            if adapter:
+                sch = schema or adapter.default_schema()
+                qstr, params = adapter.build_select_limit_query(sch, table, limit)
+                result = conn.execute(text(qstr), params)
+            else:
+                qt = f'"{schema}"."{table}"' if schema else f'"{table}"'
+                result = conn.execute(text(f"SELECT * FROM {qt} LIMIT :limit"), {"limit": limit})
+            return list(result.keys()), result.fetchall()
+
+
+def fetch_row_counts(engine: Engine, table_names: List[str], schema: str = None, adapter=None) -> Dict[str, int]:
+    """Fetch row counts for all specified tables."""
+    row_counts = {}
+    with engine.connect() as conn:
+        for table_name in table_names:
+            try:
+                if adapter:
+                    qt = adapter.quote_table(schema or "", table_name)
+                else:
+                    qt = f'"{schema}"."{table_name}"' if schema else f'"{table_name}"'
+                q = f"SELECT COUNT(*) FROM {qt}"
+                count = conn.execute(text(q)).scalar()
+                row_counts[table_name] = count if count is not None else 0
+            except Exception:
+                row_counts[table_name] = 0
+    return row_counts
+
+
+def fetch_database_timezone(engine: Engine, adapter=None) -> str:
+    """Fetch the database server timezone. Uses adapter when available."""
+    if adapter:
+        return adapter.fetch_database_timezone(engine)
+    dialect = engine.dialect.name
+    with engine.connect() as conn:
+        try:
+            if dialect == "mysql":
+                return conn.execute(text("SELECT @@global.time_zone")).scalar() or "Unknown"
+            if dialect == "sqlite":
+                return "UTC (SQLite default)"
+            return f"Unknown ({dialect})"
+        except Exception:
+            return "Unknown"
+
+
+_RANGE_SKIP_TYPES = (
+    "json", "jsonb", "bytea", "xml", "tsvector", "tsquery",
+    "point", "line", "lseg", "box", "path", "polygon", "circle",
+    "array", "user-defined", "bool", "bit",
+)
+# Oracle NUMBER(1,0) = boolean; match precisely to avoid skipping number(19,0)
+_RANGE_SKIP_ORACLE_BOOL = re.compile(r"number\s*\(\s*1\s*,\s*0\s*\)")
+
+
+def fetch_column_statistics(engine, table_name: str, columns: List[Dict], schema: str = None, row_count: int = 0, adapter=None) -> Dict[str, Dict]:
+    """Fetch cardinality, null count, and data range for all columns in a table."""
+    empty_stats = {col["name"]: {"cardinality": 0, "null_count": 0} for col in columns}
+    if not columns or row_count == 0:
+        return empty_stats
+
+    stats_parts = []
+    range_columns = set()
+    for col in columns:
+        col_name = col["name"]
+        col_type = col.get("type", "").lower()
+        quoted = adapter.quote_column(col_name) if adapter else f'"{col_name}"'
+        suffix = "__card"
+        stats_parts.append(f'COUNT(DISTINCT {quoted}) AS "{col_name}{suffix}"')
+        stats_parts.append(f'SUM(CASE WHEN {quoted} IS NULL THEN 1 ELSE 0 END) AS "{col_name}__nulls"')
+        skip_range = any(s in col_type for s in _RANGE_SKIP_TYPES) or _RANGE_SKIP_ORACLE_BOOL.search(col_type)
+        if not skip_range:
+            stats_parts.append(f'MIN({quoted}) AS "{col_name}__min"')
+            stats_parts.append(f'MAX({quoted}) AS "{col_name}__max"')
+            range_columns.add(col_name)
+
+    from_clause = adapter.quote_table(schema or "", table_name) if adapter else (f'"{schema}"."{table_name}"' if schema else f'"{table_name}"')
+    query = f"SELECT {', '.join(stats_parts)} FROM {from_clause}"
+
+    try:
+        with engine.connect() as conn:
+            row = conn.execute(text(query)).fetchone()
+        if not row:
+            return empty_stats
+        row_dict = dict(row._mapping)
+        # Oracle returns keys in uppercase; normalize for case-insensitive lookup
+        row_lower = {str(k).lower(): v for k, v in row_dict.items()} if row_dict else {}
+        stats = {}
+        for col in columns:
+            col_name = col["name"]
+            col_stats = {
+                "cardinality": int(row_lower.get(f"{col_name}__card", 0) or 0),
+                "null_count": int(row_lower.get(f"{col_name}__nulls", 0) or 0),
+            }
+            if col_name in range_columns:
+                mn, mx = row_lower.get(f"{col_name}__min"), row_lower.get(f"{col_name}__max")
+                if mn is not None or mx is not None:
+                    col_stats["data_range"] = {
+                        "min": str(mn) if mn is not None else None,
+                        "max": str(mx) if mx is not None else None,
+                    }
+            stats[col_name] = col_stats
+        return stats
+    except Exception as e:
+        logger.warning(f"Could not fetch column statistics for '{table_name}': {e}")
+        return empty_stats
+
+
+# ============================================================================
+# Metadata detection (from database_analyzer)
+# ============================================================================
+
+_SENSITIVE_PATTERNS: List[tuple[str, str]] = []
+_SENSITIVE_TYPES: Dict[str, str] = {}
+def detect_sensitive_fields(columns: List[Dict]) -> Dict[str, str]:
+    """Return {col_name: sensitivity_category} for columns that look sensitive."""
+    _load_context_rules()
+    result = {}
+    for col in columns:
+        name_lower = col["name"].lower()
+        col_type = col.get("type", "").lower()
+        for sens_type, cat in _SENSITIVE_TYPES.items():
+            if sens_type in col_type:
+                result[col["name"]] = cat
+                break
+        else:
+            for pattern, cat in _SENSITIVE_PATTERNS:
+                if pattern in name_lower:
+                    result[col["name"]] = cat
+                    break
+    return result
+
+
+def _detect_partition_columns_exact(engine: Engine, table_name: str, schema: str) -> List[str]:
+    """Detect physically configured partition columns from dialect catalogs."""
+    try:
+        dialect_name = str(engine.dialect.name or "").lower()
+        with engine.connect() as conn:
+            if dialect_name == "mssql":
+                rows = conn.execute(text("""
+                    SELECT c.name
+                    FROM sys.indexes i
+                    JOIN sys.index_columns ic ON i.object_id = ic.object_id AND i.index_id = ic.index_id
+                    JOIN sys.columns c ON ic.object_id = c.object_id AND ic.column_id = c.column_id
+                    JOIN sys.tables t ON i.object_id = t.object_id
+                    JOIN sys.schemas s ON t.schema_id = s.schema_id
+                    WHERE s.name = :schema AND t.name = :table
+                        AND i.type = 1
+                        AND i.data_space_id IN (SELECT data_space_id FROM sys.data_spaces WHERE type = 'P')
+                    ORDER BY ic.key_ordinal
+                """), {"schema": schema, "table": table_name}).fetchall()
+                return [r[0] for r in rows] if rows else []
+
+            if dialect_name == "postgresql":
+                rows = conn.execute(text("""
+                    SELECT a.attname
+                    FROM pg_partitioned_table pt
+                    JOIN pg_class c ON c.oid = pt.partrelid
+                    JOIN pg_namespace n ON n.oid = c.relnamespace
+                    JOIN pg_attribute a ON a.attrelid = c.oid AND a.attnum = ANY(pt.partattrs::smallint[])
+                    WHERE c.relname = :tbl AND n.nspname = :sch
+                    ORDER BY a.attnum
+                """), {"tbl": table_name, "sch": schema}).fetchall()
+                return [r[0] for r in rows] if rows else []
+
+            if dialect_name == "oracle":
+                rows = conn.execute(text("""
+                    SELECT COLUMN_NAME
+                    FROM ALL_PART_KEY_COLUMNS
+                    WHERE OWNER = :schema AND NAME = :table AND OBJECT_TYPE = 'TABLE'
+                    ORDER BY COLUMN_POSITION
+                """), {"schema": schema.upper(), "table": table_name.upper()}).fetchall()
+                return [r[0] for r in rows] if rows else []
+    except Exception:
+        pass
+    return []
+
+
+def detect_partition_columns(
+    columns: List[Dict],
+    table_name: Optional[str] = None,
+    schema: str = "public",
+    engine=None,
+    adapter=None,
+) -> tuple[List[str], str]:
+    """Return partition columns and detection mode: exact|candidate|none."""
+    if adapter and engine and table_name:
+        exact_columns = _detect_partition_columns_exact(engine, table_name, schema)
+        if exact_columns:
+            return exact_columns, "exact"
+        candidates = adapter.detect_partition_columns(engine, table_name, schema, columns)
+        if candidates:
+            return candidates, "candidate"
+        return [], "none"
+    if adapter:
+        candidates = adapter.detect_partition_columns(engine or object(), table_name or "", schema, columns)
+        if candidates:
+            return candidates, "candidate"
+    return [], "none"
+
+
+def detect_incremental_columns(columns: List[Dict], pk_columns: List[str]) -> List[str]:
+    """Identify columns suitable for incremental/watermark loads."""
+    inc_cols = []
+    for col in columns:
+        name_lower = col["name"].lower()
+        if any(
+            kw in name_lower
+            for kw in [
+                "updated_at",
+                "modified_at",
+                "changed_at",
+                "last_modified",
+                "last_updated",
+                "updated_on",
+                "modified_on",
+            ]
+        ):
+            inc_cols.append(col["name"])
+    return inc_cols
+
+
+def parse_connection_info(engine: Engine) -> Dict[str, str]:
+    """Extract host, port, database name, and driver from a database URL."""
+    url = engine.url
+    return {
+        "host": str(url.host or ""),
+        "port": str(url.port or ""),
+        "database": str(url.database or ""),
+        "driver": str(engine.dialect.name or ""),
+    }
+
+
+def _default_context_rules() -> Dict[str, Any]:
+    return {
+        "semantic_patterns": [
+            {"pattern": r"(length|height|width|depth|distance|diameter|radius|thickness)", "semantic_class": "length"},
+            {"pattern": r"(volume|capacity|cubic|cbm|ft3|m3|liter|litre|gallon)", "semantic_class": "volume"},
+            {"pattern": r"(pressure|press|psi|bar|kpa|mpa)", "semantic_class": "pressure"},
+            {"pattern": r"(temperature|temp|celsius|fahrenheit|kelvin)", "semantic_class": "temperature"},
+            {"pattern": r"(duration|latency|elapsed|runtime|ttl|age|timeout)", "semantic_class": "duration"},
+            {"pattern": r"(sku|product_code|product_id)", "semantic_class": "product_identifier"},
+        ],
+        "unit_aliases": {
+            "ft": "ft",
+            "feet": "ft",
+            "foot": "ft",
+            "in": "in",
+            "inch": "in",
+            "inches": "in",
+            "m": "m",
+            "meter": "m",
+            "meters": "m",
+            "metre": "m",
+            "metres": "m",
+            "cm": "cm",
+            "mm": "mm",
+            "ft3": "ft3",
+            "cubic_ft": "ft3",
+            "cubic_foot": "ft3",
+            "m3": "m3",
+            "cubic_m": "m3",
+            "cubic_meter": "m3",
+            "cubic_metre": "m3",
+            "l": "l",
+            "liter": "l",
+            "litre": "l",
+            "psi": "psi",
+            "bar": "bar",
+            "kpa": "kpa",
+            "mpa": "mpa",
+            "s": "s",
+            "sec": "s",
+            "second": "s",
+            "seconds": "s",
+            "min": "min",
+            "minute": "min",
+            "minutes": "min",
+            "h": "h",
+            "hr": "h",
+            "hour": "h",
+            "hours": "h",
+            "c": "c",
+            "celsius": "c",
+            "f": "f",
+            "fahrenheit": "f",
+            "k": "k",
+            "kelvin": "k",
+        },
+        "unit_conversion": {
+            "ft": {"canonical_unit": "m", "unit_system": "imperial", "factor_to_canonical": 0.3048, "offset_to_canonical": 0.0, "dimension": "length"},
+            "in": {"canonical_unit": "m", "unit_system": "imperial", "factor_to_canonical": 0.0254, "offset_to_canonical": 0.0, "dimension": "length"},
+            "m": {"canonical_unit": "m", "unit_system": "metric", "factor_to_canonical": 1.0, "offset_to_canonical": 0.0, "dimension": "length"},
+            "cm": {"canonical_unit": "m", "unit_system": "metric", "factor_to_canonical": 0.01, "offset_to_canonical": 0.0, "dimension": "length"},
+            "mm": {"canonical_unit": "m", "unit_system": "metric", "factor_to_canonical": 0.001, "offset_to_canonical": 0.0, "dimension": "length"},
+            "ft3": {"canonical_unit": "m3", "unit_system": "imperial", "factor_to_canonical": 0.028316846592, "offset_to_canonical": 0.0, "dimension": "volume"},
+            "m3": {"canonical_unit": "m3", "unit_system": "metric", "factor_to_canonical": 1.0, "offset_to_canonical": 0.0, "dimension": "volume"},
+            "l": {"canonical_unit": "m3", "unit_system": "metric", "factor_to_canonical": 0.001, "offset_to_canonical": 0.0, "dimension": "volume"},
+            "psi": {"canonical_unit": "bar", "unit_system": "imperial", "factor_to_canonical": 0.0689475729, "offset_to_canonical": 0.0, "dimension": "pressure"},
+            "bar": {"canonical_unit": "bar", "unit_system": "metric", "factor_to_canonical": 1.0, "offset_to_canonical": 0.0, "dimension": "pressure"},
+            "kpa": {"canonical_unit": "bar", "unit_system": "metric", "factor_to_canonical": 0.01, "offset_to_canonical": 0.0, "dimension": "pressure"},
+            "mpa": {"canonical_unit": "bar", "unit_system": "metric", "factor_to_canonical": 10.0, "offset_to_canonical": 0.0, "dimension": "pressure"},
+            "s": {"canonical_unit": "s", "unit_system": "metric", "factor_to_canonical": 1.0, "offset_to_canonical": 0.0, "dimension": "duration"},
+            "min": {"canonical_unit": "s", "unit_system": "metric", "factor_to_canonical": 60.0, "offset_to_canonical": 0.0, "dimension": "duration"},
+            "h": {"canonical_unit": "s", "unit_system": "metric", "factor_to_canonical": 3600.0, "offset_to_canonical": 0.0, "dimension": "duration"},
+            "c": {"canonical_unit": "c", "unit_system": "metric", "factor_to_canonical": 1.0, "offset_to_canonical": 0.0, "dimension": "temperature"},
+            "f": {"canonical_unit": "c", "unit_system": "imperial", "factor_to_canonical": 0.5555555556, "offset_to_canonical": -17.7777777778, "dimension": "temperature"},
+            "k": {"canonical_unit": "c", "unit_system": "metric", "factor_to_canonical": 1.0, "offset_to_canonical": -273.15, "dimension": "temperature"},
+        },
+    }
+
+
+def _load_context_rules() -> Dict[str, Any]:
+    global _RULES_CACHE, _CONCEPT_RULES, _CONCEPT_ALIAS_EXACT, _FIELD_CLASS_TO_SEMANTIC, _LEGACY_FIELD_RULES, _SENSITIVE_PATTERNS, _SENSITIVE_TYPES
+    if _RULES_CACHE is not None:
+        return _RULES_CACHE
+
+    rules = _default_context_rules()
+    if yaml is None:
+        raise RuntimeError("PyYAML is required to load concept rules from references/shared/concepts/concept_rules.yaml")
+
+    shared_dir = (_script_dir.parent / "references" / "shared").resolve()
+    semantic_path = shared_dir / "semantic_mappings.yaml"
+    unit_path = shared_dir / "unit_mappings.yaml"
+    concept_path = shared_dir / "concepts" / "concept_rules.yaml"
+    sensitivity_path = shared_dir / "concepts" / "sensitivity_rules.yaml"
+
+    try:
+        if semantic_path.exists():
+            with open(semantic_path, encoding="utf-8") as f:
+                semantic_data = yaml.safe_load(f) or {}
+            if isinstance(semantic_data.get("semantic_patterns"), list):
+                rules["semantic_patterns"] = semantic_data["semantic_patterns"]
+    except Exception as e:
+        logger.warning("Could not load semantic mappings from %s: %s", semantic_path, e)
+
+    try:
+        if unit_path.exists():
+            with open(unit_path, encoding="utf-8") as f:
+                unit_data = yaml.safe_load(f) or {}
+            if isinstance(unit_data.get("unit_aliases"), dict):
+                rules["unit_aliases"].update({str(k): str(v) for k, v in unit_data["unit_aliases"].items()})
+            if isinstance(unit_data.get("unit_conversion"), dict):
+                rules["unit_conversion"].update(unit_data["unit_conversion"])
+    except Exception as e:
+        logger.warning("Could not load unit mappings from %s: %s", unit_path, e)
+
+    if not concept_path.exists():
+        raise FileNotFoundError(f"Required concept rules file not found: {concept_path}")
+    with open(concept_path, encoding="utf-8") as f:
+        concept_data = yaml.safe_load(f) or {}
+    concept_rules = concept_data.get("concept_rules")
+    if not isinstance(concept_rules, list) or not concept_rules:
+        raise ValueError(f"Invalid concept rules in {concept_path}: 'concept_rules' must be a non-empty list")
+    cleaned_rules: List[Dict[str, Any]] = []
+    for index, rule in enumerate(concept_rules):
+        if not isinstance(rule, dict):
+            raise ValueError(f"Invalid concept rule #{index} in {concept_path}: each rule must be an object")
+        concept_id = str(rule.get("concept_id") or "").strip()
+        if not concept_id:
+            raise ValueError(f"Invalid concept rule #{index} in {concept_path}: missing concept_id")
+        cleaned_rules.append(dict(rule))
+    _CONCEPT_RULES = cleaned_rules
+    alias_exact = concept_data.get("concept_alias_exact")
+    if not isinstance(alias_exact, dict) or not alias_exact:
+        raise ValueError(f"Invalid concept aliases in {concept_path}: 'concept_alias_exact' must be a non-empty object")
+    cleaned_aliases: Dict[str, str] = {}
+    for key, value in alias_exact.items():
+        norm_key = str(key).strip().lower()
+        norm_value = str(value).strip().lower()
+        if not norm_key or not norm_value:
+            raise ValueError(f"Invalid concept alias entry in {concept_path}: keys/values must be non-empty strings")
+        cleaned_aliases[norm_key] = norm_value
+    _CONCEPT_ALIAS_EXACT = cleaned_aliases
+    field_map = concept_data.get("field_class_to_semantic")
+    if not isinstance(field_map, dict) or not field_map:
+        raise ValueError(f"Invalid field-class mapping in {concept_path}: 'field_class_to_semantic' must be a non-empty object")
+    cleaned_field_map: Dict[str, str] = {}
+    for key, value in field_map.items():
+        norm_key = str(key).strip().lower()
+        norm_value = str(value).strip()
+        if not norm_key or not norm_value:
+            raise ValueError(f"Invalid field-class mapping entry in {concept_path}: keys/values must be non-empty strings")
+        cleaned_field_map[norm_key] = norm_value
+    _FIELD_CLASS_TO_SEMANTIC = cleaned_field_map
+    legacy_rules = concept_data.get("legacy_field_rules")
+    if not isinstance(legacy_rules, list) or not legacy_rules:
+        raise ValueError(f"Invalid legacy field rules in {concept_path}: 'legacy_field_rules' must be a non-empty list")
+    cleaned_legacy_rules: List[Dict[str, Any]] = []
+    for index, rule in enumerate(legacy_rules):
+        if not isinstance(rule, dict):
+            raise ValueError(f"Invalid legacy field rule #{index} in {concept_path}: each rule must be an object")
+        field_classification = str(rule.get("field_classification") or "").strip().lower()
+        if not field_classification:
+            raise ValueError(f"Invalid legacy field rule #{index} in {concept_path}: missing field_classification")
+        contains_any = [str(v).strip().lower() for v in list(rule.get("contains_any") or []) if str(v).strip()]
+        endswith_any = [str(v).strip().lower() for v in list(rule.get("endswith_any") or []) if str(v).strip()]
+        if not contains_any and not endswith_any:
+            raise ValueError(
+                f"Invalid legacy field rule #{index} in {concept_path}: requires contains_any and/or endswith_any"
+            )
+        cleaned_legacy_rules.append(
+            {
+                "field_classification": field_classification,
+                "contains_any": contains_any,
+                "endswith_any": endswith_any,
+            }
+        )
+    _LEGACY_FIELD_RULES = cleaned_legacy_rules
+
+    if not sensitivity_path.exists():
+        raise FileNotFoundError(f"Required sensitivity rules file not found: {sensitivity_path}")
+    with open(sensitivity_path, encoding="utf-8") as f:
+        sensitivity_data = yaml.safe_load(f) or {}
+    sensitive_name_patterns = sensitivity_data.get("sensitive_name_patterns")
+    if not isinstance(sensitive_name_patterns, list) or not sensitive_name_patterns:
+        raise ValueError(
+            f"Invalid sensitivity rules in {sensitivity_path}: 'sensitive_name_patterns' must be a non-empty list"
+        )
+    cleaned_sensitive_patterns: List[tuple[str, str]] = []
+    for index, item in enumerate(sensitive_name_patterns):
+        if not isinstance(item, dict):
+            raise ValueError(
+                f"Invalid sensitive_name_patterns entry #{index} in {sensitivity_path}: each entry must be an object"
+            )
+        pattern = str(item.get("pattern") or "").strip().lower()
+        category = str(item.get("category") or "").strip()
+        if not pattern or not category:
+            raise ValueError(
+                f"Invalid sensitive_name_patterns entry #{index} in {sensitivity_path}: pattern/category are required"
+            )
+        cleaned_sensitive_patterns.append((pattern, category))
+    _SENSITIVE_PATTERNS = cleaned_sensitive_patterns
+
+    sensitive_type_patterns = sensitivity_data.get("sensitive_type_patterns")
+    if not isinstance(sensitive_type_patterns, dict) or not sensitive_type_patterns:
+        raise ValueError(
+            f"Invalid sensitivity rules in {sensitivity_path}: 'sensitive_type_patterns' must be a non-empty object"
+        )
+    cleaned_sensitive_types: Dict[str, str] = {}
+    for key, value in sensitive_type_patterns.items():
+        type_token = str(key).strip().lower()
+        category = str(value).strip()
+        if not type_token or not category:
+            raise ValueError(
+                f"Invalid sensitive_type_patterns entry in {sensitivity_path}: keys/values must be non-empty strings"
+            )
+        cleaned_sensitive_types[type_token] = category
+    _SENSITIVE_TYPES = cleaned_sensitive_types
+
+    _RULES_CACHE = rules
+    return rules
+
+
+_FIELD_CLASS_TO_SEMANTIC: Dict[str, str] = {}
+_UNITFUL_SEMANTIC_CLASSES = {
+    "quantity",
+    "count",
+    "length",
+    "area",
+    "volume",
+    "mass",
+    "pressure",
+    "temperature",
+    "duration",
+    "speed",
+    "flow_rate",
+    "force",
+    "energy",
+    "power",
+    "density",
+}
+_CONCEPT_RULES: List[Dict[str, Any]] = []
+_CONCEPT_ALIAS_EXACT: Dict[str, str] = {}
+_LEGACY_FIELD_RULES: List[Dict[str, Any]] = []
+_NON_SEMANTIC_NAME_TOKENS = {"tbl", "table", "col", "column", "field", "value", "data"}
+_LOW_SIGNAL_ALIAS_GROUPS = {"name", "code", "value", "data"}
+
+
+def _is_explicit_unit_column_name(col_name: str) -> bool:
+    lower = str(col_name or "").lower()
+    return lower.endswith("_unit") or lower.endswith("_value")
+
+
+def _infer_semantic_class(col_name: str, field_classification: Optional[str]) -> Optional[str]:
+    _load_context_rules()
+    lower = col_name.lower()
+    rules = _RULES_CACHE or {}
+    for rule in rules.get("semantic_patterns", []):
+        if not isinstance(rule, dict):
+            continue
+        pattern = str(rule.get("pattern") or "").strip()
+        semantic_class = str(rule.get("semantic_class") or "").strip()
+        if not pattern or not semantic_class:
+            continue
+        try:
+            if re.search(pattern, lower):
+                return semantic_class
+        except re.error:
+            if pattern in lower:
+                return semantic_class
+    if field_classification in _FIELD_CLASS_TO_SEMANTIC:
+        return _FIELD_CLASS_TO_SEMANTIC[field_classification]
+    return None
+
+
+def _extract_unit_from_name(col_name: str, aliases: Dict[str, str]) -> Optional[str]:
+    lower = re.sub(r"[^a-z0-9]+", "_", col_name.lower()).strip("_")
+    if not lower:
+        return None
+    for alias in sorted(aliases.keys(), key=len, reverse=True):
+        norm_alias = re.sub(r"[^a-z0-9]+", "_", str(alias).lower()).strip("_")
+        if not norm_alias:
+            continue
+        if re.search(rf"(?:^|_){re.escape(norm_alias)}(?:$|_)", lower):
+            return aliases[alias]
+    return None
+
+
+def _extract_unit_from_samples(sample_values: List[Any], aliases: Dict[str, str]) -> Optional[str]:
+    if not sample_values:
+        return None
+    tokens = []
+    for value in sample_values[:20]:
+        sval = str(value).strip().lower()
+        m = re.search(r"(?:^|\s)([a-z0-9_\/]+)\s*$", sval)
+        if m:
+            tokens.append(m.group(1))
+    for token in tokens:
+        if token in aliases:
+            return aliases[token]
+    return None
+
+
+def _build_unit_context(
+    col_name: str,
+    semantic_class: Optional[str],
+    sample_values: Optional[List[Any]] = None,
+) -> Optional[Dict[str, Any]]:
+    # Avoid false positives on non-unit columns (e.g., free-text addresses).
+    if semantic_class not in _UNITFUL_SEMANTIC_CLASSES and not _is_explicit_unit_column_name(col_name):
+        return None
+
+    rules = _load_context_rules()
+    aliases = rules.get("unit_aliases", {})
+    conversions = rules.get("unit_conversion", {})
+
+    detected = _extract_unit_from_name(col_name, aliases)
+    detection_source = "name"
+    confidence = "medium"
+    if not detected and sample_values:
+        detected = _extract_unit_from_samples(sample_values, aliases)
+        if detected:
+            detection_source = "sample_values"
+            confidence = "low"
+    if not detected:
+        if semantic_class in _UNITFUL_SEMANTIC_CLASSES:
+            return {
+                "detected_unit": None,
+                "canonical_unit": None,
+                "unit_system": "unknown",
+                "conversion": None,
+                "detection_confidence": "low",
+                "detection_source": "combined",
+                "notes": "Semantic class suggests units, but no explicit source unit token was detected.",
+            }
+        return None
+
+    conv = conversions.get(detected)
+    if not isinstance(conv, dict):
+        return {
+            "detected_unit": detected,
+            "canonical_unit": None,
+            "unit_system": "unknown",
+            "conversion": None,
+            "detection_confidence": confidence,
+            "detection_source": detection_source,
+            "notes": "Detected unit alias is not configured for canonical conversion.",
+        }
+
+    canonical_unit = conv.get("canonical_unit")
+    unit_system = conv.get("unit_system", "unknown")
+    factor = conv.get("factor_to_canonical")
+    offset = conv.get("offset_to_canonical", 0.0)
+    conversion = {
+        "factor_to_canonical": factor,
+        "offset_to_canonical": offset,
+        "formula": f"canonical = value * {factor} + {offset}",
+    }
+    notes = None
+    if detected != canonical_unit:
+        notes = f"Values should be normalized from '{detected}' to canonical '{canonical_unit}'."
+    return {
+        "detected_unit": detected,
+        "canonical_unit": canonical_unit,
+        "unit_system": unit_system,
+        "conversion": conversion,
+        "detection_confidence": confidence,
+        "detection_source": detection_source,
+        "notes": notes,
+    }
+
+
+def _unit_companion_base(col_name: str) -> Optional[str]:
+    lower = str(col_name or "").lower()
+    if lower.endswith("_unit"):
+        return lower[:-5]
+    if lower.endswith("_value"):
+        return lower[:-6]
+    return None
+
+
+def _propagate_unit_context_from_companion(columns: List[Dict[str, Any]]) -> None:
+    """Propagate unit context from *_unit columns to paired *_value columns."""
+    by_name = {str(c.get("name", "")).lower(): c for c in columns}
+    max_low_cardinality = 5
+
+    for col in columns:
+        name = str(col.get("name", "")).lower()
+        if not name.endswith("_value"):
+            continue
+        base = _unit_companion_base(name)
+        if not base:
+            continue
+        unit_col = by_name.get(f"{base}_unit")
+        if not unit_col:
+            continue
+
+        unit_ctx = unit_col.get("unit_context")
+        value_ctx = col.get("unit_context")
+        if not isinstance(unit_ctx, dict):
+            continue
+
+        detected = unit_ctx.get("detected_unit")
+        if not detected:
+            continue
+
+        if isinstance(value_ctx, dict) and value_ctx.get("detected_unit"):
+            continue
+
+        # Raise confidence when companion unit column is strongly controlled:
+        # no NULLs and very low cardinality (typically 1-3 unit labels).
+        companion_cardinality = unit_col.get("cardinality")
+        companion_null_count = unit_col.get("null_count")
+        companion_is_controlled = (
+            isinstance(companion_cardinality, (int, float))
+            and isinstance(companion_null_count, (int, float))
+            and int(companion_null_count) == 0
+            and int(companion_cardinality) <= max_low_cardinality
+        )
+        propagated_confidence = "medium" if companion_is_controlled else "low"
+
+        propagated = {
+            "detected_unit": unit_ctx.get("detected_unit"),
+            "canonical_unit": unit_ctx.get("canonical_unit"),
+            "unit_system": unit_ctx.get("unit_system", "unknown"),
+            "conversion": unit_ctx.get("conversion"),
+            "detection_confidence": propagated_confidence,
+            "detection_source": f"companion_column({unit_col.get('name')})",
+            "notes": f"Inferred from companion unit column '{unit_col.get('name')}'.",
+        }
+        col["unit_context"] = propagated
+
+
+def _build_unit_summary(columns: List[Dict[str, Any]]) -> Dict[str, Any]:
+    with_units = 0
+    unknown_cols: List[str] = []
+    groups: Dict[str, Set[str]] = {}
+    for col in columns:
+        semantic_class = col.get("semantic_class")
+        unit_ctx = col.get("unit_context")
+        if isinstance(unit_ctx, dict) and unit_ctx.get("detected_unit"):
+            with_units += 1
+            if semantic_class:
+                groups.setdefault(str(semantic_class), set()).add(str(unit_ctx.get("detected_unit")))
+        elif semantic_class in _UNITFUL_SEMANTIC_CLASSES:
+            unknown_cols.append(str(col.get("name")))
+    mixed_groups = [
+        {"semantic_class": cls, "detected_units": sorted(units)}
+        for cls, units in groups.items()
+        if len(units) > 1
+    ]
+    return {
+        "columns_with_units": with_units,
+        "columns_without_units": max(len(columns) - with_units, 0),
+        "mixed_unit_groups": mixed_groups,
+        "unknown_unit_columns": sorted(unknown_cols),
+    }
+
+
+def classify_field(col_name: str) -> Optional[str]:
+    """Classify a field based on configured legacy rule ordering."""
+    _load_context_rules()
+    col_name_lower = str(col_name or "").lower()
+    for rule in _LEGACY_FIELD_RULES:
+        contains_any = list(rule.get("contains_any") or [])
+        endswith_any = list(rule.get("endswith_any") or [])
+        contains_match = bool(contains_any and any(kw in col_name_lower for kw in contains_any))
+        endswith_match = bool(endswith_any and any(col_name_lower.endswith(sfx) for sfx in endswith_any))
+        if contains_match or endswith_match:
+            return str(rule.get("field_classification"))
+    return None
+
+
+def _normalize_name_tokens(name: str) -> List[str]:
+    normalized = re.sub(r"[^a-z0-9]+", "_", str(name or "").lower()).strip("_")
+    if not normalized:
+        return []
+    tokens = [token for token in normalized.split("_") if token and token not in _NON_SEMANTIC_NAME_TOKENS]
+    collapsed: List[str] = []
+    for token in tokens:
+        if len(token) > 3 and token.endswith("s") and not token.endswith("ss"):
+            token = token[:-1]
+        collapsed.append(token)
+    return collapsed
+
+
+def _normalize_column_alias(col_name: str) -> str:
+    _load_context_rules()
+    normalized = re.sub(r"[^a-z0-9]+", "_", str(col_name or "").lower()).strip("_")
+    if not normalized:
+        return ""
+    if normalized in _CONCEPT_ALIAS_EXACT:
+        return _CONCEPT_ALIAS_EXACT[normalized]
+    tokens = _normalize_name_tokens(normalized)
+    if not tokens:
+        return normalized
+    if "email" in tokens or "mail" in tokens:
+        return "email"
+    if any(token in {"phone", "mobile", "telephone", "cell", "fax"} for token in tokens):
+        return "phone"
+    if {"created", "at"}.issubset(set(tokens)) or "created" in tokens:
+        return "created_at"
+    if {"updated", "at"}.issubset(set(tokens)) or "updated" in tokens or "modified" in tokens:
+        return "updated_at"
+    if "event" in tokens:
+        return "event_time"
+    if "price" in tokens:
+        return "price"
+    if "amount" in tokens or "total" in tokens:
+        return "amount"
+    if "count" in tokens:
+        return "count"
+    if tokens[-1] in {"id", "uuid", "guid"}:
+        return "id"
+    return "_".join(tokens)
+
+
+def _matches_token_rule(tokens: List[str], raw_name: str, rule_tokens: tuple[str, ...]) -> bool:
+    token_set = set(tokens)
+    for rule_token in rule_tokens:
+        if rule_token.startswith("_") and raw_name.endswith(rule_token):
+            return True
+        split_rule = [part for part in rule_token.split("_") if part]
+        if split_rule and set(split_rule).issubset(token_set):
+            return True
+        if rule_token in token_set:
+            return True
+        if len(rule_token) >= 4:
+            if re.search(rf"(?:^|_){re.escape(rule_token)}(?:$|_)", raw_name):
+                return True
+    return False
+
+
+def _is_email_value(value: Any) -> bool:
+    sval = str(value or "").strip()
+    return bool(re.fullmatch(r"[^@\s]+@[^@\s]+\.[^@\s]+", sval))
+
+
+def _is_phone_value(value: Any) -> bool:
+    sval = str(value or "").strip()
+    digits = re.sub(r"\D", "", sval)
+    return 7 <= len(digits) <= 15 and bool(re.fullmatch(r"[\d\+\-\(\)\.\s]+", sval))
+
+
+def _is_ip_value(value: Any) -> bool:
+    sval = str(value or "").strip()
+    ipv4 = re.fullmatch(r"(?:\d{1,3}\.){3}\d{1,3}", sval)
+    ipv6 = ":" in sval and re.fullmatch(r"[0-9a-fA-F:]+", sval)
+    return bool(ipv4 or ipv6)
+
+
+def _is_timestamp_value(value: Any) -> bool:
+    sval = str(value or "").strip()
+    return bool(
+        re.fullmatch(r"\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+\-]\d{2}:\d{2})?", sval)
+        or re.fullmatch(r"\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}", sval)
+    )
+
+
+def _is_date_only_value(value: Any) -> bool:
+    sval = str(value or "").strip()
+    return bool(re.fullmatch(r"\d{4}-\d{2}-\d{2}", sval))
+
+
+def _detect_value_signal(detector: Optional[str], sample_values: List[Any], col_type: str, tokens: List[str]) -> bool:
+    values = [value for value in sample_values if value not in (None, "")]
+    if detector == "email":
+        return bool(values) and sum(1 for value in values[:10] if _is_email_value(value)) >= max(1, min(3, len(values[:10]) // 2))
+    if detector == "phone":
+        return bool(values) and sum(1 for value in values[:10] if _is_phone_value(value)) >= max(1, min(3, len(values[:10]) // 2))
+    if detector == "ip_address":
+        return bool(values) and sum(1 for value in values[:10] if _is_ip_value(value)) >= max(1, min(3, len(values[:10]) // 2))
+    if detector == "timestamp":
+        if "date" in col_type and "time" not in col_type and values:
+            return False
+        return bool(values) and sum(1 for value in values[:10] if _is_timestamp_value(value)) >= max(1, min(3, len(values[:10]) // 2))
+    if detector == "date_only":
+        return bool(values) and sum(1 for value in values[:10] if _is_date_only_value(value)) >= max(1, min(3, len(values[:10]) // 2))
+    if detector == "status":
+        if not values:
+            return False
+        lower_values = [str(value).strip().lower() for value in values[:10] if str(value).strip()]
+        distinct = set(lower_values)
+        status_terms = {
+            "active", "inactive", "pending", "cancelled", "canceled", "open", "closed",
+            "complete", "completed", "processing", "shipped", "received", "approved",
+            "rejected", "draft", "paid", "unpaid", "available", "unavailable",
+        }
+        return 1 <= len(distinct) <= 5 and bool(distinct.intersection(status_terms))
+    if detector == "currency_amount":
+        return any(token in {"price", "cost", "amount", "total", "balance"} for token in tokens)
+    if detector == "quantity":
+        return any(token in {"quantity", "qty", "count", "unit"} for token in tokens)
+    return False
+
+
+def _type_matches_rule(col_type: str, type_tokens: tuple[str, ...]) -> bool:
+    lowered = str(col_type or "").lower()
+    return any(token in lowered for token in type_tokens)
+
+
+def _profile_signal(column: Dict[str, Any], table: Dict[str, Any], concept_id: str) -> bool:
+    row_count = int(table.get("row_count") or 0)
+    cardinality = column.get("cardinality")
+    if concept_id in {"entity.status", "entity.category", "entity.type"}:
+        if isinstance(cardinality, int) and row_count > 0:
+            return cardinality <= max(10, row_count // 2)
+    if concept_id == "identifier.external_id":
+        if isinstance(cardinality, int) and row_count > 0:
+            return cardinality >= max(1, int(row_count * 0.8))
+    if concept_id == "measure.quantity":
+        return str(column.get("type", "")).lower().find("int") >= 0
+    return False
+
+
+def _table_context_signal(table_name: str, concept_id: str) -> bool:
+    table_tokens = set(_normalize_name_tokens(table_name))
+    if concept_id.startswith("contact.") and table_tokens.intersection({"customer", "user", "contact", "member", "account"}):
+        return True
+    if concept_id.startswith("finance.") and table_tokens.intersection({"order", "invoice", "payment", "billing", "transaction"}):
+        return True
+    if concept_id.startswith("temporal.") and table_tokens:
+        return True
+    return False
+
+
+def _build_column_feature_record(table: Dict[str, Any], column: Dict[str, Any], field_classification: Optional[str], sensitive_category: Optional[str]) -> Dict[str, Any]:
+    tokens = _normalize_name_tokens(str(column.get("name", "")))
+    sample_values = list(column.get("_sample_values") or [])
+    join_candidate_columns = {
+        str(candidate.get("column"))
+        for candidate in table.get("join_candidates", [])
+        if candidate.get("column")
+    }
+    foreign_key_columns = {
+        str(fk.get("column"))
+        for fk in table.get("foreign_keys", [])
+        if fk.get("column")
+    }
+    return {
+        "table": str(table.get("table")),
+        "schema": str(table.get("schema")),
+        "column_name": str(column.get("name")),
+        "normalized_name": re.sub(r"[^a-z0-9]+", "_", str(column.get("name", "")).lower()).strip("_"),
+        "alias_group": _normalize_column_alias(str(column.get("name", ""))),
+        "tokens": tokens,
+        "type": str(column.get("type", "")),
+        "field_classification": field_classification,
+        "sensitive_category": sensitive_category,
+        "semantic_class": column.get("semantic_class"),
+        "data_category": column.get("data_category"),
+        "sample_values": sample_values,
+        "table_context": _normalize_name_tokens(str(table.get("table"))),
+        "is_join_candidate": str(column.get("name")) in join_candidate_columns,
+        "is_foreign_key": str(column.get("name")) in foreign_key_columns,
+        "column_ref": column,
+        "table_ref": table,
+        "candidate_scores": [],
+    }
+
+
+def _score_column_concepts(feature_record: Dict[str, Any]) -> List[Dict[str, Any]]:
+    scores: List[Dict[str, Any]] = []
+    tokens = feature_record["tokens"]
+    raw_name = feature_record["normalized_name"]
+    col_type = feature_record["type"]
+    for rule in _CONCEPT_RULES:
+        evidence: List[str] = []
+        sources: List[str] = []
+        score = 0.0
+        if _matches_token_rule(tokens, raw_name, rule.get("name_tokens", ())):
+            score += 0.45
+            evidence.append(f"name token: {feature_record['alias_group'] or raw_name}")
+            sources.append("name")
+        if _type_matches_rule(col_type, tuple(rule.get("type_tokens", ()))):
+            score += 0.10
+            evidence.append(f"type hint: {col_type}")
+            sources.append("type")
+        if rule.get("field_classification") and feature_record.get("field_classification") == rule.get("field_classification"):
+            score += 0.15
+            evidence.append(f"legacy field classification: {feature_record['field_classification']}")
+            sources.append("profile")
+        if rule.get("semantic_class") and feature_record.get("semantic_class") == rule.get("semantic_class"):
+            score += 0.15
+            evidence.append(f"semantic class hint: {feature_record['semantic_class']}")
+            sources.append("profile")
+        if rule["concept_id"] == "identifier.foreign_key" and (feature_record.get("is_join_candidate") or feature_record.get("is_foreign_key")):
+            score += 0.35
+            evidence.append("structural hint: join candidate")
+            sources.append("profile")
+        if rule["concept_id"] == "identifier.product_code" and feature_record.get("is_join_candidate"):
+            score = max(0.0, score - 0.20)
+            evidence.append("join candidate reduces product-code confidence")
+            sources.append("profile")
+        if _detect_value_signal(rule.get("value_detector"), feature_record["sample_values"], col_type, tokens):
+            score += 0.25
+            evidence.append(f"value pattern: {rule.get('value_detector')}")
+            sources.append("values")
+        if _profile_signal(feature_record["column_ref"], feature_record["table_ref"], rule["concept_id"]):
+            score += 0.10
+            evidence.append("profile heuristic matched")
+            sources.append("profile")
+        if _table_context_signal(feature_record["table"], rule["concept_id"]):
+            score += 0.05
+            evidence.append(f"table context: {feature_record['table']}")
+            sources.append("table_context")
+        if feature_record.get("sensitive_category") and rule["concept_id"] in {"credential.secret", "network.ip_address", "contact.email", "contact.phone"}:
+            score += 0.10
+            evidence.append(f"sensitive hint: {feature_record['sensitive_category']}")
+            sources.append("profile")
+        if score > 0:
+            scores.append(
+                {
+                    "concept_id": rule["concept_id"],
+                    "score": min(score, 1.0),
+                    "evidence": evidence,
+                    "sources": sorted(set(sources)),
+                }
+            )
+    scores.sort(key=lambda item: item["score"], reverse=True)
+    return scores
+
+
+def _cluster_columns_for_consensus(feature_records: List[Dict[str, Any]]) -> Dict[str, List[Dict[str, Any]]]:
+    clusters: Dict[str, List[Dict[str, Any]]] = {}
+    for record in feature_records:
+        alias_group = record.get("alias_group") or record.get("normalized_name")
+        if not alias_group:
+            continue
+        clusters.setdefault(str(alias_group), []).append(record)
+    return clusters
+
+
+def _apply_cross_table_consensus(feature_records: List[Dict[str, Any]], clusters: Dict[str, List[Dict[str, Any]]]) -> None:
+    for alias_group, records in clusters.items():
+        if alias_group in _LOW_SIGNAL_ALIAS_GROUPS or len(records) < 2:
+            continue
+        distinct_tables = {record["table"] for record in records}
+        if len(distinct_tables) < 2:
+            continue
+        top_candidates = []
+        for record in records:
+            if record["candidate_scores"]:
+                top_candidates.append(record["candidate_scores"][0])
+        if not top_candidates:
+            continue
+        high_confidence = [item for item in top_candidates if item["score"] >= 0.70]
+        if not high_confidence:
+            continue
+        dominant_counts = Counter(item["concept_id"] for item in high_confidence)
+        dominant_concept, dominant_count = dominant_counts.most_common(1)[0]
+        if dominant_count < 2:
+            continue
+        conflicting = [item for item in high_confidence if item["concept_id"] != dominant_concept and item["score"] >= 0.85]
+        if conflicting:
+            continue
+        for record in records:
+            scores = record["candidate_scores"]
+            existing = next((item for item in scores if item["concept_id"] == dominant_concept), None)
+            if existing is None:
+                existing = {
+                    "concept_id": dominant_concept,
+                    "score": 0.0,
+                    "evidence": [],
+                    "sources": [],
+                }
+                scores.append(existing)
+            if existing["score"] >= 0.85:
+                continue
+            existing["score"] = min(existing["score"] + 0.15, 1.0)
+            existing["evidence"] = existing["evidence"] + [f"cross-table consensus: {dominant_count} similar columns"]
+            existing["sources"] = sorted(set(existing["sources"] + ["cross_table_consensus"]))
+            scores.sort(key=lambda item: item["score"], reverse=True)
+
+
+def _choose_best_concept(candidate_scores: List[Dict[str, Any]]) -> Dict[str, Any]:
+    if not candidate_scores:
+        return {"concept_id": None, "confidence": 0.0, "evidence": [], "sources": [], "alias_group": None}
+    best = dict(candidate_scores[0])
+    confidence = float(best["score"])
+    if len(candidate_scores) > 1 and abs(candidate_scores[0]["score"] - candidate_scores[1]["score"]) <= 0.10:
+        confidence = max(0.0, confidence - 0.10)
+        best["evidence"] = list(best.get("evidence", [])) + ["ambiguous runner-up concept"]
+    if confidence < 0.55:
+        return {
+            "concept_id": None,
+            "confidence": round(confidence, 2),
+            "evidence": list(best.get("evidence", [])),
+            "sources": list(best.get("sources", [])),
+            "alias_group": None,
+        }
+    return {
+        "concept_id": best["concept_id"],
+        "confidence": round(min(confidence, 1.0), 2),
+        "evidence": list(best.get("evidence", [])),
+        "sources": list(best.get("sources", [])),
+        "alias_group": None,
+    }
+
+
+def _build_classification_summary(table: Dict[str, Any]) -> Dict[str, Any]:
+    concept_counts = Counter()
+    low_confidence_columns: List[str] = []
+    for column in table.get("columns", []):
+        concept_id = column.get("concept_id")
+        if concept_id:
+            concept_counts[str(concept_id)] += 1
+        confidence = float(column.get("concept_confidence") or 0.0)
+        if confidence and confidence < 0.60:
+            low_confidence_columns.append(str(column.get("name")))
+    return {
+        "concept_counts": dict(sorted(concept_counts.items())),
+        "low_confidence_columns": sorted(low_confidence_columns),
+    }
+
+
+def _build_concept_registry(tables: List[Dict[str, Any]]) -> Dict[str, Any]:
+    grouped: Dict[str, List[Dict[str, Any]]] = {}
+    for table in tables:
+        for column in table.get("columns", []):
+            concept_id = column.get("concept_id")
+            if concept_id:
+                grouped.setdefault(str(concept_id), []).append(
+                    {
+                        "table": str(table.get("table")),
+                        "column": str(column.get("name")),
+                        "confidence": float(column.get("concept_confidence") or 0.0),
+                        "alias_group": str(column.get("concept_alias_group") or ""),
+                        "sources": list(column.get("concept_sources") or []),
+                    }
+                )
+    concepts = []
+    for concept_id in sorted(grouped.keys()):
+        members = grouped[concept_id]
+        confidences = [member["confidence"] for member in members]
+        concepts.append(
+            {
+                "concept_id": concept_id,
+                "column_count": len(members),
+                "table_count": len({member["table"] for member in members}),
+                "avg_confidence": round(sum(confidences) / len(confidences), 2) if confidences else 0.0,
+                "alias_groups": sorted({member["alias_group"] for member in members if member["alias_group"]}),
+                "sample_columns": [f"{member['table']}.{member['column']}" for member in members[:5]],
+                "signals": sorted({source for member in members for source in member["sources"]}),
+            }
+        )
+    return {
+        "version": 1,
+        "taxonomy": "domain-dot",
+        "generated_from_tables": len(tables),
+        "concepts": concepts,
+    }
+
+
+def _apply_concept_classification(tables: List[Dict[str, Any]]) -> Dict[str, Any]:
+    _load_context_rules()
+    feature_records: List[Dict[str, Any]] = []
+    for table in tables:
+        field_classifications = table.get("field_classifications", {})
+        sensitive_fields = table.get("sensitive_fields", {})
+        for column in table.get("columns", []):
+            record = _build_column_feature_record(
+                table,
+                column,
+                field_classifications.get(column.get("name")),
+                sensitive_fields.get(column.get("name")),
+            )
+            record["candidate_scores"] = _score_column_concepts(record)
+            feature_records.append(record)
+    clusters = _cluster_columns_for_consensus(feature_records)
+    _apply_cross_table_consensus(feature_records, clusters)
+    for record in feature_records:
+        chosen = _choose_best_concept(record["candidate_scores"])
+        column = record["column_ref"]
+        column["concept_id"] = chosen["concept_id"]
+        column["concept_confidence"] = chosen["confidence"]
+        column["concept_evidence"] = chosen["evidence"]
+        column["concept_sources"] = chosen["sources"]
+        column["concept_alias_group"] = record["alias_group"] if chosen["concept_id"] else None
+        column.pop("_sample_values", None)
+    for table in tables:
+        table["classification_summary"] = _build_classification_summary(table)
+    return _build_concept_registry(tables)
+
+
+_JOIN_CANDIDATE_SUFFIXES = ("_id", "_key", "_code", "_ref", "_fk")
+_JOIN_CANDIDATE_EXCLUDE = {
+    "postal_code", "zip_code", "area_code", "country_code", "currency_code",
+    "language_code", "phone_code", "dialing_code", "iban_code", "swift_code",
+    "barcode", "qr_code", "hash_code", "auth_code", "verification_code",
+    "access_code", "promo_code", "discount_code", "coupon_code", "voucher_code",
+    "error_code", "status_code", "exit_code", "response_code",
+}
+_ORDINAL_NAME_PATTERNS = ["priority", "grade", "rank", "rating", "severity", "score", "stage", "phase", "tier", "step", "order_num", "sequence", "position"]
+_ORDINAL_LEVEL_EXCLUDE_PREFIXES = ("reorder", "stock", "inventory", "fill", "min", "max")
+
+
+def _is_ordinal_by_name(col_name_lower: str) -> bool:
+    if any(p in col_name_lower for p in _ORDINAL_NAME_PATTERNS):
+        return True
+    if "level" in col_name_lower:
+        for prefix in _ORDINAL_LEVEL_EXCLUDE_PREFIXES:
+            if col_name_lower.startswith(prefix):
+                return False
+        return True
+    return False
+
+
+def detect_join_candidates(table_name: str, columns: List[Dict], pk_columns: List[str], fk_columns: List[Dict], all_tables_pks: Dict[str, List[str]]) -> List[Dict]:
+    """Detect columns that are candidates for JOIN operations."""
+    explicit_fk_cols = {fk["column"] for fk in fk_columns}
+    candidates = []
+    candidate_keys = set()
+
+    # Explicit FK columns are always valid join candidates.
+    for fk in fk_columns:
+        col = fk.get("column")
+        ref = fk.get("references")
+        if not col:
+            continue
+        target_table = None
+        target_column = None
+        if isinstance(ref, str) and "." in ref:
+            target_table, target_column = ref.split(".", 1)
+        key = (col, target_table, target_column)
+        if key in candidate_keys:
+            continue
+        candidate_keys.add(key)
+        candidates.append(
+            {
+                "column": col,
+                "target_table": target_table,
+                "target_column": target_column,
+                "confidence": "high",
+            }
+        )
+
+    for col in columns:
+        name = col["name"]
+        name_lower = name.lower()
+        if name in pk_columns or name in explicit_fk_cols or name_lower in _JOIN_CANDIDATE_EXCLUDE:
+            continue
+        matched_suffix = None
+        for suffix in _JOIN_CANDIDATE_SUFFIXES:
+            if name_lower.endswith(suffix):
+                matched_suffix = suffix
+                break
+        if not matched_suffix:
+            continue
+        prefix = name_lower[: -len(matched_suffix)]
+        if not prefix:
+            continue
+        for other_table, other_pks in all_tables_pks.items():
+            if other_table == table_name:
+                continue
+            other_lower = other_table.lower()
+            if (other_lower == prefix or other_lower == prefix + "s" or other_lower == prefix + "es"
+                    or other_lower.rstrip("s") == prefix or other_lower.rstrip("es") == prefix):
+                suffix_base = matched_suffix.lstrip("_")
+                target_col = next((pk for pk in other_pks if pk.lower() == suffix_base or pk.lower() == name_lower), None)
+                target_col = target_col or (other_pks[0] if other_pks else None)
+                key = (name, other_table, target_col)
+                if key in candidate_keys:
+                    break
+                candidate_keys.add(key)
+                candidates.append({"column": name, "target_table": other_table, "target_column": target_col, "confidence": "high"})
+                break
+        else:
+            key = (name, None, None)
+            if key in candidate_keys:
+                continue
+            candidate_keys.add(key)
+            candidates.append({"column": name, "target_table": None, "target_column": None, "confidence": "low"})
+    return candidates
+
+
+def classify_data_category(col_type_str: str, col_name: str, cardinality: int = 0, row_count: int = 0) -> Optional[str]:
+    """Classify a column into a statistical data category."""
+    col_type = col_type_str.lower().strip()
+    col_name_lower = col_name.lower()
+    if any(t in col_type for t in ("json", "jsonb", "bytea", "xml", "tsvector")):
+        return None
+    if any(t in col_type for t in ("float", "double", "real", "money")):
+        return "continuous"
+    if "numeric" in col_type or "decimal" in col_type:
+        return "continuous"
+    # Oracle NUMBER(p,0) is integer-like -> discrete; NUMBER(p,s) with s>0 -> continuous
+    if "number" in col_type and re.search(r",\s*0\s*\)", col_type):
+        return "ordinal" if _is_ordinal_by_name(col_name_lower) else "discrete"
+    if "number" in col_type:
+        return "continuous"
+    if any(t in col_type for t in ("timestamp", "datetime", "date", "time", "interval")):
+        return "continuous"
+    if "bool" in col_type or "bit" in col_type:
+        return "discrete"
+    if any(t in col_type for t in ("int", "serial")):
+        return "ordinal" if _is_ordinal_by_name(col_name_lower) else "discrete"
+    if any(t in col_type for t in ("varchar", "char", "text", "citext", "name")):
+        return "ordinal" if _is_ordinal_by_name(col_name_lower) else "nominal"
+    if any(t in col_type for t in ("uuid", "inet", "macaddr")):
+        return "nominal"
+    if "enum" in col_type:
+        return "ordinal" if _is_ordinal_by_name(col_name_lower) else "nominal"
+    return None
+
+
+# ============================================================================
+# Data quality: pattern constants and helpers
+# ============================================================================
+
+_TEXT_TYPES = ("text", "varchar", "char", "citext", "name", "character varying", "character")
+_FREEFORM_EXACT: Set[str] = {
+    "name", "description", "desc", "comment", "note", "notes", "title", "body", "content", "message", "summary", "detail",
+    "first_name", "last_name", "full_name", "display_name", "contact_name", "username", "email", "phone", "mobile", "fax",
+    "address", "street", "url", "uri", "path", "filename", "password", "token", "secret", "api_key", "sku", "barcode", "code", "uuid",
+}
+_FREEFORM_SUFFIXES = ("_name", "_description", "_desc", "_comment", "_email", "_phone", "_address", "_url", "_password")
+_CONTROLLED_VALUE_MAX_CARDINALITY = 20
+_PRICING_PATTERNS = ("price", "cost", "amount", "total", "subtotal", "fee", "charge", "rate")
+_QUANTITY_PATTERNS = ("quantity", "qty", "count", "quantity_on_hand")
+_JOIN_SUFFIXES = ("_id", "_key", "_code", "_ref", "_fk")
+_JOIN_EXCLUDE = {
+    "postal_code", "zip_code", "area_code", "country_code", "currency_code", "language_code", "phone_code",
+    "iban_code", "swift_code", "barcode", "qr_code", "hash_code", "auth_code", "verification_code",
+    "access_code", "promo_code", "discount_code", "coupon_code", "error_code", "status_code", "exit_code", "response_code",
+}
+_EMAIL_RE = re.compile(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$')
+_PHONE_RE = re.compile(r'^[+]?[\d\s\-().]{7,20}$')
+_DATE_TEXT_RE = re.compile(r'^\d{4}[-/]\d{2}[-/]\d{2}')
+_URL_RE = re.compile(r'^https?://')
+_NUMERIC_TEXT_RE = re.compile(r'^-?\d+\.?\d*$')
+
+
+def _is_text_type(col_type: str) -> bool:
+    return any(t in col_type.lower() for t in _TEXT_TYPES)
+
+
+def _is_numeric_type(col_type: str) -> bool:
+    return any(t in col_type.lower() for t in ("int", "numeric", "decimal", "float", "double", "real", "money", "serial"))
+
+
+def _is_freeform_column(col_name: str) -> bool:
+    lower = col_name.lower()
+    if lower in _FREEFORM_EXACT:
+        return True
+    return any(lower.endswith(s) for s in _FREEFORM_SUFFIXES)
+
+
+# ============================================================================
+# Data quality: 9 check functions
+# ============================================================================
+
+def check_controlled_value_candidates(engine: Engine, tables: List[Dict], check_constraints: Dict, enum_columns: Dict, unique_constraints: Dict[str, Set[str]], schema: str, adapter=None) -> List[Dict]:
+    findings = []
+    for tbl in tables:
+        table_name = tbl["table"]
+        if tbl.get("row_count", 0) == 0:
+            continue
+        pk_set = set(tbl.get("primary_keys", []))
+        fk_set = {fk["column"] for fk in tbl.get("foreign_keys", [])}
+        check_set = {c["column"] for c in check_constraints.get(table_name, [])}
+        enum_set = set(enum_columns.get(table_name, {}).keys())
+        unique_set = unique_constraints.get(table_name, set())
+
+        for col in tbl.get("columns", []):
+            col_name = col["name"]
+            col_type = col.get("type", "")
+            cardinality = col.get("cardinality", 0)
+            if not _is_text_type(col_type) or cardinality == 0 or cardinality > _CONTROLLED_VALUE_MAX_CARDINALITY:
+                continue
+            if col_name in pk_set | fk_set | check_set | enum_set | unique_set or _is_freeform_column(col_name):
+                continue
+
+            distinct_values = []
+            try:
+                if adapter:
+                    qc = adapter.quote_column(col_name)
+                    qt = adapter.quote_table(schema, table_name)
+                    lc = adapter.limit_clause(25)
+                    if "TOP " in lc:
+                        qstr = f'SELECT DISTINCT {lc} {qc} FROM {qt} WHERE {qc} IS NOT NULL ORDER BY {qc}'
+                    else:
+                        qstr = f'SELECT DISTINCT {qc} FROM {qt} WHERE {qc} IS NOT NULL ORDER BY {qc} {lc}'
+                    with engine.connect() as conn:
+                        distinct_values = [str(r[0]) for r in conn.execute(text(qstr)).fetchall()]
+                else:
+                    q = text(f'SELECT DISTINCT "{col_name}" FROM "{schema}"."{table_name}" WHERE "{col_name}" IS NOT NULL ORDER BY "{col_name}" LIMIT 25')
+                    with engine.connect() as conn:
+                        distinct_values = [str(r[0]) for r in conn.execute(q).fetchall()]
+            except Exception:
+                pass
+
+            values_display = ", ".join(repr(v) for v in distinct_values[:10])
+            findings.append({
+                "table": table_name, "column": col_name, "check": "controlled_value_candidate", "severity": "warning",
+                "detail": f"Text column with {cardinality} distinct value(s) ({values_display}) but no CHECK, ENUM, or FK constraint",
+                "recommendation": "Add a CHECK constraint, convert to an ENUM type, or create a lookup/reference table to prevent invalid values",
+                "distinct_values": distinct_values, "cardinality": cardinality,
+            })
+    return findings
+
+
+def check_nullable_but_never_null(tables: List[Dict]) -> List[Dict]:
+    findings = []
+    for tbl in tables:
+        row_count = tbl.get("row_count", 0)
+        if row_count == 0:
+            continue
+        for col in tbl.get("columns", []):
+            if col.get("nullable") and col.get("null_count", 0) == 0:
+                findings.append({
+                    "table": tbl["table"], "column": col["name"], "check": "nullable_but_never_null", "severity": "info",
+                    "detail": f"Column is nullable but has 0 NULLs across {row_count} row(s)",
+                    "recommendation": "Consider adding a NOT NULL constraint if the column should always have a value",
+                })
+    return findings
+
+
+def check_missing_primary_keys(tables: List[Dict]) -> List[Dict]:
+    findings = []
+    for tbl in tables:
+        if not tbl.get("has_primary_key", True):
+            findings.append({
+                "table": tbl["table"], "column": None, "check": "missing_primary_key", "severity": "critical",
+                "detail": "Table has no primary key defined",
+                "recommendation": "Add a primary key to ensure row uniqueness and enable efficient lookups",
+            })
+    return findings
+
+
+def check_missing_foreign_keys(engine: Engine, tables: List[Dict], all_pks: Dict[str, List[str]], schema: str, adapter=None) -> List[Dict]:
+    findings = []
+    for tbl in tables:
+        table_name = tbl["table"]
+        row_count = tbl.get("row_count", 0)
+        pk_set = set(tbl.get("primary_keys", []))
+        fk_set = {fk["column"] for fk in tbl.get("foreign_keys", [])}
+
+        for col in tbl.get("columns", []):
+            col_name = col["name"]
+            name_lower = col_name.lower()
+            if col_name in pk_set | fk_set or name_lower in _JOIN_EXCLUDE:
+                continue
+            matched_suffix = next((s for s in _JOIN_SUFFIXES if name_lower.endswith(s)), None)
+            if not matched_suffix:
+                continue
+            prefix = name_lower[: -len(matched_suffix)]
+            if not prefix:
+                continue
+
+            target_table = target_column = None
+            for other_table, other_pks in all_pks.items():
+                if other_table == table_name:
+                    continue
+                ol = other_table.lower()
+                if ol in (prefix, prefix + "s", prefix + "es") or ol.rstrip("s") == prefix or ol.rstrip("es") == prefix:
+                    target_table = other_table
+                    suffix_base = matched_suffix.lstrip("_")
+                    target_column = next((pk for pk in other_pks if pk.lower() in (suffix_base, name_lower)), None)
+                    target_column = target_column or (other_pks[0] if other_pks else None)
+                    break
+
+            if not target_table:
+                continue
+
+            orphan_sample = []
+            if row_count > 0 and target_column:
+                try:
+                    if adapter:
+                        qs = adapter.quote_column(col_name)
+                        qt_s = adapter.quote_table(schema, table_name)
+                        qt_t = adapter.quote_table(schema, target_table)
+                        qt_col = adapter.quote_column(target_column)
+                        lc = adapter.limit_clause(10)
+                        if "TOP " in lc:
+                            qstr = f'SELECT DISTINCT {lc} s.{qs} FROM {qt_s} s LEFT JOIN {qt_t} t ON s.{qs} = t.{qt_col} WHERE s.{qs} IS NOT NULL AND t.{qt_col} IS NULL'
+                        else:
+                            qstr = f'SELECT DISTINCT s.{qs} FROM {qt_s} s LEFT JOIN {qt_t} t ON s.{qs} = t.{qt_col} WHERE s.{qs} IS NOT NULL AND t.{qt_col} IS NULL {lc}'
+                        with engine.connect() as conn:
+                            orphan_sample = [str(r[0]) for r in conn.execute(text(qstr)).fetchall()]
+                    else:
+                        q = text(f'SELECT DISTINCT s."{col_name}" FROM "{schema}"."{table_name}" s LEFT JOIN "{schema}"."{target_table}" t ON s."{col_name}" = t."{target_column}" WHERE s."{col_name}" IS NOT NULL AND t."{target_column}" IS NULL LIMIT 10')
+                        with engine.connect() as conn:
+                            orphan_sample = [str(r[0]) for r in conn.execute(q).fetchall()]
+                except Exception:
+                    pass
+
+            detail = f"Column follows FK naming pattern and matches {target_table}.{target_column} but has no FK constraint"
+            severity = "critical" if orphan_sample else "warning"
+            if orphan_sample:
+                detail += f". Found {len(orphan_sample)} orphaned value(s): {', '.join(orphan_sample)}"
+
+            finding = {
+                "table": table_name, "column": col_name, "check": "missing_foreign_key", "severity": severity,
+                "detail": detail,
+                "recommendation": f"Add FOREIGN KEY constraint referencing {target_table}({target_column}) to enforce referential integrity",
+                "target_table": target_table, "target_column": target_column,
+            }
+            if orphan_sample:
+                finding["orphaned_values"] = orphan_sample
+            findings.append(finding)
+    return findings
+
+
+def check_format_inconsistency(engine: Engine, tables: List[Dict], schema: str, sample_size: int = 200, adapter=None) -> List[Dict]:
+    findings = []
+    patterns = {"email": _EMAIL_RE, "phone": _PHONE_RE, "date_as_text": _DATE_TEXT_RE, "url": _URL_RE, "numeric_as_text": _NUMERIC_TEXT_RE}
+    for tbl in tables:
+        table_name = tbl["table"]
+        if tbl.get("row_count", 0) == 0:
+            continue
+        for col in tbl.get("columns", []):
+            if not _is_text_type(col.get("type", "")) or col.get("cardinality", 0) <= _CONTROLLED_VALUE_MAX_CARDINALITY:
+                continue
+            try:
+                if adapter:
+                    qc = adapter.quote_column(col["name"])
+                    qt = adapter.quote_table(schema, table_name)
+                    lc = adapter.limit_clause(sample_size)
+                    if "TOP " in lc:
+                        qstr = f'SELECT {lc} {qc} FROM {qt} WHERE {qc} IS NOT NULL'
+                    else:
+                        qstr = f'SELECT {qc} FROM {qt} WHERE {qc} IS NOT NULL {lc}'
+                    with engine.connect() as conn:
+                        values = [str(r[0]) for r in conn.execute(text(qstr)).fetchall() if r[0] is not None]
+                else:
+                    q = text(f'SELECT "{col["name"]}" FROM "{schema}"."{table_name}" WHERE "{col["name"]}" IS NOT NULL LIMIT :lim')
+                    with engine.connect() as conn:
+                        values = [str(r[0]) for r in conn.execute(q, {"lim": sample_size}).fetchall() if r[0] is not None]
+            except Exception:
+                continue
+            if not values:
+                continue
+            for pat_name, pat_re in patterns.items():
+                matches = sum(1 for v in values if pat_re.match(v))
+                ratio = matches / len(values)
+                if 0.5 < ratio < 1.0:
+                    non_matching = [v for v in values if not pat_re.match(v)][:5]
+                    findings.append({
+                        "table": table_name, "column": col["name"], "check": "format_inconsistency", "severity": "warning",
+                        "detail": f"{matches}/{len(values)} sampled values match {pat_name} format, but {len(values) - matches} do not. Non-matching samples: {non_matching}",
+                        "recommendation": f"Add validation to ensure consistent {pat_name} format, or separate non-conforming values",
+                        "pattern": pat_name, "match_ratio": round(ratio, 3),
+                    })
+    return findings
+
+
+def check_range_violations(engine: Engine, tables: List[Dict], schema: str, adapter=None) -> List[Dict]:
+    findings = []
+    for tbl in tables:
+        table_name = tbl["table"]
+        if tbl.get("row_count", 0) == 0:
+            continue
+        for col in tbl.get("columns", []):
+            col_name = col["name"]
+            col_type = col.get("type", "")
+            data_range = col.get("data_range", {})
+            min_val_str = data_range.get("min")
+            if min_val_str is None:
+                continue
+            name_lower = col_name.lower()
+            try:
+                if adapter:
+                    qt = adapter.quote_table(schema, table_name)
+                    qc = adapter.quote_column(col_name)
+                    count_q = f'SELECT COUNT(*) FROM {qt} WHERE {qc} < 0'
+                else:
+                    count_q = f'SELECT COUNT(*) FROM "{schema}"."{table_name}" WHERE "{col_name}" < 0'
+                if any(p in name_lower for p in _PRICING_PATTERNS) and _is_numeric_type(col_type) and float(min_val_str) < 0:
+                    with engine.connect() as conn:
+                        neg_count = conn.execute(text(count_q)).scalar() or 0
+                    if neg_count > 0:
+                        findings.append({
+                            "table": table_name, "column": col_name, "check": "range_violation", "severity": "warning",
+                            "detail": f"Pricing/amount column has {neg_count} negative value(s) (min: {min_val_str})",
+                            "recommendation": "Add CHECK constraint (value >= 0) or verify negatives represent valid adjustments",
+                            "violation_type": "negative_pricing", "violation_count": neg_count,
+                        })
+                if any(p in name_lower for p in _QUANTITY_PATTERNS) and _is_numeric_type(col_type) and float(min_val_str) < 0:
+                    with engine.connect() as conn:
+                        neg_count = conn.execute(text(count_q)).scalar() or 0
+                    if neg_count > 0:
+                        findings.append({
+                            "table": table_name, "column": col_name, "check": "range_violation", "severity": "warning",
+                            "detail": f"Quantity column has {neg_count} negative value(s) (min: {min_val_str})",
+                            "recommendation": "Add CHECK constraint (value >= 0) if negative quantities are not expected",
+                            "violation_type": "negative_quantity", "violation_count": neg_count,
+                        })
+            except (ValueError, TypeError):
+                pass
+    return findings
+
+
+_SOFT_DELETE_TIMESTAMP = ("deleted_at", "deleted_date", "removed_at", "archived_at", "archived_date", "deactivated_at", "purged_at")
+_SOFT_DELETE_BOOLEAN = ("is_deleted", "deleted", "is_removed", "removed", "is_archived", "archived", "is_deactivated", "deactivated")
+_ACTIVE_FLAG = ("is_active", "active", "enabled", "is_enabled")
+_AUDIT_TRAIL_SUFFIXES = ("_history", "_audit", "_log", "_archive", "_changelog")
+
+
+def check_delete_management(engine: Engine, tables: List[Dict], schema: str, adapter=None) -> List[Dict]:
+    findings = []
+    all_table_names = {t["table"].lower() for t in tables}
+    for tbl in tables:
+        table_name = tbl["table"]
+        row_count = tbl.get("row_count", 0)
+        columns = tbl.get("columns", [])
+
+        soft_col = soft_type = None
+        for col in columns:
+            cn = col["name"].lower()
+            ct = col.get("type", "").lower()
+            if cn in _SOFT_DELETE_TIMESTAMP:
+                soft_col, soft_type = col["name"], "timestamp"
+                break
+            if cn in _SOFT_DELETE_BOOLEAN:
+                soft_col, soft_type = col["name"], "boolean"
+                break
+            if cn in _ACTIVE_FLAG and ("bool" in ct or "bit" in ct or "number(1" in ct):
+                soft_col, soft_type = col["name"], "active_flag"
+                break
+
+        cdc_enabled = tbl.get("cdc_enabled", False)
+        has_audit = False
+        audit_table = None
+        for sfx in _AUDIT_TRAIL_SUFFIXES:
+            if table_name.lower() + sfx in all_table_names:
+                has_audit = True
+                audit_table = table_name.lower() + sfx
+                break
+
+        value_info = ""
+        if soft_col and row_count > 0:
+            try:
+                if adapter:
+                    qc = adapter.quote_column(soft_col)
+                    qt = adapter.quote_table(schema, table_name)
+                    order_by = adapter.order_by_nullable_first(soft_col)
+                    lc = adapter.limit_clause(10)
+                    if "TOP " in lc:
+                        qstr = f'SELECT {lc} {qc}, COUNT(*) FROM {qt} GROUP BY {qc} ORDER BY {order_by}'
+                    else:
+                        qstr = f'SELECT {qc}, COUNT(*) FROM {qt} GROUP BY {qc} ORDER BY {order_by} {lc}'
+                    with engine.connect() as conn:
+                        rows = conn.execute(text(qstr)).fetchall()
+                else:
+                    q = text(f'SELECT "{soft_col}", COUNT(*) FROM "{schema}"."{table_name}" GROUP BY "{soft_col}" ORDER BY "{soft_col}" NULLS FIRST LIMIT 10')
+                    with engine.connect() as conn:
+                        rows = conn.execute(q).fetchall()
+                value_info = f" Current distribution: {', '.join(f'{r[0]}={r[1]}' for r in rows)}."
+            except Exception:
+                pass
+
+        if soft_col:
+            strategy, severity = "soft_delete", "info"
+            if soft_type == "active_flag":
+                detail = f"Active-flag column '{soft_col}' (boolean) detected — rows with {soft_col}=false are logically deleted.{value_info}"
+                recommendation = f'Filter on "{soft_col}" = true for current records during ingestion.'
+            elif soft_type == "timestamp":
+                detail = f"Soft-delete column '{soft_col}' (timestamp) detected — deleted rows are preserved with a deletion timestamp.{value_info}"
+                recommendation = f'Use "{soft_col}" IS NULL for active records. This column can serve as a watermark for incremental delete detection.'
+            else:
+                detail = f"Soft-delete column '{soft_col}' (boolean) detected — deleted rows are flagged in the source table.{value_info}"
+                recommendation = f'Filter on "{soft_col}" = false for active records, or ingest all rows for full history.'
+        elif cdc_enabled:
+            strategy, severity = "hard_delete_with_cdc", "info"
+            detail = "No soft-delete column found, but CDC is enabled. Hard deletes can be captured via change data capture."
+            recommendation = "Use CDC (e.g. Debezium, pgoutput) to capture DELETE events."
+        else:
+            strategy, severity = "hard_delete", "warning"
+            detail = "No soft-delete column detected and CDC is not enabled. Table likely uses hard deletes invisible to incremental ingestion."
+            recommendation = "Consider: (1) Add soft-delete column, (2) Enable CDC via ALTER TABLE … REPLICA IDENTITY FULL, or (3) Plan periodic full-load syncs."
+
+        if has_audit:
+            detail += f" Audit-trail table '{audit_table}' exists."
+
+        finding = {"table": table_name, "column": soft_col, "check": "delete_management", "severity": severity, "detail": detail, "recommendation": recommendation,
+                   "delete_strategy": strategy, "soft_delete_column": soft_col, "soft_delete_type": soft_type, "has_audit_trail": has_audit}
+        if audit_table:
+            finding["audit_trail_table"] = audit_table
+        findings.append(finding)
+    return findings
+
+
+def _normalize_check_clause(check_clause: Any) -> str:
+    clause = str(check_clause or "").lower()
+    clause = re.sub(r'["`\[\]]', "", clause)
+    clause = re.sub(r"\s+", "", clause)
+    return clause
+
+
+def _has_timestamp_ordering_constraint(constraints: List[Dict[str, Any]]) -> bool:
+    for constraint in constraints or []:
+        normalized = _normalize_check_clause(constraint.get("check_clause"))
+        if not normalized:
+            continue
+        if "created_at<=updated_at" in normalized or "updated_at>=created_at" in normalized:
+            return True
+    return False
+
+
+def check_timestamp_ordering(tables: List[Dict], check_constraints: Dict[str, List[Dict[str, Any]]]) -> List[Dict]:
+    findings = []
+    for tbl in tables:
+        columns = tbl.get("columns", [])
+        column_map = {str(col.get("name", "")).lower(): col for col in columns}
+        created_col = column_map.get("created_at")
+        updated_col = column_map.get("updated_at")
+        if not created_col or not updated_col:
+            continue
+
+        table_name = str(tbl.get("table", ""))
+        if _has_timestamp_ordering_constraint(check_constraints.get(table_name, [])):
+            continue
+
+        updated_nullable = bool(updated_col.get("nullable"))
+        if updated_nullable:
+            recommendation = "Add CHECK (updated_at IS NULL OR created_at <= updated_at) to enforce temporal consistency."
+        else:
+            recommendation = "Add CHECK (created_at <= updated_at) to enforce temporal consistency."
+
+        findings.append(
+            {
+                "table": table_name,
+                "column": None,
+                "check": "timestamp_ordering",
+                "severity": "info",
+                "detail": "Table has both 'created_at' and 'updated_at' but no CHECK constraint guaranteeing created_at <= updated_at.",
+                "recommendation": recommendation,
+                "created_column": "created_at",
+                "updated_column": "updated_at",
+            }
+        )
+    return findings
+
+
+_BUSINESS_DATE_PATTERNS = ("order_date", "transaction_date", "payment_date", "event_date", "event_time", "ship_date", "delivery_date", "invoice_date", "booking_date", "sale_date", "purchase_date", "effective_date", "activity_date", "record_date", "entry_date", "posting_date", "trade_date", "settlement_date", "value_date", "hire_date")
+_SYSTEM_TS_PATTERNS = ("created_at", "inserted_at", "created_date", "record_created_at", "insert_date", "insert_timestamp", "ingested_at")
+
+
+def check_late_arriving_data(engine: Engine, tables: List[Dict], schema: str, adapter=None) -> List[Dict]:
+    findings = []
+    for tbl in tables:
+        table_name = tbl["table"]
+        row_count = tbl.get("row_count", 0)
+        columns = tbl.get("columns", [])
+        if row_count == 0:
+            continue
+        col_names = {c["name"].lower(): c for c in columns}
+        biz_col = next((col_names[p] for p in _BUSINESS_DATE_PATTERNS if p in col_names), None)
+        if biz_col is None:
+            continue
+        sys_col = next((col_names[p] for p in _SYSTEM_TS_PATTERNS if p in col_names), None)
+        if sys_col is None:
+            findings.append({"table": table_name, "column": biz_col["name"], "check": "late_arriving_data", "severity": "info",
+                            "detail": f"Table has business-date column '{biz_col['name']}' but no system-insertion timestamp (created_at, etc.). Cannot measure arrival lag.",
+                            "recommendation": "Add a created_at / inserted_at column to track when rows actually land.", "business_date_column": biz_col["name"], "system_ts_column": None})
+            continue
+
+        biz_name = biz_col["name"]
+        sys_name = sys_col["name"]
+        biz_type = biz_col.get("type", "").lower()
+        if adapter and not adapter.supports_late_arriving_check():
+            continue
+        if adapter:
+            custom_expr = adapter.get_late_arriving_biz_expr(biz_name, biz_type)
+            if custom_expr is not None:
+                biz_expr = custom_expr
+            elif "date" in biz_type and "timestamp" not in biz_type:
+                biz_expr = f'CAST({adapter.quote_column(biz_name)} AS TIMESTAMP)'
+            else:
+                biz_expr = adapter.quote_column(biz_name)
+            lag_query_str = adapter.build_late_arriving_query(table_name, schema, biz_name, sys_name, biz_expr)
+            lag_query = text(lag_query_str)
+        else:
+            biz_expr = f'"{biz_name}"'
+            if "date" in biz_type and "timestamp" not in biz_type:
+                biz_expr = f'"{biz_name}"::timestamp'
+            lag_query = text(f"""
+                SELECT COUNT(*) AS total, COUNT(*) FILTER (WHERE lh > 24) AS late_1d, COUNT(*) FILTER (WHERE lh > 168) AS late_7d,
+                       ROUND(MIN(lh)::numeric, 2) AS min_h, ROUND(AVG(lh)::numeric, 2) AS avg_h,
+                       ROUND(PERCENTILE_CONT(0.95) WITHIN GROUP (ORDER BY lh)::numeric, 2) AS p95_h, ROUND(MAX(lh)::numeric, 2) AS max_h
+                FROM (SELECT EXTRACT(EPOCH FROM ("{sys_name}" - {biz_expr}))/3600.0 AS lh FROM "{schema}"."{table_name}" WHERE "{sys_name}" IS NOT NULL AND "{biz_name}" IS NOT NULL) sub
+                WHERE lh >= 0
+            """)
+        try:
+            with engine.connect() as conn:
+                row = conn.execute(lag_query).fetchone()
+        except Exception as e:
+            logger.warning(f"Could not compute arrival lag for {table_name}.{biz_name}: {e}")
+            continue
+        if not row or row[0] == 0:
+            continue
+
+        total, late_1d, late_7d = int(row[0]), int(row[1]), int(row[2])
+        min_h = float(row[3] or 0)
+        avg_h = float(row[4] or 0)
+        p95_h = float(row[5] or 0)
+        max_h = float(row[6] or 0)
+        max_days = round(max_h / 24, 1)
+        lookback_days = max(1, math.ceil(max_h / 24) + 1)
+        lag_stats = {"total_rows_compared": total, "min_lag_hours": min_h, "avg_lag_hours": avg_h, "p95_lag_hours": p95_h,
+                     "max_lag_hours": max_h, "max_lag_days": max_days, "rows_late_over_1d": late_1d, "rows_late_over_7d": late_7d}
+
+        if max_h <= 1:
+            severity, detail = "info", f"Data arrives promptly — max lag between '{biz_name}' and '{sys_name}' is {max_h:.1f}h. Standard watermarking on '{sys_name}' is safe."
+            recommendation = f"Use '{sys_name}' as the incremental watermark. No special lookback window needed."
+        elif max_h <= 24:
+            severity, detail = "info", f"Minor arrival delay — max lag between '{biz_name}' and '{sys_name}' is {max_h:.1f}h (avg {avg_h:.1f}h, P95 {p95_h:.1f}h)."
+            recommendation = f"Use '{sys_name}' as the watermark (preferred). If using '{biz_name}', add a 1–2 day lookback buffer."
+        elif max_h <= 168:
+            severity = "warning"
+            detail = f"Late-arriving data detected — max lag between '{biz_name}' and '{sys_name}' is {max_days} day(s). {late_1d} of {total} row(s) arrived >24h late."
+            recommendation = f"Do NOT use '{biz_name}' as the incremental watermark. Use '{sys_name}' instead, or add a lookback window of at least {lookback_days} day(s)."
+        else:
+            severity = "warning"
+            detail = f"Significant late-arriving data — max lag {max_days} day(s). {late_7d} of {total} row(s) arrived >7 days late."
+            recommendation = f"'{biz_name}' is NOT safe as a watermark. Use '{sys_name}' for incremental loads. If '{biz_name}' must be used, apply a {lookback_days}-day lookback window."
+
+        findings.append({
+            "table": table_name, "column": biz_name, "check": "late_arriving_data", "severity": severity,
+            "detail": detail, "recommendation": recommendation,
+            "business_date_column": biz_name, "system_ts_column": sys_name,
+            "lag_stats": lag_stats, "recommended_lookback_days": lookback_days,
+        })
+    return findings
+
+
+_TZ_DATETIME_KEYWORDS = ("timestamp", "datetime", "date", "time", "smalldatetime", "datetimeoffset")
+
+
+def _classify_column_tz(col_type_str: str, server_tz: str, dialect: str = "postgresql") -> Optional[str]:
+    ct = col_type_str.lower().strip()
+    if not any(kw in ct for kw in _TZ_DATETIME_KEYWORDS) or ct == "date":
+        return None
+    aware_types = _TZ_AWARE_TYPES.get(dialect, ())
+    if any(t in ct for t in aware_types):
+        return _TZ_AWARE_INTERPRETATION.get(dialect, "UTC")
+    return server_tz
+
+
+def check_timezone(engine: Engine, tables: List[Dict], schema: str, adapter=None) -> List[Dict]:
+    findings = []
+    server_tz = adapter.fetch_database_timezone(engine) if adapter else "Unknown"
+    all_tz_profiles = []
+
+    for tbl in tables:
+        table_name = tbl["table"]
+        columns = tbl.get("columns", [])
+        tz_columns = []
+        tz_set = set()
+        dialect = engine.dialect.name
+        for col in columns:
+            col_type = col.get("type", "")
+            eff_tz = col.get("column_timezone") or _classify_column_tz(col_type, server_tz, dialect)
+            if eff_tz is None:
+                continue
+            aware_types = _TZ_AWARE_TYPES.get(dialect, ())
+            is_aware = any(t in col_type.lower() for t in aware_types)
+            tz_columns.append({"column": col["name"], "type": col_type, "effective_timezone": eff_tz, "is_tz_aware": is_aware})
+            tz_set.add(eff_tz)
+        if not tz_columns:
+            continue
+
+        aware_count = sum(1 for c in tz_columns if c["is_tz_aware"])
+        naive_count = len(tz_columns) - aware_count
+        has_mixed = len(tz_set) > 1
+        all_tz_profiles.append({"table": table_name, "timezones": sorted(tz_set), "aware_count": aware_count, "naive_count": naive_count})
+
+        if has_mixed:
+            severity = "warning"
+            detail = f"Mixed timezones within table — date/time columns use multiple effective timezones ({', '.join(sorted(tz_set))}). {aware_count} TZ-aware, {naive_count} TZ-naive."
+            recommendation = "Standardize date/time columns to a single timezone (preferably UTC with timestamptz)."
+        elif naive_count > 0 and server_tz != "UTC":
+            severity = "info"
+            detail = f"All {len(tz_columns)} date/time column(s) are TZ-naive — stored values are implicitly in server timezone '{server_tz}'."
+            recommendation = f"During ingestion, treat all timestamps as '{server_tz}' and convert to UTC."
+        elif aware_count == len(tz_columns):
+            severity = "info"
+            detail = f"All {len(tz_columns)} date/time column(s) are TZ-aware (timestamptz) — values are stored as UTC internally."
+            recommendation = "Timestamps are in UTC. No special timezone handling needed during ingestion."
+        else:
+            severity = "info"
+            tz_val = next(iter(tz_set))
+            detail = f"All {len(tz_columns)} date/time column(s) use timezone '{tz_val}'."
+            recommendation = f"Treat all timestamps as '{tz_val}' during ingestion."
+
+        findings.append({
+            "table": table_name, "column": None, "check": "timezone", "severity": severity,
+            "detail": detail, "recommendation": recommendation,
+            "server_timezone": server_tz, "columns": tz_columns,
+            "distinct_timezones": sorted(tz_set), "tz_aware_count": aware_count, "tz_naive_count": naive_count,
+        })
+
+    all_tzs = set()
+    for p in all_tz_profiles:
+        all_tzs.update(p["timezones"])
+    if len(all_tzs) > 1:
+        findings.append({
+            "table": "(database-wide)", "column": None, "check": "timezone", "severity": "warning",
+            "detail": f"Multiple effective timezones detected across the database: {', '.join(sorted(all_tzs))}.",
+            "recommendation": "Establish a single source timezone convention. Preferably migrate all columns to timestamptz (UTC).",
+            "server_timezone": server_tz, "all_timezones": sorted(all_tzs),
+        })
+    return findings
+
+
+def check_unit_consistency(tables: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    findings: List[Dict[str, Any]] = []
+    for tbl in tables:
+        table_name = tbl.get("table")
+        unit_groups: Dict[str, Set[str]] = {}
+        for col in tbl.get("columns", []):
+            col_name = col.get("name")
+            semantic_class = col.get("semantic_class")
+            unit_ctx = col.get("unit_context")
+            if not semantic_class or semantic_class not in _UNITFUL_SEMANTIC_CLASSES:
+                continue
+            if not isinstance(unit_ctx, dict):
+                findings.append(
+                    {
+                        "table": table_name,
+                        "column": col_name,
+                        "check": "unit_unknown",
+                        "severity": "warning",
+                        "detail": f"Column semantic class '{semantic_class}' expects units, but no unit context was detected.",
+                        "recommendation": "Annotate the source column with explicit units or add a mapping override.",
+                    }
+                )
+                continue
+            detected = unit_ctx.get("detected_unit")
+            canonical = unit_ctx.get("canonical_unit")
+            conversion = unit_ctx.get("conversion")
+            if not detected:
+                findings.append(
+                    {
+                        "table": table_name,
+                        "column": col_name,
+                        "check": "unit_unknown",
+                        "severity": "warning",
+                        "detail": f"Column semantic class '{semantic_class}' has unknown source units.",
+                        "recommendation": "Add explicit source unit mapping for this field to enable safe aggregation.",
+                    }
+                )
+                continue
+            unit_groups.setdefault(str(semantic_class), set()).add(str(detected))
+            if canonical and detected != canonical and isinstance(conversion, dict):
+                findings.append(
+                    {
+                        "table": table_name,
+                        "column": col_name,
+                        "check": "unit_noncanonical_but_convertible",
+                        "severity": "warning",
+                        "detail": f"Column uses '{detected}' while canonical unit is '{canonical}'.",
+                        "recommendation": "Convert values to canonical unit during ingestion using the provided conversion metadata.",
+                        "detected_unit": detected,
+                        "canonical_unit": canonical,
+                    }
+                )
+        for semantic_class, units in unit_groups.items():
+            if len(units) > 1:
+                findings.append(
+                    {
+                        "table": table_name,
+                        "column": None,
+                        "check": "unit_mismatch_within_semantic_group",
+                        "severity": "warning",
+                        "detail": f"Columns in semantic class '{semantic_class}' use mixed source units: {', '.join(sorted(units))}.",
+                        "recommendation": "Normalize all fields in this semantic class to one canonical unit before aggregation.",
+                        "semantic_class": semantic_class,
+                        "detected_units": sorted(units),
+                    }
+                )
+    return findings
+
+
+# ============================================================================
+# Data quality: per-table grouping helper
+# ============================================================================
+
+
+def _build_table_data_quality(findings: List[Dict]) -> Dict[str, Any]:
+    """Build a per-table data_quality object from that table's findings.
+
+    Returns a single flat findings list — the canonical representation.
+    """
+    return {"findings": findings}
+
+
+# ============================================================================
+# Main entry: analyze_source_system
+# ============================================================================
+
+def build_source_system_document(
+    database_url: str,
+    schema: Optional[str] = None,
+    include_sample_data: bool = False,
+    dialect_override: Optional[str] = None,
+    config: Optional[Dict[str, Any]] = None,
+    generate_missing_descriptions: bool = True,
+    system_description: Optional[str] = None,
+    system_description_config_path: Optional[str] = None,
+) -> Dict[str, Any]:
+    """Analyze source database schema and data quality and return the schema document."""
+    config = config or load_config(tool_name="source_system_analyzer")
+    if config.get("error") == "db_analysis_config_required":
+        return config
+    system_description_config = _load_system_description_config(system_description_config_path)
+    resolved_system_description = str(
+        system_description
+        if system_description is not None
+        else system_description_config.get("system_description") or ""
+    ).strip()
+
+    engine = get_engine(database_url)
+    dialect = dialect_override or engine.dialect.name
+    adapter = get_adapter(dialect)
+
+    if dialect_override and dialect_override != engine.dialect.name:
+        logger.warning(f"Specified dialect '{dialect_override}' does not match URL dialect '{engine.dialect.name}'")
+
+    schema = schema or (adapter.resolve_default_schema(engine) if adapter else "public")
+    if should_exclude_schema(schema, config):
+        logger.warning("Schema '%s' is excluded by db-analysis-config.json", schema)
+        return {"error": "No tables found"}
+    logger.info(f"Starting source system analysis for schema: {schema}")
+
+    try:
+        schema_meta = fetch_schema_metadata(engine, schema=schema, config=config)
+        tables = schema_meta["tables"]
+        all_columns = schema_meta["columns"]
+        all_pks = schema_meta["primary_keys"]
+        all_fks = schema_meta["foreign_keys"]
+
+        if not tables:
+            logger.warning("No tables found to analyze.")
+            return {"error": "No tables found"}
+
+        logger.info(f"Found {len(tables)} tables")
+
+        connection_info = parse_connection_info(engine)
+        db_timezone = fetch_database_timezone(engine, adapter=adapter)
+        row_counts = fetch_row_counts(engine, tables, schema=schema, adapter=adapter)
+        openmetadata_classifications = fetch_openmetadata_classification_catalog()
+        openmetadata_glossary_assignments, openmetadata_enrichment = _fetch_openmetadata_glossary_assignments(
+            database_name=str(connection_info.get("database") or ""),
+            schema_name=str(schema or ""),
+            table_names=tables,
+        )
+        description_generator = _build_description_generator() if generate_missing_descriptions else None
+        glossary_assigner: Optional[AzureGlossaryAssigner] = None
+        classification_assigner: Optional[AzureClassificationTagAssigner] = None
+        all_glossary_terms: List[Dict[str, Any]] = []
+        if description_generator and description_generator.is_available():
+            if openmetadata_classifications:
+                classification_assigner = AzureClassificationTagAssigner(description_generator)
+                logger.info(
+                    "Loaded %d OpenMetadata classifications for LLM-based classification tag assignment",
+                    len(openmetadata_classifications),
+                )
+            all_glossary_terms = fetch_openmetadata_glossary_terms()
+            if all_glossary_terms:
+                glossary_assigner = AzureGlossaryAssigner(description_generator)
+                logger.info("Loaded %d glossary terms for LLM-based assignment", len(all_glossary_terms))
+            else:
+                logger.info("No glossary terms found in OpenMetadata; skipping LLM glossary assignment")
+        _collect_projection_inputs(engine, schema, config)
+        projection_lookup = _direct_history_projection_lookup(engine, schema, tables, row_counts)
+        stored_projection_lookup = _projection_lookup(engine, config)
+        for key, value in stored_projection_lookup.items():
+            projection_lookup.setdefault(key, value)
+        table_descriptions = adapter.fetch_table_descriptions(engine, schema) if adapter else {}
+        column_descriptions = adapter.fetch_column_descriptions(engine, schema) if adapter else {}
+
+        enriched_tables = []
+        total_rows = 0
+
+        for idx, table_name in enumerate(tables):
+            logger.info(f"Analyzing table {idx + 1}/{len(tables)}: {table_name}")
+            try:
+                table_columns = all_columns.get(table_name, [])
+                pk_columns = all_pks.get(table_name, [])
+                fk_columns = all_fks.get(table_name, [])
+                row_count = row_counts.get(table_name, 0)
+                total_rows += row_count
+                table_schema = schema or "public"
+
+                # Always fetch lightweight samples for unit inference.
+                # sample_data is only included in output when include_sample_data=True.
+                sample_values_by_col = None
+                sample_data_output = None
+                prompt_sample_rows: List[Dict[str, Any]] = []
+                try:
+                    colnames, rows = fetch_sample_rows(
+                        engine,
+                        table_name,
+                        limit=apply_sample_row_limit(10, config),
+                        schema=table_schema,
+                        adapter=adapter,
+                    )
+                    raw_sample = {str(col): [row[i] for row in rows] for i, col in enumerate(colnames)}
+                    # SQL dialects/drivers may return column names in different casing.
+                    # Keep a normalized lowercase map for resilient lookups.
+                    sample_values_by_col = {k.lower(): v for k, v in raw_sample.items()}
+                    prompt_sample_rows = _prepare_sample_rows_for_prompts(colnames, rows, limit=3)
+                    if include_sample_data:
+                        sample_data_output = raw_sample
+                except Exception:
+                    pass
+
+                field_classifications = {col["name"]: c for col in table_columns if (c := classify_field(col["name"]))}
+                sensitive_fields = detect_sensitive_fields(table_columns)
+                partition_columns, partition_mode = detect_partition_columns(
+                    table_columns,
+                    table_name=table_name,
+                    schema=table_schema,
+                    engine=engine,
+                    adapter=adapter,
+                )
+                incremental_columns = detect_incremental_columns(table_columns, pk_columns)
+                cdc_enabled = adapter.detect_cdc_enabled(engine, table_name, table_schema) if adapter else False
+                col_statistics = fetch_column_statistics(engine, table_name, table_columns, schema=table_schema, row_count=row_count, adapter=adapter)
+                join_candidates = detect_join_candidates(table_name, table_columns, pk_columns, fk_columns, all_pks)
+
+                enriched_columns = []
+                raw_table_description = str(table_descriptions.get(table_name) or "")
+                table_glossary_terms = list(
+                    (openmetadata_glossary_assignments.get(table_name) or {}).get("glossary_terms") or []
+                )
+                table_classification_tags = list(
+                    (openmetadata_glossary_assignments.get(table_name) or {}).get("classification_tags") or []
+                )
+                table_column_glossary_terms = dict(
+                    (openmetadata_glossary_assignments.get(table_name) or {}).get("column_glossary_terms") or {}
+                )
+                table_column_classification_tags = dict(
+                    (openmetadata_glossary_assignments.get(table_name) or {}).get("column_classification_tags") or {}
+                )
+                for col in table_columns:
+                    raw_column_description = str((column_descriptions.get(table_name, {}) or {}).get(col["name"]) or "")
+                    col_dict = {
+                        "name": col["name"],
+                        "type": col["type"],
+                        "nullable": col.get("nullable", True),
+                        "is_incremental": col.get("is_incremental", False),
+                        "column_description": raw_column_description,
+                        "glossary_terms": list(table_column_glossary_terms.get(col["name"]) or []),
+                        "classification_tags": list(table_column_classification_tags.get(col["name"]) or []),
+                    }
+                    col_tz = get_column_timezone(col["type"], dialect, db_timezone)
+                    if col_tz is not None:
+                        col_dict["column_timezone"] = col_tz
+                    stats = col_statistics.get(col["name"], {})
+                    if stats:
+                        col_dict["cardinality"] = stats.get("cardinality", 0)
+                        col_dict["null_count"] = stats.get("null_count", 0)
+                        if "data_range" in stats:
+                            col_dict["data_range"] = stats["data_range"]
+                    data_cat = classify_data_category(col["type"], col["name"], cardinality=stats.get("cardinality", 0), row_count=row_count)
+                    if data_cat:
+                        col_dict["data_category"] = data_cat
+                    field_classification = field_classifications.get(col["name"])
+                    semantic_class = _infer_semantic_class(col["name"], field_classification)
+                    col_dict["semantic_class"] = semantic_class
+                    sample_values = sample_values_by_col.get(str(col["name"]).lower(), []) if isinstance(sample_values_by_col, dict) else None
+                    if sample_values:
+                        col_dict["_sample_values"] = list(sample_values)
+                    col_dict["unit_context"] = _build_unit_context(col["name"], semantic_class, sample_values=sample_values)
+                    if generate_missing_descriptions:
+                        if raw_column_description:
+                            col_dict["column_description"] = raw_column_description
+                            logger.info("Using source column description for %s.%s.%s", table_schema, table_name, col["name"])
+                        else:
+                            prompt_rows = prompt_sample_rows[:3]
+                            try:
+                                if description_generator and description_generator.is_available():
+                                    col_dict["column_description"] = description_generator.generate_column_description(
+                                        system_description=resolved_system_description,
+                                        schema_name=table_schema,
+                                        table_name=table_name,
+                                        column=col_dict,
+                                        pk_columns=pk_columns,
+                                        fk_columns=fk_columns,
+                                        prompt_sample_rows=prompt_rows,
+                                    )
+                                    logger.info("Generated Azure column description for %s.%s.%s", table_schema, table_name, col["name"])
+                                else:
+                                    raise RuntimeError("Azure description generator unavailable")
+                            except Exception as exc:
+                                logger.warning(
+                                    "Falling back to heuristic column description for %s.%s.%s: %s",
+                                    table_schema,
+                                    table_name,
+                                    col["name"],
+                                    exc,
+                                )
+                                col_dict["column_description"] = _generate_column_description(
+                                    table_name,
+                                    col_dict,
+                                    pk_columns,
+                                    fk_columns,
+                                    raw_column_description,
+                                )
+                    enriched_columns.append(col_dict)
+
+                incremental_lower = {c.lower() for c in incremental_columns}
+                for col_dict in enriched_columns:
+                    col_dict["is_incremental"] = col_dict["name"].lower() in incremental_lower
+
+                _propagate_unit_context_from_companion(enriched_columns)
+                unit_summary = _build_unit_summary(enriched_columns)
+
+                table_entry = {
+                    "table": table_name, "schema": table_schema, "columns": enriched_columns,
+                    "table_description": raw_table_description,
+                    "glossary_terms": table_glossary_terms,
+                    "classification_tags": table_classification_tags,
+                    "primary_keys": pk_columns,
+                    "foreign_keys": [{"column": fk["column"], "references": fk["references"]} for fk in fk_columns],
+                    "row_count": row_count,
+                    "field_classifications": field_classifications,
+                    "sensitive_fields": sensitive_fields,
+                    "incremental_columns": incremental_columns,
+                    "join_candidates": join_candidates,
+                    "unit_summary": unit_summary,
+                    "cdc_enabled": cdc_enabled,
+                    "has_primary_key": len(pk_columns) > 0,
+                    "has_foreign_keys": len(fk_columns) > 0,
+                    "has_sensitive_fields": len(sensitive_fields) > 0,
+                }
+                table_entry.update(_default_row_count_projections(row_count))
+                table_entry.update(projection_lookup.get((table_schema, table_name), {}))
+                if partition_mode == "exact":
+                    table_entry["partition_columns"] = partition_columns
+                elif partition_mode == "candidate":
+                    table_entry["partition_columns_candidates"] = partition_columns
+                else:
+                    table_entry["partition_columns"] = []
+                if sample_data_output:
+                    table_entry["sample_data"] = sample_data_output
+                if generate_missing_descriptions:
+                    if raw_table_description:
+                        table_entry["table_description"] = raw_table_description
+                        logger.info("Using source table description for %s.%s", table_schema, table_name)
+                    else:
+                        try:
+                            if description_generator and description_generator.is_available():
+                                table_entry["table_description"] = description_generator.generate_table_description(
+                                    system_description=resolved_system_description,
+                                    schema_name=table_schema,
+                                    table_name=table_name,
+                                    columns=enriched_columns,
+                                )
+                                logger.info("Generated Azure table description for %s.%s", table_schema, table_name)
+                            else:
+                                raise RuntimeError("Azure description generator unavailable")
+                        except Exception as exc:
+                            logger.warning(
+                                "Falling back to heuristic table description for %s.%s: %s",
+                                table_schema,
+                                table_name,
+                                exc,
+                            )
+                            table_entry["table_description"] = _generate_table_description(
+                                table_name,
+                                enriched_columns,
+                                pk_columns,
+                                fk_columns,
+                                raw_table_description,
+                            )
+
+                if glossary_assigner and glossary_assigner.is_available() and all_glossary_terms:
+                    try:
+                        if not table_entry.get("glossary_terms"):
+                            assigned = glossary_assigner.assign_table(
+                                schema_name=table_schema,
+                                table_name=table_name,
+                                table_description=str(table_entry.get("table_description") or ""),
+                                columns=enriched_columns,
+                                candidates=all_glossary_terms,
+                            )
+                            if assigned:
+                                table_entry["glossary_terms"] = assigned
+                                logger.info("Assigned %d glossary term(s) to table %s.%s", len(assigned), table_schema, table_name)
+                        else:
+                            logger.info("Table %s.%s already tagged; skipping LLM glossary assignment", table_schema, table_name)
+
+                        for col_dict in enriched_columns:
+                            if col_dict.get("glossary_terms"):
+                                logger.info(
+                                    "Column %s.%s.%s already tagged; skipping LLM glossary assignment",
+                                    table_schema, table_name, col_dict.get("name"),
+                                )
+                                continue
+                            col_assigned = glossary_assigner.assign_column(
+                                schema_name=table_schema,
+                                table_name=table_name,
+                                table_description=str(table_entry.get("table_description") or ""),
+                                column_name=str(col_dict.get("name") or ""),
+                                data_type=str(col_dict.get("type") or ""),
+                                column_description=str(col_dict.get("column_description") or ""),
+                                semantic_class=str(col_dict.get("semantic_class") or ""),
+                                candidates=all_glossary_terms,
+                            )
+                            if col_assigned:
+                                col_dict["glossary_terms"] = col_assigned
+                                logger.info(
+                                    "Assigned %d glossary term(s) to column %s.%s.%s",
+                                    len(col_assigned), table_schema, table_name, col_dict.get("name"),
+                                )
+                    except Exception as exc:
+                        logger.warning("Glossary assignment failed for table %s.%s: %s", table_schema, table_name, exc)
+
+                if classification_assigner and classification_assigner.is_available() and openmetadata_classifications:
+                    try:
+                        if not table_entry.get("classification_tags"):
+                            assigned_tags = classification_assigner.assign_table(
+                                schema_name=table_schema,
+                                table_name=table_name,
+                                table_description=str(table_entry.get("table_description") or ""),
+                                columns=enriched_columns,
+                                candidates=openmetadata_classifications,
+                            )
+                            if assigned_tags:
+                                table_entry["classification_tags"] = assigned_tags
+                                logger.info(
+                                    "Assigned %d classification tag(s) to table %s.%s",
+                                    len(assigned_tags), table_schema, table_name,
+                                )
+                        else:
+                            logger.info(
+                                "Table %s.%s already has classification tags; skipping LLM classification assignment",
+                                table_schema, table_name,
+                            )
+
+                        for col_dict in enriched_columns:
+                            if col_dict.get("classification_tags"):
+                                logger.info(
+                                    "Column %s.%s.%s already has classification tags; skipping LLM classification assignment",
+                                    table_schema, table_name, col_dict.get("name"),
+                                )
+                                continue
+                            col_assigned_tags = classification_assigner.assign_column(
+                                schema_name=table_schema,
+                                table_name=table_name,
+                                table_description=str(table_entry.get("table_description") or ""),
+                                column_name=str(col_dict.get("name") or ""),
+                                data_type=str(col_dict.get("type") or ""),
+                                column_description=str(col_dict.get("column_description") or ""),
+                                semantic_class=str(col_dict.get("semantic_class") or ""),
+                                sample_values=list(col_dict.get("_sample_values") or []),
+                                candidates=openmetadata_classifications,
+                            )
+                            if col_assigned_tags:
+                                col_dict["classification_tags"] = col_assigned_tags
+                                logger.info(
+                                    "Assigned %d classification tag(s) to column %s.%s.%s",
+                                    len(col_assigned_tags), table_schema, table_name, col_dict.get("name"),
+                                )
+                    except Exception as exc:
+                        logger.warning(
+                            "Classification tag assignment failed for table %s.%s: %s",
+                            table_schema, table_name, exc,
+                        )
+
+                enriched_tables.append(table_entry)
+            except Exception as e:
+                logger.warning(f"Skipped table '{table_name}': {e}")
+
+        concept_registry = _apply_concept_classification(enriched_tables)
+
+        # ---- Data quality checks (supported dialects only) ----
+        data_quality_summary = {}
+        database_wide_findings = []
+        if adapter:
+            logger.info("Running data quality checks…")
+            check_constraints = adapter.fetch_check_constraints(engine, schema)
+            enum_cols = adapter.fetch_enum_columns(engine, schema)
+            unique_constraints = adapter.fetch_unique_constraints(engine, schema)
+            all_pks_dict = {t["table"]: t.get("primary_keys", []) for t in enriched_tables}
+
+            all_findings = []
+            all_findings.extend(check_controlled_value_candidates(engine, enriched_tables, check_constraints, enum_cols, unique_constraints, schema, adapter=adapter))
+            all_findings.extend(check_nullable_but_never_null(enriched_tables))
+            all_findings.extend(check_missing_primary_keys(enriched_tables))
+            all_findings.extend(check_missing_foreign_keys(engine, enriched_tables, all_pks_dict, schema, adapter=adapter))
+            all_findings.extend(
+                check_format_inconsistency(
+                    engine,
+                    enriched_tables,
+                    schema,
+                    sample_size=apply_sample_row_limit(200, config),
+                    adapter=adapter,
+                )
+            )
+            all_findings.extend(check_range_violations(engine, enriched_tables, schema, adapter=adapter))
+            all_findings.extend(check_timestamp_ordering(enriched_tables, check_constraints))
+            all_findings.extend(check_delete_management(engine, enriched_tables, schema, adapter=adapter))
+            all_findings.extend(check_late_arriving_data(engine, enriched_tables, schema, adapter=adapter))
+            all_findings.extend(check_timezone(engine, enriched_tables, schema, adapter=adapter))
+            all_findings.extend(check_unit_consistency(enriched_tables))
+
+            severity_counts = Counter(f["severity"] for f in all_findings)
+            check_counts = Counter(f["check"] for f in all_findings)
+
+            # Group findings by table name and nest into each table entry
+            findings_by_table: Dict[str, List[Dict]] = {}
+            database_wide_findings = []
+            for f in all_findings:
+                finding_copy = {k: v for k, v in f.items() if k != "table"}
+                table_name = f["table"]
+                if table_name == "(database-wide)":
+                    database_wide_findings.append(finding_copy)
+                else:
+                    findings_by_table.setdefault(table_name, []).append(finding_copy)
+
+            for tbl in enriched_tables:
+                table_findings = findings_by_table.get(tbl["table"], [])
+                tbl["data_quality"] = _build_table_data_quality(table_findings)
+
+            data_quality_summary = {
+                "critical": severity_counts.get("critical", 0),
+                "warning": severity_counts.get("warning", 0),
+                "info": severity_counts.get("info", 0),
+                "by_check": {
+                    check: check_counts.get(check, 0)
+                    for check in (
+                        "controlled_value_candidate", "nullable_but_never_null",
+                        "missing_primary_key", "missing_foreign_key",
+                        "format_inconsistency", "range_violation",
+                        "timestamp_ordering", "delete_management", "late_arriving_data", "timezone",
+                        "unit_unknown", "unit_noncanonical_but_convertible", "unit_mismatch_within_semantic_group",
+                    )
+                },
+                "constraints_found": {
+                    "check_constraints": sum(len(v) for v in check_constraints.values()),
+                    "enum_columns": sum(len(v) for v in enum_cols.values()),
+                    "unique_constraints": sum(len(v) for v in unique_constraints.values()),
+                },
+            }
+            if database_wide_findings:
+                data_quality_summary["database_wide_findings"] = database_wide_findings
+
+            logger.info(f"Data quality: {len(all_findings)} finding(s) (critical: {severity_counts.get('critical', 0)}, warning: {severity_counts.get('warning', 0)}, info: {severity_counts.get('info', 0)})")
+        else:
+            logger.info(
+                f"Data quality checks skipped (dialect {dialect} not supported; "
+                "use postgresql, mssql, oracle, or snowflake)"
+            )
+
+        # Build final document
+        total_findings = sum(len(tbl.get("data_quality", {}).get("findings", [])) for tbl in enriched_tables)
+        if database_wide_findings:
+            total_findings += len(database_wide_findings)
+        schema_document = {
+            "metadata": {
+                "generated_at": datetime.now(timezone.utc).isoformat(),
+                "database_url": database_url.split("@")[-1] if "@" in database_url else database_url,
+                "schema_filter": schema,
+                "total_tables": len(enriched_tables),
+                "total_rows": total_rows,
+                "total_findings": total_findings,
+                "openmetadata_classifications": openmetadata_classifications,
+            },
+            "connection": {**connection_info, "timezone": db_timezone},
+            "source_system_context": {
+                "contacts": [],
+                "delete_management_instruction": "",
+                "restrictions": "",
+                "late_arriving_data_manual": "",
+                "volume_size_projection_manual": "",
+                "system_description": resolved_system_description,
+                "openmetadata_enrichment": openmetadata_enrichment,
+                "db_analysis_config": {
+                    "exclude_schemas": list(config.get("exclude_schemas", [])),
+                    "exclude_tables": list(config.get("exclude_tables", [])),
+                    "max_row_limit": config.get("max_row_limit"),
+                },
+            },
+            "concept_registry": concept_registry,
+            "data_quality_summary": data_quality_summary,
+            "tables": enriched_tables,
+        }
+
+        return schema_document
+
+    except Exception as e:
+        logger.error(f"Error analyzing source system: {e}")
+        raise
+
+
+def analyze_source_system(
+    database_url: str,
+    output_path: str,
+    schema: Optional[str] = None,
+    include_sample_data: bool = False,
+    dialect_override: Optional[str] = None,
+    config: Optional[Dict[str, Any]] = None,
+    generate_missing_descriptions: bool = True,
+    system_description: Optional[str] = None,
+    system_description_config_path: Optional[str] = None,
+) -> Dict[str, Any]:
+    """Analyze source database schema and data quality, save combined output to schema.json."""
+    schema_document = build_source_system_document(
+        database_url,
+        schema=schema,
+        include_sample_data=include_sample_data,
+        dialect_override=dialect_override,
+        config=config,
+        generate_missing_descriptions=generate_missing_descriptions,
+        system_description=system_description,
+        system_description_config_path=system_description_config_path,
+    )
+
+    if schema_document.get("error") == "db_analysis_config_required":
+        return schema_document
+
+    schema_name = str(schema_document.get("metadata", {}).get("schema_filter") or schema or "public")
+    dialect = str(schema_document.get("connection", {}).get("driver") or dialect_override or "unknown")
+
+    # Append schema and dialect to output filename: schema.json -> schema_public_postgresql.json
+    out_path = Path(output_path)
+    base = out_path.stem
+    ext = out_path.suffix or ".json"
+    parent = out_path.parent
+    output_path = str(parent / f"{base}_{schema_name}_{dialect}{ext}")
+
+    logger.info(f"Saving to {output_path}")
+    with open(output_path, "w", encoding="utf-8") as f:
+        json.dump(schema_document, f, indent=2, default=str)
+
+    total_tables = len(schema_document.get("tables", []))
+    total_findings = int(schema_document.get("metadata", {}).get("total_findings", 0) or 0)
+    logger.info(f"Done — {total_tables} tables, {total_findings} data quality findings")
+    return schema_document
+
+
+if __name__ == "__main__":
+    import argparse
+    import sys
+    _load_env_file()
+    parser = argparse.ArgumentParser(description="Analyze source database schema and data quality")
+    parser.add_argument(
+        "database_url",
+        nargs="?",
+        default=None,
+        help="Database URL, or keyvault://<secret-name> reference (optional when --database-url-secret is used)",
+    )
+    parser.add_argument("output_json_path", help="Path for schema.json output")
+    parser.add_argument("schema", nargs="?", default=None, help="Schema to analyze (default: from DATABASE_SCHEMA/SCHEMA env or dialect default)")
+    parser.add_argument(
+        "--dialect",
+        choices=["postgresql", "mssql", "oracle", "snowflake"],
+        default=None,
+        help="Override dialect (default: inferred from URL)",
+    )
+    parser.add_argument(
+        "--database-url-secret",
+        default=None,
+        help="Azure Key Vault secret name containing the database URL (e.g. AZURE-MSSQL-URL)",
+    )
+    parser.add_argument(
+        "--keyvault-name",
+        default=None,
+        help="Azure Key Vault name override (defaults to KEYVAULT_NAME env var)",
+    )
+    parser.add_argument(
+        "--system-description",
+        default=None,
+        help="Persist this system description to the analyzer description config and use it for AI-generated descriptions.",
+    )
+    parser.add_argument(
+        "--system-description-config",
+        default=None,
+        help="Path to the JSON file that stores the persisted system description (default: source-system-description.json).",
+    )
+    args = parser.parse_args()
+    if args.system_description is not None:
+        config_path = _save_system_description_config(
+            args.system_description,
+            config_path=args.system_description_config,
+        )
+        logger.info("Saved system description config to %s", config_path)
+    database_url = _resolve_database_url(
+        args.database_url,
+        database_url_secret=args.database_url_secret,
+        keyvault_name=args.keyvault_name,
+    )
+    schema = args.schema or os.environ.get("DATABASE_SCHEMA") or os.environ.get("SCHEMA")
+    if args.dialect == "snowflake" and schema:
+        schema = str(schema).upper()
+    result = analyze_source_system(
+        database_url,
+        args.output_json_path,
+        schema=schema,
+        dialect_override=args.dialect,
+        system_description=args.system_description,
+        system_description_config_path=args.system_description_config,
+    )
+    if result.get("error") == "db_analysis_config_required":
+        print(json.dumps(result, indent=2))
+        raise SystemExit(1)

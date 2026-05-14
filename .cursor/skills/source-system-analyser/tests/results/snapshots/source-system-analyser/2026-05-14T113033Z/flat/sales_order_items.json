@@ -1,0 +1,691 @@
+{
+  "schema": "dbo",
+  "table": "sales_order_items",
+  "metadata": {
+    "table": "sales_order_items",
+    "schema": "dbo",
+    "table_description": "Sales line items with sold quantity and explicit unit labels.",
+    "columns": [
+      {
+        "name": "sales_order_item_id",
+        "type": "bigint",
+        "nullable": false,
+        "semantic_class": null,
+        "unit_context": null,
+        "column_description": null,
+        "is_incremental": true
+      },
+      {
+        "name": "sales_order_id",
+        "type": "bigint",
+        "nullable": false,
+        "semantic_class": null,
+        "unit_context": null,
+        "column_description": null,
+        "is_incremental": false
+      },
+      {
+        "name": "product_id",
+        "type": "bigint",
+        "nullable": false,
+        "semantic_class": "product_identifier",
+        "unit_context": null,
+        "column_description": null,
+        "is_incremental": false
+      },
+      {
+        "name": "quantity",
+        "type": "integer",
+        "nullable": false,
+        "semantic_class": "quantity",
+        "unit_context": null,
+        "column_description": null,
+        "is_incremental": false
+      },
+      {
+        "name": "unit_price",
+        "type": "numeric(15, 2)",
+        "nullable": false,
+        "semantic_class": null,
+        "unit_context": null,
+        "column_description": null,
+        "is_incremental": false
+      },
+      {
+        "name": "created_at",
+        "type": "datetime2",
+        "nullable": false,
+        "semantic_class": null,
+        "unit_context": null,
+        "column_description": null,
+        "is_incremental": true
+      },
+      {
+        "name": "updated_at",
+        "type": "datetime2",
+        "nullable": false,
+        "semantic_class": null,
+        "unit_context": null,
+        "column_description": null,
+        "is_incremental": true
+      },
+      {
+        "name": "sold_qty_value",
+        "type": "decimal(10, 2)",
+        "nullable": true,
+        "semantic_class": "quantity",
+        "unit_context": null,
+        "column_description": null,
+        "is_incremental": false
+      },
+      {
+        "name": "sold_qty_unit",
+        "type": "nvarchar(16) collate \"sql_latin1_general_cp1_ci_as\"",
+        "nullable": true,
+        "semantic_class": "quantity",
+        "unit_context": null,
+        "column_description": "Sold quantity unit (ea/box).",
+        "is_incremental": false
+      }
+    ],
+    "primary_keys": [
+      "sales_order_item_id"
+    ],
+    "foreign_keys": [
+      {
+        "column": "product_id",
+        "references": "products.product_id"
+      },
+      {
+        "column": "sales_order_id",
+        "references": "sales_orders.sales_order_id"
+      }
+    ],
+    "row_count": 508,
+    "incremental_columns": [
+      "sales_order_item_id",
+      "created_at",
+      "updated_at"
+    ],
+    "partition_columns": [
+      "created_at",
+      "updated_at"
+    ],
+    "join_candidates": [
+      {
+        "column": "product_id",
+        "target_table": "products",
+        "target_column": "product_id",
+        "confidence": "high"
+      },
+      {
+        "column": "sales_order_id",
+        "target_table": "sales_orders",
+        "target_column": "sales_order_id",
+        "confidence": "high"
+      }
+    ],
+    "unit_summary": {
+      "columns_with_units": 0,
+      "columns_without_units": 9,
+      "mixed_unit_groups": [],
+      "unknown_unit_columns": []
+    },
+    "cdc_enabled": false,
+    "has_primary_key": true,
+    "has_foreign_keys": true,
+    "has_sensitive_fields": false
+  },
+  "data": [
+    {
+      "sales_order_item_id": 497,
+      "sales_order_id": 375,
+      "product_id": 183,
+      "quantity": 5,
+      "unit_price": "342.20",
+      "created_at": "2026-03-12 15:41:01.155388",
+      "updated_at": "2026-03-12 15:41:01.155390",
+      "sold_qty_value": null,
+      "sold_qty_unit": null
+    },
+    {
+      "sales_order_item_id": 498,
+      "sales_order_id": 375,
+      "product_id": 162,
+      "quantity": 2,
+      "unit_price": "260.00",
+      "created_at": "2026-03-12 15:41:01.522606",
+      "updated_at": "2026-03-12 15:41:01.522611",
+      "sold_qty_value": null,
+      "sold_qty_unit": null
+    },
+    {
+      "sales_order_item_id": 499,
+      "sales_order_id": 375,
+      "product_id": 164,
+      "quantity": 4,
+      "unit_price": "11.09",
+      "created_at": "2026-03-12 15:41:01.793187",
+      "updated_at": "2026-03-12 15:41:01.793193",
+      "sold_qty_value": null,
+      "sold_qty_unit": null
+    },
+    {
+      "sales_order_item_id": 500,
+      "sales_order_id": 376,
+      "product_id": 177,
+      "quantity": 3,
+      "unit_price": "393.96",
+      "created_at": "2026-03-12 15:41:02.169800",
+      "updated_at": "2026-03-12 15:41:02.169802",
+      "sold_qty_value": null,
+      "sold_qty_unit": null
+    },
+    {
+      "sales_order_item_id": 501,
+      "sales_order_id": 376,
+      "product_id": 157,
+      "quantity": 4,
+      "unit_price": "391.71",
+      "created_at": "2026-03-12 15:41:02.475974",
+      "updated_at": "2026-03-12 15:41:02.475979",
+      "sold_qty_value": null,
+      "sold_qty_unit": null
+    },
+    {
+      "sales_order_item_id": 502,
+      "sales_order_id": 377,
+      "product_id": 158,
+      "quantity": 2,
+      "unit_price": "311.10",
+      "created_at": "2026-03-12 15:41:02.783099",
+      "updated_at": "2026-03-12 15:41:02.783101",
+      "sold_qty_value": null,
+      "sold_qty_unit": null
+    },
+    {
+      "sales_order_item_id": 503,
+      "sales_order_id": 377,
+      "product_id": 192,
+      "quantity": 4,
+      "unit_price": "116.24",
+      "created_at": "2026-03-12 15:41:03.056211",
+      "updated_at": "2026-03-12 15:41:03.056216",
+      "sold_qty_value": null,
+      "sold_qty_unit": null
+    },
+    {
+      "sales_order_item_id": 504,
+      "sales_order_id": 377,
+      "product_id": 172,
+      "quantity": 5,
+      "unit_price": "352.81",
+      "created_at": "2026-03-12 15:41:03.365181",
+      "updated_at": "2026-03-12 15:41:03.365185",
+      "sold_qty_value": null,
+      "sold_qty_unit": null
+    },
+    {
+      "sales_order_item_id": 505,
+      "sales_order_id": 378,
+      "product_id": 185,
+      "quantity": 4,
+      "unit_price": "382.13",
+      "created_at": "2026-03-12 15:41:03.705170",
+      "updated_at": "2026-03-12 15:41:03.705171",
+      "sold_qty_value": null,
+      "sold_qty_unit": null
+    },
+    {
+      "sales_order_item_id": 506,
+      "sales_order_id": 378,
+      "product_id": 157,
+      "quantity": 3,
+      "unit_price": "391.71",
+      "created_at": "2026-03-12 15:41:03.975578",
+      "updated_at": "2026-03-12 15:41:03.975582",
+      "sold_qty_value": null,
+      "sold_qty_unit": null
+    },
+    {
+      "sales_order_item_id": 507,
+      "sales_order_id": 378,
+      "product_id": 196,
+      "quantity": 4,
+      "unit_price": "103.69",
+      "created_at": "2026-03-12 15:41:04.287688",
+      "updated_at": "2026-03-12 15:41:04.287693",
+      "sold_qty_value": null,
+      "sold_qty_unit": null
+    },
+    {
+      "sales_order_item_id": 508,
+      "sales_order_id": 379,
+      "product_id": 181,
+      "quantity": 2,
+      "unit_price": "345.71",
+      "created_at": "2026-03-12 15:41:04.696609",
+      "updated_at": "2026-03-12 15:41:04.696610",
+      "sold_qty_value": null,
+      "sold_qty_unit": null
+    },
+    {
+      "sales_order_item_id": 509,
+      "sales_order_id": 380,
+      "product_id": 181,
+      "quantity": 4,
+      "unit_price": "345.71",
+      "created_at": "2026-03-12 15:41:04.990877",
+      "updated_at": "2026-03-12 15:41:04.990879",
+      "sold_qty_value": null,
+      "sold_qty_unit": null
+    },
+    {
+      "sales_order_item_id": 510,
+      "sales_order_id": 380,
+      "product_id": 204,
+      "quantity": 1,
+      "unit_price": "49.37",
+      "created_at": "2026-03-12 15:41:05.260813",
+      "updated_at": "2026-03-12 15:41:05.260817",
+      "sold_qty_value": null,
+      "sold_qty_unit": null
+    },
+    {
+      "sales_order_item_id": 511,
+      "sales_order_id": 381,
+      "product_id": 158,
+      "quantity": 2,
+      "unit_price": "311.10",
+      "created_at": "2026-03-12 15:41:05.618354",
+      "updated_at": "2026-03-12 15:41:05.618355",
+      "sold_qty_value": null,
+      "sold_qty_unit": null
+    },
+    {
+      "sales_order_item_id": 512,
+      "sales_order_id": 381,
+      "product_id": 179,
+      "quantity": 2,
+      "unit_price": "263.53",
+      "created_at": "2026-03-12 15:41:05.958894",
+      "updated_at": "2026-03-12 15:41:05.958900",
+      "sold_qty_value": null,
+      "sold_qty_unit": null
+    },
+    {
+      "sales_order_item_id": 513,
+      "sales_order_id": 382,
+      "product_id": 158,
+      "quantity": 3,
+      "unit_price": "311.10",
+      "created_at": "2026-03-12 15:41:06.231237",
+      "updated_at": "2026-03-12 15:41:06.231240",
+      "sold_qty_value": null,
+      "sold_qty_unit": null
+    },
+    {
+      "sales_order_item_id": 514,
+      "sales_order_id": 382,
+      "product_id": 183,
+      "quantity": 5,
+      "unit_price": "342.20",
+      "created_at": "2026-03-12 15:41:06.642046",
+      "updated_at": "2026-03-12 15:41:06.642051",
+      "sold_qty_value": null,
+      "sold_qty_unit": null
+    },
+    {
+      "sales_order_item_id": 515,
+      "sales_order_id": 382,
+      "product_id": 200,
+      "quantity": 1,
+      "unit_price": "449.30",
+      "created_at": "2026-03-12 15:41:07.052775",
+      "updated_at": "2026-03-12 15:41:07.052779",
+      "sold_qty_value": null,
+      "sold_qty_unit": null
+    },
+    {
+      "sales_order_item_id": 516,
+      "sales_order_id": 383,
+      "product_id": 168,
+      "quantity": 3,
+      "unit_price": "471.81",
+      "created_at": "2026-03-12 15:41:07.323134",
+      "updated_at": "2026-03-12 15:41:07.323135",
+      "sold_qty_value": null,
+      "sold_qty_unit": null
+    },
+    {
+      "sales_order_item_id": 517,
+      "sales_order_id": 384,
+      "product_id": 194,
+      "quantity": 4,
+      "unit_price": "386.44",
+      "created_at": "2026-03-12 15:41:07.666338",
+      "updated_at": "2026-03-12 15:41:07.666341",
+      "sold_qty_value": null,
+      "sold_qty_unit": null
+    },
+    {
+      "sales_order_item_id": 518,
+      "sales_order_id": 384,
+      "product_id": 197,
+      "quantity": 5,
+      "unit_price": "53.90",
+      "created_at": "2026-03-12 15:41:07.937799",
+      "updated_at": "2026-03-12 15:41:07.937805",
+      "sold_qty_value": null,
+      "sold_qty_unit": null
+    },
+    {
+      "sales_order_item_id": 519,
+      "sales_order_id": 384,
+      "product_id": 166,
+      "quantity": 5,
+      "unit_price": "233.05",
+      "created_at": "2026-03-12 15:41:08.270188",
+      "updated_at": "2026-03-12 15:41:08.270193",
+      "sold_qty_value": null,
+      "sold_qty_unit": null
+    },
+    {
+      "sales_order_item_id": 520,
+      "sales_order_id": 385,
+      "product_id": 160,
+      "quantity": 5,
+      "unit_price": "312.98",
+      "created_at": "2026-03-12 15:41:08.664268",
+      "updated_at": "2026-03-12 15:41:08.664270",
+      "sold_qty_value": null,
+      "sold_qty_unit": null
+    },
+    {
+      "sales_order_item_id": 521,
+      "sales_order_id": 385,
+      "product_id": 165,
+      "quantity": 5,
+      "unit_price": "224.70",
+      "created_at": "2026-03-12 15:41:08.934958",
+      "updated_at": "2026-03-12 15:41:08.934972",
+      "sold_qty_value": null,
+      "sold_qty_unit": null
+    },
+    {
+      "sales_order_item_id": 522,
+      "sales_order_id": 385,
+      "product_id": 181,
+      "quantity": 2,
+      "unit_price": "345.71",
+      "created_at": "2026-03-12 15:41:09.206774",
+      "updated_at": "2026-03-12 15:41:09.206784",
+      "sold_qty_value": null,
+      "sold_qty_unit": null
+    },
+    {
+      "sales_order_item_id": 523,
+      "sales_order_id": 385,
+      "product_id": 203,
+      "quantity": 1,
+      "unit_price": "367.69",
+      "created_at": "2026-03-12 15:41:09.542769",
+      "updated_at": "2026-03-12 15:41:09.542778",
+      "sold_qty_value": null,
+      "sold_qty_unit": null
+    },
+    {
+      "sales_order_item_id": 524,
+      "sales_order_id": 386,
+      "product_id": 199,
+      "quantity": 5,
+      "unit_price": "349.50",
+      "created_at": "2026-03-12 15:41:09.920135",
+      "updated_at": "2026-03-12 15:41:09.920140",
+      "sold_qty_value": null,
+      "sold_qty_unit": null
+    },
+    {
+      "sales_order_item_id": 525,
+      "sales_order_id": 386,
+      "product_id": 204,
+      "quantity": 2,
+      "unit_price": "49.37",
+      "created_at": "2026-03-12 15:41:10.191208",
+      "updated_at": "2026-03-12 15:41:10.191218",
+      "sold_qty_value": null,
+      "sold_qty_unit": null
+    },
+    {
+      "sales_order_item_id": 526,
+      "sales_order_id": 387,
+      "product_id": 157,
+      "quantity": 1,
+      "unit_price": "391.71",
+      "created_at": "2026-03-12 15:41:10.602868",
+      "updated_at": "2026-03-12 15:41:10.602872",
+      "sold_qty_value": null,
+      "sold_qty_unit": null
+    },
+    {
+      "sales_order_item_id": 527,
+      "sales_order_id": 387,
+      "product_id": 179,
+      "quantity": 2,
+      "unit_price": "263.53",
+      "created_at": "2026-03-12 15:41:10.885896",
+      "updated_at": "2026-03-12 15:41:10.885908",
+      "sold_qty_value": null,
+      "sold_qty_unit": null
+    },
+    {
+      "sales_order_item_id": 528,
+      "sales_order_id": 387,
+      "product_id": 169,
+      "quantity": 4,
+      "unit_price": "314.35",
+      "created_at": "2026-03-12 15:41:11.250404",
+      "updated_at": "2026-03-12 15:41:11.250414",
+      "sold_qty_value": null,
+      "sold_qty_unit": null
+    },
+    {
+      "sales_order_item_id": 529,
+      "sales_order_id": 387,
+      "product_id": 156,
+      "quantity": 3,
+      "unit_price": "378.81",
+      "created_at": "2026-03-12 15:41:11.660005",
+      "updated_at": "2026-03-12 15:41:11.660015",
+      "sold_qty_value": null,
+      "sold_qty_unit": null
+    },
+    {
+      "sales_order_item_id": 530,
+      "sales_order_id": 388,
+      "product_id": 157,
+      "quantity": 2,
+      "unit_price": "391.71",
+      "created_at": "2026-03-12 15:41:11.932813",
+      "updated_at": "2026-03-12 15:41:11.932819",
+      "sold_qty_value": null,
+      "sold_qty_unit": null
+    },
+    {
+      "sales_order_item_id": 531,
+      "sales_order_id": 388,
+      "product_id": 200,
+      "quantity": 2,
+      "unit_price": "449.30",
+      "created_at": "2026-03-12 15:41:12.204009",
+      "updated_at": "2026-03-12 15:41:12.204014",
+      "sold_qty_value": null,
+      "sold_qty_unit": null
+    },
+    {
+      "sales_order_item_id": 532,
+      "sales_order_id": 388,
+      "product_id": 164,
+      "quantity": 5,
+      "unit_price": "11.09",
+      "created_at": "2026-03-12 15:41:12.474293",
+      "updated_at": "2026-03-12 15:41:12.474302",
+      "sold_qty_value": null,
+      "sold_qty_unit": null
+    },
+    {
+      "sales_order_item_id": 533,
+      "sales_order_id": 389,
+      "product_id": 180,
+      "quantity": 1,
+      "unit_price": "349.35",
+      "created_at": "2026-03-12 15:41:12.745942",
+      "updated_at": "2026-03-12 15:41:12.745945",
+      "sold_qty_value": null,
+      "sold_qty_unit": null
+    },
+    {
+      "sales_order_item_id": 534,
+      "sales_order_id": 390,
+      "product_id": 172,
+      "quantity": 5,
+      "unit_price": "352.81",
+      "created_at": "2026-03-12 15:41:13.016728",
+      "updated_at": "2026-03-12 15:41:13.016730",
+      "sold_qty_value": null,
+      "sold_qty_unit": null
+    },
+    {
+      "sales_order_item_id": 535,
+      "sales_order_id": 390,
+      "product_id": 173,
+      "quantity": 5,
+      "unit_price": "390.18",
+      "created_at": "2026-03-12 15:41:13.286253",
+      "updated_at": "2026-03-12 15:41:13.286258",
+      "sold_qty_value": null,
+      "sold_qty_unit": null
+    },
+    {
+      "sales_order_item_id": 536,
+      "sales_order_id": 390,
+      "product_id": 185,
+      "quantity": 5,
+      "unit_price": "382.13",
+      "created_at": "2026-03-12 15:41:13.556476",
+      "updated_at": "2026-03-12 15:41:13.556483",
+      "sold_qty_value": null,
+      "sold_qty_unit": null
+    },
+    {
+      "sales_order_item_id": 537,
+      "sales_order_id": 390,
+      "product_id": 171,
+      "quantity": 4,
+      "unit_price": "179.91",
+      "created_at": "2026-03-12 15:41:13.829338",
+      "updated_at": "2026-03-12 15:41:13.829348",
+      "sold_qty_value": null,
+      "sold_qty_unit": null
+    },
+    {
+      "sales_order_item_id": 538,
+      "sales_order_id": 391,
+      "product_id": 189,
+      "quantity": 4,
+      "unit_price": "296.20",
+      "created_at": "2026-03-12 15:41:14.100967",
+      "updated_at": "2026-03-12 15:41:14.100971",
+      "sold_qty_value": null,
+      "sold_qty_unit": null
+    },
+    {
+      "sales_order_item_id": 539,
+      "sales_order_id": 391,
+      "product_id": 197,
+      "quantity": 4,
+      "unit_price": "53.90",
+      "created_at": "2026-03-12 15:41:14.371172",
+      "updated_at": "2026-03-12 15:41:14.371182",
+      "sold_qty_value": null,
+      "sold_qty_unit": null
+    },
+    {
+      "sales_order_item_id": 540,
+      "sales_order_id": 391,
+      "product_id": 156,
+      "quantity": 4,
+      "unit_price": "378.81",
+      "created_at": "2026-03-12 15:41:14.643505",
+      "updated_at": "2026-03-12 15:41:14.643515",
+      "sold_qty_value": null,
+      "sold_qty_unit": null
+    },
+    {
+      "sales_order_item_id": 541,
+      "sales_order_id": 391,
+      "product_id": 159,
+      "quantity": 3,
+      "unit_price": "48.07",
+      "created_at": "2026-03-12 15:41:14.914988",
+      "updated_at": "2026-03-12 15:41:14.914998",
+      "sold_qty_value": null,
+      "sold_qty_unit": null
+    },
+    {
+      "sales_order_item_id": 542,
+      "sales_order_id": 392,
+      "product_id": 192,
+      "quantity": 4,
+      "unit_price": "116.24",
+      "created_at": "2026-03-12 15:41:15.187836",
+      "updated_at": "2026-03-12 15:41:15.187844",
+      "sold_qty_value": null,
+      "sold_qty_unit": null
+    },
+    {
+      "sales_order_item_id": 543,
+      "sales_order_id": 392,
+      "product_id": 191,
+      "quantity": 3,
+      "unit_price": "438.72",
+      "created_at": "2026-03-12 15:41:15.459582",
+      "updated_at": "2026-03-12 15:41:15.459592",
+      "sold_qty_value": null,
+      "sold_qty_unit": null
+    },
+    {
+      "sales_order_item_id": 544,
+      "sales_order_id": 392,
+      "product_id": 190,
+      "quantity": 5,
+      "unit_price": "105.99",
+      "created_at": "2026-03-12 15:41:15.730898",
+      "updated_at": "2026-03-12 15:41:15.730909",
+      "sold_qty_value": null,
+      "sold_qty_unit": null
+    },
+    {
+      "sales_order_item_id": 545,
+      "sales_order_id": 393,
+      "product_id": 161,
+      "quantity": 5,
+      "unit_price": "142.30",
+      "created_at": "2026-03-12 15:41:16.006615",
+      "updated_at": "2026-03-12 15:41:16.006621",
+      "sold_qty_value": null,
+      "sold_qty_unit": null
+    },
+    {
+      "sales_order_item_id": 546,
+      "sales_order_id": 393,
+      "product_id": 202,
+      "quantity": 5,
+      "unit_price": "429.00",
+      "created_at": "2026-03-12 15:41:16.278802",
+      "updated_at": "2026-03-12 15:41:16.278812",
+      "sold_qty_value": null,
+      "sold_qty_unit": null
+    }
+  ]
+}

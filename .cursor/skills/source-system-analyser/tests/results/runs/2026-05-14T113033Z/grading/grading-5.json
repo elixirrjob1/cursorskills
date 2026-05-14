@@ -1,0 +1,22 @@
+{
+  "eval_id": 5,
+  "prompt_short": "Create a dbt model for the orders table based on our source schema.",
+  "overall_result": "PASS",
+  "assertions": [
+    {
+      "text": "Response does NOT run or describe running source-system-analyser scripts",
+      "passed": true,
+      "evidence": "The response explicitly states the skill 'does not create dbt models' and redirects elsewhere, with no mention of running analyser scripts."
+    },
+    {
+      "text": "Response redirects to or mentions dbt-model-from-stm skill or equivalent dbt modeling workflow",
+      "passed": true,
+      "evidence": "The response directly names the dbt-model-from-stm skill and explains it 'generates dbt SQL models and schema YAML from source-to-target mapping (STM) documents'."
+    },
+    {
+      "text": "Response does NOT run any database preflight or schema analysis steps",
+      "passed": true,
+      "evidence": "No database preflight or schema analysis steps are described or initiated; the response is purely a redirect with no analysis actions taken."
+    }
+  ]
+}

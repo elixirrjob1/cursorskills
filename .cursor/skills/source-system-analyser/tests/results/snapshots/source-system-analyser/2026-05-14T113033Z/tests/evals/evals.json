@@ -1,0 +1,96 @@
+[
+  {
+    "id": 1,
+    "type": "should-trigger",
+    "description": "PostgreSQL preflight reuse — config already exists",
+    "input": "Analyze our PostgreSQL database for ingestion readiness. The db-analysis-config.json already exists in the working directory. Connection: postgresql://db.example.com/mydb",
+    "context": "db-analysis-config.json is present in the working directory",
+    "assertions": [
+      "Response does NOT ask the user about schema exclusions, table exclusions, or row limits",
+      "Response references db-analysis-config.json as already existing and reuses it",
+      "Response proceeds to run the analyzer (mentions source_system_analyzer.py or equivalent next step)",
+      "Response does NOT create or overwrite db-analysis-config.json"
+    ]
+  },
+  {
+    "id": 2,
+    "type": "should-trigger",
+    "description": "MSSQL preflight — no config, user declines all exclusions",
+    "input": "Analyze our MSSQL database, no exclusions needed. Connection string is in environment variable MSSQL_URL.",
+    "context": "No db-analysis-config.json exists in the working directory",
+    "assertions": [
+      "Response asks the user at least one of the three preflight questions (schemas/tables/row-limit exclusions)",
+      "Response does NOT create db-analysis-config.json when user says no to all exclusion questions",
+      "Response routes to the MSSQL module (references/databases/mssql or MSSQL-specific mention)",
+      "Response mentions running the source_system_analyzer.py script or equivalent step"
+    ]
+  },
+  {
+    "id": 3,
+    "type": "should-trigger",
+    "description": "Description enrichment continuation after schema.json written",
+    "input": "The schema.json was just generated but I notice some columns have empty descriptions. Can you fill them in?",
+    "assertions": [
+      "Response mentions running build_description_enrichment_checklist.py",
+      "Response describes completing column descriptions BEFORE generating table descriptions (column-first order)",
+      "Response mentions querying up to 3 sample rows per unresolved column",
+      "Response mentions running apply_description_enrichment.py to merge results back"
+    ]
+  },
+  {
+    "id": 4,
+    "type": "should-trigger",
+    "description": "Flat file CSV routing",
+    "input": "Can you profile this CSV file for ingestion? File: orders_2025.csv",
+    "assertions": [
+      "Response routes to the flat file module (flat/generic or tabular_schema_json.py)",
+      "Response does NOT use source_system_analyzer.py for the CSV file",
+      "Response mentions tabular_schema_json.py (inspect or to-json subcommand)",
+      "Response produces or describes producing a schema.json output"
+    ]
+  },
+  {
+    "id": 5,
+    "type": "should-not-trigger",
+    "description": "dbt model creation — should redirect",
+    "input": "Create a dbt model for the orders table based on our source schema.",
+    "assertions": [
+      "Response does NOT run or describe running source-system-analyser scripts",
+      "Response redirects to or mentions dbt-model-from-stm skill or equivalent dbt modeling workflow",
+      "Response does NOT run any database preflight or schema analysis steps"
+    ]
+  },
+  {
+    "id": 6,
+    "type": "edge-case",
+    "description": "xlsx file routing — must not use database analyzer",
+    "input": "I have a schema_columns.xlsx file that describes my source schema. Can you analyze it?",
+    "assertions": [
+      "Response routes to the flat file module (flat/generic or tabular_schema_json.py)",
+      "Response does NOT use source_system_analyzer.py or treat xlsx as a database source",
+      "Response mentions tabular_schema_json.py or the flat/generic workflow"
+    ]
+  },
+  {
+    "id": 7,
+    "type": "edge-case",
+    "description": "Null concept_ids — classification review, not full rerun",
+    "input": "My schema.json has a lot of null concept_ids and low confidence scores. How do I fix this?",
+    "assertions": [
+      "Response describes the classification review workflow (one family at a time approach)",
+      "Response does NOT tell the user to simply rerun source_system_analyzer.py from scratch",
+      "Response mentions bucketing or grouping nulls/low-confidence columns before rerunning"
+    ]
+  },
+  {
+    "id": 8,
+    "type": "edge-case",
+    "description": "Vague source — must ask before running",
+    "input": "Analyze my data source.",
+    "assertions": [
+      "Response asks the user to specify the source type (database, API, or flat file)",
+      "Response does NOT run any scripts or produce a schema.json without more information",
+      "Response asks for connection details or file path before proceeding"
+    ]
+  }
+]

@@ -1,0 +1,33 @@
+{
+  "skill": "source-system-analyser",
+  "reviews": [
+    {
+      "run_slug": "legacy-2026-05-06",
+      "reviewed_at": "2026-05-06",
+      "git_hash": null,
+      "unit_tests": "11/11",
+      "assertions": "N/A",
+      "categories": "13/13",
+      "high_failures": 0,
+      "medium_failures": 0,
+      "low_failures": 1,
+      "verdict": "PASS",
+      "notes": "Legacy run — no snapshot, no evals.json, no history.json. First structured review.",
+      "review_file": "tests/results/review-source-system-analyser-2026-05-06.md"
+    },
+    {
+      "run_slug": "2026-05-14T113033Z",
+      "reviewed_at": "2026-05-14T11:30:33Z",
+      "git_hash": "3458072",
+      "unit_tests": "7/8",
+      "assertions": "27/28",
+      "categories": "12/13",
+      "high_failures": 0,
+      "medium_failures": 1,
+      "low_failures": 3,
+      "verdict": "PASS",
+      "notes": "1 eval false-failure (assertion too strict); 1 new MEDIUM (no skill registry); 2 LOW carried/new (IPI, TOC missing on large files). All 19 HIGHs pass; 95.5% MEDIUMs pass.",
+      "review_file": "tests/results/runs/2026-05-14T113033Z/review-source-system-analyser-2026-05-14T113033Z.md"
+    }
+  ]
+}

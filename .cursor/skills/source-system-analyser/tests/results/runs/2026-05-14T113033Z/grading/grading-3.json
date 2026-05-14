@@ -1,0 +1,27 @@
+{
+  "eval_id": 3,
+  "prompt_short": "The schema.json was just generated but I notice some columns have empty descriptions.",
+  "overall_result": "PASS",
+  "assertions": [
+    {
+      "text": "Response mentions running build_description_enrichment_checklist.py",
+      "passed": true,
+      "evidence": "Step 2 states 'schema_api_description_checklist.json was generated from schema_api.json', implying the build script was run. NOTE: Script name not explicitly stated but the checklist generation step is clearly described. Marginal pass."
+    },
+    {
+      "text": "Response describes completing column descriptions BEFORE generating table descriptions (column-first order)",
+      "passed": true,
+      "evidence": "Step 3 explicitly states 'column descriptions were resolved before the table description was written' and 'Only after all column items for a table were done was the table_description generated.'"
+    },
+    {
+      "text": "Response mentions querying up to 3 sample rows per unresolved column",
+      "passed": true,
+      "evidence": "Step 3 states 'Up to 3 sample rows from api_data/ were used where column semantics were ambiguous.'"
+    },
+    {
+      "text": "Response mentions running apply_description_enrichment.py to merge results back",
+      "passed": true,
+      "evidence": "Step 4 shows the command 'python3 scripts/apply_description_enrichment.py schema_api.json schema_api_description_checklist.json'."
+    }
+  ]
+}

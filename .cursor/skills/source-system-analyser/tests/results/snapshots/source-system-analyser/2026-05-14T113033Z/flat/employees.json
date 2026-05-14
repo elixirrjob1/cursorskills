@@ -1,0 +1,352 @@
+{
+  "schema": "dbo",
+  "table": "employees",
+  "metadata": {
+    "table": "employees",
+    "schema": "dbo",
+    "table_description": null,
+    "columns": [
+      {
+        "name": "employee_id",
+        "type": "bigint",
+        "nullable": false,
+        "semantic_class": null,
+        "unit_context": null,
+        "column_description": null,
+        "is_incremental": true
+      },
+      {
+        "name": "store_id",
+        "type": "bigint",
+        "nullable": false,
+        "semantic_class": null,
+        "unit_context": null,
+        "column_description": null,
+        "is_incremental": false
+      },
+      {
+        "name": "first_name",
+        "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+        "nullable": false,
+        "semantic_class": null,
+        "unit_context": null,
+        "column_description": null,
+        "is_incremental": false
+      },
+      {
+        "name": "last_name",
+        "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+        "nullable": false,
+        "semantic_class": null,
+        "unit_context": null,
+        "column_description": null,
+        "is_incremental": false
+      },
+      {
+        "name": "email",
+        "type": "nvarchar(450) collate \"sql_latin1_general_cp1_ci_as\"",
+        "nullable": false,
+        "semantic_class": null,
+        "unit_context": null,
+        "column_description": null,
+        "is_incremental": false
+      },
+      {
+        "name": "role",
+        "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+        "nullable": false,
+        "semantic_class": null,
+        "unit_context": null,
+        "column_description": null,
+        "is_incremental": false
+      },
+      {
+        "name": "hire_date",
+        "type": "date",
+        "nullable": false,
+        "semantic_class": null,
+        "unit_context": null,
+        "column_description": null,
+        "is_incremental": false
+      },
+      {
+        "name": "created_at",
+        "type": "datetime2",
+        "nullable": false,
+        "semantic_class": null,
+        "unit_context": null,
+        "column_description": null,
+        "is_incremental": true
+      },
+      {
+        "name": "updated_at",
+        "type": "datetime2",
+        "nullable": false,
+        "semantic_class": null,
+        "unit_context": null,
+        "column_description": null,
+        "is_incremental": true
+      }
+    ],
+    "primary_keys": [
+      "employee_id"
+    ],
+    "foreign_keys": [
+      {
+        "column": "store_id",
+        "references": "stores.store_id"
+      }
+    ],
+    "row_count": 20,
+    "incremental_columns": [
+      "employee_id",
+      "created_at",
+      "updated_at"
+    ],
+    "partition_columns": [
+      "hire_date",
+      "created_at",
+      "updated_at"
+    ],
+    "join_candidates": [
+      {
+        "column": "store_id",
+        "target_table": "stores",
+        "target_column": "store_id",
+        "confidence": "high"
+      }
+    ],
+    "unit_summary": {
+      "columns_with_units": 0,
+      "columns_without_units": 9,
+      "mixed_unit_groups": [],
+      "unknown_unit_columns": []
+    },
+    "cdc_enabled": false,
+    "has_primary_key": true,
+    "has_foreign_keys": true,
+    "has_sensitive_fields": false
+  },
+  "data": [
+    {
+      "employee_id": 64,
+      "store_id": 23,
+      "first_name": "Employee1",
+      "last_name": "LastName1",
+      "email": "emp1@example.com",
+      "role": "Cashier",
+      "hire_date": "2021-05-03",
+      "created_at": "2021-05-03 15:38:57.201565",
+      "updated_at": "2021-05-03 15:38:57.201565"
+    },
+    {
+      "employee_id": 65,
+      "store_id": 21,
+      "first_name": "Employee2",
+      "last_name": "LastName2",
+      "email": "emp2@example.com",
+      "role": "Sales",
+      "hire_date": "2023-06-14",
+      "created_at": "2023-06-14 15:38:57.201565",
+      "updated_at": "2023-06-14 15:38:57.201565"
+    },
+    {
+      "employee_id": 66,
+      "store_id": 19,
+      "first_name": "Employee3",
+      "last_name": "LastName3",
+      "email": "emp3@example.com",
+      "role": "Sales",
+      "hire_date": "2021-05-05",
+      "created_at": "2021-05-05 15:38:57.201565",
+      "updated_at": "2021-05-05 15:38:57.201565"
+    },
+    {
+      "employee_id": 67,
+      "store_id": 19,
+      "first_name": "Employee4",
+      "last_name": "LastName4",
+      "email": "emp4@example.com",
+      "role": "Sales",
+      "hire_date": "2021-06-23",
+      "created_at": "2021-06-23 15:38:57.201565",
+      "updated_at": "2021-06-23 15:38:57.201565"
+    },
+    {
+      "employee_id": 68,
+      "store_id": 20,
+      "first_name": "Employee5",
+      "last_name": "LastName5",
+      "email": "emp5@example.com",
+      "role": "Stock",
+      "hire_date": "2022-11-23",
+      "created_at": "2022-11-23 15:38:57.201565",
+      "updated_at": "2022-11-23 15:38:57.201565"
+    },
+    {
+      "employee_id": 69,
+      "store_id": 21,
+      "first_name": "Employee6",
+      "last_name": "LastName6",
+      "email": "emp6@example.com",
+      "role": "Cashier",
+      "hire_date": "2023-01-10",
+      "created_at": "2023-01-10 15:38:57.201565",
+      "updated_at": "2023-01-10 15:38:57.201565"
+    },
+    {
+      "employee_id": 70,
+      "store_id": 19,
+      "first_name": "Employee7",
+      "last_name": "LastName7",
+      "email": "emp7@example.com",
+      "role": "Cashier",
+      "hire_date": "2022-07-29",
+      "created_at": "2022-07-29 15:38:57.201565",
+      "updated_at": "2022-07-29 15:38:57.201565"
+    },
+    {
+      "employee_id": 71,
+      "store_id": 22,
+      "first_name": "Employee8",
+      "last_name": "LastName8",
+      "email": "emp8@example.com",
+      "role": "Sales",
+      "hire_date": "2024-06-22",
+      "created_at": "2024-06-22 15:38:57.201565",
+      "updated_at": "2024-06-22 15:38:57.201565"
+    },
+    {
+      "employee_id": 72,
+      "store_id": 23,
+      "first_name": "Employee9",
+      "last_name": "LastName9",
+      "email": "emp9@example.com",
+      "role": "Stock",
+      "hire_date": "2022-11-03",
+      "created_at": "2022-11-03 15:38:57.201565",
+      "updated_at": "2022-11-03 15:38:57.201565"
+    },
+    {
+      "employee_id": 73,
+      "store_id": 19,
+      "first_name": "Employee10",
+      "last_name": "LastName10",
+      "email": "emp10@example.com",
+      "role": "Sales",
+      "hire_date": "2025-01-26",
+      "created_at": "2025-01-26 15:38:57.201565",
+      "updated_at": "2025-01-26 15:38:57.201565"
+    },
+    {
+      "employee_id": 74,
+      "store_id": 22,
+      "first_name": "Employee11",
+      "last_name": "LastName11",
+      "email": "emp11@example.com",
+      "role": "Cashier",
+      "hire_date": "2022-02-20",
+      "created_at": "2022-02-20 15:38:57.201565",
+      "updated_at": "2022-02-20 15:38:57.201565"
+    },
+    {
+      "employee_id": 75,
+      "store_id": 23,
+      "first_name": "Employee12",
+      "last_name": "LastName12",
+      "email": "emp12@example.com",
+      "role": "Cashier",
+      "hire_date": "2021-10-17",
+      "created_at": "2021-10-17 15:38:57.201565",
+      "updated_at": "2021-10-17 15:38:57.201565"
+    },
+    {
+      "employee_id": 76,
+      "store_id": 20,
+      "first_name": "Employee13",
+      "last_name": "LastName13",
+      "email": "emp13@example.com",
+      "role": "Manager",
+      "hire_date": "2024-09-06",
+      "created_at": "2024-09-06 15:38:57.201565",
+      "updated_at": "2024-09-06 15:38:57.201565"
+    },
+    {
+      "employee_id": 77,
+      "store_id": 21,
+      "first_name": "Employee14",
+      "last_name": "LastName14",
+      "email": "emp14@example.com",
+      "role": "Stock",
+      "hire_date": "2023-10-29",
+      "created_at": "2023-10-29 15:38:57.201565",
+      "updated_at": "2023-10-29 15:38:57.201565"
+    },
+    {
+      "employee_id": 78,
+      "store_id": 22,
+      "first_name": "Employee15",
+      "last_name": "LastName15",
+      "email": "emp15@example.com",
+      "role": "Stock",
+      "hire_date": "2024-11-05",
+      "created_at": "2024-11-05 15:38:57.201565",
+      "updated_at": "2024-11-05 15:38:57.201565"
+    },
+    {
+      "employee_id": 79,
+      "store_id": 19,
+      "first_name": "Employee16",
+      "last_name": "LastName16",
+      "email": "emp16@example.com",
+      "role": "Sales",
+      "hire_date": "2022-04-06",
+      "created_at": "2022-04-06 15:38:57.201565",
+      "updated_at": "2022-04-06 15:38:57.201565"
+    },
+    {
+      "employee_id": 80,
+      "store_id": 23,
+      "first_name": "Employee17",
+      "last_name": "LastName17",
+      "email": "emp17@example.com",
+      "role": "Manager",
+      "hire_date": "2024-02-13",
+      "created_at": "2024-02-13 15:38:57.201565",
+      "updated_at": "2024-02-13 15:38:57.201565"
+    },
+    {
+      "employee_id": 81,
+      "store_id": 22,
+      "first_name": "Employee18",
+      "last_name": "LastName18",
+      "email": "emp18@example.com",
+      "role": "Manager",
+      "hire_date": "2023-01-25",
+      "created_at": "2023-01-25 15:38:57.201565",
+      "updated_at": "2023-01-25 15:38:57.201565"
+    },
+    {
+      "employee_id": 82,
+      "store_id": 23,
+      "first_name": "Employee19",
+      "last_name": "LastName19",
+      "email": "emp19@example.com",
+      "role": "Manager",
+      "hire_date": "2022-11-16",
+      "created_at": "2022-11-16 15:38:57.201565",
+      "updated_at": "2022-11-16 15:38:57.201565"
+    },
+    {
+      "employee_id": 83,
+      "store_id": 23,
+      "first_name": "Employee20",
+      "last_name": "LastName20",
+      "email": "emp20@example.com",
+      "role": "Sales",
+      "hire_date": "2024-07-25",
+      "created_at": "2024-07-25 15:38:57.201565",
+      "updated_at": "2024-07-25 15:38:57.201565"
+    }
+  ]
+}

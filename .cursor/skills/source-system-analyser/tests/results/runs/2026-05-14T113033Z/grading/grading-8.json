@@ -1,0 +1,22 @@
+{
+  "eval_id": 8,
+  "prompt_short": "Analyze my data source.",
+  "overall_result": "PASS",
+  "assertions": [
+    {
+      "text": "Response asks the user to specify the source type (database, API, or flat file)",
+      "passed": true,
+      "evidence": "The response explicitly asks 'What type of data source are you connecting to?' and lists three source types: Database, HTTP/HTTPS API, and Flat file."
+    },
+    {
+      "text": "Response does NOT run any scripts or produce a schema.json without more information",
+      "passed": true,
+      "evidence": "The response contains no script execution or schema output — it only asks clarifying questions before proceeding."
+    },
+    {
+      "text": "Response asks for connection details or file path before proceeding",
+      "passed": true,
+      "evidence": "The response requests connection details for each source type (e.g., 'connection string or host/port/credentials' for databases, 'file path' for flat files) before proceeding."
+    }
+  ]
+}

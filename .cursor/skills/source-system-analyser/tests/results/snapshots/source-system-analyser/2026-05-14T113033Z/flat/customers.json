@@ -1,0 +1,551 @@
+{
+  "schema": "dbo",
+  "table": "customers",
+  "metadata": {
+    "table": "customers",
+    "schema": "dbo",
+    "table_description": null,
+    "columns": [
+      {
+        "name": "customer_id",
+        "type": "bigint",
+        "nullable": false,
+        "semantic_class": null,
+        "unit_context": null,
+        "column_description": null,
+        "is_incremental": true
+      },
+      {
+        "name": "first_name",
+        "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+        "nullable": false,
+        "semantic_class": null,
+        "unit_context": null,
+        "column_description": null,
+        "is_incremental": false
+      },
+      {
+        "name": "last_name",
+        "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+        "nullable": false,
+        "semantic_class": null,
+        "unit_context": null,
+        "column_description": null,
+        "is_incremental": false
+      },
+      {
+        "name": "email",
+        "type": "nvarchar(450) collate \"sql_latin1_general_cp1_ci_as\"",
+        "nullable": true,
+        "semantic_class": null,
+        "unit_context": null,
+        "column_description": null,
+        "is_incremental": false
+      },
+      {
+        "name": "phone",
+        "type": "nvarchar collate \"sql_latin1_general_cp1_ci_as\"",
+        "nullable": true,
+        "semantic_class": null,
+        "unit_context": null,
+        "column_description": null,
+        "is_incremental": false
+      },
+      {
+        "name": "created_at",
+        "type": "datetime2",
+        "nullable": false,
+        "semantic_class": null,
+        "unit_context": null,
+        "column_description": null,
+        "is_incremental": true
+      },
+      {
+        "name": "updated_at",
+        "type": "datetime2",
+        "nullable": false,
+        "semantic_class": null,
+        "unit_context": null,
+        "column_description": null,
+        "is_incremental": true
+      }
+    ],
+    "primary_keys": [
+      "customer_id"
+    ],
+    "foreign_keys": [],
+    "row_count": 100,
+    "incremental_columns": [
+      "customer_id",
+      "created_at",
+      "updated_at"
+    ],
+    "partition_columns": [
+      "created_at",
+      "updated_at"
+    ],
+    "join_candidates": [],
+    "unit_summary": {
+      "columns_with_units": 0,
+      "columns_without_units": 7,
+      "mixed_unit_groups": [],
+      "unknown_unit_columns": []
+    },
+    "cdc_enabled": false,
+    "has_primary_key": true,
+    "has_foreign_keys": false,
+    "has_sensitive_fields": false
+  },
+  "data": [
+    {
+      "customer_id": 404,
+      "first_name": "Customer1",
+      "last_name": "LastName1 (updated)",
+      "email": "customer1@example.com",
+      "phone": "555-1001",
+      "created_at": "2024-08-18 15:38:57.201565",
+      "updated_at": "2026-03-26 08:52:49.252228"
+    },
+    {
+      "customer_id": 405,
+      "first_name": "Customer2",
+      "last_name": "LastName2",
+      "email": "customer2@example.com",
+      "phone": "555-1002",
+      "created_at": "2024-08-20 15:38:57.201565",
+      "updated_at": "2024-08-20 15:38:57.201565"
+    },
+    {
+      "customer_id": 406,
+      "first_name": "Customer3",
+      "last_name": "LastName3",
+      "email": "customer3@example.com",
+      "phone": "555-1003",
+      "created_at": "2021-08-16 15:38:57.201565",
+      "updated_at": "2021-08-16 15:38:57.201565"
+    },
+    {
+      "customer_id": 407,
+      "first_name": "Customer4",
+      "last_name": "LastName4",
+      "email": "customer4@example.com",
+      "phone": "555-1004",
+      "created_at": "2024-03-31 15:38:57.201565",
+      "updated_at": "2024-03-31 15:38:57.201565"
+    },
+    {
+      "customer_id": 408,
+      "first_name": "Customer5",
+      "last_name": "LastName5",
+      "email": "customer5@example.com",
+      "phone": "555-1005",
+      "created_at": "2026-02-26 15:38:57.201565",
+      "updated_at": "2026-02-26 15:38:57.201565"
+    },
+    {
+      "customer_id": 409,
+      "first_name": "Customer6",
+      "last_name": "LastName6",
+      "email": "customer6@example.com",
+      "phone": "555-1006",
+      "created_at": "2022-07-22 15:38:57.201565",
+      "updated_at": "2022-07-22 15:38:57.201565"
+    },
+    {
+      "customer_id": 410,
+      "first_name": "Customer7",
+      "last_name": "LastName7",
+      "email": "customer7@example.com",
+      "phone": "555-1007",
+      "created_at": "2021-04-09 15:38:57.201565",
+      "updated_at": "2021-04-09 15:38:57.201565"
+    },
+    {
+      "customer_id": 411,
+      "first_name": "Customer8",
+      "last_name": "LastName8",
+      "email": "customer8@example.com",
+      "phone": "555-1008",
+      "created_at": "2022-11-09 15:38:57.201565",
+      "updated_at": "2022-11-09 15:38:57.201565"
+    },
+    {
+      "customer_id": 412,
+      "first_name": "Customer9",
+      "last_name": "LastName9",
+      "email": "customer9@example.com",
+      "phone": "555-1009",
+      "created_at": "2025-05-02 15:38:57.201565",
+      "updated_at": "2025-05-02 15:38:57.201565"
+    },
+    {
+      "customer_id": 413,
+      "first_name": "Customer10",
+      "last_name": "LastName10",
+      "email": "customer10@example.com",
+      "phone": "555-1010",
+      "created_at": "2026-02-26 15:38:57.201565",
+      "updated_at": "2026-02-26 15:38:57.201565"
+    },
+    {
+      "customer_id": 414,
+      "first_name": "Customer11",
+      "last_name": "LastName11",
+      "email": "customer11@example.com",
+      "phone": "555-1011",
+      "created_at": "2025-09-28 15:38:57.201565",
+      "updated_at": "2025-09-28 15:38:57.201565"
+    },
+    {
+      "customer_id": 415,
+      "first_name": "Customer12",
+      "last_name": "LastName12",
+      "email": "customer12@example.com",
+      "phone": "555-1012",
+      "created_at": "2021-10-09 15:38:57.201565",
+      "updated_at": "2021-10-09 15:38:57.201565"
+    },
+    {
+      "customer_id": 416,
+      "first_name": "Customer13",
+      "last_name": "LastName13",
+      "email": "customer13@example.com",
+      "phone": "555-1013",
+      "created_at": "2024-08-01 15:38:57.201565",
+      "updated_at": "2024-08-01 15:38:57.201565"
+    },
+    {
+      "customer_id": 417,
+      "first_name": "Customer14",
+      "last_name": "LastName14",
+      "email": "customer14@example.com",
+      "phone": "555-1014",
+      "created_at": "2025-05-15 15:38:57.201565",
+      "updated_at": "2025-05-15 15:38:57.201565"
+    },
+    {
+      "customer_id": 418,
+      "first_name": "Customer15",
+      "last_name": "LastName15",
+      "email": "customer15@example.com",
+      "phone": "555-1015",
+      "created_at": "2022-04-25 15:38:57.201565",
+      "updated_at": "2022-04-25 15:38:57.201565"
+    },
+    {
+      "customer_id": 419,
+      "first_name": "Customer16",
+      "last_name": "LastName16",
+      "email": "customer16@example.com",
+      "phone": "555-1016",
+      "created_at": "2024-05-04 15:38:57.201565",
+      "updated_at": "2024-05-04 15:38:57.201565"
+    },
+    {
+      "customer_id": 420,
+      "first_name": "Customer17",
+      "last_name": "LastName17",
+      "email": "customer17@example.com",
+      "phone": "555-1017",
+      "created_at": "2024-06-02 15:38:57.201565",
+      "updated_at": "2024-06-02 15:38:57.201565"
+    },
+    {
+      "customer_id": 421,
+      "first_name": "Customer18",
+      "last_name": "LastName18",
+      "email": "customer18@example.com",
+      "phone": "555-1018",
+      "created_at": "2021-03-23 15:38:57.201565",
+      "updated_at": "2021-03-23 15:38:57.201565"
+    },
+    {
+      "customer_id": 422,
+      "first_name": "Customer19",
+      "last_name": "LastName19",
+      "email": "customer19@example.com",
+      "phone": "555-1019",
+      "created_at": "2022-11-09 15:38:57.201565",
+      "updated_at": "2022-11-09 15:38:57.201565"
+    },
+    {
+      "customer_id": 423,
+      "first_name": "Customer20",
+      "last_name": "LastName20",
+      "email": "customer20@example.com",
+      "phone": "555-1020",
+      "created_at": "2022-06-17 15:38:57.201565",
+      "updated_at": "2022-06-17 15:38:57.201565"
+    },
+    {
+      "customer_id": 424,
+      "first_name": "Customer21",
+      "last_name": "LastName21",
+      "email": "customer21@example.com",
+      "phone": "555-1021",
+      "created_at": "2023-06-01 15:38:57.201565",
+      "updated_at": "2023-06-01 15:38:57.201565"
+    },
+    {
+      "customer_id": 425,
+      "first_name": "Customer22",
+      "last_name": "LastName22",
+      "email": "customer22@example.com",
+      "phone": "555-1022",
+      "created_at": "2022-04-20 15:38:57.201565",
+      "updated_at": "2022-04-20 15:38:57.201565"
+    },
+    {
+      "customer_id": 426,
+      "first_name": "Customer23",
+      "last_name": "LastName23",
+      "email": "customer23@example.com",
+      "phone": "555-1023",
+      "created_at": "2022-06-11 15:38:57.201565",
+      "updated_at": "2022-06-11 15:38:57.201565"
+    },
+    {
+      "customer_id": 427,
+      "first_name": "Customer24",
+      "last_name": "LastName24",
+      "email": "customer24@example.com",
+      "phone": "555-1024",
+      "created_at": "2025-05-13 15:38:57.201565",
+      "updated_at": "2025-05-13 15:38:57.201565"
+    },
+    {
+      "customer_id": 428,
+      "first_name": "Customer25",
+      "last_name": "LastName25",
+      "email": "customer25@example.com",
+      "phone": "555-1025",
+      "created_at": "2021-08-24 15:38:57.201565",
+      "updated_at": "2021-08-24 15:38:57.201565"
+    },
+    {
+      "customer_id": 429,
+      "first_name": "Customer26",
+      "last_name": "LastName26",
+      "email": "customer26@example.com",
+      "phone": "555-1026",
+      "created_at": "2025-04-18 15:38:57.201565",
+      "updated_at": "2025-04-18 15:38:57.201565"
+    },
+    {
+      "customer_id": 430,
+      "first_name": "Customer27",
+      "last_name": "LastName27",
+      "email": "customer27@example.com",
+      "phone": "555-1027",
+      "created_at": "2025-08-01 15:38:57.201565",
+      "updated_at": "2025-08-01 15:38:57.201565"
+    },
+    {
+      "customer_id": 431,
+      "first_name": "Customer28",
+      "last_name": "LastName28",
+      "email": "customer28@example.com",
+      "phone": "555-1028",
+      "created_at": "2022-03-23 15:38:57.201565",
+      "updated_at": "2022-03-23 15:38:57.201565"
+    },
+    {
+      "customer_id": 432,
+      "first_name": "Customer29",
+      "last_name": "LastName29",
+      "email": "customer29@example.com",
+      "phone": "555-1029",
+      "created_at": "2023-07-24 15:38:57.201565",
+      "updated_at": "2023-07-24 15:38:57.201565"
+    },
+    {
+      "customer_id": 433,
+      "first_name": "Customer30",
+      "last_name": "LastName30",
+      "email": "customer30@example.com",
+      "phone": "555-1030",
+      "created_at": "2024-02-13 15:38:57.201565",
+      "updated_at": "2024-02-13 15:38:57.201565"
+    },
+    {
+      "customer_id": 434,
+      "first_name": "Customer31",
+      "last_name": "LastName31",
+      "email": "customer31@example.com",
+      "phone": "555-1031",
+      "created_at": "2021-09-13 15:38:57.201565",
+      "updated_at": "2021-09-13 15:38:57.201565"
+    },
+    {
+      "customer_id": 435,
+      "first_name": "Customer32",
+      "last_name": "LastName32",
+      "email": "customer32@example.com",
+      "phone": "555-1032",
+      "created_at": "2021-06-04 15:38:57.201565",
+      "updated_at": "2021-06-04 15:38:57.201565"
+    },
+    {
+      "customer_id": 436,
+      "first_name": "Customer33",
+      "last_name": "LastName33",
+      "email": "customer33@example.com",
+      "phone": "555-1033",
+      "created_at": "2023-12-31 15:38:57.201565",
+      "updated_at": "2023-12-31 15:38:57.201565"
+    },
+    {
+      "customer_id": 437,
+      "first_name": "Customer34",
+      "last_name": "LastName34",
+      "email": "customer34@example.com",
+      "phone": "555-1034",
+      "created_at": "2023-10-15 15:38:57.201565",
+      "updated_at": "2023-10-15 15:38:57.201565"
+    },
+    {
+      "customer_id": 438,
+      "first_name": "Customer35",
+      "last_name": "LastName35",
+      "email": "customer35@example.com",
+      "phone": "555-1035",
+      "created_at": "2021-10-11 15:38:57.201565",
+      "updated_at": "2021-10-11 15:38:57.201565"
+    },
+    {
+      "customer_id": 439,
+      "first_name": "Customer36",
+      "last_name": "LastName36",
+      "email": "customer36@example.com",
+      "phone": "555-1036",
+      "created_at": "2021-06-24 15:38:57.201565",
+      "updated_at": "2021-06-24 15:38:57.201565"
+    },
+    {
+      "customer_id": 440,
+      "first_name": "Customer37",
+      "last_name": "LastName37",
+      "email": "customer37@example.com",
+      "phone": "555-1037",
+      "created_at": "2022-07-06 15:38:57.201565",
+      "updated_at": "2022-07-06 15:38:57.201565"
+    },
+    {
+      "customer_id": 441,
+      "first_name": "Customer38",
+      "last_name": "LastName38",
+      "email": "customer38@example.com",
+      "phone": "555-1038",
+      "created_at": "2024-06-27 15:38:57.201565",
+      "updated_at": "2024-06-27 15:38:57.201565"
+    },
+    {
+      "customer_id": 442,
+      "first_name": "Customer39",
+      "last_name": "LastName39",
+      "email": "customer39@example.com",
+      "phone": "555-1039",
+      "created_at": "2024-06-13 15:38:57.201565",
+      "updated_at": "2024-06-13 15:38:57.201565"
+    },
+    {
+      "customer_id": 443,
+      "first_name": "Customer40",
+      "last_name": "LastName40",
+      "email": "customer40@example.com",
+      "phone": "555-1040",
+      "created_at": "2023-04-11 15:38:57.201565",
+      "updated_at": "2023-04-11 15:38:57.201565"
+    },
+    {
+      "customer_id": 444,
+      "first_name": "Customer41",
+      "last_name": "LastName41",
+      "email": "customer41@example.com",
+      "phone": "555-1041",
+      "created_at": "2025-03-24 15:38:57.201565",
+      "updated_at": "2025-03-24 15:38:57.201565"
+    },
+    {
+      "customer_id": 445,
+      "first_name": "Customer42",
+      "last_name": "LastName42",
+      "email": "customer42@example.com",
+      "phone": "555-1042",
+      "created_at": "2022-02-19 15:38:57.201565",
+      "updated_at": "2022-02-19 15:38:57.201565"
+    },
+    {
+      "customer_id": 446,
+      "first_name": "Customer43",
+      "last_name": "LastName43",
+      "email": "customer43@example.com",
+      "phone": "555-1043",
+      "created_at": "2022-01-16 15:38:57.201565",
+      "updated_at": "2022-01-16 15:38:57.201565"
+    },
+    {
+      "customer_id": 447,
+      "first_name": "Customer44",
+      "last_name": "LastName44",
+      "email": "customer44@example.com",
+      "phone": "555-1044",
+      "created_at": "2023-12-06 15:38:57.201565",
+      "updated_at": "2023-12-06 15:38:57.201565"
+    },
+    {
+      "customer_id": 448,
+      "first_name": "Customer45",
+      "last_name": "LastName45",
+      "email": "customer45@example.com",
+      "phone": "555-1045",
+      "created_at": "2024-04-18 15:38:57.201565",
+      "updated_at": "2024-04-18 15:38:57.201565"
+    },
+    {
+      "customer_id": 449,
+      "first_name": "Customer46",
+      "last_name": "LastName46",
+      "email": "customer46@example.com",
+      "phone": "555-1046",
+      "created_at": "2023-04-24 15:38:57.201565",
+      "updated_at": "2023-04-24 15:38:57.201565"
+    },
+    {
+      "customer_id": 450,
+      "first_name": "Customer47",
+      "last_name": "LastName47",
+      "email": "customer47@example.com",
+      "phone": "555-1047",
+      "created_at": "2023-09-03 15:38:57.201565",
+      "updated_at": "2023-09-03 15:38:57.201565"
+    },
+    {
+      "customer_id": 451,
+      "first_name": "Customer48",
+      "last_name": "LastName48",
+      "email": "customer48@example.com",
+      "phone": "555-1048",
+      "created_at": "2024-02-03 15:38:57.201565",
+      "updated_at": "2024-02-03 15:38:57.201565"
+    },
+    {
+      "customer_id": 452,
+      "first_name": "Customer49",
+      "last_name": "LastName49",
+      "email": "customer49@example.com",
+      "phone": "555-1049",
+      "created_at": "2022-06-06 15:38:57.201565",
+      "updated_at": "2022-06-06 15:38:57.201565"
+    },
+    {
+      "customer_id": 453,
+      "first_name": "Customer50",
+      "last_name": "LastName50",
+      "email": "customer50@example.com",
+      "phone": "555-1050",
+      "created_at": "2023-02-05 15:38:57.201565",
+      "updated_at": "2023-02-05 15:38:57.201565"
+    }
+  ]
+}

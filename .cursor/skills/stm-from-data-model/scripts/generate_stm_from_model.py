@@ -16,15 +16,16 @@ from typing import Any
 import requests
 
 
-_PROJECT_ROOT = Path(__file__).resolve().parents[3]
-DEFAULT_INPUT_DIR = _PROJECT_ROOT / "stm" / "input"
-DEFAULT_OUTPUT_DIR = _PROJECT_ROOT / "stm" / "output"
-SOURCE_SYSTEM = "Snowflake"
-SOURCE_DATABASE_SCHEMA = "DRIP_DATA_INTELLIGENCE.BRONZE_ERP__DBO"
+_PROJECT_ROOT = Path(__file__).resolve().parents[4]
+DEFAULT_MODEL_INPUT_DIR = _PROJECT_ROOT / "output" / "modeling"
+DEFAULT_ANALYZER_INPUT_DIR = _PROJECT_ROOT / "output" / "source-system-analysis"
+DEFAULT_OUTPUT_DIR = _PROJECT_ROOT / "output" / "stm"
+SOURCE_SYSTEM = ""
+SOURCE_DATABASE_SCHEMA = ""
 SOURCE_TABLE_FILE = "See field-level mapping"
 SOURCE_NOTES = "Immediate technical source is Snowflake bronze; original lineage comes from the analyzer source system."
-TARGET_DATABASE = "DRIP_DATA_INTELLIGENCE"
-TARGET_SCHEMA = "GOLD"
+TARGET_DATABASE = ""
+TARGET_SCHEMA = ""
 OPENMETADATA_API_VERSION_PREFIX = "v1"
 OPENMETADATA_LOGIN_ENDPOINT = "users/login"
 OPENMETADATA_TIMEOUT = (10, 30)
@@ -38,6 +39,7 @@ class ColumnDef:
     data_type: str
     nullable: str
     description: str
+    constraints: str = ""
 
 
 @dataclass
@@ -84,8 +86,139 @@ class AnalyzerMetadata:
     glossary_definitions: dict[str, GlossaryDefinition] = field(default_factory=dict)
 
 
+def _load_dotenv() -> None:
+    env_candidates = [
+        Path(os.getcwd()) / ".env",
+        _PROJECT_ROOT / ".env",
+    ]
+    for env_path in env_candidates:
+        if not env_path.exists():
+            continue
+        try:
+            for line in env_path.read_text(encoding="utf-8").splitlines():
+                stripped = line.strip()
+                if not stripped or stripped.startswith("#") or "=" not in stripped:
+                    continue
+                name, _, value = stripped.partition("=")
+                key = name.strip()
+                if not key or key in os.environ:
+                    continue
+                os.environ[key] = value.strip().strip("'\"")
+        except OSError:
+            pass
+        break
+
+
+def _has_openmetadata_env_vars() -> bool:
+    required = (
+        "OPENMETADATA_BASE_URL",
+        "OPENMETADATA_JWT_TOKEN",
+        "OPENMETADATA_EMAIL",
+        "OPENMETADATA_PASSWORD",
+    )
+    return any(os.getenv(name, "").strip() for name in required)
+
+
+def _load_openmetadata_fallback_env() -> None:
+    if _has_openmetadata_env_vars():
+        return
+    env_candidates = [
+        Path(os.getcwd()) / "OpenMetadata.env",
+        _PROJECT_ROOT / "OpenMetadata.env",
+    ]
+    for env_path in env_candidates:
+        if not env_path.exists():
+            continue
+        try:
+            for line in env_path.read_text(encoding="utf-8").splitlines():
+                stripped = line.strip()
+                if not stripped or stripped.startswith("#") or "=" not in stripped:
+                    continue
+                name, _, value = stripped.partition("=")
+                key = name.strip()
+                if not key or key in os.environ:
+                    continue
+                if not key.startswith("OPENMETADATA_"):
+                    continue
+                os.environ[key] = value.strip().strip("'\"")
+        except OSError:
+            pass
+        break
+
+
+def _first_env(*names: str) -> str:
+    for name in names:
+        value = os.getenv(name, "").strip()
+        if value:
+            return value
+    return ""
+
+
+def _require_any_env(*names: str) -> str:
+    value = _first_env(*names)
+    if value:
+        return value
+    readable = ", ".join(names)
+    raise RuntimeError(f"Missing required environment variable. Set one of: {readable}")
+
+
+def _initialize_runtime_config_from_env() -> None:
+    global SOURCE_SYSTEM
+    global SOURCE_DATABASE_SCHEMA
+    global TARGET_DATABASE
+    global TARGET_SCHEMA
+
+    SOURCE_SYSTEM = _require_any_env(
+        "STM_SOURCE_SYSTEM",
+        "SOURCE_SYSTEM",
+    )
+    SOURCE_DATABASE_SCHEMA = _require_any_env(
+        "STM_SOURCE_DATABASE_SCHEMA",
+        "SOURCE_DATABASE_SCHEMA",
+    )
+    TARGET_DATABASE = _require_any_env(
+        "STM_TARGET_DATABASE",
+        "TARGET_DATABASE",
+        "SNOWFLAKE_DATABASE",
+    )
+    TARGET_SCHEMA = _require_any_env(
+        "STM_TARGET_SCHEMA",
+        "TARGET_SCHEMA",
+        "SNOWFLAKE_SCHEMA",
+    )
+
+
 def _slug_index_name(index: int, table_name: str) -> str:
     return f"{index:02d}-{table_name}-stm.md"
+
+
+_STM_FILENAME_RE = re.compile(r"^\d+-.+-stm\.md$")
+
+
+def _cleanup_stale_outputs(output_dir: Path, kept_names: set[str]) -> list[Path]:
+    """Remove stale STM files from a previous run.
+
+    Only files matching the <index>-<TableName>-stm.md naming convention are
+    eligible for removal. README.md and any unrelated files the user keeps
+    in the output directory are left alone. This makes re-runs safe when
+    tables get renamed, reordered, or removed without leaving orphans behind.
+    """
+    removed: list[Path] = []
+    if not output_dir.exists():
+        return removed
+    for entry in output_dir.iterdir():
+        if not entry.is_file():
+            continue
+        if entry.name in kept_names:
+            continue
+        if not _STM_FILENAME_RE.match(entry.name):
+            continue
+        try:
+            entry.unlink()
+            removed.append(entry)
+        except OSError:
+            pass
+    return removed
 
 
 def _extract_first(pattern: str, text: str) -> str:
@@ -133,34 +266,82 @@ def _extract_labeled_block(label: str, block: str) -> str:
     return "\n".join(captured).strip()
 
 
+def _markdown_header_cells(line: str) -> list[str]:
+    return [part.strip() for part in line.strip().strip("|").split("|")]
+
+
+def _is_markdown_separator_row(cells: list[str]) -> bool:
+    return bool(cells) and all(set(c) <= {"-", " ", ":"} for c in cells)
+
+
 def _parse_markdown_table(block: str) -> list[ColumnDef]:
+    """Parse the per-table column definition markdown table.
+
+    Supports two header shapes:
+
+    - Legacy (4 value columns): Column | Data Type | Nullable | Description
+    - Extended (5 value columns): Column | Data Type | Nullable | Constraints | Description
+
+    Optional **Constraints** carries field-level constraint notes from the model (PK/FK/CHECK/etc.).
+    """
     rows: list[ColumnDef] = []
     lines = block.splitlines()
     in_table = False
+    extended = False
+
     for line in lines:
         stripped = line.strip()
-        if stripped.startswith("| Column | Data Type | Nullable | Description |"):
-            in_table = True
-            continue
-        if not in_table:
-            continue
         if not stripped.startswith("|"):
-            break
-        if set(stripped.replace("|", "").replace("-", "").replace(" ", "")) == set():
+            if in_table:
+                break
             continue
-        parts = [part.strip() for part in stripped.strip("|").split("|")]
-        if len(parts) != 4:
+
+        cells = _markdown_header_cells(stripped)
+
+        if not in_table:
+            hdr = tuple(h.lower() for h in cells)
+            if hdr == ("column", "data type", "nullable", "description"):
+                extended = False
+                in_table = True
+                continue
+            if hdr == ("column", "data type", "nullable", "constraints", "description"):
+                extended = True
+                in_table = True
+                continue
             continue
-        if parts[0] == "Column":
+
+        if _is_markdown_separator_row(cells):
             continue
-        rows.append(
-            ColumnDef(
-                name=parts[0],
-                data_type=parts[1],
-                nullable=parts[2],
-                description=parts[3],
+
+        parts = cells
+        if parts and parts[0].lower() == "column":
+            continue
+
+        if extended:
+            if len(parts) != 5:
+                continue
+            rows.append(
+                ColumnDef(
+                    name=parts[0],
+                    data_type=parts[1],
+                    nullable=parts[2],
+                    description=parts[4],
+                    constraints=parts[3],
+                )
             )
-        )
+        else:
+            if len(parts) != 4:
+                continue
+            rows.append(
+                ColumnDef(
+                    name=parts[0],
+                    data_type=parts[1],
+                    nullable=parts[2],
+                    description=parts[3],
+                    constraints="",
+                )
+            )
+
     return rows
 
 
@@ -899,19 +1080,36 @@ def render_stm(
         f"| {_markdown_escape(TARGET_DATABASE)} | {_markdown_escape(TARGET_SCHEMA)} | {_markdown_escape(table.name)} | {_markdown_escape(scd_type)} | "
         f"{_markdown_escape(grain_pk)} |  | {_markdown_escape(table_type)} | {_markdown_escape(description)} |"
     )
+    business_key = table.meta.get("Business Key", "").strip()
+    foreign_keys = table.meta.get("Foreign Keys", "").strip()
+    if business_key or foreign_keys:
+        lines.append("")
+        if business_key:
+            lines.append("**Business Key (from model):**  ")
+            lines.append(f"> {_markdown_escape(business_key)}")
+            lines.append("")
+        if foreign_keys:
+            lines.append("**Foreign Keys (from model):**  ")
+            lines.append(f"> {_markdown_escape(foreign_keys)}")
     lines.append("")
     lines.append("---")
     lines.append("")
     _append_classification_section(lines, table, analyzer_table, analyzer_metadata)
     _append_glossary_section(lines, table, analyzer_table, analyzer_metadata)
     lines.append("## 7. Field-Level Mapping Matrix")
-    lines.append("| Target Table | Target Column | Data Type | Field Type | Source System | Source Table | Source Column(s) | Transformation / Business Rule | Nullable? | Default / Fallback | Description |")
-    lines.append("|--------------|---------------|-----------|------------|---------------|--------------|------------------|--------------------------------|-----------|--------------------|-------------|")
+    lines.append(
+        "| Target Table | Target Column | Data Type | Field Type | Source System | Source Table | Source Column(s) | "
+        "Transformation / Business Rule | Nullable? | Default / Fallback | Constraints | Description |"
+    )
+    lines.append(
+        "|--------------|---------------|-----------|------------|---------------|--------------|------------------|"
+        "|--------------------------------|-----------|--------------------|-------------|-------------|"
+    )
     for column in table.columns:
         lines.append(
             f"| {_markdown_escape(table.name)} | {_markdown_escape(column.name)} | {_markdown_escape(_to_snowflake_type(column.data_type, column.name))} | "
             f"{_markdown_escape(_field_type(column, table))} | {_markdown_escape(SOURCE_SYSTEM)} |  |  | {_markdown_escape(_column_transformation_logic(column, table))} | "
-            f"{_markdown_escape(column.nullable)} |  | {_markdown_escape(column.description)} |"
+            f"{_markdown_escape(column.nullable)} |  | {_markdown_escape(column.constraints)} | {_markdown_escape(column.description)} |"
         )
     lines.append("")
     lines.append("---")
@@ -978,14 +1176,16 @@ def resolve_input_path(explicit_input: str | None) -> Path:
             raise FileNotFoundError(f"Input markdown file not found: {path}")
         return path
 
-    if not DEFAULT_INPUT_DIR.exists():
-        raise FileNotFoundError(f"Default input directory not found: {DEFAULT_INPUT_DIR}")
-    candidates = sorted(DEFAULT_INPUT_DIR.glob("*.md"))
+    if not DEFAULT_MODEL_INPUT_DIR.exists():
+        raise FileNotFoundError(f"Default model directory not found: {DEFAULT_MODEL_INPUT_DIR}")
+    candidates = sorted(DEFAULT_MODEL_INPUT_DIR.glob("*.md"))
     if not candidates:
-        raise FileNotFoundError(f"No markdown files found in {DEFAULT_INPUT_DIR}")
+        raise FileNotFoundError(f"No markdown files found in {DEFAULT_MODEL_INPUT_DIR}")
     if len(candidates) > 1:
         names = ", ".join(path.name for path in candidates)
-        raise ValueError(f"Multiple markdown files found in {DEFAULT_INPUT_DIR}; use --input explicitly. Found: {names}")
+        raise ValueError(
+            f"Multiple markdown files found in {DEFAULT_MODEL_INPUT_DIR}; use --input explicitly. Found: {names}"
+        )
     return candidates[0]
 
 
@@ -996,17 +1196,17 @@ def resolve_analyzer_path(explicit_analyzer_path: str | None) -> Path:
             raise FileNotFoundError(f"Analyzer JSON file not found: {path}")
         return path
 
-    if not DEFAULT_INPUT_DIR.exists():
-        raise FileNotFoundError(f"Default input directory not found: {DEFAULT_INPUT_DIR}")
-    candidates = sorted(DEFAULT_INPUT_DIR.glob("*.json"))
+    if not DEFAULT_ANALYZER_INPUT_DIR.exists():
+        raise FileNotFoundError(f"Default schema directory not found: {DEFAULT_ANALYZER_INPUT_DIR}")
+    candidates = sorted(DEFAULT_ANALYZER_INPUT_DIR.glob("*.json"))
     if not candidates:
         raise FileNotFoundError(
-            f"No analyzer JSON files found in {DEFAULT_INPUT_DIR}; use --analyzer-json explicitly."
+            f"No analyzer JSON files found in {DEFAULT_ANALYZER_INPUT_DIR}; use --analyzer-json explicitly."
         )
     if len(candidates) > 1:
         names = ", ".join(path.name for path in candidates)
         raise ValueError(
-            f"Multiple analyzer JSON files found in {DEFAULT_INPUT_DIR}; use --analyzer-json explicitly. Found: {names}"
+            f"Multiple analyzer JSON files found in {DEFAULT_ANALYZER_INPUT_DIR}; use --analyzer-json explicitly. Found: {names}"
         )
     return candidates[0]
 
@@ -1025,6 +1225,10 @@ def main() -> None:
     )
     args = parser.parse_args()
 
+    _load_dotenv()
+    _load_openmetadata_fallback_env()
+    _initialize_runtime_config_from_env()
+
     input_path = resolve_input_path(args.input)
     analyzer_path = resolve_analyzer_path(args.analyzer_json)
     output_dir = Path(args.output_dir).expanduser()
@@ -1040,16 +1244,24 @@ def main() -> None:
             print("OpenMetadata unavailable — using glossary definitions from analyzer JSON only.")
     author = str(doc.get("author") or args.author or getpass.getuser()).strip()
 
+    written_names: set[str] = set()
     for idx, table in enumerate(tables, start=1):
-        output_path = output_dir / _slug_index_name(idx, table.name)
+        file_name = _slug_index_name(idx, table.name)
+        output_path = output_dir / file_name
         output_path.write_text(
             render_stm(doc, table, input_path, analyzer_metadata, author=author),
             encoding="utf-8",
         )
+        written_names.add(file_name)
+
+    removed = _cleanup_stale_outputs(output_dir, written_names)
 
     readme_path = output_dir / "README.md"
     readme_path.write_text(render_index(input_path, analyzer_path, output_dir, tables), encoding="utf-8")
     print(f"Generated {len(tables)} STM files in {output_dir}")
+    if removed:
+        names = ", ".join(sorted(path.name for path in removed))
+        print(f"Removed {len(removed)} stale STM file(s) from previous run: {names}")
 
 
 if __name__ == "__main__":

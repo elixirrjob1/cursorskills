@@ -6,6 +6,15 @@ subagent has filled in (per the STM catalogue enricher skill, step 4b). For
 each item, appends rows to Section 5 (Classification Tags) and Section 6
 (Glossary Terms) of the corresponding STM without touching existing rows.
 
+When (and only when) at least one row is actually appended for an STM, the
+script also runs ``_touch_document_metadata_and_history`` on that file so
+``STM Version`` is bumped on the patch segment, ``Last Updated`` /
+``Last Updated By`` in Section 1 are updated, and a matching
+``Version Control & Governance`` history row is appended per the STM
+Preservation Contract in ``SKILL.md``. If no new rows are produced (e.g. every
+classification was already present), the STM file is left untouched — keeping
+re-runs strictly idempotent.
+
 Work-file item shape (after subagent completion):
 
     {
@@ -31,7 +40,7 @@ from pathlib import Path
 
 _SCRIPT_DIR = Path(__file__).resolve().parent
 sys.path.insert(0, str(_SCRIPT_DIR))
-from post_enrich_tags_glossary import _get  # noqa: E402  — OM helper
+from post_enrich_tags_glossary import _get, _touch_document_metadata_and_history  # noqa: E402  — OM helper
 
 
 _S5_HEADER_LINE = "| Scope | Column | Tag FQN | Classification |"
@@ -255,6 +264,12 @@ def main() -> None:
         for w in warns:
             print(f"    warn: {w}")
         if not args.dry_run and new_text != text:
+            if n5 + n6 > 0:
+                new_text = _touch_document_metadata_and_history(
+                    new_text,
+                    "sections 5 and 6",
+                    substantive_stm_change=True,
+                )
             stm_path.write_text(new_text)
 
     print(f"\nTotal rows added: section 5 +{total_s5}, section 6 +{total_s6}")

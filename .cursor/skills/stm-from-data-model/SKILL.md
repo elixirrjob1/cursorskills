@@ -1,6 +1,6 @@
 ---
 name: stm-from-data-model
-description: Generate source-to-target mapping markdown documents from a target data-model markdown file plus analyzer schema JSON. Use when the user has a dimensional/star-schema model in markdown, an analyzer JSON with glossary and classification assignments, and wants one STM document per target table written to `stm/output`.
+description: Generate source-to-target mapping markdown documents from a target data-model markdown file plus analyzer schema JSON. Use when the user has a dimensional/star-schema model in markdown, an analyzer JSON with glossary and classification assignments, and wants one STM document per target table written to `output/stm`.
 ---
 
 # STM From Data Model
@@ -12,34 +12,42 @@ Use this skill when:
 - the user wants STM/source-to-target mapping documents per target table
 - the output should follow a fixed STM template
 - analyzer glossary terms and classification tags should be copied into the STM
-- unknown source-side values must remain blank, except for the hardcoded Snowflake source/target conventions below
+- unknown source-side values must remain blank, except for the warehouse source/target conventions populated from `.env` (see Population Rules)
 
 ## Inputs
 
-- Default input folder: `stm/input` (relative to project root)
-- Default output folder: `stm/output` (relative to project root)
+- Default model folder: `output/modeling` (relative to project root)
+- Default analyzer JSON folder: `output/source-system-analysis` (relative to project root)
+- Default output folder: `output/stm` (relative to project root)
 - Required inputs:
   - one markdown file describing the target warehouse model
   - one analyzer schema JSON file with table/column `glossary_terms` and `classification_tags`
 - Environment requirements for glossary definitions:
+  - Warehouse context from `.env`:
+    - `STM_SOURCE_SYSTEM` (or `SOURCE_SYSTEM`)
+    - `STM_SOURCE_DATABASE_SCHEMA` (or `SOURCE_DATABASE_SCHEMA`)
+    - `STM_TARGET_DATABASE` (or `TARGET_DATABASE` / `SNOWFLAKE_DATABASE`)
+    - `STM_TARGET_SCHEMA` (or `TARGET_SCHEMA` / `SNOWFLAKE_SCHEMA`)
   - `OPENMETADATA_BASE_URL`
   - `OPENMETADATA_EMAIL` and `OPENMETADATA_PASSWORD`, or `OPENMETADATA_JWT_TOKEN`
+  - OpenMetadata fallback file: if no `OPENMETADATA_*` variables are set, load `OpenMetadata.env` (cwd first, then repo root)
 
 If the caller provides explicit paths, use them. Otherwise:
-- read the single `.md` file in `stm/input`
-- read the single `.json` file in `stm/input`
-- write all outputs to `stm/output`
+- read the single `.md` file in `output/modeling`
+- read the single `.json` file in `output/source-system-analysis`
+- write all outputs to `output/stm`
+- load warehouse and OpenMetadata connection values from `.env`
 
 ## Run
 
 ```bash
 python3 .cursor/skills/stm-from-data-model/scripts/generate_stm_from_model.py \
-  --input stm/input/<model>.md \
-  --analyzer-json LATEST_SCHEMA/schema_azure_mssql_dbo.json \
-  --output-dir stm/output
+  --input output/modeling/<model>.md \
+  --analyzer-json output/source-system-analysis/<schema>.json \
+  --output-dir output/stm
 ```
 
-If there is exactly one markdown file and one analyzer JSON file in `stm/input`, both path flags may be omitted:
+If there is exactly one markdown file in `output/modeling` and one analyzer JSON file in `output/source-system-analysis`, both path flags may be omitted:
 
 ```bash
 python3 .cursor/skills/stm-from-data-model/scripts/generate_stm_from_model.py
@@ -57,15 +65,24 @@ File naming:
 - `02-<TableName>-stm.md`
 - etc.
 
+### Post-generate cleanup
+
+After writing the new STM files, the script removes stale STM files from previous runs in the output directory so reruns leave no duplicates behind (handles renamed tables, reordered indexes, or removed tables).
+
+- Only files matching the `<index>-<TableName>-stm.md` pattern are eligible for removal.
+- The freshly written files for the current run are always kept.
+- `README.md` and any unrelated files in the output directory are left alone.
+- The script prints the names of any removed files so the cleanup is auditable.
+
 ## Population Rules
 
-Hardcode these warehouse conventions in every generated STM:
-- `Source System Inventory.Source System` = `Snowflake`
-- `Source System Inventory.Database / Schema` = `DRIP_DATA_INTELLIGENCE.BRONZE_ERP__DBO`
-- `Source System Inventory.Table / File` = `See field-level mapping`
-- `Source System Inventory.Notes` = `Immediate technical source is Snowflake bronze; original lineage comes from the analyzer source system.`
-- `Target Schema Definition.Target Database` = `DRIP_DATA_INTELLIGENCE`
-- `Target Schema Definition.Schema` = `GOLD`
+Use warehouse values from `.env` in every generated STM:
+- `Source System Inventory.Source System` comes from `STM_SOURCE_SYSTEM` (or `SOURCE_SYSTEM`)
+- `Source System Inventory.Database / Schema` comes from `STM_SOURCE_DATABASE_SCHEMA` (or `SOURCE_DATABASE_SCHEMA`)
+- `Target Schema Definition.Target Database` comes from `STM_TARGET_DATABASE` (or `TARGET_DATABASE` / `SNOWFLAKE_DATABASE`)
+- `Target Schema Definition.Schema` comes from `STM_TARGET_SCHEMA` (or `TARGET_SCHEMA` / `SNOWFLAKE_SCHEMA`)
+- `Source System Inventory.Table / File` remains `See field-level mapping`
+- `Source System Inventory.Notes` remains `Immediate technical source is Snowflake bronze; original lineage comes from the analyzer source system.`
 
 - Fill only fields derivable from the model markdown and analyzer JSON.
 - Leave other unknown values literally blank.
@@ -82,6 +99,25 @@ Hardcode these warehouse conventions in every generated STM:
   - explicit SCD behavior
   - explicit grain statements
   - explicit measure notes
+
+### Field-level constraints (optional column + table-level blocks)
+
+When the target data model captures constraints, carry them into the STM automatically:
+
+1. **Per-column constraints** — use an extended column table header (add **Constraints** between Nullable and Description):
+
+   `| Column | Data Type | Nullable | Constraints | Description |`
+
+   Put concise notes such as PK, FK references, UNIQUE, CHECK expressions, or “NOT NULL enforced in warehouse” in **Constraints**. Leave the cell blank when none apply.
+
+   The legacy header without **Constraints** remains supported; those STMs still generate with an empty **Constraints** column in Section 7.
+
+2. **Table-level keys** — keep using labeled blocks under each `### TableName` section:
+
+   - `**Business Key**:` …
+   - `**Foreign Keys**:` … (free text or bullet list)
+
+   These are emitted under **Section 4. Target Schema Definition** immediately after the target table row so relationship rules survive generation.
 
 ### WarehouseHashFK — UNKNOWN fallback pattern
 
@@ -126,7 +162,7 @@ Each generated STM must include:
 4. Target Schema Definition
 5. Classification Tags
 6. Glossary Terms
-7. Field-Level Mapping Matrix
+7. Field-Level Mapping Matrix (includes a **Constraints** column for model- or catalogue-derived field rules)
 8. Transformation & Business Rules
 9. Data Quality & Validation Rules
 10. Load Strategy

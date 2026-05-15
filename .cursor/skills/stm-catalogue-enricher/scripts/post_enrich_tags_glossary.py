@@ -11,7 +11,10 @@ resolves glossary term definitions, and writes the results back into each STM fi
 from __future__ import annotations
 
 import argparse
+import getpass
+import os
 import sys
+from datetime import date
 from pathlib import Path
 from typing import Any
 
@@ -169,6 +172,254 @@ _S5_EMPTY  = "|  |  |  |  |"
 _S6_HEADER = "| Scope | Column | Term FQN | Term Name | Definition |"
 _S6_SEP    = "|-------|--------|----------|-----------|------------|"
 _S6_EMPTY  = "|  |  |  |  |  |"
+
+
+def _rows_from_section5(text: str) -> list[dict[str, str]]:
+    rows = _parse_table_rows(text.splitlines(), "## 5.")
+    if len(rows) < 2:
+        return []
+    out: list[dict[str, str]] = []
+    for cells in rows[1:]:
+        if len(cells) < 4:
+            continue
+        row = {
+            "scope": cells[0].strip(),
+            "column": cells[1].strip(),
+            "tag_fqn": cells[2].strip(),
+            "classification": cells[3].strip(),
+        }
+        if not any(row.values()):
+            continue
+        out.append(row)
+    return out
+
+
+def _rows_from_section6(text: str) -> list[dict[str, str]]:
+    rows = _parse_table_rows(text.splitlines(), "## 6.")
+    if len(rows) < 2:
+        return []
+    out: list[dict[str, str]] = []
+    for cells in rows[1:]:
+        if len(cells) < 5:
+            continue
+        row = {
+            "scope": cells[0].strip(),
+            "column": cells[1].strip(),
+            "term_fqn": cells[2].strip(),
+            "term_name": cells[3].strip(),
+            "definition": cells[4].strip(),
+        }
+        if not any(row.values()):
+            continue
+        out.append(row)
+    return out
+
+
+def _merge_section5_rows(
+    existing_rows: list[dict[str, str]],
+    new_rows: list[dict[str, str]],
+) -> list[dict[str, str]]:
+    seen: set[tuple[str, str, str, str]] = set()
+    merged: list[dict[str, str]] = []
+    for row in existing_rows + new_rows:
+        key = (row["scope"], row["column"], row["tag_fqn"], row["classification"])
+        if key in seen:
+            continue
+        seen.add(key)
+        merged.append(row)
+    return merged
+
+
+def _merge_section6_rows(
+    existing_rows: list[dict[str, str]],
+    new_rows: list[dict[str, str]],
+) -> list[dict[str, str]]:
+    seen: set[tuple[str, str, str]] = set()
+    merged: list[dict[str, str]] = []
+    for row in existing_rows + new_rows:
+        key = (row["scope"], row["column"], row["term_fqn"])
+        if key in seen:
+            continue
+        seen.add(key)
+        merged.append(row)
+    return merged
+
+
+_STM_VERSION_LINE = re.compile(r"^\|\s*\*\*STM Version\*\*\s*\|\s*([^|]+?)\s*\|", re.IGNORECASE)
+_LAST_UPDATED_LINE = re.compile(r"^\|\s*\*\*Last Updated\*\*\s*\|", re.IGNORECASE)
+_LAST_UPDATED_BY_LINE = re.compile(r"^\|\s*\*\*Last Updated By\*\*\s*\|", re.IGNORECASE)
+
+
+def _extract_stm_version(text: str) -> str:
+    for line in text.splitlines():
+        m = _STM_VERSION_LINE.match(line.strip())
+        if m:
+            value = m.group(1).strip()
+            if value:
+                return value
+    return "1.0"
+
+
+def _is_doc_info_heading(stripped: str) -> bool:
+    """Recognize Section 1 regardless of numbering format."""
+    if not stripped.startswith("## "):
+        return False
+    body = stripped[3:].strip().lower()
+    if body.startswith("1.") or body.startswith("1 "):
+        return True
+    if "document information" in body:
+        return True
+    return False
+
+
+def _is_version_history_heading(stripped: str) -> bool:
+    """Recognize the version-control / version-history section heading."""
+    if not stripped.startswith("## "):
+        return False
+    body = stripped[3:].strip().lower()
+    if "version" not in body:
+        return False
+    return any(kw in body for kw in ("control", "history", "governance"))
+
+
+def _increment_stm_version(current: str) -> str:
+    """Bump the document version when substantive STM body content changed.
+
+    Rules:
+    - If the last dot-separated segment is all digits, increment it (``1.0`` → ``1.1``,
+      ``2.10`` → ``2.11``, ``1.0.3`` → ``1.0.4``).
+    - If the whole string is digits with no dot, increment as an integer (``3`` → ``4``).
+    - Otherwise append ``.1`` (e.g. ``draft`` → ``draft.1``).
+    """
+    v = current.strip()
+    if not v:
+        return "1.1"
+    if "." in v:
+        base, last = v.rsplit(".", 1)
+        if last.isdigit():
+            return f"{base}.{int(last) + 1}"
+    if v.isdigit():
+        return str(int(v) + 1)
+    return f"{v}.1"
+
+
+def _history_row_key(row: str) -> tuple[str, str, str] | None:
+    """Return ``(version, date, actor)`` for a history row, lower-cased.
+
+    The "note" column is intentionally excluded so re-runs with slightly
+    different wording still deduplicate to one row per ``(version, date,
+    actor)``.
+    """
+    cells = [c.strip() for c in row.split("|")[1:-1]]
+    if len(cells) < 3:
+        return None
+    return (cells[0].lower(), cells[1].lower(), cells[2].lower())
+
+
+def _touch_document_metadata_and_history(
+    text: str,
+    changed_sections: str,
+    *,
+    substantive_stm_change: bool = False,
+) -> str:
+    """Update Section 1 (``STM Version`` bump, ``Last Updated``, ``Last Updated By``)
+    and append one ``Version Control & Governance`` row.
+
+    When ``substantive_stm_change`` is false, return ``text`` unchanged — do not
+    bump ``STM Version``, do not touch ``Last Updated`` / ``Last Updated By``,
+    and do not append history (no detected change in the STM body for this pass).
+
+    When true, increment the patch segment of ``STM Version`` (see
+    ``_increment_stm_version``) before recording history so the governance row
+    matches the new document version.
+    """
+    if not substantive_stm_change:
+        return text
+
+    today = date.today().isoformat()
+    actor = (
+        os.getenv("STM_UPDATED_BY")
+        or os.getenv("USERNAME")
+        or os.getenv("USER")
+        or getpass.getuser()
+    )
+    lines = text.split("\n")
+
+    doc_info_start = -1
+    doc_info_end = len(lines)
+    for i, line in enumerate(lines):
+        s = line.strip()
+        if doc_info_start < 0:
+            if _is_doc_info_heading(s):
+                doc_info_start = i
+            continue
+        if s.startswith("## "):
+            doc_info_end = i
+            break
+
+    if doc_info_start >= 0:
+        for i in range(doc_info_start + 1, doc_info_end):
+            s = lines[i].strip()
+            m = _STM_VERSION_LINE.match(s)
+            if not m:
+                continue
+            old_ver = m.group(1).strip()
+            new_ver = _increment_stm_version(old_ver)
+            lines[i] = f"| **STM Version** | {new_ver} |"
+            break
+
+    updated = False
+    updated_by_idx = -1
+    last_updated_idx = -1
+    if doc_info_start >= 0:
+        for i in range(doc_info_start + 1, doc_info_end):
+            s = lines[i].strip()
+            if _LAST_UPDATED_BY_LINE.match(s):
+                lines[i] = f"| **Last Updated By** | {actor} |"
+                updated_by_idx = i
+                continue
+            if _LAST_UPDATED_LINE.match(s):
+                lines[i] = f"| **Last Updated** | {today} |"
+                last_updated_idx = i
+                updated = True
+
+        if updated and updated_by_idx < 0 and last_updated_idx >= 0:
+            lines.insert(last_updated_idx + 1, f"| **Last Updated By** | {actor} |")
+            doc_info_end += 1
+
+    version = _extract_stm_version("\n".join(lines))
+    note = f"stm-catalogue-enricher-v2: updated {changed_sections}"
+
+    sec_start = -1
+    for i, line in enumerate(lines):
+        if _is_version_history_heading(line.strip()):
+            sec_start = i
+            break
+    if sec_start < 0:
+        return "\n".join(lines)
+
+    sec_end = len(lines)
+    for i in range(sec_start + 1, len(lines)):
+        if lines[i].strip().startswith("## "):
+            sec_end = i
+            break
+
+    insert_at = sec_end
+    existing_keys: set[tuple[str, str, str]] = set()
+    for i in range(sec_start + 1, sec_end):
+        row_stripped = lines[i].strip()
+        if row_stripped.startswith("|"):
+            insert_at = i + 1
+            key = _history_row_key(row_stripped)
+            if key is not None:
+                existing_keys.add(key)
+
+    candidate_key = (version.lower(), today.lower(), actor.lower())
+    if candidate_key not in existing_keys:
+        candidate = f"| {version} | {today} | {actor} | {note} |  |"
+        lines.insert(insert_at, candidate)
+
+    return "\n".join(lines)
 
 
 def _build_section3_table(source_tables: list[str], schema_fqn: str) -> str:
@@ -536,24 +787,37 @@ def _process_stm(
             "definition": term.get("description", ""),
         })
 
-    unique_source_tables = list(dict.fromkeys(
-        m["source_table"] for m in mappings
-    ))
-
-    new_s3 = _build_section3_table(unique_source_tables, schema_fqn)
-    new_s5 = _build_section5_table(all_class)
-    new_s6 = _build_section6_table(glossary_rows)
-
     text = stm_path.read_text()
-    text = _replace_section_table(text, "## 3.", new_s3)
+    existing_s5 = _rows_from_section5(text)
+    existing_s6 = _rows_from_section6(text)
+    merged_s5 = _merge_section5_rows(existing_s5, all_class)
+    # Re-apply layer overrides on the merged set so stale rows from previous
+    # enrichment passes (e.g. an old Architecture.Raw row carried over from a
+    # bronze pass) are coerced to the target layer and then re-deduplicated.
+    merged_s5 = _apply_layer_overrides(merged_s5, target_schema)
+    merged_s5 = _deduplicate_classification_tags(merged_s5)
+    merged_s6 = _merge_section6_rows(existing_s6, glossary_rows)
+    new_s5 = _build_section5_table(merged_s5)
+    new_s6 = _build_section6_table(merged_s6)
+    old_s5 = _build_section5_table(existing_s5)
+    old_s6 = _build_section6_table(existing_s6)
+    substantive = (new_s5 != old_s5) or (new_s6 != old_s6)
     text = _replace_section_table(text, "## 5.", new_s5)
     text = _replace_section_table(text, "## 6.", new_s6)
+    if not substantive:
+        return {"file": stm_path.name, "status": "unchanged",
+                "tags": len(merged_s5), "terms": len(merged_s6),
+                "unclassified_dbt_columns": unclassified,
+                "source_tables": list(dict.fromkeys(m["source_table"] for m in mappings))}
+    text = _touch_document_metadata_and_history(
+        text, "sections 5 and 6", substantive_stm_change=True,
+    )
     stm_path.write_text(text)
 
     return {"file": stm_path.name, "status": "enriched",
-            "tags": len(all_class), "terms": len(glossary_rows),
+            "tags": len(merged_s5), "terms": len(merged_s6),
             "unclassified_dbt_columns": unclassified,
-            "source_tables": unique_source_tables}
+            "source_tables": list(dict.fromkeys(m["source_table"] for m in mappings))}
 
 
 # ---------------------------------------------------------------------------
@@ -647,12 +911,16 @@ def main() -> None:
         print(f"    → {r['status']}: {r['tags']} tags, {r['terms']} glossary terms{extra}")
 
     enriched = sum(1 for r in results if r["status"] == "enriched")
-    skipped = len(results) - enriched
+    unchanged = sum(1 for r in results if r["status"] == "unchanged")
+    skipped = sum(1 for r in results if r["status"] == "skipped")
     total_tags = sum(r["tags"] for r in results)
     total_terms = sum(r["terms"] for r in results)
     total_unclassified = sum(len(r.get("unclassified_dbt_columns", [])) for r in results)
 
-    print(f"\nDone: {enriched} enriched, {skipped} skipped")
+    print(
+        f"\nDone: {enriched} enriched, {unchanged} unchanged (no Section 5/6 delta), "
+        f"{skipped} skipped",
+    )
     print(f"Totals: {total_tags} classification tags, {total_terms} glossary terms")
     print(f"API calls: {len(table_cache)} table fetches, {len(term_cache)} glossary term fetches")
 

@@ -244,19 +244,13 @@ See the [dbtproject README](https://github.com/responsum-team/dbtproject) for db
 
 ---
 
-## 8. Your first tasks
+## 8. Your first task
 
-Once you have completed setup, ask Cursor: *"Check my setup"* — the `setup-verifier` skill will test all four MCP connections and your `.env` in one go and tell you exactly what to fix if anything fails.
+Once you have completed setup, ask Cursor:
 
-Then follow this sequence to build context:
+> *"Check my setup"*
 
-1. **Verify source access** — in Cursor (with the plugin installed), ask: *"Run the source system analyser against the source database"*. The skill will use the source DB connection secret and produce a `schema.json`. If it succeeds, your Key Vault and database access are working.
-
-2. **Check dbt health** — open `responsum-team/dbtproject` in Cursor and ask: *"Extract the last dbt Cloud run logs"*. The `dbt-cloud-log-extractor` skill will report model pass/fail status.
-
-3. **Browse the catalog** — ask Cursor: *"List all tables in OpenMetadata"*. This confirms OpenMetadata MCP access.
-
-4. **Explore the STMs** — STM (source-to-target mapping) docs are in the `plugins` repo under `stm/output/`. Each file covers one target table and shows source → target column mapping plus governance metadata.
+The `setup-verifier` skill will test all four MCP connections and your `.env` in one go and tell you exactly what to fix if anything fails.
 
 ---
 

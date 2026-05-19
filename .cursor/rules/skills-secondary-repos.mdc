@@ -41,17 +41,18 @@ git push
 | `dbt-cloud-log-extractor` | `skill-dbt-cloud-log-extractor` |
 | `dbt-model-from-stm` | `skill-dbt-model-from-stm` |
 | `governance-import-dbt-lineage` | `skill-governance-import-dbt-lineage` |
-| `governance-vocab-generator` | `skill-governance-vocab-generator-v2` |
+| `governance-vocab-generator` | `skill-governance-vocab-generator` |
 | `ingestion-from-analyzer` | `skill-ingestion-from-analyzer` |
 | `json-to-excel-export` | `skill-json-to-excel-export` |
 | `meetingintroskill` | `skill-meetingintroskill` |
 | `natural-language-data-query` | `skill-natural-language-data-query` |
 | `schema-glossary-generator` | `skill-schema-glossary-generator` |
-| `source-system-analyser` | `skill-source-system-analyser-v2` |
-| `stm-catalogue-enricher` | `skill-stm-catalogue-enricher-v2` |
-| `stm-from-data-model` | `skill-stm-from-data-model-v2` |
+| `source-system-analyser` | `skill-source-system-analyser` |
+| `stm-catalogue-enricher` | `skill-stm-catalogue-enricher` |
+| `stm-from-data-model` | `skill-stm-from-data-model` |
 | `skill-reviewer` | `skill-skill-reviewer` |
 | `stm-to-catalog-enricher` | `skill-stm-to-catalog-enricher` |
+| `setup-verifier` | `skill-setup-verifier` |
 
 ## Rules
 

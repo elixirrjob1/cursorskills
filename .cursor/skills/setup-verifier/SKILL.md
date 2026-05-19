@@ -124,5 +124,4 @@ Then:
 | Last evaluated | 2026-05-19 (run_slug: 2026-05-19T093403Z) |
 | Dependencies | project-0-cursorskills-snowflake MCP, user-openmetadata MCP, project-0-cursorskills-dbt MCP, user-fivetran-example MCP |
 | Model compatibility | Validated on Claude 3.5 Sonnet / Cursor Agent mode |
-| Source repo | `elixirrjob1/cursorskills` → `.cursor/skills/setup-verifier/` |
-| Mirror repo | [responsum-team/skill-setup-verifier](https://github.com/responsum-team/skill-setup-verifier) |
+| Repo | [responsum-team/skill-setup-verifier](https://github.com/responsum-team/skill-setup-verifier) |

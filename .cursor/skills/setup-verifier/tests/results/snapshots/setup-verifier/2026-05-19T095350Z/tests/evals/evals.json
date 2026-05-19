@@ -1,0 +1,104 @@
+{
+  "skill_name": "setup-verifier",
+  "generated_date": "2026-05-19",
+  "evals": [
+    {
+      "id": 1,
+      "type": "should-trigger",
+      "prompt": "check my setup",
+      "expected_behavior": "Loads skill; calls all four MCP checks (Snowflake, OpenMetadata, dbt Cloud, Fivetran) and validates .env keys; outputs a pass/fail table",
+      "assertions": [
+        "Response references Snowflake, OpenMetadata, dbt, and Fivetran checks",
+        "Response includes a table or structured list showing all four systems (Snowflake, OpenMetadata, dbt Cloud, Fivetran)",
+        "Response references .env variable validation (key check or .env row in output table)"
+      ]
+    },
+    {
+      "id": 2,
+      "type": "should-trigger",
+      "prompt": "verify my connections are working",
+      "expected_behavior": "Loads skill; runs all four MCP checks; produces a table with ✅/❌ per system",
+      "assertions": [
+        "Response includes a results table with at least 4 rows (one per system)",
+        "Response contains status indicators (✅, ❌, or —) or explicitly names each system that will be checked",
+        "Response does NOT describe how to install or configure a new system from scratch"
+      ]
+    },
+    {
+      "id": 3,
+      "type": "should-trigger",
+      "prompt": "validate my environment before I start work",
+      "expected_behavior": "Loads skill; runs all four checks; reports pass/fail with specific fixes for any failures",
+      "assertions": [
+        "Response includes at least one specific fix or remediation step",
+        "Response covers all four systems: Snowflake, OpenMetadata, dbt, Fivetran",
+        "Response describes the expected output structure, including either the 'Setup complete' outcome OR at least one specific failure scenario with its fix"
+      ]
+    },
+    {
+      "id": 4,
+      "type": "should-trigger",
+      "prompt": "is my MCP access set up correctly?",
+      "expected_behavior": "Loads skill; tests each named MCP server; reports outcomes in the defined table format",
+      "assertions": [
+        "Response mentions testing or querying specific MCP servers",
+        "Response outputs results in a tabular or structured format",
+        "Response does NOT just describe what MCP is without running checks"
+      ]
+    },
+    {
+      "id": 5,
+      "type": "should-not-trigger",
+      "prompt": "extract the last dbt Cloud run logs",
+      "expected_behavior": "Triggers dbt-cloud-log-extractor skill, not this one",
+      "assertions": [
+        "Response does NOT call list_database_services or list_connectors",
+        "Response focuses on dbt run history, model status, or log extraction",
+        "Response does NOT output a 4-system connection check table"
+      ]
+    },
+    {
+      "id": 6,
+      "type": "should-not-trigger",
+      "prompt": "run the source system analyser against my database",
+      "expected_behavior": "Triggers source-system-analyser skill, not this one",
+      "assertions": [
+        "Response does NOT run a 4-system connection check",
+        "Response mentions running or invoking the source system analyser",
+        "Response does NOT output the setup-verifier pass/fail table format"
+      ]
+    },
+    {
+      "id": 7,
+      "type": "should-not-trigger",
+      "prompt": "how do I install Cursor?",
+      "expected_behavior": "General knowledge answer; no skill triggered",
+      "assertions": [
+        "Response does NOT call any MCP tools",
+        "Response does NOT output a setup verification table",
+        "Response provides installation guidance or points to cursor.com"
+      ]
+    },
+    {
+      "id": 8,
+      "type": "edge-case",
+      "prompt": "just check my Snowflake connection",
+      "expected_behavior": "Skill runs full check covering all four systems (scoping not documented in skill)",
+      "assertions": [
+        "Response checks Snowflake at minimum",
+        "Response does NOT skip the other MCP systems without explanation",
+        "Response produces a structured result for at least the Snowflake connection"
+      ]
+    },
+    {
+      "id": 9,
+      "type": "edge-case",
+      "prompt": "my setup is done",
+      "expected_behavior": "Ambiguous statement — skill should not fire automatically; agent may ask a clarifying question or do nothing",
+      "assertions": [
+        "Response does NOT immediately run all four MCP checks without any user follow-up",
+        "Response either asks a clarifying question or acknowledges the statement without triggering verification"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "eval_id": 1,
+  "prompt_short": "check my setup",
+  "overall_result": "PASS",
+  "assertions": [
+    {
+      "text": "Response references Snowflake, OpenMetadata, dbt, and Fivetran checks",
+      "passed": true,
+      "evidence": "All 4 systems listed in the preview table rows"
+    },
+    {
+      "text": "Response includes a table or structured list showing all four systems (Snowflake, OpenMetadata, dbt Cloud, Fivetran)",
+      "passed": true,
+      "evidence": "Table with 5 rows: Snowflake, OpenMetadata, dbt Cloud, Fivetran, .env variables — all with '—' status"
+    },
+    {
+      "text": "Response references .env variable validation (key check or .env row in output table)",
+      "passed": true,
+      "evidence": "'.env variables' row present in table; also: 'Would check both dbtproject/.env and skills .env'"
+    }
+  ]
+}

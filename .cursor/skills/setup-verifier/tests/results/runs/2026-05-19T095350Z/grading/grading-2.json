@@ -1,0 +1,22 @@
+{
+  "eval_id": 2,
+  "prompt_short": "verify my connections are working",
+  "overall_result": "PASS",
+  "assertions": [
+    {
+      "text": "Response includes a results table with at least 4 rows (one per system)",
+      "passed": true,
+      "evidence": "Table with 5 rows: Snowflake, OpenMetadata, dbt Cloud, Fivetran, .env keys"
+    },
+    {
+      "text": "Response contains status indicators (✅, ❌, or —) or explicitly names each system that will be checked",
+      "passed": true,
+      "evidence": "All rows have '—' in Status column plus example fix for Snowflake credentials"
+    },
+    {
+      "text": "Response does NOT describe how to install or configure a new system from scratch",
+      "passed": true,
+      "evidence": "Response focused entirely on running the verification; no installation guidance"
+    }
+  ]
+}

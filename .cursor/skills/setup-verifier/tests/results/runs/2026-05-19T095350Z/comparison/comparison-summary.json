@@ -1,0 +1,10 @@
+{
+  "reviewed_at": "2026-05-19T09:53:50Z",
+  "review_date": "2026-05-19",
+  "overall": "new_wins",
+  "new_wins": 3,
+  "old_wins": 0,
+  "ties": 0,
+  "total_compared": 3,
+  "note": "Comparator run on Evals 1-3. New skill now produces a structured preview table with all 4 systems, '—' status, and concrete fix examples even in Ask mode. Old skill (run 2 snapshot) only explained mode constraint without showing the table."
+}

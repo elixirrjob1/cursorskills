@@ -15,7 +15,7 @@ Run all four in sequence. For each: attempt the MCP call, mark ✅ or ❌, recor
 
 Call the Snowflake MCP with:
 ```
-project-0-cursorskills-snowflake:execute_query(query: "SELECT CURRENT_USER(), CURRENT_ROLE(), CURRENT_WAREHOUSE()")
+project-0-cursorskills-snowflake:run_snowflake_query(statement: "SELECT CURRENT_USER(), CURRENT_ROLE(), CURRENT_WAREHOUSE()")
 ```
 Expected: a single row with non-null values.
 

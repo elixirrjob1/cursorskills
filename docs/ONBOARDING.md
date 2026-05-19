@@ -18,7 +18,7 @@ Request access to the following before your first day of active work:
 
 | System | What you need |
 |--------|---------------|
-| **GitHub** | Read on `responsum-team/plugins` (skills, rules, MCPs — installed via team marketplace), read/write on `responsum-team/dbtproject` (primary dbt repo — this is what dbt Cloud runs), and read on `responsum-team/skill-setup-verifier` (onboarding setup check skill) |
+| **GitHub** | Read on `responsum-team/plugins` (skills, rules, MCPs — installed via team marketplace) and read/write on `responsum-team/dbtproject` (primary dbt repo — this is what dbt Cloud runs) |
 | **Azure Key Vault** | Reader + Secrets User role on the team Key Vault — this is where all credentials live |
 | **Snowflake** | Account access and the appropriate role on the project database |
 | **dbt Cloud** | Member access on the project in dbt Cloud |

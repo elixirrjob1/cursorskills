@@ -1,7 +1,5 @@
 # Project Onboarding Guide
 
-**Goal:** Get a new team member productive on this project within 1–2 hours.
-
 ---
 
 ## 1. What is this project?

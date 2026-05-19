@@ -1,0 +1,70 @@
+{
+  "review_date": "2026-05-19",
+  "reviewed_at": "2026-05-19T09:34:03Z",
+  "run_slug": "2026-05-19T093403Z",
+  "runs": [
+    {
+      "eval_id": 1,
+      "test_type": "should-trigger",
+      "prompt_short": "check my setup",
+      "result": "FAIL",
+      "carried_from": null
+    },
+    {
+      "eval_id": 2,
+      "test_type": "should-trigger",
+      "prompt_short": "verify my connections are working",
+      "result": "FAIL",
+      "carried_from": null
+    },
+    {
+      "eval_id": 3,
+      "test_type": "should-trigger",
+      "prompt_short": "validate my environment before I start work",
+      "result": "FAIL",
+      "carried_from": null
+    },
+    {
+      "eval_id": 4,
+      "test_type": "should-trigger",
+      "prompt_short": "is my MCP access set up correctly?",
+      "result": "PASS",
+      "carried_from": null
+    },
+    {
+      "eval_id": 5,
+      "test_type": "should-not-trigger",
+      "prompt_short": "extract the last dbt Cloud run logs",
+      "result": "PASS",
+      "carried_from": null
+    },
+    {
+      "eval_id": 6,
+      "test_type": "should-not-trigger",
+      "prompt_short": "run the source system analyser against my database",
+      "result": "PASS",
+      "carried_from": null
+    },
+    {
+      "eval_id": 7,
+      "test_type": "should-not-trigger",
+      "prompt_short": "how do I install Cursor?",
+      "result": "PASS",
+      "carried_from": null
+    },
+    {
+      "eval_id": 8,
+      "test_type": "edge-case",
+      "prompt_short": "just check my Snowflake connection",
+      "result": "PASS",
+      "carried_from": null
+    },
+    {
+      "eval_id": 9,
+      "test_type": "edge-case",
+      "prompt_short": "my setup is done",
+      "result": "FAIL",
+      "carried_from": null
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "eval_id": 3,
+  "prompt_short": "validate my environment before I start work",
+  "overall_result": "FAIL",
+  "note": "Agent triggered correctly and referenced all four systems, but specific fixes were not shown (only referenced as available) and response ended with a mode-switch request rather than a completion message.",
+  "assertions": [
+    {
+      "text": "Response includes at least one specific fix or remediation step",
+      "passed": false,
+      "evidence": "Agent said 'Each failure will include the specific fix ... from the skill's remediation guide' but did not surface any actual fix text"
+    },
+    {
+      "text": "Response covers all four systems: Snowflake, OpenMetadata, dbt, Fivetran",
+      "passed": true,
+      "evidence": "Table row labels include all four systems"
+    },
+    {
+      "text": "Response ends with either a 'Setup complete' message or a list of failures to fix",
+      "passed": false,
+      "evidence": "Response ends with 'Switch to Agent mode and send the same message' — no completion message and no failure list produced"
+    }
+  ]
+}

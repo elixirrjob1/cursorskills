@@ -1,0 +1,22 @@
+{
+  "eval_id": 6,
+  "prompt_short": "run the source system analyser against my database",
+  "overall_result": "PASS",
+  "assertions": [
+    {
+      "text": "Response does NOT run a 4-system connection check",
+      "passed": true,
+      "evidence": "Agent routed exclusively to source-system-analyser; no connection check table produced"
+    },
+    {
+      "text": "Response mentions running or invoking the source system analyser",
+      "passed": true,
+      "evidence": "Agent said 'I use SKILL 2 - source-system-analyser' and 'read the skill file at .../source-system-analyser/SKILL.md...then follow the instructions'"
+    },
+    {
+      "text": "Response does NOT output the setup-verifier pass/fail table format",
+      "passed": true,
+      "evidence": "No System | Status | Detail table shown; setup-verifier not mentioned as applicable"
+    }
+  ]
+}

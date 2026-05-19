@@ -1,0 +1,22 @@
+{
+  "eval_id": 4,
+  "prompt_short": "is my MCP access set up correctly?",
+  "overall_result": "PASS",
+  "assertions": [
+    {
+      "text": "Response mentions testing or querying specific MCP servers",
+      "passed": true,
+      "evidence": "Agent listed each MCP check: Snowflake execute_query, OpenMetadata list_database_services, dbt Cloud list_jobs, Fivetran list_connectors — by tool name"
+    },
+    {
+      "text": "Response outputs results in a tabular or structured format",
+      "passed": true,
+      "evidence": "Agent showed a structured table: Step | Check | Tool called — clearly formatted"
+    },
+    {
+      "text": "Response does NOT just describe what MCP is without running checks",
+      "passed": true,
+      "evidence": "Response immediately moved to listing specific checks and tool names; no generic MCP explanation provided"
+    }
+  ]
+}

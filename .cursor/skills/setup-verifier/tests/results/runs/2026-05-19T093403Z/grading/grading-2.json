@@ -1,0 +1,23 @@
+{
+  "eval_id": 2,
+  "prompt_short": "verify my connections are working",
+  "overall_result": "FAIL",
+  "note": "Agent correctly triggered, showed a pending table with 5 rows, but status column shows '—' not actual ✅/❌ per assertion 2.",
+  "assertions": [
+    {
+      "text": "Response includes a results table with at least 4 rows (one per system)",
+      "passed": true,
+      "evidence": "Agent showed a table with 5 rows: Snowflake, OpenMetadata, dbt Cloud, Fivetran, .env variables — all marked 'pending'"
+    },
+    {
+      "text": "Response contains ✅ or ❌ symbols indicating per-system status",
+      "passed": false,
+      "evidence": "Table showed '—' in the Status column, not ✅/❌ — no live checks were executed due to Ask mode"
+    },
+    {
+      "text": "Response does NOT describe how to install or configure a new system from scratch",
+      "passed": true,
+      "evidence": "Response focused entirely on running checks and showing pending results, no installation guidance given"
+    }
+  ]
+}

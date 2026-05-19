@@ -1,0 +1,22 @@
+{
+  "eval_id": 7,
+  "prompt_short": "how do I install Cursor?",
+  "overall_result": "PASS",
+  "assertions": [
+    {
+      "text": "Response does NOT call any MCP tools",
+      "passed": true,
+      "evidence": "Response provided plain installation instructions; no MCP tool invocation mentioned"
+    },
+    {
+      "text": "Response does NOT output a setup verification table",
+      "passed": true,
+      "evidence": "No System | Status | Detail table shown; agent explicitly noted setup-verifier is 'for verifying MCP connections and .env variables after Cursor is already installed'"
+    },
+    {
+      "text": "Response provides installation guidance or points to cursor.com",
+      "passed": true,
+      "evidence": "Agent said 'Download the installer from cursor.com' and gave OS-specific install steps (Windows .exe, macOS .dmg, Linux .AppImage/.deb)"
+    }
+  ]
+}

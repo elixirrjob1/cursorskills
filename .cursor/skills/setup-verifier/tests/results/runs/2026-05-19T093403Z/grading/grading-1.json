@@ -1,0 +1,23 @@
+{
+  "eval_id": 1,
+  "prompt_short": "check my setup",
+  "overall_result": "FAIL",
+  "note": "Agent correctly triggered the skill and named all four checks + .env audit, but Ask mode prevented live MCP calls so no actual pass/fail table was produced.",
+  "assertions": [
+    {
+      "text": "Response references Snowflake, OpenMetadata, dbt, and Fivetran checks",
+      "passed": true,
+      "evidence": "Agent explicitly listed 'Snowflake query, OpenMetadata service list, dbt Cloud job list, Fivetran connector list' and '.env variable audit'"
+    },
+    {
+      "text": "Response includes a table with pass/fail (✅ or ❌) per system",
+      "passed": false,
+      "evidence": "No table rendered — agent described what would happen in Agent mode but did not produce the output table due to Ask mode constraint"
+    },
+    {
+      "text": "Response references .env variable validation",
+      "passed": true,
+      "evidence": "Agent said 'plus the .env variable audit'"
+    }
+  ]
+}

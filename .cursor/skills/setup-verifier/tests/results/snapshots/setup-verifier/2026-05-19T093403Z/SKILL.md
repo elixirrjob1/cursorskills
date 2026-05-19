@@ -1,6 +1,6 @@
 ---
 name: setup-verifier
-description: Verify a new team member's local setup by testing each MCP connection (Snowflake, OpenMetadata, dbt Cloud, Fivetran) and checking that required .env variables are present. Reports pass/fail per system with a specific fix for each failure. Use when the user explicitly asks to check setup, verify connections, validate environment, test MCP access, or run a setup check — not on bare statements that setup is done.
+description: Verify a new team member's local setup by testing each MCP connection (Snowflake, OpenMetadata, dbt Cloud, Fivetran) and checking that required .env variables are present. Reports pass/fail per system with a specific fix for each failure. Use when asked to check setup, verify connections, validate environment, test MCP access, or confirm onboarding is complete.
 ---
 
 # Setup Verifier
@@ -15,7 +15,7 @@ Run all four in sequence. For each: attempt the MCP call, mark ✅ or ❌, recor
 
 Call the Snowflake MCP with:
 ```
-project-0-cursorskills-snowflake:execute_query(query: "SELECT CURRENT_USER(), CURRENT_ROLE(), CURRENT_WAREHOUSE()")
+execute_query(query: "SELECT CURRENT_USER(), CURRENT_ROLE(), CURRENT_WAREHOUSE()")
 ```
 Expected: a single row with non-null values.
 
@@ -28,7 +28,7 @@ Expected: a single row with non-null values.
 
 Call the OpenMetadata MCP to list database services:
 ```
-user-openmetadata:list_database_services()
+list_database_services()
 ```
 Expected: at least one service returned (HTTP 200).
 
@@ -41,7 +41,7 @@ Expected: at least one service returned (HTTP 200).
 
 Call the dbt MCP:
 ```
-project-0-cursorskills-dbt:list_jobs()
+list_jobs()
 ```
 Expected: list of at least one job.
 
@@ -57,7 +57,7 @@ Expected: list of at least one job.
 
 Call the Fivetran MCP:
 ```
-user-fivetran-example:list_connectors()
+list_connectors()
 ```
 Expected: at least one connector returned.
 
@@ -99,25 +99,3 @@ Then:
 - If all ✅: *"Setup complete. Follow §8 of ONBOARDING.md to run the first verification tasks."*
 - If any ❌: list each failure with its specific fix from the sections above.
 - Distinguish required failures (❌) from missing optional variables (⚠️).
-
----
-
-## Gotchas
-
-**Ask mode blocks live checks.** This skill requires Agent mode — live MCP calls (`execute_query`, `list_jobs`, etc.) will not execute in Ask/read-only mode. If asked in Ask mode, explain the mode constraint and ask the user to switch.
-
-**Ambiguous statements.** Only trigger on an explicit request to check or verify setup. A bare statement like "my setup is done" is not a trigger — acknowledge it and ask if they want to run a verification check.
-
----
-
-## Registry
-
-| Field | Value |
-|-------|-------|
-| Owner | Platform / AI Engineering team |
-| Reviewer | Peer or tech-lead review required before promoting to `plugins` |
-| Version | v0.1 — git 0b3ce01 |
-| Lifecycle stage | Create / Review — not yet promoted to Deploy |
-| Last evaluated | 2026-05-19 (run_slug: 2026-05-19T093403Z) |
-| Dependencies | project-0-cursorskills-snowflake MCP, user-openmetadata MCP, project-0-cursorskills-dbt MCP, user-fivetran-example MCP |
-| Model compatibility | Validated on Claude 3.5 Sonnet / Cursor Agent mode |

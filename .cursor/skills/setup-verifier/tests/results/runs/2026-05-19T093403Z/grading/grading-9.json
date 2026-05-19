@@ -1,0 +1,18 @@
+{
+  "eval_id": 9,
+  "prompt_short": "my setup is done",
+  "overall_result": "FAIL",
+  "note": "Agent over-eagerly offered to run verification immediately on an ambiguous statement, rather than asking a clarifying question or simply acknowledging.",
+  "assertions": [
+    {
+      "text": "Response does NOT immediately run all four MCP checks without any user follow-up",
+      "passed": true,
+      "evidence": "Agent did not execute checks (Ask mode blocked), and requested mode switch before proceeding — no live check was fired"
+    },
+    {
+      "text": "Response either asks a clarifying question or acknowledges the statement without triggering verification",
+      "passed": false,
+      "evidence": "Agent responded 'Great to hear your setup is done! I'd love to verify it now' — immediately offered verification without asking whether the user wanted it, treating the statement as implicit trigger"
+    }
+  ]
+}

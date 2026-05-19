@@ -1,0 +1,22 @@
+{
+  "eval_id": 8,
+  "prompt_short": "just check my Snowflake connection",
+  "overall_result": "PASS",
+  "assertions": [
+    {
+      "text": "Response checks Snowflake at minimum",
+      "passed": true,
+      "evidence": "Agent described the Snowflake check in detail: 'calls the Snowflake MCP with SELECT CURRENT_USER(), CURRENT_ROLE(), CURRENT_WAREHOUSE()' and showed the Snowflake row in the output table"
+    },
+    {
+      "text": "Response does NOT skip the other MCP systems without explanation",
+      "passed": true,
+      "evidence": "Agent's table included all four systems (Snowflake, OpenMetadata, dbt Cloud, Fivetran) — the skill runs the full check even for a scoped request since scoping is not documented"
+    },
+    {
+      "text": "Response produces a structured result for at least the Snowflake connection",
+      "passed": true,
+      "evidence": "Agent showed: '| Snowflake | ✅ | Connected as FILLIP / TRANSFORMER |' as an example result row"
+    }
+  ]
+}

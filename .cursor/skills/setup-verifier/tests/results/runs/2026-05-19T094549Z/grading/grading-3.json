@@ -1,0 +1,23 @@
+{
+  "eval_id": 3,
+  "prompt_short": "validate my environment before I start work",
+  "overall_result": "FAIL",
+  "note": "Agent followed Gotchas (mode constraint explained). Generic 'all four MCP checks' without naming systems. No specific fix text and no completion message.",
+  "assertions": [
+    {
+      "text": "Response includes at least one specific fix or remediation step",
+      "passed": false,
+      "evidence": "Response said 'specific fixes for any failures' generically — no actual fix text shown"
+    },
+    {
+      "text": "Response covers all four systems: Snowflake, OpenMetadata, dbt, Fivetran",
+      "passed": false,
+      "evidence": "Response said 'all four MCP checks' without naming the individual systems"
+    },
+    {
+      "text": "Response ends with either a 'Setup complete' message or a list of failures to fix",
+      "passed": false,
+      "evidence": "Response ended with instructions to switch mode — no completion message or failure list"
+    }
+  ]
+}

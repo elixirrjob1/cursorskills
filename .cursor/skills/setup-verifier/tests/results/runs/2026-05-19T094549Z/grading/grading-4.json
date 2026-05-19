@@ -1,0 +1,22 @@
+{
+  "eval_id": 4,
+  "prompt_short": "is my MCP access set up correctly?",
+  "overall_result": "PASS",
+  "assertions": [
+    {
+      "text": "Response mentions testing or querying specific MCP servers",
+      "passed": true,
+      "evidence": "Listed all four by qualified name: project-0-cursorskills-snowflake:execute_query, user-openmetadata:list_database_services, project-0-cursorskills-dbt:list_jobs, user-fivetran-example:list_connectors"
+    },
+    {
+      "text": "Response outputs results in a tabular or structured format",
+      "passed": true,
+      "evidence": "Step | Check | Tool called table shown with a realistic example row including a fail case"
+    },
+    {
+      "text": "Response does NOT just describe what MCP is without running checks",
+      "passed": true,
+      "evidence": "Response went straight to specific tool invocations and example results"
+    }
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "eval_id": 9,
+  "prompt_short": "my setup is done",
+  "verdict": "a_wins",
+  "reasoning": "Response A (new skill) correctly treats the statement as ambiguous by asking 'Would you like me to run a verification check?', whereas Response B (old skill) presumed the user wanted verification and said 'I'd love to verify it now' — over-eager trigger."
+}

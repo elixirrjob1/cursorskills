@@ -1,0 +1,22 @@
+{
+  "eval_id": 8,
+  "prompt_short": "just check my Snowflake connection",
+  "overall_result": "PASS",
+  "assertions": [
+    {
+      "text": "Response checks Snowflake at minimum",
+      "passed": true,
+      "evidence": "Agent described using setup-verifier for Snowflake check and mentioned the Snowflake MCP call"
+    },
+    {
+      "text": "Response does NOT skip the other MCP systems without explanation",
+      "passed": true,
+      "evidence": "Agent said '(and optionally the other MCPs)' — covered all systems without skipping"
+    },
+    {
+      "text": "Response produces a structured result for at least the Snowflake connection",
+      "passed": true,
+      "evidence": "Agent offered a pass/fail table with specific fix if wrong, referencing Snowflake explicitly"
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "eval_id": 2,
+  "prompt_short": "verify my connections are working",
+  "overall_result": "FAIL",
+  "note": "Agent correctly identified skill, listed all 4 checks by qualified name, mentioned .env check. No actual table or status symbols — Ask mode constraint.",
+  "assertions": [
+    {
+      "text": "Response includes a results table with at least 4 rows (one per system)",
+      "passed": false,
+      "evidence": "No table shown — agent described the planned checks but could not execute in Ask mode"
+    },
+    {
+      "text": "Response contains ✅ or ❌ symbols indicating per-system status",
+      "passed": false,
+      "evidence": "No symbols; agent listed steps by name without status indicators"
+    },
+    {
+      "text": "Response does NOT describe how to install or configure a new system from scratch",
+      "passed": true,
+      "evidence": "Response focused entirely on running the verification; no installation guidance given"
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "eval_id": 9,
+  "prompt_short": "my setup is done",
+  "overall_result": "PASS",
+  "note": "Gotchas section fix worked. Agent acknowledged the statement and asked a clarifying question before offering to run checks.",
+  "assertions": [
+    {
+      "text": "Response does NOT immediately run all four MCP checks without any user follow-up",
+      "passed": true,
+      "evidence": "Agent said 'Would you like me to run a verification check?' — requested explicit confirmation before proceeding"
+    },
+    {
+      "text": "Response either asks a clarifying question or acknowledges the statement without triggering verification",
+      "passed": true,
+      "evidence": "Agent acknowledged ('Got it — setup is done, great!') and asked ('Would you like me to run a verification check?') — correct behavior per Gotchas rule"
+    }
+  ]
+}

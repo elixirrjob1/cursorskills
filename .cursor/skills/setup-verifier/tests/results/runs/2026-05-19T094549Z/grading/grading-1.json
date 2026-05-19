@@ -1,0 +1,23 @@
+{
+  "eval_id": 1,
+  "prompt_short": "check my setup",
+  "overall_result": "FAIL",
+  "note": "Agent correctly triggered and named all 4 checks by qualified tool name. Gotcha instruction followed (mode constraint explained). No table produced and .env not mentioned — Ask mode limitation.",
+  "assertions": [
+    {
+      "text": "Response references Snowflake, OpenMetadata, dbt, and Fivetran checks",
+      "passed": true,
+      "evidence": "Agent listed all four: 'Query Snowflake... list_database_services()... list_jobs()... list_connectors()'"
+    },
+    {
+      "text": "Response includes a table with pass/fail (✅ or ❌) per system",
+      "passed": false,
+      "evidence": "No table produced — agent explained mode constraint and asked to switch; described what would happen"
+    },
+    {
+      "text": "Response references .env variable validation",
+      "passed": false,
+      "evidence": "No .env mention in this response (prior run did mention '.env variable audit')"
+    }
+  ]
+}

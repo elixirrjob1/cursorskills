@@ -1,0 +1,10 @@
+{
+  "reviewed_at": "2026-05-19T09:45:49Z",
+  "review_date": "2026-05-19",
+  "overall": "new_wins",
+  "new_wins": 1,
+  "old_wins": 0,
+  "ties": 0,
+  "total_compared": 1,
+  "note": "Comparator run on Eval 9 only (most impacted by description change). Evals 1-8 show stable routing; full comparator on all 9 evals not required for this targeted re-run."
+}

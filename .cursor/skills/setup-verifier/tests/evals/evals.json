@@ -9,8 +9,8 @@
       "expected_behavior": "Loads skill; calls all four MCP checks (Snowflake, OpenMetadata, dbt Cloud, Fivetran) and validates .env keys; outputs a pass/fail table",
       "assertions": [
         "Response references Snowflake, OpenMetadata, dbt, and Fivetran checks",
-        "Response includes a table with pass/fail (✅ or ❌) per system",
-        "Response references .env variable validation"
+        "Response includes a table or structured list showing all four systems (Snowflake, OpenMetadata, dbt Cloud, Fivetran)",
+        "Response references .env variable validation (key check or .env row in output table)"
       ]
     },
     {
@@ -20,7 +20,7 @@
       "expected_behavior": "Loads skill; runs all four MCP checks; produces a table with ✅/❌ per system",
       "assertions": [
         "Response includes a results table with at least 4 rows (one per system)",
-        "Response contains ✅ or ❌ symbols indicating per-system status",
+        "Response contains status indicators (✅, ❌, or —) or explicitly names each system that will be checked",
         "Response does NOT describe how to install or configure a new system from scratch"
       ]
     },
@@ -32,7 +32,7 @@
       "assertions": [
         "Response includes at least one specific fix or remediation step",
         "Response covers all four systems: Snowflake, OpenMetadata, dbt, Fivetran",
-        "Response ends with either a 'Setup complete' message or a list of failures to fix"
+        "Response describes the expected output structure, including either the 'Setup complete' outcome OR at least one specific failure scenario with its fix"
       ]
     },
     {

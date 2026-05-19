@@ -104,7 +104,10 @@ Then:
 
 ## Gotchas
 
-**Ask mode blocks live checks.** This skill requires Agent mode — live MCP calls (`execute_query`, `list_jobs`, etc.) will not execute in Ask/read-only mode. If asked in Ask mode, explain the mode constraint and ask the user to switch.
+**Ask mode blocks live checks.** This skill requires Agent mode — live MCP calls will not execute in Ask/read-only mode. If asked in Ask mode:
+1. Explain the mode constraint and ask the user to switch.
+2. Still show the full planned output table with all four systems and the `.env` row listed (use `—` for status since no live check was run).
+3. Surface at least one concrete example fix from the remediation sections above so the user can prepare in advance.
 
 **Ambiguous statements.** Only trigger on an explicit request to check or verify setup. A bare statement like "my setup is done" is not a trigger — acknowledge it and ask if they want to run a verification check.
 

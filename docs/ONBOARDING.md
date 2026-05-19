@@ -54,26 +54,63 @@ Open `dbtproject` in Cursor for all dbt work — the dbt MCP server is configure
 
 ### 3.2 Configure secrets via `.env`
 
-Copy the example env file and populate it with the credentials from the team Key Vault:
+There are two `.env` files — one per repo. Both have an `.env.example` to copy from:
 
 ```bash
+# In dbtproject/
 cp .env.example .env
+
+# In the skills/scripts tooling context (if using source analysis or catalog scripts)
+# same pattern applies
 ```
 
-The `.env.example` file lists all required secret names. Obtain the actual values from the team Key Vault (ask a team admin for the vault name and access). Key categories of secrets:
-
-| Category | What it covers |
-|----------|---------------|
-| Source database connection | Connection string and schema for the ERP source |
-| Snowflake credentials | Account, user, role, warehouse, database |
-| OpenMetadata connection | Base URL, email, password |
-| API auth token | Bearer token for the project API (if applicable) |
-
-To load secrets from Key Vault programmatically (if the loader script is set up):
+Obtain the actual values from the team Key Vault (ask a team admin for the vault name and access). If the Key Vault loader script is available, it populates `.env` automatically:
 
 ```bash
 python scripts/keyvault_loader.py
 ```
+
+#### `dbtproject/.env` — required variables
+
+| Variable | What it is |
+|----------|------------|
+| `SNOWFLAKE_ACCOUNT` | Snowflake account identifier (format: `orgname-accountname`) |
+| `SNOWFLAKE_USER` | Snowflake user for the Fivetran ingestion service account |
+| `SNOWFLAKE_FIVETRAN_PASSWORD` | Password for the Fivetran Snowflake user |
+| `SNOWFLAKE_DATABASE` | Snowflake database name for the project |
+| `SNOWFLAKE_WAREHOUSE` | Snowflake warehouse used for ingestion queries |
+| `SNOWFLAKE_DBT_USER` | Separate dbt transformation service account user |
+| `SNOWFLAKE_DBT_ROLE` | Role for the dbt service account |
+| `SNOWFLAKE_DBT_WAREHOUSE` | Warehouse for dbt transformation runs |
+| `SNOWFLAKE_DBT_PASSWORD` | Password for the dbt service account |
+| `DBT_HOST` | dbt Cloud tenant host (e.g. `<id>.us1.dbt.com`) |
+| `DBT_ACCOUNT_ID` | Numeric dbt Cloud account ID (from the URL in dbt Cloud settings) |
+
+#### `dbtproject/.env` — optional variables (enable advanced MCP features)
+
+| Variable | What it is |
+|----------|------------|
+| `DBT_PAT` | dbt Cloud service PAT — alternative to OAuth, used for CI or shared machines |
+| `DBT_USER_ID` | Your numeric dbt Cloud user ID (from your profile URL in dbt Cloud) |
+| `DBT_PROD_ENV_ID` | Numeric ID of the production dbt Cloud environment — unlocks Discovery API |
+| `DBT_DEV_ENV_ID` | Numeric ID of the dev dbt Cloud environment — unlocks SQL execution via MCP |
+| `DISABLE_DISCOVERY` | Set to `false` to enable lineage/model health tools (requires `DBT_PROD_ENV_ID`) |
+| `DISABLE_SQL` | Set to `false` to enable SQL execution via MCP (requires `DBT_DEV_ENV_ID`) |
+| `DISABLE_SEMANTIC_LAYER` | Set to `false` to enable Semantic Layer tools (requires dbt Cloud licence) |
+
+#### Skills/scripts `.env` — for source analysis, catalog, and ingestion tooling
+
+| Variable | What it is |
+|----------|------------|
+| `KEYVAULT_NAME` | Azure Key Vault name — if set, secrets load from Key Vault instead of `.env` |
+| `OPENMETADATA_BASE_URL` | OpenMetadata instance URL (e.g. `http://<host>:8585`) |
+| `OPENMETADATA_EMAIL` | OpenMetadata login email |
+| `OPENMETADATA_PASSWORD` | OpenMetadata login password |
+| `FIVETRAN_API_KEY` / `FIVETRAN_API_SECRET` | Fivetran API credentials for the MCP and ingestion scripts |
+| `AZURE_MSSQL_URL` | Connection string for the Azure SQL source database |
+| `AZURE_MSSQL_SCHEMA` | Schema name in the Azure SQL source (typically `dbo`) |
+| `DATABASE_URL` | PostgreSQL connection string (used by source analyser scripts) |
+| `API_AUTH_TOKEN` | Bearer token for the project REST API (if applicable) |
 
 ### 3.3 Configure MCP credentials
 

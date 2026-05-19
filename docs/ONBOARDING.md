@@ -246,7 +246,9 @@ See the [dbtproject README](https://github.com/responsum-team/dbtproject) for db
 
 ## 8. Your first tasks
 
-Follow this sequence to verify your setup and get context quickly:
+Once you have completed setup, ask Cursor: *"Check my setup"* — the `setup-verifier` skill will test all four MCP connections and your `.env` in one go and tell you exactly what to fix if anything fails.
+
+Then follow this sequence to build context:
 
 1. **Verify source access** — in Cursor (with the plugin installed), ask: *"Run the source system analyser against the source database"*. The skill will use the source DB connection secret and produce a `schema.json`. If it succeeds, your Key Vault and database access are working.
 

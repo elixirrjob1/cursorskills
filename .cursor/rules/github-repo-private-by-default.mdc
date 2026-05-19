@@ -1,0 +1,19 @@
+---
+description: All new GitHub repositories must be created as private unless the user explicitly requests public.
+alwaysApply: true
+---
+
+# GitHub Repos — Private by Default
+
+Always pass `--private` when creating a GitHub repository:
+
+```bash
+# ✅ GOOD
+gh repo create responsum-team/my-repo --private
+
+# ❌ BAD — omitting the flag defaults to public on some gh versions
+gh repo create responsum-team/my-repo
+```
+
+- Never use `--public` unless the user explicitly asks for a public repo.
+- If unsure, default to `--private` and mention it in your response.

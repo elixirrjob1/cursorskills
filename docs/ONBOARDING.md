@@ -54,17 +54,20 @@ Open `dbtproject` in Cursor for all dbt work — the dbt MCP server is configure
 
 ### 3.2 Configure secrets via `.env`
 
-There are two `.env` files — one per repo. Both have an `.env.example` to copy from:
+There are two `.env` files — one per repo. Both have an `.env.example` to copy from.
 
+**`dbtproject/`** — for dbt and Snowflake work:
 ```bash
-# In dbtproject/
+cd dbtproject
 cp .env.example .env
-
-# In the skills/scripts tooling context (if using source analysis or catalog scripts)
-# same pattern applies
 ```
 
-Obtain the actual values from the team Key Vault (ask a team admin for the vault name and access). If the Key Vault loader script is available, it populates `.env` automatically:
+**`responsum-team/plugins`** (or the local skills context provided by your team) — for source analysis, catalog, and ingestion scripts:
+```bash
+cp .env.example .env
+```
+
+Obtain the actual values from the team Key Vault (ask a team admin for the vault name and access). If the Key Vault loader script is configured, it populates `.env` automatically:
 
 ```bash
 python scripts/keyvault_loader.py
@@ -245,13 +248,13 @@ See the [dbtproject README](https://github.com/responsum-team/dbtproject) for db
 
 Follow this sequence to verify your setup and get context quickly:
 
-1. **Verify source access** — ask Cursor: *"Run the source system analyser against the source database"*. It will use the source DB connection secret and produce a `schema.json`. If it succeeds, your Key Vault and database access are working.
+1. **Verify source access** — in Cursor (with the plugin installed), ask: *"Run the source system analyser against the source database"*. The skill will use the source DB connection secret and produce a `schema.json`. If it succeeds, your Key Vault and database access are working.
 
 2. **Check dbt health** — open `responsum-team/dbtproject` in Cursor and ask: *"Extract the last dbt Cloud run logs"*. The `dbt-cloud-log-extractor` skill will report model pass/fail status.
 
 3. **Browse the catalog** — ask Cursor: *"List all tables in OpenMetadata"*. This confirms OpenMetadata MCP access.
 
-4. **Explore the STMs** — browse `stm/output/` in the dbt repo for the target tables. Each STM shows source → target column mapping plus governance metadata.
+4. **Explore the STMs** — STM (source-to-target mapping) docs are in the `plugins` repo under `stm/output/`. Each file covers one target table and shows source → target column mapping plus governance metadata.
 
 ---
 
@@ -265,7 +268,7 @@ Ask a team admin to fill in the specific URLs for your environment:
 | Azure Key Vault | Your team's Key Vault (Azure portal) |
 | Plugins repo (skills, rules, MCPs) | [responsum-team/plugins](https://github.com/responsum-team/plugins) |
 | dbt project repo | [responsum-team/dbtproject](https://github.com/responsum-team/dbtproject) |
-| End-to-end flow | [end-to-end-flow.md](end-to-end-flow.md) |
-| Key Vault setup | [KEYVAULT_SETUP.md](KEYVAULT_SETUP.md) |
-| Fivetran runbooks | [FIVETRAN_TROUBLESHOOTING.md](FIVETRAN_TROUBLESHOOTING.md), [FIVETRAN_ADVANCED_TUNING.md](FIVETRAN_ADVANCED_TUNING.md) |
-| OpenMetadata + glossary | [README.md](README.md) |
+| End-to-end flow | [docs/end-to-end-flow.md](https://github.com/elixirrjob1/cursorskills/blob/main/docs/end-to-end-flow.md) |
+| Key Vault setup | [docs/KEYVAULT_SETUP.md](https://github.com/elixirrjob1/cursorskills/blob/main/docs/KEYVAULT_SETUP.md) |
+| Fivetran runbooks | [FIVETRAN_TROUBLESHOOTING.md](https://github.com/elixirrjob1/cursorskills/blob/main/docs/FIVETRAN_TROUBLESHOOTING.md), [FIVETRAN_ADVANCED_TUNING.md](https://github.com/elixirrjob1/cursorskills/blob/main/docs/FIVETRAN_ADVANCED_TUNING.md) |
+| OpenMetadata + glossary | [docs/README.md](https://github.com/elixirrjob1/cursorskills/blob/main/docs/README.md) |

@@ -24,8 +24,37 @@ When a reference name is confirmed during execution, persist the name (only) in 
 After downloading discovery and per-table payload files, run:
 
 ```bash
-.venv/bin/python scripts/apis/api_analyzer.py --discovery api_discovery.json --data-dir ./api_data --base-url "$API_BASE_URL" --output schema_api.json
+.venv/bin/python scripts/apis/api_analyzer.py \
+  --discovery api_discovery.json \
+  --data-dir ./api_data \
+  --base-url "$API_BASE_URL" \
+  --output schema_api.json \
+  --recommend-types snowflake \
+  --verify-types
 ```
+
+For pure REST APIs (no DB-backed metadata), `--recommend-types` overwrites crude `type` values with destination DB types (`VARCHAR(100)`, `BIGINT`, `TIMESTAMP_TZ(9)`, etc.). Dialect options: `snowflake`, `sqlserver`, `postgresql`, `oracle`.
+
+Incremental updates when editing schema JSON (add table, fix types):
+
+```bash
+.venv/bin/python scripts/apis/api_analyzer.py \
+  --discovery api_discovery.json \
+  --data-dir ./api_data \
+  --base-url "$API_BASE_URL" \
+  --output schema_api.json \
+  --merge-into schema_api.json \
+  --detect-changes \
+  --recommend-types snowflake
+```
+
+If a Fivetran connector exists, sync `schema()` afterward:
+
+```bash
+.venv/bin/python scripts/apis/sync_connector_schema.py schema_api.json connectors/<name>/connector.py
+```
+
+See workspace rule `.cursor/rules/schema-connector-sync.mdc` for the full sync workflow.
 
 Expected inputs for analyzer:
 - discovery file must include `tables` list

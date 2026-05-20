@@ -60,6 +60,7 @@ Column-level optional enrichments:
 - `concept_sources` (`name`, `type`, `values`, `profile`, `table_context`, `cross_table_consensus`)
 - `concept_alias_group` (normalized alias used for reconciliation)
 - `classification_tags` (array of selected OpenMetadata classification tag FQNs for the column, such as `["PII.Sensitive"]`)
+- `type_confidence` (optional; API sources after `--recommend-types`: `rule`, `ai`, `ai_verified`, `source`, or `manual` when user-overridden)
 
 Backward compatibility:
 

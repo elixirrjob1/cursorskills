@@ -131,6 +131,8 @@ The merged API and tabular flows are now available directly inside this skill:
 - API script: `scripts/apis/api_reader.py`
 - Test API wrapper: `scripts/apis/test_api/test_api_reader.py`
 - API analyzer: `scripts/apis/api_analyzer.py`
+- API type checklist: `scripts/apis/build_type_enrichment_checklist.py`, `scripts/apis/apply_type_enrichment.py`
+- Connector schema sync: `scripts/apis/sync_connector_schema.py`
 - Tabular schema script: `scripts/flat/tabular_schema_json.py`
 - Volume projection collector: `scripts/volume_projection/collector.py`
 - Volume projection predictor: `scripts/volume_projection/predictor.py`
@@ -142,6 +144,7 @@ The merged API and tabular flows are now available directly inside this skill:
 - **Passing database URL with credentials as a CLI argument**: `<database_url>` embeds passwords visible in `ps aux` and shell history. Prefer `--database-url-secret` (reads from Azure Key Vault) in shared or production environments.
 - **Running the full analyzer to fix null classifications**: Use the classification review workflow (one family at a time) — not a full rerun — when improving concept assignments.
 - **Using source_system_analyzer.py for flat files**: CSV/Excel inputs use `tabular_schema_json.py`, not the database analyzer.
+- **Editing schema.json without syncing types**: When adding tables/columns to API schema JSON, run incremental `--merge-into` + `--recommend-types` and sync connector `schema()` per `.cursor/rules/schema-connector-sync.mdc`.
 
 ## Fallback Rules
 

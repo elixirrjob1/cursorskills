@@ -1,0 +1,85 @@
+---
+description: When schema.json or connector.py is edited, run incremental API type analysis and sync connector schema() to match
+globs: schema*.json,**/*_schema.json,connectors/**/connector.py
+alwaysApply: false
+---
+
+# Schema / Connector Sync Rule
+
+When the user adds or edits tables or columns in analyzer `schema.json`, or asks to sync a Fivetran connector:
+
+## 1. Detect the delta
+
+Identify affected tables:
+- New table names in JSON
+- New column names on existing tables
+- Columns with crude types (`text`, `integer`, `numeric`, `boolean`, `timestamp`)
+- Columns missing `type_confidence`
+- Do **not** reprocess tables where all columns have `type_confidence` of `source`, `rule`, `ai`, or `ai_verified` unless the user explicitly asks
+
+Preserve manual overrides: columns with `type_confidence: manual` must not be overwritten.
+
+## 2. Run incremental analyser (not a full rerun)
+
+Use the source-system-analyser API scripts. Paths are relative to the skill:
+
+```bash
+SKILL=./.cursor/skills/source-system-analyser
+.venv/bin/python "$SKILL/scripts/apis/api_analyzer.py" \
+  --discovery api_discovery.json \
+  --data-dir ./api_data \
+  --base-url "$API_BASE_URL" \
+  --output schema_api.json \
+  --merge-into schema_api.json \
+  --detect-changes \
+  --recommend-types snowflake \
+  --verify-types \
+  --fetch-live
+```
+
+Or for explicit tables:
+
+```bash
+  --tables stg_new_table \
+  --recommend-types snowflake
+```
+
+Replace `snowflake` with the target dialect: `snowflake`, `sqlserver`, `postgresql`, or `oracle`.
+
+## 3. Type enrichment checklist (when ambiguous types remain)
+
+```bash
+.venv/bin/python "$SKILL/scripts/apis/build_type_enrichment_checklist.py" \
+  schema_api.json --dialect snowflake -o schema_type_checklist.json
+```
+
+Work the checklist table by table. For uncertain columns, fetch up to 10 live API rows before assigning `proposed_type`. Merge back:
+
+```bash
+.venv/bin/python "$SKILL/scripts/apis/apply_type_enrichment.py" \
+  schema_api.json schema_type_checklist.json --in-place
+```
+
+## 4. Sync connector if it exists
+
+If `connectors/<name>/connector.py` exists for this source:
+
+```bash
+.venv/bin/python "$SKILL/scripts/apis/sync_connector_schema.py" \
+  schema_api.json connectors/dbt_cloud_logs/connector.py
+```
+
+Only update `schema()` — do not change `update()` unless the user asks.
+
+## 5. Report changes
+
+List:
+- Tables/columns updated in `schema.json`
+- Whether connector `schema()` was synced
+- Any columns still pending in the type checklist
+
+## Guardrails
+
+- Never embed API tokens in commands; use env vars (`API_BEARER_TOKEN`, etc.)
+- Do not full-rerun the analyser when only one table changed
+- Do not overwrite `table_description`, `column_description`, classifications, or manual types on unchanged tables

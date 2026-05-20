@@ -2011,6 +2011,289 @@
           "value": "UTC"
         }
       }
+    },
+    {
+      "table": "stg_dbt_run_model_results",
+      "schema": "bronze_dbt_logs",
+      "table_description": "One row per model execution parsed from dbt step logs. Each row captures the model name, schema, materialization type, execution status (succeeded/errored/skipped), duration in seconds, and Snowflake error code and message when the model failed. Foreign keys to stg_dbt_run_steps and stg_dbt_runs.",
+      "columns": [
+        {
+          "name": "step_id",
+          "type": "bigint",
+          "required": true,
+          "nullable": false,
+          "is_incremental": false,
+          "column_description": "Foreign key to stg_dbt_run_steps.id \u2014 the step whose log produced this result.",
+          "data_category": "identifier",
+          "concept_id": null,
+          "concept_confidence": null,
+          "concept_evidence": [],
+          "concept_alias_group": null,
+          "concept_sources": null,
+          "classification_tags": [],
+          "glossary_terms": [],
+          "semantic_class": null,
+          "unit_context": null,
+          "cardinality": null,
+          "null_count": null,
+          "data_range": null
+        },
+        {
+          "name": "model_schema",
+          "type": "varchar",
+          "required": true,
+          "nullable": false,
+          "is_incremental": false,
+          "column_description": "Snowflake target schema the model was materialized into (e.g. DBT_PROD, DBT_PROD_enriched).",
+          "data_category": "attribute",
+          "concept_id": null,
+          "concept_confidence": null,
+          "concept_evidence": [],
+          "concept_alias_group": null,
+          "concept_sources": null,
+          "classification_tags": [],
+          "glossary_terms": [],
+          "semantic_class": null,
+          "unit_context": null,
+          "cardinality": null,
+          "null_count": null,
+          "data_range": null
+        },
+        {
+          "name": "model_name",
+          "type": "varchar",
+          "required": true,
+          "nullable": false,
+          "is_incremental": false,
+          "column_description": "Name of the dbt model (e.g. vw_FactSales, DimCustomer).",
+          "data_category": "attribute",
+          "concept_id": null,
+          "concept_confidence": null,
+          "concept_evidence": [],
+          "concept_alias_group": null,
+          "concept_sources": null,
+          "classification_tags": [],
+          "glossary_terms": [],
+          "semantic_class": null,
+          "unit_context": null,
+          "cardinality": null,
+          "null_count": null,
+          "data_range": null
+        },
+        {
+          "name": "run_id",
+          "type": "bigint",
+          "required": true,
+          "nullable": false,
+          "is_incremental": false,
+          "column_description": "Foreign key to stg_dbt_runs.id \u2014 the run that contained this step.",
+          "data_category": "identifier",
+          "concept_id": null,
+          "concept_confidence": null,
+          "concept_evidence": [],
+          "concept_alias_group": null,
+          "concept_sources": null,
+          "classification_tags": [],
+          "glossary_terms": [],
+          "semantic_class": null,
+          "unit_context": null,
+          "cardinality": null,
+          "null_count": null,
+          "data_range": null
+        },
+        {
+          "name": "account_id",
+          "type": "bigint",
+          "required": true,
+          "nullable": false,
+          "is_incremental": false,
+          "column_description": "dbt Cloud account identifier.",
+          "data_category": "identifier",
+          "concept_id": null,
+          "concept_confidence": null,
+          "concept_evidence": [],
+          "concept_alias_group": null,
+          "concept_sources": null,
+          "classification_tags": [],
+          "glossary_terms": [],
+          "semantic_class": null,
+          "unit_context": null,
+          "cardinality": null,
+          "null_count": null,
+          "data_range": null
+        },
+        {
+          "name": "model_type",
+          "type": "varchar",
+          "required": false,
+          "nullable": true,
+          "is_incremental": false,
+          "column_description": "dbt materialization type: view, incremental, or table.",
+          "data_category": "attribute",
+          "concept_id": null,
+          "concept_confidence": null,
+          "concept_evidence": [],
+          "concept_alias_group": null,
+          "concept_sources": null,
+          "classification_tags": [],
+          "glossary_terms": [],
+          "semantic_class": null,
+          "unit_context": null,
+          "cardinality": null,
+          "null_count": null,
+          "data_range": null
+        },
+        {
+          "name": "status",
+          "type": "varchar",
+          "required": true,
+          "nullable": false,
+          "is_incremental": false,
+          "column_description": "Execution outcome: succeeded, errored, or skipped.",
+          "data_category": "attribute",
+          "concept_id": null,
+          "concept_confidence": null,
+          "concept_evidence": [],
+          "concept_alias_group": null,
+          "concept_sources": null,
+          "classification_tags": [],
+          "glossary_terms": [],
+          "semantic_class": null,
+          "unit_context": null,
+          "cardinality": null,
+          "null_count": null,
+          "data_range": null
+        },
+        {
+          "name": "duration_s",
+          "type": "float",
+          "required": false,
+          "nullable": true,
+          "is_incremental": false,
+          "column_description": "Wall-clock execution time in seconds as reported in the step log.",
+          "data_category": "metric",
+          "concept_id": null,
+          "concept_confidence": null,
+          "concept_evidence": [],
+          "concept_alias_group": null,
+          "concept_sources": null,
+          "classification_tags": [],
+          "glossary_terms": [],
+          "semantic_class": null,
+          "unit_context": null,
+          "cardinality": null,
+          "null_count": null,
+          "data_range": null,
+          "unit": "seconds"
+        },
+        {
+          "name": "error_code",
+          "type": "varchar",
+          "required": false,
+          "nullable": true,
+          "is_incremental": false,
+          "column_description": "dbt error code (e.g. dbt1302) extracted from the ERROR block. Null when status is succeeded or skipped.",
+          "data_category": "attribute",
+          "concept_id": null,
+          "concept_confidence": null,
+          "concept_evidence": [],
+          "concept_alias_group": null,
+          "concept_sources": null,
+          "classification_tags": [],
+          "glossary_terms": [],
+          "semantic_class": null,
+          "unit_context": null,
+          "cardinality": null,
+          "null_count": null,
+          "data_range": null
+        },
+        {
+          "name": "error_message",
+          "type": "varchar",
+          "required": false,
+          "nullable": true,
+          "is_incremental": false,
+          "column_description": "Snowflake error detail extracted from the ERROR block. Null when status is succeeded or skipped.",
+          "data_category": "attribute",
+          "concept_id": null,
+          "concept_confidence": null,
+          "concept_evidence": [],
+          "concept_alias_group": null,
+          "concept_sources": null,
+          "classification_tags": [],
+          "glossary_terms": [],
+          "semantic_class": null,
+          "unit_context": null,
+          "cardinality": null,
+          "null_count": null,
+          "data_range": null
+        }
+      ],
+      "primary_keys": [
+        "step_id",
+        "model_schema",
+        "model_name"
+      ],
+      "foreign_keys": [
+        {
+          "column": "step_id",
+          "references_table": "stg_dbt_run_steps",
+          "references_column": "id"
+        },
+        {
+          "column": "run_id",
+          "references_table": "stg_dbt_runs",
+          "references_column": "id"
+        }
+      ],
+      "row_count": null,
+      "has_primary_key": true,
+      "has_foreign_keys": true,
+      "has_sensitive_fields": false,
+      "sensitive_fields": [],
+      "cdc_enabled": false,
+      "incremental_columns": [],
+      "partition_columns": [],
+      "join_candidates": [
+        {
+          "table": "stg_dbt_run_steps",
+          "join_column": "step_id",
+          "confidence": "high"
+        },
+        {
+          "table": "stg_dbt_runs",
+          "join_column": "run_id",
+          "confidence": "high"
+        }
+      ],
+      "unit_summary": {
+        "columns_with_units": [
+          "duration_s"
+        ],
+        "unknown_unit_columns": []
+      },
+      "classification_summary": {
+        "concept_counts": {},
+        "low_confidence_columns": []
+      },
+      "classification_tags": [],
+      "glossary_terms": [],
+      "field_classifications": {},
+      "row_count_projection_1y": null,
+      "row_count_projection_2y": null,
+      "row_count_projection_5y": null,
+      "data_quality": {
+        "findings": [],
+        "delete_management": {
+          "strategy": "not_applicable_for_api"
+        },
+        "late_arriving_data": {
+          "risk": "low"
+        },
+        "timezone": {
+          "value": "UTC"
+        }
+      }
     }
   ]
 }

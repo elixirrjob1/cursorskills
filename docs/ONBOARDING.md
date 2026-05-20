@@ -19,7 +19,7 @@ Request access to the following before your first day of active work:
 | System | What you need |
 |--------|---------------|
 | **GitHub** | Read on `responsum-team/plugins` (skills, rules, MCPs — installed via team marketplace) and read/write on `responsum-team/dbtproject` (primary dbt repo — this is what dbt Cloud runs) |
-| **Azure Key Vault** | Reader + Secrets User role on the team Key Vault — this is where all credentials live |
+| **Bitwarden** | Member of the Elixir org with access to the **Training credentials** collection — sample `.env` values for onboarding live here |
 | **Snowflake** | Account access and the appropriate role on the project database |
 | **dbt Cloud** | Member access on the project in dbt Cloud |
 | **Fivetran** | Viewer or Connector Creator on the project destination group |
@@ -65,11 +65,13 @@ cp .env.example .env
 cp .env.example .env
 ```
 
-Obtain the actual values from the team Key Vault (ask a team admin for the vault name and access). If the Key Vault loader script is configured, it populates `.env` automatically:
+Copy the training values from Bitwarden into your local `.env` files. Variable names come from `.env.example`; values are in the shared Secure Note **Cursor skills – sample .env** (Training credentials collection):
 
-```bash
-python scripts/keyvault_loader.py
-```
+[Open sample `.env` in Bitwarden](https://vault.bitwarden.com/#/vault?collectionId=12a08d6f-8af4-443e-970a-ab7400a607b2&itemId=004c5dd0-d1a6-43ca-8e73-b45000c5a175&action=view)
+
+> You must be logged into Bitwarden with Elixir org access. Ask a team admin if the link does not open or the item is missing.
+
+**Key Vault:** Some scripts support loading from Azure Key Vault when `KEYVAULT_NAME` is set. That applies only if you have already created a vault, stored secrets in it, and been granted access — it is not the onboarding path. See [KEYVAULT_SETUP.md](KEYVAULT_SETUP.md).
 
 #### `dbtproject/.env` — required variables
 
@@ -259,7 +261,8 @@ Ask a team admin to fill in the specific URLs for your environment:
 | Resource | Location |
 |----------|----------|
 | dbt Cloud | Your team's dbt Cloud account |
-| Azure Key Vault | Your team's Key Vault (Azure portal) |
+| Sample `.env` (Bitwarden) | [Cursor skills – sample .env](https://vault.bitwarden.com/#/vault?collectionId=12a08d6f-8af4-443e-970a-ab7400a607b2&itemId=004c5dd0-d1a6-43ca-8e73-b45000c5a175&action=view) (Training credentials) |
+| Azure Key Vault | Optional — see [KEYVAULT_SETUP.md](KEYVAULT_SETUP.md) only if you maintain your own vault with secrets |
 | Plugins repo (skills, rules, MCPs) | [responsum-team/plugins](https://github.com/responsum-team/plugins) |
 | dbt project repo | [responsum-team/dbtproject](https://github.com/responsum-team/dbtproject) |
 | End-to-end flow | [docs/end-to-end-flow.md](https://github.com/elixirrjob1/cursorskills/blob/main/docs/end-to-end-flow.md) |

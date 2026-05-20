@@ -187,6 +187,9 @@ Each skill inside `plugins/skills/` also has its own standalone repo under `resp
 
 ```
 dbtproject/
+├── docs/
+│   ├── README.md        ← doc index
+│   └── ONBOARDING.md    ← dbt-specific setup (Bitwarden, env, MCP)
 ├── .cursor/
 │   └── mcp.json         ← dbt MCP server config (auto-start in Cursor)
 ├── models/

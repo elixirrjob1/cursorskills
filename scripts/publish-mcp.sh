@@ -9,7 +9,9 @@
 #
 # Layout assumption:
 #   tools/<mcp-name>_mcp/                       in this repo
-#   github.com/${PAT2_USER}/mcp-<mcp-name>      on the PAT2 account
+#   github.com/${PAT2_ORG:-PAT2_USER}/mcp-<mcp-name>
+#
+# Known mirrors: mcp-openmetadata, mcp-fivetran, mcp-snowflake
 
 set -euo pipefail
 

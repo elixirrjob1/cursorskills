@@ -4,14 +4,22 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-ENV_FILE="${SCRIPT_DIR}/../../.env"
 CONFIG_FILE="${SCRIPT_DIR}/tools_config.yaml"
-CONN_FILE="${HOME}/.snowflake/connections.toml"
 
-# Load .env
-if [[ -f "$ENV_FILE" ]]; then
-  set -a; source "$ENV_FILE"; set +a
-fi
+_load_dotenv() {
+  local dir="$SCRIPT_DIR"
+  while [[ "$dir" != "/" ]]; do
+    if [[ -f "$dir/.env" ]]; then
+      set -a
+      # shellcheck source=/dev/null
+      source "$dir/.env"
+      set +a
+      return 0
+    fi
+    dir="$(dirname "$dir")"
+  done
+}
+_load_dotenv
 
 : "${SNOWFLAKE_ACCOUNT:?SNOWFLAKE_ACCOUNT not set in .env}"
 : "${SNOWFLAKE_USER:?SNOWFLAKE_USER not set in .env}"

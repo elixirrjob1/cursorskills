@@ -20,11 +20,12 @@ Wraps [`snowflake-labs-mcp`](https://github.com/Snowflake-Labs/mcp) (installed o
 
 ## Setup
 
-1. **Copy the example env file** to the repo root and fill in your values:
+1. **Copy the example env file** and fill in your values (monorepo or standalone `mcp-snowflake` clone):
    ```bash
-   cp tools/snowflake_mcp/.env.example .env
-   # then edit .env and set the five SNOWFLAKE_* variables
+   cp .env.example .env
+   # or from cursorskills root: cp tools/snowflake_mcp/.env.example .env
    ```
+   Place `.env` in this directory or a parent workspace folder; `run.sh` walks up to find it.
 
    | Variable | Description |
    |---|---|
@@ -39,12 +40,12 @@ Wraps [`snowflake-labs-mcp`](https://github.com/Snowflake-Labs/mcp) (installed o
    {
      "mcpServers": {
        "snowflake": {
-         "command": "/absolute/path/to/tools/snowflake_mcp/run.sh"
+         "command": "/absolute/path/to/run.sh"
        }
      }
    }
    ```
-   Replace the path with the actual absolute path to `run.sh` in your clone.
+   Use the absolute path to `run.sh` in your clone (`tools/snowflake_mcp/run.sh` in cursorskills, or `./run.sh` in `responsum-team/mcp-snowflake`).
 
 3. **Reload Cursor** — open the MCP panel (`Cursor Settings → MCP`) and confirm the `snowflake` server shows a green status.
 

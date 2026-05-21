@@ -11,7 +11,7 @@ Use the OpenMetadata MCP server as the execution surface for glossary governance
 
 Before running the workflow:
 - ensure the `openmetadata` MCP server is registered in Cursor
-- ensure `OPENMETADATA_BASE_URL`, `OPENMETADATA_EMAIL`, and `OPENMETADATA_PASSWORD` are available
+- ensure `OM_BASE_URL` and `OM_TOKEN` are available in `.env` (legacy aliases: `OPENMETADATA_BASE_URL`, `OPENMETADATA_JWT_TOKEN`)
 - ensure metadata has already been ingested into OpenMetadata for the target service and schema
 
 If the MCP server is not configured yet, use:

@@ -36,7 +36,7 @@ automatically by the MCP bridge (`om_mcp_bridge.py`). The bridge uses this prior
 | Priority | Source | Notes |
 |---|---|---|
 | 1 | `SECRETS_PROVIDER` env var | Production — Azure KV / AWS / HashiCorp Vault |
-| 2 | `OPENMETADATA_*` env vars | From `.env` (auto-loaded) or `mcp.json` env block |
+| 2 | `OM_BASE_URL` + `OM_TOKEN` | From `.env` (auto-loaded) or `mcp.json` env block |
 
 The agent **never** needs to pass OpenMetadata credentials to any script — the MCP connection handles authentication.
 

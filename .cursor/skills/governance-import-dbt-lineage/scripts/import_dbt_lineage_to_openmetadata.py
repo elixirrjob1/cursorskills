@@ -6,9 +6,8 @@ lineage edges to OpenMetadata using PUT /api/v1/lineage.
 
 Credentials and endpoint (never hardcoded):
 
-  OPENMETADATA_BASE_URL   Required. Prefer https://...
-  OPENMETADATA_EMAIL      Required unless you adopt JWT separately later
-  OPENMETADATA_PASSWORD   Required unless you adopt JWT separately later
+  OM_BASE_URL             Required. Prefer https://... (legacy alias OPENMETADATA_BASE_URL)
+  OM_TOKEN                Required (legacy alias OPENMETADATA_JWT_TOKEN)
 
 Optional operational env (defaults are secure for shared/CI runs):
 
@@ -25,7 +24,6 @@ CLI overrides nothing hardcoded:
 from __future__ import annotations
 
 import argparse
-import base64
 import json
 import os
 import sys
@@ -120,30 +118,15 @@ def _http_error_suffix(exc: error.HTTPError) -> str:
 
 
 def _login() -> tuple[str, str]:
-    base_url = _normalize_om_base_url(_require_env("OPENMETADATA_BASE_URL"))
-    email = _require_env("OPENMETADATA_EMAIL")
-    password = _require_env("OPENMETADATA_PASSWORD")
-    encoded_password = base64.b64encode(password.encode("utf-8")).decode("ascii")
-    body = {"email": email, "password": encoded_password}
-    payload = json.dumps(body).encode("utf-8")
-    req = request.Request(
-        f"{base_url}/v1/users/login",
-        data=payload,
-        headers={"Content-Type": "application/json", "Accept": "application/json"},
-        method="POST",
-    )
-    try:
-        with request.urlopen(req, timeout=30) as resp:
-            data = json.loads(resp.read() or b"{}")
-    except error.HTTPError as exc:
-        suf = _http_error_suffix(exc)
-        raise SystemExit(f"error: OpenMetadata login failed ({exc.code}){suf}") from exc
-    except error.URLError as exc:
-        raise SystemExit("error: OpenMetadata login failed (network)") from exc
-    token = str(data.get("accessToken") or data.get("jwtToken") or "").strip()
-    if not token:
-        raise SystemExit("error: login response missing token")
-    return base_url, token
+    import sys
+    from pathlib import Path
+
+    script_dir = Path(__file__).resolve().parent
+    if str(script_dir) not in sys.path:
+        sys.path.insert(0, str(script_dir))
+    from om_auth import om_api_root, om_token
+
+    return om_api_root(), om_token()
 
 
 def _api(

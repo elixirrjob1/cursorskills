@@ -256,28 +256,14 @@ class OpenMetadataMcpTests(unittest.TestCase):
     @mock.patch.dict(
         os.environ,
         {
-            "OPENMETADATA_BASE_URL": "http://example:8585",
-            "OPENMETADATA_EMAIL": "admin@example.com",
-            "OPENMETADATA_PASSWORD": "secret",
+            "OM_BASE_URL": "http://example:8585",
+            "OM_TOKEN": "jwt-value",
         },
         clear=False,
     )
-    @mock.patch("requests.post")
-    def test_login_tries_base64_first(self, mock_post):
-        response = mock.Mock()
-        response.status_code = 200
-        response.content = b'{"accessToken":"jwt-value"}'
-        response.json.return_value = {"accessToken": "jwt-value"}
-        response.raise_for_status.return_value = None
-        mock_post.return_value = response
-        openmetadata_module._TOKEN_CACHE["token"] = None
-
-        token = openmetadata_module._login()
-
-        self.assertEqual(token, "jwt-value")
-        called_payload = mock_post.call_args.kwargs["json"]
-        self.assertEqual(called_payload["email"], "admin@example.com")
-        self.assertNotEqual(called_payload["password"], "secret")
+    def test_headers_use_om_token(self):
+        headers = openmetadata_module._headers()
+        self.assertEqual(headers["Authorization"], "Bearer jwt-value")
 
 
 if __name__ == "__main__":

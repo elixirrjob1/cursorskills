@@ -17,14 +17,9 @@ The OpenMetadata MCP's `update_metadata_ingestion_pipeline` (and `create_metadat
 
 On some OM+Airflow setups, the first MCP call after a config update returns `"Workflow [...] has been created"` but does not actually queue a run. The second call triggers the run. `scripts/wait_for_ingestion.py` handles this: it polls for a new `pipelineStatuses.startDate` greater than the last known one and retriggers once if nothing appears after ~30 seconds.
 
-### OM login requires base64-encoded password
+### OpenMetadata authentication uses `OM_TOKEN`
 
-The `/api/v1/users/login` endpoint expects the `password` field in the JSON body to be base64-encoded, not plaintext. Python one-liner:
-
-```python
-import base64
-payload = {"email": email, "password": base64.b64encode(password.encode()).decode()}
-```
+All REST helpers (`om_client.py`, `scripts/apply_stm_to_openmetadata.py`) authenticate with a Bearer JWT from `OM_TOKEN` in `.env` via `scripts/om_auth.py`. No username/password login is performed.
 
 ## Snowflake identifier casing
 

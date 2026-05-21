@@ -4,9 +4,9 @@
 from __future__ import annotations
 
 import argparse
-import base64
 import csv
 import os
+import sys
 import time
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
@@ -16,78 +16,35 @@ from typing import Any
 import requests
 from dotenv import load_dotenv
 
+_PROJECT_ROOT = Path(__file__).resolve().parents[4]
+_SCRIPT_DIR = Path(__file__).resolve().parent
+if str(_SCRIPT_DIR) not in sys.path:
+    sys.path.insert(0, str(_SCRIPT_DIR))
+
+from om_auth import om_api_url, om_bearer_headers  # noqa: E402
+
 load_dotenv()
 
-_PROJECT_ROOT = Path(__file__).resolve().parents[4]
 DEFAULT_SCHEMA_FQN = "snowflake_fivetran.DRIP_DATA_INTELLIGENCE.BRONZE_ERP__DBO"
 DEFAULT_CATALOGUE_OUT = _PROJECT_ROOT / ".cursor" / "flat" / "data_catalogue.csv"
 
-API_VERSION_PREFIX = "v1"
-_TOKEN_CACHE: dict[str, Any] = {"token": None}
-
 
 # ---------------------------------------------------------------------------
-# OpenMetadata API helpers (minimal, self-contained)
+# OpenMetadata API helpers
 # ---------------------------------------------------------------------------
-
-def _api_root() -> str:
-    base = os.getenv("OPENMETADATA_BASE_URL", "").strip().rstrip("/")
-    if not base:
-        raise RuntimeError("Missing OPENMETADATA_BASE_URL")
-    return f"{base}/api" if not base.endswith("/api") else base
-
 
 def _api_url(path: str) -> str:
-    cleaned = path.lstrip("/")
-    if not cleaned.startswith(f"{API_VERSION_PREFIX}/"):
-        cleaned = f"{API_VERSION_PREFIX}/{cleaned}"
-    return f"{_api_root()}/{cleaned}"
-
-
-def _login() -> str:
-    jwt = os.getenv("OPENMETADATA_JWT_TOKEN", "").strip()
-    if jwt:
-        return jwt
-    cached = _TOKEN_CACHE.get("token")
-    if isinstance(cached, str) and cached.strip():
-        return cached.strip()
-    email = os.getenv("OPENMETADATA_EMAIL", "").strip()
-    password = os.getenv("OPENMETADATA_PASSWORD", "")
-    encoded = base64.b64encode(password.encode()).decode("ascii")
-    for payload in [{"email": email, "password": encoded}, {"email": email, "password": password}]:
-        try:
-            r = requests.post(
-                _api_url("users/login"),
-                headers={"Accept": "application/json", "Content-Type": "application/json"},
-                json=payload, timeout=(10, 30),
-            )
-            r.raise_for_status()
-            data = r.json() if r.content else {}
-            for key in ("accessToken", "jwtToken", "token", "id_token"):
-                tok = data.get(key)
-                if isinstance(tok, str) and tok.strip():
-                    _TOKEN_CACHE["token"] = tok.strip()
-                    return tok.strip()
-        except Exception:
-            continue
-    raise RuntimeError("OpenMetadata login failed")
+    return om_api_url(path)
 
 
 def _headers() -> dict[str, str]:
-    return {
-        "Accept": "application/json",
-        "Content-Type": "application/json",
-        "Authorization": f"Bearer {_login()}",
-    }
+    return om_bearer_headers(user_agent="enrich-stm-from-catalogue")
 
 
 def _get(endpoint: str, params: dict | None = None) -> Any:
     for attempt in range(2):
         try:
             r = requests.get(_api_url(endpoint), headers=_headers(), params=params, timeout=(10, 30))
-            if r.status_code == 401 and attempt < 1:
-                _TOKEN_CACHE["token"] = None
-                continue
             r.raise_for_status()
             return r.json()
         except Exception as e:

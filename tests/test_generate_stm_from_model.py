@@ -33,9 +33,8 @@ class GenerateStmFromModelTests(unittest.TestCase):
     @mock.patch.dict(
         "os.environ",
         {
-            "OPENMETADATA_BASE_URL": "http://example:8585",
-            "OPENMETADATA_EMAIL": "admin@example.com",
-            "OPENMETADATA_PASSWORD": "secret",
+            "OM_BASE_URL": "http://example:8585",
+            "OM_TOKEN": "test-jwt",
         },
         clear=False,
     )

@@ -27,7 +27,7 @@ Example:
 
 ### OpenMetadata Glossary Terms
 
-The `DataGovernanceTerms` sheet is **fetched automatically** from OpenMetadata when the env vars `OPENMETADATA_BASE_URL` and auth credentials (`OPENMETADATA_EMAIL` / `OPENMETADATA_PASSWORD` or `OPENMETADATA_JWT_TOKEN`) are set. No extra flags or MCP calls are needed.
+The `DataGovernanceTerms` sheet is **fetched automatically** from OpenMetadata when `OM_BASE_URL` and `OM_TOKEN` are set (legacy aliases: `OPENMETADATA_BASE_URL`, `OPENMETADATA_JWT_TOKEN`). No extra flags or MCP calls are needed.
 
 To **skip** the automatic fetch:
 
@@ -92,7 +92,7 @@ Formatting:
 ## Gotchas
 
 **Omitting `--no-openmetadata` when OM is slow.**
-If `OPENMETADATA_BASE_URL` is set but the instance is unreachable or slow, the script will hang on the login and glossary fetch (10 s connect, 30 s read timeout per request). Pass `--no-openmetadata` to skip the fetch entirely when OM availability is uncertain.
+If `OM_BASE_URL` is set but the instance is unreachable or slow, the script will hang on the glossary fetch (10 s connect, 30 s read timeout per request). Pass `--no-openmetadata` to skip the fetch entirely when OM availability is uncertain.
 
 **Editing `__rt_*` or `__dv_*` tabs is silently ignored.**
 Hidden round-trip tabs (`__rt_meta`, `__rt_payload`) and the classification-validation helper sheet (`__dv_classifications`) are internal. Any values written to those tabs are never read back during reverse conversion — only the visible sheets are applied. Edit the visible tabs only.

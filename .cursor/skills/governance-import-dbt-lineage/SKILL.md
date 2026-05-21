@@ -25,9 +25,8 @@ Supports:
 - OpenMetadata table entities are already ingested and discoverable.
 - dbt `manifest.json` is available (generate with `dbt parse` if missing).
 - OpenMetadata connection and credentials come from the environment only (no hardcoded hosts or secrets in the script):
-  - `OPENMETADATA_BASE_URL` (include scheme, e.g. `https://host:port`; for `http://`, set `OPENMETADATA_ALLOW_INSECURE_HTTP=true` when you intentionally accept cleartext).
-  - `OPENMETADATA_EMAIL`
-  - `OPENMETADATA_PASSWORD`
+  - `OM_BASE_URL` (include scheme, e.g. `https://host:port`; legacy alias `OPENMETADATA_BASE_URL`; for `http://`, set `OPENMETADATA_ALLOW_INSECURE_HTTP=true` when you intentionally accept cleartext).
+  - `OM_TOKEN` (legacy alias `OPENMETADATA_JWT_TOKEN`)
 
 Optional:
 

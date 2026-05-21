@@ -34,7 +34,7 @@ Expected: at least one service returned (HTTP 200).
 
 **If it fails:**
 - `401 Unauthorized` → `OM_TOKEN` in `.env` is missing or expired; re-generate a token from the OpenMetadata UI under Settings → Access Tokens
-- `Connection refused` / no response → wrong `OPENMETADATA_BASE_URL`; confirm the URL with a team admin
+- `Connection refused` / no response → wrong `OM_BASE_URL`; confirm the URL with a team admin
 - `403 Forbidden` → user lacks Viewer role; ask a team admin to grant it
 
 ### 3. dbt Cloud
@@ -75,7 +75,7 @@ After the MCP checks, verify that these keys are present (non-empty) in the acti
 `SNOWFLAKE_ACCOUNT`, `SNOWFLAKE_USER`, `SNOWFLAKE_FIVETRAN_PASSWORD`, `SNOWFLAKE_DATABASE`, `SNOWFLAKE_WAREHOUSE`, `SNOWFLAKE_DBT_USER`, `SNOWFLAKE_DBT_ROLE`, `SNOWFLAKE_DBT_WAREHOUSE`, `SNOWFLAKE_DBT_PASSWORD`, `DBT_HOST`, `DBT_ACCOUNT_ID`
 
 **Skills/scripts `.env` — required:**
-`OPENMETADATA_BASE_URL`, `OPENMETADATA_EMAIL`, `OPENMETADATA_PASSWORD`, `FIVETRAN_API_KEY`, `FIVETRAN_API_SECRET`
+`OM_BASE_URL`, `OM_TOKEN`, `FIVETRAN_API_KEY`, `FIVETRAN_API_SECRET`
 
 Report any missing keys as ❌ with the note: *"Obtain from the team Key Vault — ask a team admin for the vault name"*.
 

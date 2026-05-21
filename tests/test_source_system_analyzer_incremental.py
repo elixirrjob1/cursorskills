@@ -366,7 +366,7 @@ class SourceSystemAnalyzerIncrementalTests(unittest.TestCase):
             },
         )
 
-    @patch.dict("os.environ", {"OPENMETADATA_BASE_URL": "http://example:8585", "OPENMETADATA_EMAIL": "admin@example.com", "OPENMETADATA_PASSWORD": "secret"}, clear=False)
+    @patch.dict("os.environ", {"OM_BASE_URL": "http://example:8585", "OM_TOKEN": "test-jwt"}, clear=False)
     @patch.object(MODULE, "_openmetadata_request")
     def test_fetch_openmetadata_glossary_assignments_matches_by_table_and_column_name(self, mock_request):
         mock_request.return_value = {
@@ -402,7 +402,7 @@ class SourceSystemAnalyzerIncrementalTests(unittest.TestCase):
         self.assertEqual(status["matched_tables"], 1)
         self.assertEqual(status["unmatched_tables"], 0)
 
-    @patch.dict("os.environ", {"OPENMETADATA_BASE_URL": "http://example:8585", "OPENMETADATA_EMAIL": "admin@example.com", "OPENMETADATA_PASSWORD": "secret"}, clear=False)
+    @patch.dict("os.environ", {"OM_BASE_URL": "http://example:8585", "OM_TOKEN": "test-jwt"}, clear=False)
     @patch.object(MODULE, "_openmetadata_request")
     def test_fetch_openmetadata_classification_catalog_normalizes_scope_and_options(self, mock_request):
         def side_effect(method, endpoint, params=None):

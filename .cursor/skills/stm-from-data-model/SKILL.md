@@ -28,9 +28,8 @@ Use this skill when:
     - `STM_SOURCE_DATABASE_SCHEMA` (or `SOURCE_DATABASE_SCHEMA`)
     - `STM_TARGET_DATABASE` (or `TARGET_DATABASE` / `SNOWFLAKE_DATABASE`)
     - `STM_TARGET_SCHEMA` (or `TARGET_SCHEMA` / `SNOWFLAKE_SCHEMA`)
-  - `OPENMETADATA_BASE_URL`
-  - `OPENMETADATA_EMAIL` and `OPENMETADATA_PASSWORD`, or `OPENMETADATA_JWT_TOKEN`
-  - OpenMetadata fallback file: if no `OPENMETADATA_*` variables are set, load `OpenMetadata.env` (cwd first, then repo root)
+  - `OM_BASE_URL` and `OM_TOKEN` (legacy aliases: `OPENMETADATA_BASE_URL`, `OPENMETADATA_JWT_TOKEN`)
+  - OpenMetadata fallback file: if no `OM_*` / `OPENMETADATA_*` variables are set, load `OpenMetadata.env` (cwd first, then repo root)
 
 If the caller provides explicit paths, use them. Otherwise:
 - read the single `.md` file in `output/modeling`

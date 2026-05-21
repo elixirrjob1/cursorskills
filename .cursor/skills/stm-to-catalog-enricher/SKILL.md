@@ -18,7 +18,7 @@ This skill orchestrates existing primitives — `catalog-sync` for ingestion, `c
 ## Prerequisites
 
 - OpenMetadata MCP server registered as `user-openmetadata`.
-- `.env` contains `OPENMETADATA_BASE_URL`, `OPENMETADATA_EMAIL`, `OPENMETADATA_PASSWORD`.
+- `.env` contains `OM_BASE_URL` and `OM_TOKEN` (legacy aliases: `OPENMETADATA_BASE_URL`, `OPENMETADATA_JWT_TOKEN`).
 - A Snowflake database service already exists in OpenMetadata with working credentials. If not, run `catalog-sync` first to create it.
 - STM files follow the layout produced by `stm-from-data-model` (Sections 2, 5, 6, 7 Final present).
 
@@ -183,7 +183,7 @@ Reports a pass/fail table and exits non-zero if any table fails.
 - `scripts/apply_stm_to_openmetadata.py` — Parse STMs and issue a single JSON-patch per table covering description + merged tags/glossary + column descriptions. Idempotent. Runs in ~1s per table. Primary enrichment path — subagents are only a fallback.
 - `scripts/verify_enrichment.py` — Spot-check every enriched table and report missing descriptions/tags.
 
-All scripts load credentials from `.env` (`OPENMETADATA_BASE_URL`, `OPENMETADATA_EMAIL`, `OPENMETADATA_PASSWORD`).
+All scripts load credentials from `.env` via `scripts/om_auth.py` (`OM_BASE_URL`, `OM_TOKEN`).
 
 ## Guardrails
 

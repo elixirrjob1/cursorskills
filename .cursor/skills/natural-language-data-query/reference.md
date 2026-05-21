@@ -40,11 +40,10 @@ Credentials are stored in the workspace `.env` file (gitignored) and loaded
 automatically by the bridge script. See `.env` for the actual values.
 
 ```
-OPENMETADATA_API_URL=<your-om-url>
-OPENMETADATA_USERNAME=<your-email>
-OPENMETADATA_PASSWORD=<your-password>
-# or use a long-lived token instead:
-OPENMETADATA_TOKEN=<bot-jwt-token>
+OM_BASE_URL=<your-om-url>
+OM_TOKEN=<jwt-from-settings-access-tokens-or-bots>
+# legacy aliases still work:
+# OPENMETADATA_BASE_URL, OPENMETADATA_JWT_TOKEN
 ```
 
 For production, set `SECRETS_PROVIDER=azure-keyvault` and `SECRETS_URL=https://<vault>.vault.azure.net`
@@ -109,10 +108,8 @@ or as a single JSON blob (AWS Secrets Manager).
 
 | Key name | Maps to env var |
 |---|---|
-| `openmetadata-api-url` | `OPENMETADATA_API_URL` |
-| `openmetadata-username` | `OPENMETADATA_USERNAME` |
-| `openmetadata-password` | `OPENMETADATA_PASSWORD` |
-| `openmetadata-token` | `OPENMETADATA_TOKEN` |
+| `openmetadata-api-url` | `OM_BASE_URL` (alias `OPENMETADATA_API_URL`) |
+| `openmetadata-token` | `OM_TOKEN` (alias `OPENMETADATA_JWT_TOKEN`) |
 | `snowflake-bearer-token` | `SNOWFLAKE_BEARER_TOKEN` |
 | `snowflake-sql-api-host` | `SNOWFLAKE_SQL_API_HOST` |
 | `snowflake-warehouse` | `SNOWFLAKE_WAREHOUSE` |

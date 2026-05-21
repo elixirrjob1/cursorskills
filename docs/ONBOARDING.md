@@ -19,7 +19,7 @@ Request access to the following before your first day of active work:
 | System | What you need |
 |--------|---------------|
 | **GitHub** | Read on `responsum-team/plugins` (skills, rules, MCPs — installed via team marketplace) and read/write on `responsum-team/dbtproject` (primary dbt repo — this is what dbt Cloud runs) |
-| **Bitwarden** | Member of the Elixir org with access to the **Training credentials** collection — sample `.env` values for onboarding live here |
+| **Bitwarden** | Member of the Elixir org with access to the **Training Credentials** collection — item **Cursor onboarding – sample .env** |
 | **Snowflake** | Account access and the appropriate role on the project database |
 | **dbt Cloud** | Member access on the project in dbt Cloud |
 | **Fivetran** | Viewer or Connector Creator on the project destination group |
@@ -65,9 +65,11 @@ cp .env.example .env
 cp .env.example .env
 ```
 
-Copy the training values from Bitwarden into your local `.env` files. Variable names come from `.env.example`; values are in the shared Secure Note **Cursor skills – sample .env** (Training credentials collection):
+Copy the training values from Bitwarden into your local `.env` files. Variable names come from `.env.example`; values are in Bitwarden:
 
-[Open sample `.env` in Bitwarden](https://vault.bitwarden.com/#/vault?collectionId=12a08d6f-8af4-443e-970a-ab7400a607b2&itemId=004c5dd0-d1a6-43ca-8e73-b45000c5a175&action=view)
+**Collection:** Training Credentials → **Item:** Cursor onboarding – sample .env
+
+[Open in Bitwarden](https://vault.bitwarden.com/#/vault?collectionId=12a08d6f-8af4-443e-970a-ab7400a607b2&itemId=004c5dd0-d1a6-43ca-8e73-b45000c5a175&action=view)
 
 > You must be logged into Bitwarden with Elixir org access. Ask a team admin if the link does not open or the item is missing.
 
@@ -106,9 +108,8 @@ Copy the training values from Bitwarden into your local `.env` files. Variable n
 | Variable | What it is |
 |----------|------------|
 | `KEYVAULT_NAME` | Azure Key Vault name — if set, secrets load from Key Vault instead of `.env` |
-| `OPENMETADATA_BASE_URL` | OpenMetadata instance URL (e.g. `http://<host>:8585`) |
-| `OPENMETADATA_EMAIL` | OpenMetadata login email |
-| `OPENMETADATA_PASSWORD` | OpenMetadata login password |
+| `OM_BASE_URL` | OpenMetadata instance URL (e.g. `https://<host>:8585`, no trailing slash) |
+| `OM_TOKEN` | Long-lived JWT from OpenMetadata (Settings → Access Tokens or Bots) |
 | `FIVETRAN_API_KEY` / `FIVETRAN_API_SECRET` | Fivetran API credentials for the MCP and ingestion scripts |
 | `AZURE_MSSQL_URL` | Connection string for the Azure SQL source database |
 | `AZURE_MSSQL_SCHEMA` | Schema name in the Azure SQL source (typically `dbo`) |
@@ -243,7 +244,7 @@ For Cursor-assisted dbt work, open `dbtproject` in Cursor — the dbt MCP server
 - *"Show me the lineage for a specific model"*
 - *"Run all enriched models"*
 
-See the [dbtproject README](https://github.com/responsum-team/dbtproject) for dbt Cloud auth (OAuth vs PAT) and MCP feature flags.
+See the [dbtproject docs/ONBOARDING.md](https://github.com/responsum-team/dbtproject/blob/main/docs/ONBOARDING.md) for dbt Cloud auth (OAuth vs PAT) and MCP feature flags.
 
 ---
 
@@ -264,7 +265,7 @@ Ask a team admin to fill in the specific URLs for your environment:
 | Resource | Location |
 |----------|----------|
 | dbt Cloud | Your team's dbt Cloud account |
-| Sample `.env` (Bitwarden) | [Cursor skills – sample .env](https://vault.bitwarden.com/#/vault?collectionId=12a08d6f-8af4-443e-970a-ab7400a607b2&itemId=004c5dd0-d1a6-43ca-8e73-b45000c5a175&action=view) (Training credentials) |
+| Sample `.env` (Bitwarden) | **Training Credentials** → **Cursor onboarding – sample .env** — [open link](https://vault.bitwarden.com/#/vault?collectionId=12a08d6f-8af4-443e-970a-ab7400a607b2&itemId=004c5dd0-d1a6-43ca-8e73-b45000c5a175&action=view) |
 | Azure Key Vault | Optional — see [KEYVAULT_SETUP.md](KEYVAULT_SETUP.md) only if you maintain your own vault with secrets |
 | Plugins repo (skills, rules, MCPs) | [responsum-team/plugins](https://github.com/responsum-team/plugins) |
 | dbt project repo | [responsum-team/dbtproject](https://github.com/responsum-team/dbtproject) |

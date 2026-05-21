@@ -2,11 +2,11 @@
 from __future__ import annotations
 
 import argparse
-import base64
 import getpass
 import json
 import os
 import re
+import sys
 import time
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
@@ -17,6 +17,11 @@ import requests
 
 
 _PROJECT_ROOT = Path(__file__).resolve().parents[4]
+_SCRIPT_DIR = Path(__file__).resolve().parent
+if str(_SCRIPT_DIR) not in sys.path:
+    sys.path.insert(0, str(_SCRIPT_DIR))
+
+from om_auth import om_api_url, om_bearer_headers  # noqa: E402
 DEFAULT_MODEL_INPUT_DIR = _PROJECT_ROOT / "output" / "modeling"
 DEFAULT_ANALYZER_INPUT_DIR = _PROJECT_ROOT / "output" / "source-system-analysis"
 DEFAULT_OUTPUT_DIR = _PROJECT_ROOT / "output" / "stm"
@@ -26,11 +31,7 @@ SOURCE_TABLE_FILE = "See field-level mapping"
 SOURCE_NOTES = "Immediate technical source is Snowflake bronze; original lineage comes from the analyzer source system."
 TARGET_DATABASE = ""
 TARGET_SCHEMA = ""
-OPENMETADATA_API_VERSION_PREFIX = "v1"
-OPENMETADATA_LOGIN_ENDPOINT = "users/login"
 OPENMETADATA_TIMEOUT = (10, 30)
-OPENMETADATA_USER_AGENT = "stm-from-data-model"
-_OPENMETADATA_TOKEN_CACHE: dict[str, str | None] = {"token": None}
 
 
 @dataclass
@@ -111,10 +112,10 @@ def _load_dotenv() -> None:
 
 def _has_openmetadata_env_vars() -> bool:
     required = (
+        "OM_BASE_URL",
+        "OM_TOKEN",
         "OPENMETADATA_BASE_URL",
         "OPENMETADATA_JWT_TOKEN",
-        "OPENMETADATA_EMAIL",
-        "OPENMETADATA_PASSWORD",
     )
     return any(os.getenv(name, "").strip() for name in required)
 
@@ -138,7 +139,7 @@ def _load_openmetadata_fallback_env() -> None:
                 key = name.strip()
                 if not key or key in os.environ:
                     continue
-                if not key.startswith("OPENMETADATA_"):
+                if not (key.startswith("OPENMETADATA_") or key.startswith("OM_")):
                     continue
                 os.environ[key] = value.strip().strip("'\"")
         except OSError:
@@ -633,95 +634,12 @@ def _extract_glossary_definition_map(document: dict[str, Any]) -> dict[str, Glos
     return definition_map
 
 
-def _normalize_openmetadata_base_url(value: str) -> str:
-    base = (value or "").strip().rstrip("/")
-    if not base:
-        raise RuntimeError("Missing OpenMetadata base URL. Set OPENMETADATA_BASE_URL.")
-    return base if base.endswith("/api") else f"{base}/api"
-
-
-def _openmetadata_api_root() -> str:
-    return _normalize_openmetadata_base_url(os.getenv("OPENMETADATA_BASE_URL", ""))
-
-
 def _openmetadata_api_url(path: str) -> str:
-    cleaned = path.lstrip("/")
-    if not cleaned.startswith(f"{OPENMETADATA_API_VERSION_PREFIX}/"):
-        cleaned = f"{OPENMETADATA_API_VERSION_PREFIX}/{cleaned}"
-    return f"{_openmetadata_api_root()}/{cleaned}"
-
-
-def _openmetadata_login_payloads() -> list[dict[str, str]]:
-    email = os.getenv("OPENMETADATA_EMAIL", "").strip()
-    password = os.getenv("OPENMETADATA_PASSWORD", "")
-    if not email or not password:
-        raise RuntimeError(
-            "Missing OpenMetadata credentials. Set OPENMETADATA_EMAIL and OPENMETADATA_PASSWORD."
-        )
-    encoded_password = base64.b64encode(password.encode("utf-8")).decode("ascii")
-    return [
-        {"email": email, "password": encoded_password},
-        {"email": email, "password": password},
-    ]
-
-
-def _extract_openmetadata_token(payload: Any) -> str | None:
-    if isinstance(payload, str) and payload.strip():
-        return payload.strip()
-    if isinstance(payload, dict):
-        for key in ("accessToken", "jwtToken", "token", "id_token"):
-            value = payload.get(key)
-            if isinstance(value, str) and value.strip():
-                return value.strip()
-        for nested_key in ("data", "response"):
-            token = _extract_openmetadata_token(payload.get(nested_key))
-            if token:
-                return token
-    return None
-
-
-def _openmetadata_login() -> str:
-    jwt_token = os.getenv("OPENMETADATA_JWT_TOKEN", "").strip()
-    if jwt_token:
-        return jwt_token
-
-    cached = _OPENMETADATA_TOKEN_CACHE.get("token")
-    if isinstance(cached, str) and cached.strip():
-        return cached.strip()
-
-    last_error: Exception | None = None
-    for payload in _openmetadata_login_payloads():
-        try:
-            response = requests.post(
-                _openmetadata_api_url(OPENMETADATA_LOGIN_ENDPOINT),
-                headers={
-                    "Accept": "application/json",
-                    "Content-Type": "application/json",
-                    "User-Agent": OPENMETADATA_USER_AGENT,
-                },
-                json=payload,
-                timeout=OPENMETADATA_TIMEOUT,
-            )
-            response.raise_for_status()
-            data = response.json() if response.content else {}
-            token = _extract_openmetadata_token(data)
-            if token:
-                _OPENMETADATA_TOKEN_CACHE["token"] = token
-                return token
-            last_error = RuntimeError("OpenMetadata login succeeded but no JWT token was returned.")
-        except requests.exceptions.RequestException as exc:
-            last_error = exc
-
-    raise RuntimeError(f"OpenMetadata login failed: {last_error}") from last_error
+    return om_api_url(path)
 
 
 def _openmetadata_headers() -> dict[str, str]:
-    return {
-        "Accept": "application/json",
-        "Content-Type": "application/json",
-        "Authorization": f"Bearer {_openmetadata_login()}",
-        "User-Agent": OPENMETADATA_USER_AGENT,
-    }
+    return om_bearer_headers(user_agent="stm-from-data-model")
 
 
 def _openmetadata_request(method: str, endpoint: str, params: dict[str, Any] | None = None) -> Any:
@@ -735,10 +653,6 @@ def _openmetadata_request(method: str, endpoint: str, params: dict[str, Any] | N
                 params=params,
                 timeout=OPENMETADATA_TIMEOUT,
             )
-            if response.status_code == 401 and not os.getenv("OPENMETADATA_JWT_TOKEN"):
-                _OPENMETADATA_TOKEN_CACHE["token"] = None
-                if attempt < 1:
-                    continue
             response.raise_for_status()
             if response.status_code == 204 or not response.content:
                 return {}

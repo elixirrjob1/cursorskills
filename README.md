@@ -308,7 +308,7 @@ To use local OpenMetadata glossary governance tools from Cursor, add the **OpenM
 ./scripts/setup_openmetadata_mcp.sh
 ```
 
-This adds an `openmetadata` entry to `~/.cursor/mcp.json` without replacing other MCP servers. It loads `OPENMETADATA_BASE_URL`, `OPENMETADATA_EMAIL`, and `OPENMETADATA_PASSWORD` from the project `.env`.
+This adds an `openmetadata` entry to `~/.cursor/mcp.json` without replacing other MCP servers. It loads `OM_BASE_URL` and `OM_TOKEN` from the project `.env`.
 
 ### Per-Project (Not Recommended)
 

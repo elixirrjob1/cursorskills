@@ -30,7 +30,6 @@ Usage:
 from __future__ import annotations
 
 import argparse
-import base64
 import os
 import re
 import sys
@@ -41,72 +40,29 @@ from typing import Any
 import requests
 from dotenv import load_dotenv
 
-load_dotenv()
+from om_auth import om_api_url, om_bearer_headers
 
-API_VERSION_PREFIX = "v1"
-_TOKEN_CACHE: dict[str, Any] = {"token": None}
+load_dotenv()
 
 
 # ---------------------------------------------------------------------------
 # OpenMetadata REST helpers
 # ---------------------------------------------------------------------------
 
-def _api_root() -> str:
-    base = os.getenv("OPENMETADATA_BASE_URL", "").strip().rstrip("/")
-    if not base:
-        raise RuntimeError("Missing OPENMETADATA_BASE_URL")
-    return f"{base}/api" if not base.endswith("/api") else base
-
-
 def _api_url(path: str) -> str:
-    cleaned = path.lstrip("/")
-    if not cleaned.startswith(f"{API_VERSION_PREFIX}/"):
-        cleaned = f"{API_VERSION_PREFIX}/{cleaned}"
-    return f"{_api_root()}/{cleaned}"
-
-
-def _login() -> str:
-    jwt = os.getenv("OPENMETADATA_JWT_TOKEN", "").strip()
-    if jwt:
-        return jwt
-    cached = _TOKEN_CACHE.get("token")
-    if isinstance(cached, str) and cached.strip():
-        return cached.strip()
-    email = os.getenv("OPENMETADATA_EMAIL", "").strip()
-    password = os.getenv("OPENMETADATA_PASSWORD", "")
-    if not email or not password:
-        raise RuntimeError("Missing OPENMETADATA_EMAIL / OPENMETADATA_PASSWORD")
-    encoded = base64.b64encode(password.encode()).decode("ascii")
-    for payload in [{"email": email, "password": encoded}, {"email": email, "password": password}]:
-        try:
-            r = requests.post(
-                _api_url("users/login"),
-                headers={"Accept": "application/json", "Content-Type": "application/json"},
-                json=payload, timeout=(10, 30),
-            )
-            r.raise_for_status()
-            for key in ("accessToken", "jwtToken", "token", "id_token"):
-                tok = (r.json() if r.content else {}).get(key)
-                if isinstance(tok, str) and tok.strip():
-                    _TOKEN_CACHE["token"] = tok.strip()
-                    return tok.strip()
-        except Exception:
-            continue
-    raise RuntimeError("OpenMetadata login failed")
+    return om_api_url(path)
 
 
 def _headers(ct: str = "application/json") -> dict[str, str]:
-    return {"Accept": "application/json", "Content-Type": ct,
-            "Authorization": f"Bearer {_login()}"}
+    headers = om_bearer_headers(user_agent="apply-stm-to-openmetadata")
+    headers["Content-Type"] = ct
+    return headers
 
 
 def _get(path: str, params: dict | None = None) -> Any:
     for attempt in range(2):
         try:
             r = requests.get(_api_url(path), headers=_headers(), params=params, timeout=(10, 30))
-            if r.status_code == 401 and attempt == 0:
-                _TOKEN_CACHE["token"] = None
-                continue
             r.raise_for_status()
             return r.json()
         except Exception as e:
@@ -122,9 +78,6 @@ def _patch(path: str, ops: list[dict]) -> Any:
                 _api_url(path), headers=_headers("application/json-patch+json"),
                 json=ops, timeout=(10, 30),
             )
-            if r.status_code == 401 and attempt == 0:
-                _TOKEN_CACHE["token"] = None
-                continue
             r.raise_for_status()
             return r.json() if r.content else {"success": True}
         except Exception as e:

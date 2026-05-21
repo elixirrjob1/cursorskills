@@ -7,9 +7,9 @@ endpoint ({OM_URL}/mcp).  Handles authentication automatically so Cursor does
 not need to manage tokens.
 
 Credential resolution order (highest priority first):
-  1. Cloud secrets manager (SECRETS_PROVIDER env var)     → production
-  2. OPENMETADATA_TOKEN env var                           → pre-generated JWT
-  3. OPENMETADATA_API_URL + USERNAME + PASSWORD env vars  → auto-login (.env)
+  1. Cloud secrets manager (SECRETS_PROVIDER env var) → `openmetadata-api-url` + `openmetadata-token`
+  2. OM_TOKEN (legacy alias OPENMETADATA_JWT_TOKEN) from .env
+  3. OM_BASE_URL (legacy aliases OPENMETADATA_BASE_URL / OPENMETADATA_API_URL) for the MCP host
 
 All credentials should be stored in the workspace .env file (gitignored) or
 in a cloud secrets manager for production. Do not hardcode credentials here.
@@ -18,7 +18,6 @@ Transport:
   Cursor ──stdio/NDJSON──► this bridge ──HTTP POST──► {OM_URL}/mcp
 """
 
-import base64
 import json
 import logging
 import os
@@ -51,10 +50,8 @@ log = logging.getLogger("om-bridge")
 # ---------------------------------------------------------------------------
 
 _OM_SECRET_KEYS = {
-    "om_host":     "openmetadata-api-url",
-    "om_username": "openmetadata-username",
-    "om_password": "openmetadata-password",
-    "om_token":    "openmetadata-token",
+    "om_host": "openmetadata-api-url",
+    "om_token": "openmetadata-token",
 }
 
 
@@ -128,54 +125,31 @@ def resolve_credentials() -> dict:
 
     # Env vars — loaded from .env (auto-loaded at startup) or mcp.json env block
     creds: dict = {
-        "om_host":     os.environ.get("OPENMETADATA_API_URL") or os.environ.get("OPENMETADATA_HOST", ""),
-        "om_username": os.environ.get("OPENMETADATA_USERNAME", ""),
-        "om_password": os.environ.get("OPENMETADATA_PASSWORD", ""),
-        "om_token":    os.environ.get("OPENMETADATA_TOKEN", ""),
+        "om_host": os.environ.get("OM_BASE_URL")
+        or os.environ.get("OPENMETADATA_BASE_URL")
+        or os.environ.get("OPENMETADATA_API_URL")
+        or os.environ.get("OPENMETADATA_HOST", ""),
+        "om_token": os.environ.get("OM_TOKEN") or os.environ.get("OPENMETADATA_JWT_TOKEN", ""),
     }
 
     return creds
 
 
 # ---------------------------------------------------------------------------
-# OpenMetadata JWT login
+# OpenMetadata JWT (OM_TOKEN)
 # ---------------------------------------------------------------------------
 
 def get_jwt(creds: dict) -> str:
     """Return a valid JWT for the OpenMetadata MCP endpoint."""
-    if creds.get("om_token"):
-        log.info("Using pre-supplied OpenMetadata token")
-        return creds["om_token"]
+    token = (creds.get("om_token") or "").strip()
+    if token:
+        log.info("Using OM_TOKEN for OpenMetadata")
+        return token
 
-    host = creds.get("om_host", "").rstrip("/")
-    username = creds.get("om_username", "")
-    password = creds.get("om_password", "")
-
-    if not (host and username and password):
-        missing = [k for k in ("om_host", "om_username", "om_password") if not creds.get(k)]
-        raise RuntimeError(
-            f"OpenMetadata credentials incomplete — missing: {missing}. "
-            "Set OPENMETADATA_API_URL / OPENMETADATA_USERNAME / OPENMETADATA_PASSWORD "
-            "or add them to reference.md."
-        )
-
-    log.info("Logging into OpenMetadata as %s @ %s", username, host)
-    b64_pwd = base64.b64encode(password.encode()).decode()
-    resp = requests.post(
-        f"{host}/api/v1/users/login",
-        json={"email": username, "password": b64_pwd},
-        timeout=15,
+    raise RuntimeError(
+        "Missing OpenMetadata token. Set OM_TOKEN in .env "
+        "(OpenMetadata UI: Settings → Access Tokens)."
     )
-    if resp.status_code != 200:
-        raise RuntimeError(
-            f"OpenMetadata login failed ({resp.status_code}): {resp.text[:300]}"
-        )
-    data = resp.json()
-    token = data.get("accessToken") or data.get("token") or data.get("access_token", "")
-    if not token:
-        raise RuntimeError(f"Login response missing token — keys: {list(data.keys())}")
-    log.info("OpenMetadata login successful")
-    return token
 
 
 # ---------------------------------------------------------------------------

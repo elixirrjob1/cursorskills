@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 import argparse
-import base64
 import json
 import logging
 import os
@@ -18,44 +17,34 @@ _log = logging.getLogger(__name__)
 
 
 # ---------------------------------------------------------------------------
-# OpenMetadata direct REST helpers (mirrors tools/openmetadata_mcp/server.py)
+# OpenMetadata direct REST helpers (shared om_auth)
 # ---------------------------------------------------------------------------
 
+def _om_script_dir() -> Path:
+    script_dir = Path(__file__).resolve().parent
+    if str(script_dir) not in sys.path:
+        sys.path.insert(0, str(script_dir))
+    return script_dir
+
+
 def _om_base_url() -> str | None:
-    raw = os.getenv("OPENMETADATA_BASE_URL", "").strip().rstrip("/")
-    if not raw:
+    try:
+        _om_script_dir()
+        from om_auth import om_api_root
+
+        return om_api_root()
+    except RuntimeError:
         return None
-    return f"{raw}/api" if not raw.endswith("/api") else raw
 
 
 def _om_login_token() -> str | None:
-    jwt = os.getenv("OPENMETADATA_JWT_TOKEN", "").strip()
-    if jwt:
-        return jwt
-    base = _om_base_url()
-    email = os.getenv("OPENMETADATA_EMAIL", "").strip()
-    password = os.getenv("OPENMETADATA_PASSWORD", "")
-    if not base or not email or not password:
+    try:
+        _om_script_dir()
+        from om_auth import om_token
+
+        return om_token()
+    except RuntimeError:
         return None
-    import requests as _req
-    encoded = base64.b64encode(password.encode("utf-8")).decode("ascii")
-    for pwd in (encoded, password):
-        try:
-            resp = _req.post(
-                f"{base}/v1/users/login",
-                headers={"Accept": "application/json", "Content-Type": "application/json"},
-                json={"email": email, "password": pwd},
-                timeout=(10, 30),
-            )
-            resp.raise_for_status()
-            data = resp.json() if resp.content else {}
-            for key in ("accessToken", "jwtToken", "token", "id_token"):
-                val = data.get(key) if isinstance(data, dict) else None
-                if isinstance(val, str) and val.strip():
-                    return val.strip()
-        except Exception:
-            continue
-    return None
 
 
 def _om_fetch_glossary_payload() -> dict | None:

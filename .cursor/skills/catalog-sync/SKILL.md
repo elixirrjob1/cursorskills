@@ -17,7 +17,7 @@ This skill assumes the repo-local OpenMetadata MCP server is the execution surfa
 
 Before using the workflow:
 - ensure the OpenMetadata MCP server is registered in Cursor
-- ensure `OPENMETADATA_BASE_URL`, `OPENMETADATA_EMAIL`, and `OPENMETADATA_PASSWORD` are available
+- ensure `OM_BASE_URL` and `OM_TOKEN` are available in `.env` (legacy aliases: `OPENMETADATA_BASE_URL`, `OPENMETADATA_JWT_TOKEN`)
 - ensure the database connection details are available for the target service type
 
 If the MCP server is not set up yet, use the repo scripts:

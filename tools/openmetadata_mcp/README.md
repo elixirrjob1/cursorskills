@@ -6,8 +6,8 @@ Repo-local stdio MCP server for OpenMetadata glossary operations, database sync 
 
 ```bash
 export OPENMETADATA_BASE_URL="http://52.255.209.74:8585"
-export OPENMETADATA_EMAIL="admin@open-metadata.org"
-export OPENMETADATA_PASSWORD="admin"
+export OM_BASE_URL="http://localhost:8585"
+export OM_TOKEN="<your-access-token-or-bot-jwt>"
 ```
 
 Optional:

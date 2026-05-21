@@ -3,22 +3,28 @@
 
 from __future__ import annotations
 
-import base64
 import json
 import os
+import sys
 import time
 from datetime import datetime
+from pathlib import Path
 from typing import Any
 
 import requests
 
 from mcp.server.fastmcp import FastMCP
 
+_SCRIPTS = Path(__file__).resolve().parents[2] / "scripts"
+if str(_SCRIPTS) not in sys.path:
+    sys.path.insert(0, str(_SCRIPTS))
+
+from om_auth import om_api_root, om_api_url, om_bearer_headers  # noqa: E402
+
 
 mcp = FastMCP("openmetadata-mcp")
 
 USER_AGENT = "openmetadata-cursor-mcp"
-LOGIN_ENDPOINT = "users/login"
 API_VERSION_PREFIX = "v1"
 
 DATABASE_SERVICE_ENDPOINT = "services/databaseServices"
@@ -43,45 +49,30 @@ PIPELINE_RUN_ENDPOINT_CANDIDATES = (
 )
 TABLE_ENTITY_FIELDS = "columns,tags"
 
-_TOKEN_CACHE: dict[str, Any] = {"token": None}
-
 
 def _normalize_base_url(value: str) -> str:
     base = (value or "").strip().rstrip("/")
     if not base:
-        raise RuntimeError("Missing OpenMetadata base URL. Set OPENMETADATA_BASE_URL.")
+        raise RuntimeError("Missing OpenMetadata base URL. Set OM_BASE_URL.")
     if base.endswith("/api"):
         return base
     return f"{base}/api"
 
 
 def _api_root() -> str:
-    return _normalize_base_url(os.getenv("OPENMETADATA_BASE_URL", ""))
+    return om_api_root()
 
 
 def _api_url(path: str) -> str:
-    cleaned = path.lstrip("/")
-    if not cleaned.startswith(f"{API_VERSION_PREFIX}/"):
-        cleaned = f"{API_VERSION_PREFIX}/{cleaned}"
-    return f"{_api_root()}/{cleaned}"
+    return om_api_url(path)
 
 
-def _login_payloads() -> list[dict[str, str]]:
-    email = os.getenv("OPENMETADATA_EMAIL", "").strip()
-    password = os.getenv("OPENMETADATA_PASSWORD", "")
-    if not email or not password:
-        raise RuntimeError(
-            "Missing OpenMetadata credentials. Set OPENMETADATA_EMAIL and OPENMETADATA_PASSWORD."
-        )
-
-    encoded_password = base64.b64encode(password.encode("utf-8")).decode("ascii")
-    return [
-        {"email": email, "password": encoded_password},
-        {"email": email, "password": password},
-    ]
+def _headers() -> dict[str, str]:
+    return om_bearer_headers(user_agent=USER_AGENT)
 
 
 def _extract_token(payload: Any) -> str | None:
+    """Parse token fields from API payloads (used by tests and response helpers)."""
     if isinstance(payload, str) and payload.strip():
         return payload.strip()
     if isinstance(payload, dict):
@@ -95,51 +86,6 @@ def _extract_token(payload: Any) -> str | None:
             if token:
                 return token
     return None
-
-
-def _login() -> str:
-    jwt_token = os.getenv("OPENMETADATA_JWT_TOKEN", "").strip()
-    if jwt_token:
-        return jwt_token
-
-    cached = _TOKEN_CACHE.get("token")
-    if isinstance(cached, str) and cached.strip():
-        return cached.strip()
-
-    timeout = (10, 30)
-    last_error: Exception | None = None
-    for payload in _login_payloads():
-        try:
-            response = requests.post(
-                _api_url(LOGIN_ENDPOINT),
-                headers={
-                    "Accept": "application/json",
-                    "Content-Type": "application/json",
-                    "User-Agent": USER_AGENT,
-                },
-                json=payload,
-                timeout=timeout,
-            )
-            response.raise_for_status()
-            data = response.json() if response.content else {}
-            token = _extract_token(data)
-            if token:
-                _TOKEN_CACHE["token"] = token
-                return token
-            last_error = RuntimeError("OpenMetadata login succeeded but no JWT token was returned.")
-        except requests.exceptions.RequestException as exc:
-            last_error = exc
-
-    raise RuntimeError(f"OpenMetadata login failed: {last_error}") from last_error
-
-
-def _headers() -> dict[str, str]:
-    return {
-        "Accept": "application/json",
-        "Content-Type": "application/json",
-        "Authorization": f"Bearer {_login()}",
-        "User-Agent": USER_AGENT,
-    }
 
 
 def _clean_dict(payload: dict[str, Any]) -> dict[str, Any]:
@@ -166,14 +112,10 @@ def _request(
                 params=params,
                 timeout=timeout,
             )
-            if response.status_code == 401 and not os.getenv("OPENMETADATA_JWT_TOKEN"):
-                _TOKEN_CACHE["token"] = None
-                if attempt < max_retries - 1:
-                    continue
             response.raise_for_status()
             if response.status_code == 204 or not response.content:
                 return {"message": "Request completed", "success": True}
-            return response.json()
+                return response.json()
         except requests.exceptions.RequestException as exc:
             last_error = exc
             if attempt == max_retries - 1:
@@ -198,10 +140,6 @@ def _patch_json_patch(endpoint: str, patch_ops: list[dict[str, Any]]) -> Any:
                 json=patch_ops,
                 timeout=timeout,
             )
-            if response.status_code == 401 and not os.getenv("OPENMETADATA_JWT_TOKEN"):
-                _TOKEN_CACHE["token"] = None
-                if attempt < 1:
-                    continue
             response.raise_for_status()
             if response.status_code == 204 or not response.content:
                 return {"message": "Request completed", "success": True}
@@ -506,7 +444,7 @@ def test_connection() -> str:
         {
             "success": True,
             "users_returned": len(users) if isinstance(users, list) else 0,
-            "base_url": os.getenv("OPENMETADATA_BASE_URL", ""),
+            "base_url": os.getenv("OM_BASE_URL", "") or os.getenv("OPENMETADATA_BASE_URL", ""),
             "timestamp": datetime.now().isoformat(),
         }
     )

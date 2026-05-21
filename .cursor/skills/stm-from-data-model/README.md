@@ -31,7 +31,7 @@ Required warehouse context variables (set one from each group):
 
 Required OpenMetadata variables:
 - `OPENMETADATA_BASE_URL`
-- `OPENMETADATA_EMAIL` and `OPENMETADATA_PASSWORD`, or `OPENMETADATA_JWT_TOKEN`
+- `OM_BASE_URL` and `OM_TOKEN` (legacy aliases: `OPENMETADATA_BASE_URL`, `OPENMETADATA_JWT_TOKEN`)
 
 ## Usage
 

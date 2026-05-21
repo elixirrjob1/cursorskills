@@ -23,7 +23,7 @@ if [[ ! -f "$MCP_JSON" ]]; then
   }
 }" > "$MCP_JSON"
   echo "Created $MCP_JSON with openmetadata."
-  echo "Set OPENMETADATA_BASE_URL, OPENMETADATA_EMAIL, and OPENMETADATA_PASSWORD in project .env."
+  echo "Set OM_BASE_URL and OM_TOKEN in project .env."
   exit 0
 fi
 
@@ -32,7 +32,7 @@ if command -v jq >/dev/null 2>&1; then
   jq --argjson server "$SERVER_JSON" '.mcpServers = (.mcpServers // {}) | .mcpServers["openmetadata"] = $server' "$MCP_JSON" > "$tmp"
   mv "$tmp" "$MCP_JSON"
   echo "Updated $MCP_JSON with openmetadata."
-  echo "Set OPENMETADATA_BASE_URL, OPENMETADATA_EMAIL, and OPENMETADATA_PASSWORD in project .env."
+  echo "Set OM_BASE_URL and OM_TOKEN in project .env."
   exit 0
 fi
 

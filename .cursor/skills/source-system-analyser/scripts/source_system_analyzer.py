@@ -143,98 +143,16 @@ def _resolve_database_url(
     )
 
 
-def _normalize_openmetadata_base_url(value: str) -> str:
-    base = str(value or "").strip().rstrip("/")
-    if not base:
-        raise RuntimeError("Missing OpenMetadata base URL.")
-    if base.endswith("/api"):
-        return base
-    return f"{base}/api"
-
-
-def _openmetadata_api_root() -> str:
-    return _normalize_openmetadata_base_url(os.getenv("OPENMETADATA_BASE_URL", ""))
-
-
 def _openmetadata_api_url(path: str) -> str:
-    cleaned = path.lstrip("/")
-    if not cleaned.startswith(f"{_OPENMETADATA_API_VERSION_PREFIX}/"):
-        cleaned = f"{_OPENMETADATA_API_VERSION_PREFIX}/{cleaned}"
-    return f"{_openmetadata_api_root()}/{cleaned}"
+    from om_auth import om_api_url
 
-
-def _openmetadata_login_payloads() -> List[Dict[str, str]]:
-    email = os.getenv("OPENMETADATA_EMAIL", "").strip()
-    password = os.getenv("OPENMETADATA_PASSWORD", "")
-    if not email or not password:
-        raise RuntimeError("Missing OpenMetadata credentials.")
-
-    encoded_password = json.dumps(password).strip('"').encode("utf-8")
-    import base64
-
-    return [
-        {"email": email, "password": base64.b64encode(encoded_password).decode("ascii")},
-        {"email": email, "password": password},
-    ]
-
-
-def _extract_openmetadata_token(payload: Any) -> str | None:
-    if isinstance(payload, str) and payload.strip():
-        return payload.strip()
-    if isinstance(payload, dict):
-        for key in ("accessToken", "jwtToken", "token", "id_token"):
-            value = payload.get(key)
-            if isinstance(value, str) and value.strip():
-                return value.strip()
-        for nested_key in ("data", "response"):
-            token = _extract_openmetadata_token(payload.get(nested_key))
-            if token:
-                return token
-    return None
-
-
-def _openmetadata_login() -> str:
-    jwt_token = os.getenv("OPENMETADATA_JWT_TOKEN", "").strip()
-    if jwt_token:
-        return jwt_token
-
-    cached = _OPENMETADATA_TOKEN_CACHE.get("token")
-    if isinstance(cached, str) and cached.strip():
-        return cached.strip()
-
-    last_error: Exception | None = None
-    for payload in _openmetadata_login_payloads():
-        try:
-            response = requests.post(
-                _openmetadata_api_url(_OPENMETADATA_LOGIN_ENDPOINT),
-                headers={
-                    "Accept": "application/json",
-                    "Content-Type": "application/json",
-                    "User-Agent": "source-system-analyzer-openmetadata",
-                },
-                json=payload,
-                timeout=_OPENMETADATA_TIMEOUT,
-            )
-            response.raise_for_status()
-            data = response.json() if response.content else {}
-            token = _extract_openmetadata_token(data)
-            if token:
-                _OPENMETADATA_TOKEN_CACHE["token"] = token
-                return token
-            last_error = RuntimeError("OpenMetadata login succeeded but no token was returned.")
-        except requests.RequestException as exc:
-            last_error = exc
-
-    raise RuntimeError(f"OpenMetadata login failed: {last_error}") from last_error
+    return om_api_url(path)
 
 
 def _openmetadata_headers() -> Dict[str, str]:
-    return {
-        "Accept": "application/json",
-        "Content-Type": "application/json",
-        "Authorization": f"Bearer {_openmetadata_login()}",
-        "User-Agent": "source-system-analyzer-openmetadata",
-    }
+    from om_auth import om_bearer_headers
+
+    return om_bearer_headers(user_agent="source-system-analyzer-openmetadata")
 
 
 def _openmetadata_request(method: str, endpoint: str, params: Optional[Dict[str, Any]] = None) -> Any:
@@ -245,15 +163,6 @@ def _openmetadata_request(method: str, endpoint: str, params: Optional[Dict[str,
         params=params,
         timeout=_OPENMETADATA_TIMEOUT,
     )
-    if response.status_code == 401 and not os.getenv("OPENMETADATA_JWT_TOKEN"):
-        _OPENMETADATA_TOKEN_CACHE["token"] = None
-        response = requests.request(
-            method=method,
-            url=_openmetadata_api_url(endpoint),
-            headers=_openmetadata_headers(),
-            params=params,
-            timeout=_OPENMETADATA_TIMEOUT,
-        )
     response.raise_for_status()
     if response.status_code == 204 or not response.content:
         return {}
@@ -497,11 +406,8 @@ logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 _RULES_CACHE: Optional[Dict[str, Any]] = None
 _DESCRIPTION_CONFIG_FILENAME = "source-system-description.json"
 _DEFAULT_AZURE_OPENAI_API_VERSION = "2024-12-01-preview"
-_OPENMETADATA_LOGIN_ENDPOINT = "users/login"
-_OPENMETADATA_API_VERSION_PREFIX = "v1"
 _OPENMETADATA_TABLE_FIELDS = "columns,tags"
 _OPENMETADATA_TIMEOUT = (10, 30)
-_OPENMETADATA_TOKEN_CACHE: Dict[str, Optional[str]] = {"token": None}
 
 
 def _humanize_identifier(value: str) -> str:

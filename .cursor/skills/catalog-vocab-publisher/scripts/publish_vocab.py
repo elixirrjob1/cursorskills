@@ -23,6 +23,7 @@ import argparse
 import os
 import re
 import sys
+from pathlib import Path
 from dataclasses import dataclass, field
 from typing import Optional
 
@@ -245,18 +246,6 @@ def publish(classifications: list[Classification], base_url: str, token: str) ->
 # Entry point
 # ---------------------------------------------------------------------------
 
-def _require_env(name: str) -> str:
-    value = os.environ.get(name, "").strip()
-    if not value:
-        print(
-            f"ERROR: Required environment variable '{name}' is not set or is empty.\n"
-            "       Copy .env.example to .env, fill in your values, and export them before running.",
-            file=sys.stderr,
-        )
-        sys.exit(1)
-    return value
-
-
 def main():
     parser = argparse.ArgumentParser(
         description="Publish a governance vocabulary .md to OpenMetadata Classifications and Tags."
@@ -264,8 +253,17 @@ def main():
     parser.add_argument("--file", required=True, help="Path to the governance vocabulary .md file.")
     args = parser.parse_args()
 
-    base_url = _require_env("OM_BASE_URL").rstrip("/")
-    token = _require_env("OM_TOKEN")
+    _script_dir = Path(__file__).resolve().parent
+    if str(_script_dir) not in sys.path:
+        sys.path.insert(0, str(_script_dir))
+    from om_auth import om_base_url_host, om_token
+
+    try:
+        base_url = om_base_url_host()
+        token = om_token()
+    except RuntimeError as exc:
+        print(f"ERROR: {exc}", file=sys.stderr)
+        sys.exit(1)
 
     if not os.path.isfile(args.file):
         print(f"ERROR: File not found: {args.file}", file=sys.stderr)

@@ -15,9 +15,9 @@ import requests
 
 from mcp.server.fastmcp import FastMCP
 
-_SCRIPTS = Path(__file__).resolve().parents[2] / "scripts"
-if str(_SCRIPTS) not in sys.path:
-    sys.path.insert(0, str(_SCRIPTS))
+_MCP_DIR = Path(__file__).resolve().parent
+if str(_MCP_DIR) not in sys.path:
+    sys.path.insert(0, str(_MCP_DIR))
 
 from om_auth import om_api_root, om_api_url, om_bearer_headers  # noqa: E402
 
@@ -186,14 +186,16 @@ def _required_connection_fields(service_type: str) -> set[str]:
     return mapping.get(normalized, set())
 
 
-def _repo_root() -> Path:
-    return Path(__file__).resolve().parents[2]
-
-
 def _load_repo_dotenv() -> None:
-    """Load repo ``.env`` once so ``*_env`` connection refs resolve server-side."""
-    env_file = _repo_root() / ".env"
-    if not env_file.is_file():
+    """Load nearest ``.env`` so ``*_env`` connection refs resolve server-side."""
+    start = Path(__file__).resolve().parent
+    env_file = None
+    for candidate in [start, *start.parents]:
+        path = candidate / ".env"
+        if path.is_file():
+            env_file = path
+            break
+    if env_file is None:
         return
     for line in env_file.read_text(encoding="utf-8").splitlines():
         stripped = line.strip()

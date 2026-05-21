@@ -29,10 +29,14 @@ The MCP resolves values server-side; the agent should only ask the user for vari
 
 ## Local run
 
+From the monorepo:
+
 ```bash
 ./scripts/install_openmetadata_mcp_deps.sh
 ./tools/openmetadata_mcp/run.sh
 ```
+
+From a standalone `mcp-openmetadata` clone: install vendor deps into `./vendor`, place `.env` in this directory or a parent workspace folder, then `./run.sh`. `om_auth.py` is bundled in this package.
 
 ## Available tools
 

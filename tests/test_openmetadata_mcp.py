@@ -78,6 +78,46 @@ class OpenMetadataMcpTests(unittest.TestCase):
         self.assertIn("hostPort", str(ctx.exception))
         self.assertIn("database", str(ctx.exception))
 
+    @mock.patch.dict(os.environ, {"TEST_MYSQL_PASSWORD": "from-env"}, clear=False)
+    def test_resolve_connection_config_password_env(self):
+        resolved = openmetadata_module._resolve_connection_config(
+            {
+                "username": "reader",
+                "password_env": "TEST_MYSQL_PASSWORD",
+                "hostPort": "localhost:3306",
+            }
+        )
+        self.assertEqual(resolved["password"], "from-env")
+        self.assertNotIn("password_env", resolved)
+
+    @mock.patch.dict(
+        os.environ,
+        {"TEST_SF_USER": "svc", "TEST_MYSQL_PASSWORD": "from-env"},
+        clear=False,
+    )
+    def test_service_connection_payload_resolves_env_refs(self):
+        with mock.patch.object(openmetadata_module, "_load_repo_dotenv"):
+            payload = openmetadata_module._service_connection_payload(
+                "Snowflake",
+                {
+                    "username_env": "TEST_SF_USER",
+                    "password_env": "TEST_MYSQL_PASSWORD",
+                    "account": "acct",
+                    "warehouse": "wh",
+                },
+            )
+        self.assertEqual(payload["config"]["username"], "svc")
+        self.assertEqual(payload["config"]["password"], "from-env")
+        self.assertNotIn("password_env", payload["config"])
+
+    def test_connection_field_present_accepts_env_ref(self):
+        self.assertTrue(
+            openmetadata_module._connection_field_present(
+                {"password_env": "MYSQL_RETAIL_PROD_PASSWORD"},
+                "password",
+            )
+        )
+
     def test_ingestion_pipeline_payload_uses_database_metadata_defaults(self):
         service_ref = {
             "id": "svc-id",

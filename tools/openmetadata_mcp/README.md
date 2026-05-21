@@ -16,7 +16,16 @@ Optional:
 export OPENMETADATA_JWT_TOKEN="existing-jwt-token"
 ```
 
-If `OPENMETADATA_JWT_TOKEN` is present, the server uses it directly. Otherwise it logs in with email/password and caches the JWT in-memory.
+Authentication uses `OM_TOKEN` (Bearer JWT) only — no email/password login.
+
+### Database connection secrets
+
+`create_database_service` and `update_database_service` accept `connection_config` with secrets referenced by **`.env` variable name**, not inline values:
+
+- `password_env`: `"MYSQL_RETAIL_PROD_PASSWORD"` → reads `MYSQL_RETAIL_PROD_PASSWORD` from repo `.env`
+- Any field: `"password": "env:MYSQL_RETAIL_PROD_PASSWORD"` (same resolution)
+
+The MCP resolves values server-side; the agent should only ask the user for variable **names**.
 
 ## Local run
 

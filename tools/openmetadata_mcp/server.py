@@ -115,7 +115,7 @@ def _request(
             response.raise_for_status()
             if response.status_code == 204 or not response.content:
                 return {"message": "Request completed", "success": True}
-                return response.json()
+            return response.json()
         except requests.exceptions.RequestException as exc:
             last_error = exc
             if attempt == max_retries - 1:
@@ -186,6 +186,76 @@ def _required_connection_fields(service_type: str) -> set[str]:
     return mapping.get(normalized, set())
 
 
+def _repo_root() -> Path:
+    return Path(__file__).resolve().parents[2]
+
+
+def _load_repo_dotenv() -> None:
+    """Load repo ``.env`` once so ``*_env`` connection refs resolve server-side."""
+    env_file = _repo_root() / ".env"
+    if not env_file.is_file():
+        return
+    for line in env_file.read_text(encoding="utf-8").splitlines():
+        stripped = line.strip()
+        if not stripped or stripped.startswith("#") or "=" not in stripped:
+            continue
+        key, _, value = stripped.partition("=")
+        key = key.strip()
+        if not key or key in os.environ:
+            continue
+        value = value.strip()
+        if len(value) >= 2 and value[0] == value[-1] and value[0] in "\"'":
+            value = value[1:-1]
+        os.environ[key] = value
+
+
+def _lookup_env_var(var_name: str) -> str:
+    name = (var_name or "").strip()
+    if not name:
+        raise RuntimeError("Environment variable name is empty.")
+    if not name.replace("_", "").isalnum():
+        raise RuntimeError(f"Invalid environment variable name: {name!r}")
+    _load_repo_dotenv()
+    value = os.getenv(name, "").strip()
+    if not value:
+        raise RuntimeError(
+            f"Environment variable {name!r} is not set. Add it to the repo .env file."
+        )
+    return value
+
+
+def _connection_field_present(config: dict[str, Any], field: str) -> bool:
+    direct = config.get(field)
+    if direct not in (None, "", [], {}):
+        return True
+    env_ref = config.get(f"{field}_env")
+    return isinstance(env_ref, str) and bool(env_ref.strip())
+
+
+def _resolve_connection_config(connection_config: dict[str, Any]) -> dict[str, Any]:
+    """Resolve ``field_env`` and ``env:VAR`` values from ``.env``; never log secrets."""
+    config = dict(connection_config)
+    resolved: dict[str, Any] = {}
+
+    for key, value in list(config.items()):
+        if key.endswith("_env"):
+            field = key[: -len("_env")]
+            if not field:
+                continue
+            var_name = str(value).strip()
+            resolved[field] = _lookup_env_var(var_name)
+            continue
+
+        if isinstance(value, str) and value.startswith("env:"):
+            var_name = value[4:].strip()
+            resolved[key] = _lookup_env_var(var_name)
+            continue
+
+        resolved[key] = value
+
+    return resolved
+
+
 def _validate_connection_config(service_type: str, connection_config: dict[str, Any]) -> None:
     required_fields = _required_connection_fields(service_type)
     if not required_fields:
@@ -194,12 +264,13 @@ def _validate_connection_config(service_type: str, connection_config: dict[str, 
     missing = sorted(
         field
         for field in required_fields
-        if connection_config.get(field) in (None, "", [], {})
+        if not _connection_field_present(connection_config, field)
     )
     if missing:
         raise RuntimeError(
             f"Missing required connection fields for {_normalize_service_type(service_type)}: "
             + ", ".join(missing)
+            + ". Provide the value or a .env variable name via field_env (e.g. password_env)."
         )
 
 
@@ -207,11 +278,14 @@ def _service_connection_payload(
     service_type: str,
     connection_config: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
-    config = dict(connection_config or {})
     normalized_type = _normalize_service_type(service_type)
+    _validate_connection_config(normalized_type, connection_config or {})
+    config = _resolve_connection_config(connection_config or {})
     if "type" not in config:
         config["type"] = normalized_type
-    _validate_connection_config(normalized_type, config)
+    for key in list(config):
+        if key.endswith("_env"):
+            del config[key]
     return {"config": config}
 
 

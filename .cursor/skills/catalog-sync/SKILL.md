@@ -18,7 +18,7 @@ This skill assumes the repo-local OpenMetadata MCP server is the execution surfa
 Before using the workflow:
 - ensure the OpenMetadata MCP server is registered in Cursor
 - ensure `OM_BASE_URL` and `OM_TOKEN` are available in `.env` (legacy aliases: `OPENMETADATA_BASE_URL`, `OPENMETADATA_JWT_TOKEN`)
-- ensure the database connection details are available for the target service type
+- ensure database connection secrets are stored in the repo `.env` under names the user provides (see Credentials below)
 
 If the MCP server is not set up yet, use the repo scripts:
 
@@ -63,12 +63,38 @@ If the MCP server is not set up yet, use the repo scripts:
 - Pass the service-specific connection settings through `connection_config`.
 - Do not invent connection fields or credentials. If required values are missing, stop and ask for them.
 
-For known service types, use these minimum fields:
+### Credentials (never ask for secret values in chat)
+
+For any sensitive or connection field (`password`, `username`, etc.):
+
+1. Ask the user for the **`.env` variable name** only (e.g. `MYSQL_RETAIL_PROD_PASSWORD`), not the value.
+2. Confirm the variable exists in the repo `.env` (you may run `grep '^MYSQL_RETAIL' .env` to check the name exists — do not print values).
+3. Pass references in `connection_config` using either form:
+   - **`{field}_env`**: e.g. `"password_env": "MYSQL_RETAIL_PROD_PASSWORD"`
+   - **`env:VAR`**: e.g. `"password": "env:MYSQL_RETAIL_PROD_PASSWORD"`
+
+The OpenMetadata MCP server resolves these from `.env` at call time. The agent never sees or repeats secret values.
+
+Non-secret fields (`hostPort`, `account`, `warehouse`, `database`) may be literals in `connection_config` or use the same `*_env` / `env:` pattern if the user prefers.
+
+For known service types, use these minimum fields (literal or `*_env` / `env:` for each):
+
 - `Snowflake`: `username`, `password`, `account`, `warehouse`
 - `Postgres`: `username`, `password`, `hostPort`, `database`
 - `Mysql`: `username`, `password`, `hostPort`, `database`
 - `Mssql`: `username`, `password`, `hostPort`, `database`
 - `Oracle`: `username`, `password`, `hostPort`, `serviceName`
+
+Example `connection_config` for MySQL (password only via `.env`):
+
+```json
+{
+  "username": "om_reader",
+  "password_env": "MYSQL_RETAIL_PROD_PASSWORD",
+  "hostPort": "mysql.example.com:3306",
+  "database": "retail_erp"
+}
+```
 
 ## Tagging Rules
 
@@ -88,6 +114,7 @@ The analyzer output can keep technical metadata such as column type and generate
 
 ## Guardrails
 
+- Never ask for or print secret **values** in chat (only `.env` variable **names**).
 - Never print secrets in the final response.
 - Do not create duplicate services or pipelines when an existing one can be reused.
 - Do not treat glossary and classification tags as the same thing.

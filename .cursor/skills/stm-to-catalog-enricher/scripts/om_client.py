@@ -12,7 +12,7 @@ _SCRIPT_DIR = Path(__file__).resolve().parent
 if str(_SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(_SCRIPT_DIR))
 
-from om_auth import om_api_root, om_bearer_headers, om_token  # noqa: E402
+from om_auth import om_api_root, om_api_url, om_token  # noqa: E402
 
 
 def _load_env_file(start: Path | None = None) -> None:
@@ -38,17 +38,26 @@ def login() -> tuple[str, str]:
     return om_api_root(), om_token()
 
 
+def _resolve_api_url(path: str) -> str:
+    """Build a full OM REST URL from caller paths like ``/api/v1/tables/...``."""
+    raw = path.strip()
+    query = ""
+    if "?" in raw:
+        raw, query = raw.split("?", 1)
+        query = f"?{query}"
+
+    cleaned = raw.lstrip("/")
+    if cleaned.startswith("api/"):
+        cleaned = cleaned[len("api/") :]
+    if cleaned.startswith("v1/"):
+        cleaned = cleaned[len("v1/") :]
+
+    return om_api_url(cleaned) + query
+
+
 def api(method: str, path: str, token: str, *, body: Any = None, content_type: str | None = None) -> Any:
     """Call an OM REST endpoint. Returns parsed JSON or raises."""
-    import os
-
-    base_url = os.environ.get("OM_BASE_URL", "") or os.environ.get("OPENMETADATA_BASE_URL", "")
-    base_url = base_url.strip().rstrip("/")
-    if base_url.endswith("/api"):
-        base_url = base_url
-    else:
-        base_url = f"{base_url}/api" if base_url else om_api_root()
-    url = f"{base_url}{path}" if path.startswith("/") else f"{base_url}/{path}"
+    url = _resolve_api_url(path)
     payload = None
     headers = {"Authorization": f"Bearer {token}"}
     if body is not None:

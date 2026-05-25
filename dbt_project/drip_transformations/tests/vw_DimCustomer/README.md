@@ -109,7 +109,8 @@ committed here. If you need to regenerate, use the
 `view-to-dbt-unit-test` skill with:
 
 ```
-OM host:           http://52.255.209.74:8585
+OM host:           https://openmetadata.responsum.ai  (or your instance URL)
+Auth:              OM_TOKEN JWT in `.env` (Settings → Access Tokens or Bots)
 Service prefix:    snowflake_fivetran
 Resolved FQN:      snowflake_fivetran.DRIP_DATA_INTELLIGENCE.BRONZE_ERP__DBO.CUSTOMERS
 Model name:        vw_DimCustomer

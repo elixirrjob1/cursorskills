@@ -122,7 +122,7 @@ MCP server configurations (Snowflake, OpenMetadata, Fivetran, dbt) are included 
 
 Update the relevant entries in `~/.cursor/mcp.json` (or the per-project `mcp.json` in `dbtproject/`) with your personal credentials for:
 - Snowflake (account, username, password/key)
-- OpenMetadata (base URL, email, password)
+- OpenMetadata (`OM_BASE_URL` and `OM_TOKEN` JWT in `.env`)
 - Fivetran (API key)
 
 The dbt MCP uses OAuth or a service PAT — run `uvx dbt-mcp auth` inside the `dbtproject` folder once to authenticate.

@@ -94,9 +94,8 @@ The intermediate `lineage.json` / `enriched.json` / `ref_map.json` are not
 committed here. To regenerate, use the `view-to-dbt-unit-test` skill with:
 
 ```
-OM host:           http://52.255.209.74:8585
-Auth:              email=admin@open-metadata.org, password=admin (basic-auth
-                   login → JWT exchange, supported since skill commit 6036beb)
+OM host:           https://openmetadata.responsum.ai  (or your instance URL)
+Auth:              OM_TOKEN JWT in `.env` (Settings → Access Tokens or Bots)
 Service prefix:    snowflake_fivetran
 Resolved FQN:      snowflake_fivetran.DRIP_DATA_INTELLIGENCE.BRONZE_ERP__DBO.EMPLOYEES
 Model name:        vw_DimEmployee

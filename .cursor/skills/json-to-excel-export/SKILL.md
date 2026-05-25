@@ -98,7 +98,7 @@ If `OM_BASE_URL` is set but the instance is unreachable or slow, the script will
 Hidden round-trip tabs (`__rt_meta`, `__rt_payload`) and the classification-validation helper sheet (`__dv_classifications`) are internal. Any values written to those tabs are never read back during reverse conversion — only the visible sheets are applied. Edit the visible tabs only.
 
 **`requests` must be installed for auto-fetch.**
-The `requests` library is imported lazily inside `_om_login_token` and `_om_fetch_glossary_payload`. If it is not installed and `--no-openmetadata` / `--glossary-json` are not set, the script will raise an `ImportError` at runtime. Install it or use one of the two skip flags.
+The `requests` library is imported lazily inside `_om_fetch_glossary_payload` (which reads `OM_TOKEN` via `om_auth.py`). If it is not installed and `--no-openmetadata` / `--glossary-json` are not set, the script will raise an `ImportError` at runtime. Install it or use one of the two skip flags.
 
 **Legacy workbooks without `__rt_*` tabs.**
 `excel_to_json.py` falls back to applying visible sheet edits only when no `__rt_meta` sheet is found. The reconstructed JSON will lack any fields that were not visible in the workbook — this is expected and documented behaviour.

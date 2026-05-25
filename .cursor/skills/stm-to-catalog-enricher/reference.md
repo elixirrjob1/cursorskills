@@ -86,4 +86,4 @@ Observed when the MCP server is overloaded. Mitigations:
 
 ### 401 on PATCH after a while
 
-OpenMetadata JWT tokens expire after a few hours. The helper scripts re-login automatically per invocation. If you're running things manually, re-run the login block before each PATCH.
+`OM_TOKEN` JWTs expire when the token reaches its expiry (or is revoked). Helper scripts read a fresh token from `.env` on each invocation — they do not call a username/password login endpoint. Regenerate the token in OpenMetadata (**Settings → Access Tokens** or **Bots**), update `OM_TOKEN` in `.env`, and retry.

@@ -8,7 +8,7 @@ A Cursor-based agent skill that generates domain business glossaries and pushes 
 
 - [Cursor IDE](https://cursor.sh/) installed
 - Python 3.10+ available on your PATH
-- Access to an OpenMetadata instance (URL, email, and password)
+- Access to an OpenMetadata instance (base URL and a long-lived JWT access token)
 
 ---
 
@@ -53,7 +53,7 @@ OM_TOKEN=
 SNOWFLAKE_DATABASE=DRIP_DATA_INTELLIGENCE
 ```
 
-Replace the placeholders with the values from your OpenMetadata instance metadata (email and password).
+Set `OM_BASE_URL` (or `OPENMETADATA_BASE_URL`) to your OpenMetadata host URL and `OM_TOKEN` to a long-lived JWT from **Settings → Access Tokens** (or **Settings → Bots**) in the OpenMetadata UI. Copy other empty values from the team Key Vault or Bitwarden onboarding item.
 
 ---
 

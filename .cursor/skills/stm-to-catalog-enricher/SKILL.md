@@ -58,7 +58,7 @@ python scripts/patch_pipeline_filter.py \
   --include-databases DRIP_DATA_INTELLIGENCE
 ```
 
-Pipeline id can be discovered with `list_ingestion_pipelines` (MCP). The script handles login, base64-password quirk, and JSON-patch payload.
+Pipeline id can be discovered with `list_ingestion_pipelines` (MCP). The script authenticates with `OM_TOKEN` from `.env` (via `om_client.py` / `om_auth.py`) and sends the JSON-patch payload.
 
 ### Step 3 — Trigger ingestion
 

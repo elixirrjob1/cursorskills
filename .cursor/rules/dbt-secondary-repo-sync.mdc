@@ -11,7 +11,9 @@ Pushing to main is not enough — you must also sync to the secondary repo or db
 
 ## When to sync
 
-After any commit that touches `dbt_project/drip_transformations/` — models, macros, schema YAML, sources.
+After any commit that touches `dbt_project/drip_transformations/` — models, macros, schema YAML, sources, or `docs/`.
+
+If you edited platform docs under `docs/`, run `./scripts/sync_onboarding_docs.sh` first so `dbt_project/drip_transformations/docs/` is up to date.
 
 ## How to sync (correct method — no force push)
 

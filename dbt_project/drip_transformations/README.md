@@ -4,6 +4,8 @@ Silver → Gold transformation layer for the Drip Data Intelligence platform.
 Models land in Snowflake schemas `DBT_DEV` / `DBT_DEV_ENRICHED` (dev) and
 `DBT_PROD` / `DBT_PROD_ENRICHED` (prod).
 
+**Platform onboarding:** see [docs/ONBOARDING.md](docs/ONBOARDING.md) (Bitwarden, `.env`, MCP, pipeline overview).
+
 ---
 
 ## Getting started

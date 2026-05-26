@@ -1,0 +1,27 @@
+---
+description: Sync platform docs to responsum-team/plugins (docs/ folder)
+alwaysApply: false
+globs: docs/**,plugins/docs/**
+---
+
+# Plugins Secondary Repo — Docs Sync
+
+Platform documentation is authored in `docs/` at the cursorskills repo root and mirrored to `plugins/docs/` for distribution via `responsum-team/plugins`.
+
+## When to sync
+
+After any commit that touches `docs/` (especially `ONBOARDING.md` or runbooks).
+
+## Steps
+
+```bash
+./scripts/sync_onboarding_docs.sh
+./scripts/sync_plugins_secondary_repo.sh
+```
+
+Requires `PAT2` in `.env`. Never force-push to `responsum-team/plugins`.
+
+## Rules
+
+- Edit docs only in `docs/` — not directly in `plugins/docs/` (overwritten by sync).
+- The plugins repo may also contain `skills/`, `rules/`, and `mcps/` assembled separately; this rule covers `docs/` only.

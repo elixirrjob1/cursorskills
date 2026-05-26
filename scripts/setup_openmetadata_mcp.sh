@@ -6,15 +6,20 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-MCP_JSON="${CURSOR_MCP_JSON:-$HOME/.cursor/mcp.json}"
+# Default: project-level mcp.json (same as dbt/snowflake). Override with CURSOR_MCP_JSON.
+MCP_JSON="${CURSOR_MCP_JSON:-$ROOT_DIR/.cursor/mcp.json}"
 LAUNCHER_PATH="$ROOT_DIR/tools/openmetadata_mcp/run.sh"
 
 mkdir -p "$(dirname "$MCP_JSON")"
 
-SERVER_JSON=$(cat <<EOF
+if [[ "$MCP_JSON" == "$ROOT_DIR/.cursor/mcp.json" ]]; then
+  SERVER_JSON='{"command":"${workspaceFolder}/tools/openmetadata_mcp/run.sh"}'
+else
+  SERVER_JSON=$(cat <<EOF
 {"command":"$LAUNCHER_PATH"}
 EOF
 )
+fi
 
 if [[ ! -f "$MCP_JSON" ]]; then
   printf '%s\n' "{

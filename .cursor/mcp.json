@@ -6,6 +6,9 @@
     },
     "snowflake": {
       "command": "/home/fillip/projec/cursorskills/tools/snowflake_mcp/run.sh"
+    },
+    "openmetadata": {
+      "command": "${workspaceFolder}/tools/openmetadata_mcp/run.sh"
     }
   }
 }

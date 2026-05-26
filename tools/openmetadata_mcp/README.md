@@ -86,4 +86,8 @@ Use:
 ./scripts/setup_openmetadata_mcp.sh
 ```
 
-This adds an `openmetadata` entry to `~/.cursor/mcp.json` without replacing other MCP servers.
+This adds an `openmetadata` entry to `.cursor/mcp.json` in the repo (project-level, alongside dbt and snowflake). To register at user level instead:
+
+```bash
+CURSOR_MCP_JSON=~/.cursor/mcp.json ./scripts/setup_openmetadata_mcp.sh
+```

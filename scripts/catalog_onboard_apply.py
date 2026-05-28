@@ -291,16 +291,21 @@ def _fetch_pipeline_id(pipeline_fqn: str) -> str:
 # ---------------------------------------------------------------------------
 
 def _run_and_poll(pipeline_fqn: str, pipeline_id: str) -> None:
-    # Try trigger → deploy → run (trigger fires an immediate run; deploy just registers the DAG)
+    # Always deploy first: pushes the current OM pipeline config (including filter) into the
+    # Airflow DAG file. Without this, Airflow runs a stale cached DAG and ignores config changes.
+    print("  Deploying DAG to Airflow...")
+    _http("POST", f"v1/services/ingestionPipelines/deploy/{pipeline_id}", soft_fail=True)
+
+    # Then trigger an immediate run against the freshly deployed DAG.
     triggered = False
-    for candidate in ("trigger", "deploy", "run"):
+    for candidate in ("trigger", "run"):
         result = _http("POST", f"v1/services/ingestionPipelines/{candidate}/{pipeline_id}", soft_fail=True)
         if result is not None:
             print(f"  Ingestion triggered via /{candidate}.")
             triggered = True
             break
     if not triggered:
-        _die(f"Could not trigger ingestion pipeline '{pipeline_fqn}' — tried trigger/deploy/run.")
+        _die(f"Could not trigger ingestion pipeline '{pipeline_fqn}' — tried trigger/run.")
     print(f"  Polling every {POLL_INTERVAL_SECONDS}s (timeout {INGESTION_TIMEOUT_SECONDS}s)...")
     encoded_fqn = _urllib_request.quote(pipeline_fqn, safe="")
 

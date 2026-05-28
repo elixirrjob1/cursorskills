@@ -207,8 +207,10 @@ Widen the existing Snowflake-Fivetran pipeline filter instead:
 2. Append the new schema — do not replace the existing list.
 3. Run: `python .cursor/skills/stm-to-catalog-enricher/scripts/patch_pipeline_filter.py \`
    `--pipeline-id <uuid> --include-schemas <existing_schemas>,<new_schema>`
-4. Re-run ingestion on the pipeline.
-5. Verify the new schema's tables appeared in OM.
+   The script patches the filter, then automatically calls `/deploy` (pushes updated DAG
+   to Airflow) and `/trigger` (fires an immediate run). Both steps are required:
+   without `/deploy` Airflow runs the stale cached DAG and silently ignores the new schema.
+4. Verify the new schema's tables appeared in OM.
 
 Always read the current filter before patching. The patch replaces the list — merging must
 happen in step 2, not in the script.

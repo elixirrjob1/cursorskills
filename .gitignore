@@ -218,3 +218,6 @@ dbt_project/drip_transformations/mcp.yml
 # Fivetran resolved connector configs (contain real secrets — never commit)
 connectors/**/configuration.resolved.json
 connectors/**/files/
+
+# Catalog onboard plan files (contain internal infra details — never commit)
+.cursor/flat/onboard_plan_*.json

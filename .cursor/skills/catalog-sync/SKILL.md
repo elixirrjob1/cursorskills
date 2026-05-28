@@ -96,6 +96,133 @@ Example `connection_config` for MySQL (password only via `.env`):
 }
 ```
 
+## Onboard Source System (plan / apply / rollback)
+
+Use this route when registering a **new** database source in OpenMetadata for the first time.
+It is the only route in this skill that writes to OM in a reviewed, reversible sequence.
+
+For re-running ingestion on an existing service, updating service config, or assigning tags,
+use the standard Workflow section above — not this route.
+
+### Trigger phrases
+
+"Onboard a new source", "register a new database service", "add a new source to the catalog",
+"set up catalog ingestion for a new source".
+
+### Interview (plan step)
+
+Ask the following questions in order. Stop if any required answer is missing or ambiguous.
+
+1. **Service name** — lowercase, underscores, no spaces (e.g. `mysql_retail_erp`)
+2. **Database type** — `Mysql` / `Postgres` / `Mssql` / `Oracle` / `Snowflake`
+3. **Host and port** — e.g. `mysql.example.com:3306`
+4. **Database name**
+5. **Username** — literal value, not a secret
+6. **Password** — ask for the `.env` variable **name** only (e.g. `MYSQL_RETAIL_PROD_PASSWORD`).
+   Confirm the name exists with `grep '^MYSQL_RETAIL' .env` — do not print the value.
+7. **Analyser JSON** — does a `schema_*.json` from source-system-analyser exist for this source?
+   - Yes → path to the file; tables will be verified by name after ingestion.
+   - No → count-only verification will be used.
+8. **Schema filter** — schemas to include (leave blank for all)
+9. **Confirm** — present a full summary (see plan file schema below) and ask the user to approve
+   before writing anything.
+
+### Plan file
+
+Write to `.cursor/flat/onboard_plan_<service_name>.json`. Never commit this file (covered by `.gitignore`).
+
+```json
+{
+  "version": 1,
+  "created_at": "<ISO timestamp>",
+  "service_name": "mysql_retail_erp",
+  "service_type": "Mysql",
+  "connection_config": {
+    "username": "om_reader",
+    "password_env": "MYSQL_RETAIL_PROD_PASSWORD",
+    "hostPort": "mysql.example.com:3306",
+    "database": "retail_erp"
+  },
+  "include_schemas": ["retail_erp"],
+  "analyzer_json": ".cursor/flat/schema_mysql_retail_erp.json",
+  "expected_tables": ["orders", "customers", "products"],
+  "existing_service_fqns_snapshot": ["snowflake_fivetran", "mssql_bronze"],
+  "created": {
+    "service_fqn": null,
+    "pipeline_fqn": null
+  }
+}
+```
+
+Rules for the plan file:
+- `connection_config` must contain `password_env` (variable name). Never a literal `password` value.
+- `existing_service_fqns_snapshot` must list every service FQN currently in OM at plan time
+  (call `list_database_services` to get these).
+- `expected_tables` is populated from `analyzer_json` if provided; otherwise left empty.
+- `created` starts with both fields null. Apply fills them in as each entity is created.
+
+### Apply step
+
+Run: `python scripts/catalog_onboard_apply.py .cursor/flat/onboard_plan_<service_name>.json`
+
+The script enforces these guardrails — if any fails, it exits before creating anything:
+- Password env var resolves to a non-empty value after loading `.env` / Key Vault.
+- No literal `password` field in `connection_config`.
+- Service with that name does not already exist in OM.
+- No ingestion pipeline already exists for the service.
+
+On success: `created.service_fqn` and `created.pipeline_fqn` are written back to the plan file.
+Ingestion polls for up to 10 minutes. If it times out, apply exits with a manual-check message
+— this is not a failure, ingestion may still be running.
+
+#### Key Vault password resolution
+
+If the password env var is not in `.env` directly but is stored in Azure Key Vault:
+- `KEYVAULT_NAME` must be set in `.env`.
+- The secret name in Key Vault uses hyphens: `MYSQL-RETAIL-PROD-PASSWORD`.
+- The variable name must appear in the `ENV_VARS` list in `scripts/keyvault_loader.py`.
+  If it does not, the apply script will exit with a clear diagnostic and instructions to add it.
+
+### Rollback step
+
+Run: `python scripts/catalog_onboard_rollback.py .cursor/flat/onboard_plan_<service_name>.json`
+
+Add `--dry-run` to preview what would be deleted without making any changes:
+`python scripts/catalog_onboard_rollback.py .cursor/flat/onboard_plan_<service_name>.json --dry-run`
+
+The script enforces these guardrails — if any fails, it exits and deletes nothing:
+- The service FQN to be deleted is not in `existing_service_fqns_snapshot`.
+- No table under the service has tags, glossary terms, or non-empty descriptions.
+  If annotations are found, the script lists them and stops. Remove them manually or accept the service.
+
+Handles partial apply: if `pipeline_fqn` is null (pipeline creation failed), rollback still
+deletes the service cleanly.
+
+### Extend existing pipeline (dbt logs / add schema to Snowflake-Fivetran)
+
+When dbt logs land as Snowflake tables via Fivetran, do not register a new OM connector.
+Widen the existing Snowflake-Fivetran pipeline filter instead:
+
+1. Read the current pipeline to get the existing `schemaFilterPattern.includes` list.
+2. Append the new schema — do not replace the existing list.
+3. Run: `python .cursor/skills/stm-to-catalog-enricher/scripts/patch_pipeline_filter.py \`
+   `--pipeline-id <uuid> --include-schemas <existing_schemas>,<new_schema>`
+4. Re-run ingestion on the pipeline.
+5. Verify the new schema's tables appeared in OM.
+
+Always read the current filter before patching. The patch replaces the list — merging must
+happen in step 2, not in the script.
+
+### Guardrails (hard stops — no bypass)
+
+- NEVER call `create_database_service` if a service with that name already exists.
+- NEVER call `create_metadata_ingestion_pipeline` if a pipeline already exists for the service.
+- NEVER call `update_database_service` or `update_metadata_ingestion_pipeline` from this route.
+- NEVER call any `assign_*` tool from this route.
+- NEVER delete a service or pipeline whose FQN is in `existing_service_fqns_snapshot`.
+- NEVER rollback if any table under the service has a tag, glossary term, or non-empty description.
+- NEVER patch a pipeline filter without first reading the current filter and merging, not replacing.
+
 ## Tagging Rules
 
 - OpenMetadata is the source of truth once glossary terms and tags are assigned there.

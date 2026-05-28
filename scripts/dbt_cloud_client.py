@@ -75,7 +75,16 @@ def get_access_token(repo_root: Path | None = None) -> str:
     3) DBT_PAT from env
     """
     root = repo_root or Path(__file__).resolve().parent.parent
-    mcp_yml = root / "dbt_project/drip_transformations/mcp.yml"
+    # Support two layouts:
+    #   monorepo  (cursorskills): scripts/ sits two levels above dbt_project/drip_transformations/
+    #   base repo (dbtproject):   scripts/ sits at repo root alongside mcp.yml
+    mcp_yml = next(
+        (p for p in [
+            root / "dbt_project/drip_transformations/mcp.yml",
+            root / "mcp.yml",
+        ] if p.exists()),
+        root / "dbt_project/drip_transformations/mcp.yml",  # fallback (may not exist)
+    )
     if mcp_yml.exists():
         try:
             raw = mcp_yml.read_text(encoding="utf-8")

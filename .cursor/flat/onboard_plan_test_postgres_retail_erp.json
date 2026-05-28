@@ -1,0 +1,35 @@
+{
+  "version": 1,
+  "created_at": "2026-05-26T12:28:00+00:00",
+  "service_name": "test_postgres_retail_erp",
+  "service_type": "Postgres",
+  "connection_config": {
+    "username": "postgres",
+    "password_env": "POSTGRES_PASSWORD",
+    "hostPort": "env:POSTGRES_TARGET",
+    "database": "postgres"
+  },
+  "include_schemas": [
+    "mssql__dbo"
+  ],
+  "analyzer_json": ".cursor/flat/schema_postgres_keyvault_public_postgresql.json",
+  "expected_tables": [
+    "customers",
+    "employees",
+    "inventory",
+    "products",
+    "purchase_order_items",
+    "purchase_orders",
+    "sales_order_items",
+    "sales_orders",
+    "stores",
+    "suppliers"
+  ],
+  "existing_service_fqns_snapshot": [
+    "snowflake_fivetran"
+  ],
+  "created": {
+    "service_fqn": "test_postgres_retail_erp",
+    "pipeline_fqn": "test_postgres_retail_erp.test_postgres_retail_erp_metadata_ingestion"
+  }
+}

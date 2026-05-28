@@ -221,3 +221,7 @@ connectors/**/files/
 
 # Catalog onboard plan files (contain internal infra details — never commit)
 .cursor/flat/onboard_plan_*.json
+
+# Local MCP bundle for sharing (generated; may contain machine-specific paths)
+mcp-export-for-erik/
+mcp-export-for-erik.zip

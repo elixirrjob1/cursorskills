@@ -5,7 +5,7 @@
 #   dbt project (models, tests, macros, STMs, MCP config) — repo root in dbtproject
 #   scripts/         — platform Python + shell scripts
 #   requirements.txt — Python dependencies
-#   .cursor/skills/  — Cursor agent skills (test snapshots excluded)
+#   .cursor/skills/  — Cursor agent skills (test snapshots, runs, __pycache__ excluded)
 #   .cursor/rules/   — agent guardrails
 #
 # Requires PAT2 in .env. Never force-push.
@@ -32,29 +32,35 @@ fi
 rm -rf /tmp/dbt-sync-target
 git clone "https://${PAT2}@github.com/${TARGET_REPO}.git" /tmp/dbt-sync-target
 
+_RSYNC_CACHE_EXCLUDES=(
+  --exclude='__pycache__'
+  --exclude='*.pyc'
+)
+
 # dbt project files → repo root (dbt Cloud requires dbt_project.yml at root)
-rsync -av --exclude='.git' \
+rsync -av --exclude='.git' "${_RSYNC_CACHE_EXCLUDES[@]}" \
   "${DBT_SRC}/" \
   /tmp/dbt-sync-target/
 
 # Platform scripts
-rsync -av --delete --exclude='.git' \
+rsync -av --delete --exclude='.git' "${_RSYNC_CACHE_EXCLUDES[@]}" \
   "${ROOT_DIR}/scripts/" \
   /tmp/dbt-sync-target/scripts/
 
 # Python dependencies
 cp "${ROOT_DIR}/requirements.txt" /tmp/dbt-sync-target/requirements.txt
 
-# Cursor skills — exclude bulky test snapshots and run artefacts
+# Cursor skills — exclude bulky test snapshots, run artefacts, and bytecode caches
 rsync -av --delete \
   --exclude='.git' \
   --exclude='tests/results/snapshots/' \
   --exclude='tests/results/runs/' \
+  "${_RSYNC_CACHE_EXCLUDES[@]}" \
   "${ROOT_DIR}/.cursor/skills/" \
   /tmp/dbt-sync-target/.cursor/skills/
 
 # Cursor rules
-rsync -av --delete --exclude='.git' \
+rsync -av --delete --exclude='.git' "${_RSYNC_CACHE_EXCLUDES[@]}" \
   "${ROOT_DIR}/.cursor/rules/" \
   /tmp/dbt-sync-target/.cursor/rules/
 

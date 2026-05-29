@@ -157,6 +157,13 @@ class TestPlanFixtures:
         assert "password" not in conn or not conn.get("password"), \
             "Valid plan must not have a literal password"
 
+    def test_valid_mysql_plan_uses_database_name_field(self):
+        plan = _load_fixture("plan_valid.json")
+        conn = plan["connection_config"]
+        assert plan["service_type"] == "Mysql"
+        assert "databaseName" in conn
+        assert "database" not in conn
+
     def test_valid_plan_has_created_nulls(self):
         plan = _load_fixture("plan_valid.json")
         assert plan["created"]["service_fqn"] is None

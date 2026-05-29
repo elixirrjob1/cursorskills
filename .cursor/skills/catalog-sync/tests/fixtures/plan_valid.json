@@ -7,7 +7,7 @@
     "username": "om_reader",
     "password_env": "MYSQL_RETAIL_PROD_PASSWORD",
     "hostPort": "mysql.example.com:3306",
-    "database": "retail_erp"
+    "databaseName": "retail_erp"
   },
   "include_schemas": ["retail_erp"],
   "analyzer_json": null,

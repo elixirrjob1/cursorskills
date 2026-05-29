@@ -237,10 +237,13 @@ def _create_service(plan: dict) -> tuple[str, str]:
             # Use username from URL if not explicitly overridden to something meaningful
             if _p.username and config.get("username") in (None, "", "postgres"):
                 config["username"] = _p.username
-            # Use database from URL path if not explicitly set
+            # Fill DB field from URL only when the plan already names that field.
             _db_from_url = (_p.path or "").lstrip("/")
-            if _db_from_url and not config.get("database"):
-                config["database"] = _db_from_url
+            if _db_from_url:
+                if "databaseName" in conn and not config.get("databaseName"):
+                    config["databaseName"] = _db_from_url
+                elif "database" in conn and not config.get("database"):
+                    config["database"] = _db_from_url
         except Exception:
             _die(f"hostPort '{raw_host}' looks like a URL but could not be parsed. "
                  "Set hostPort to 'host:port' format in your plan file.")

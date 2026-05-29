@@ -79,11 +79,12 @@ The OpenMetadata MCP server resolves these from `.env` at call time. The agent n
 
 Non-secret fields (`hostPort`, `account`, `warehouse`, `database`) may be literals in `connection_config` or use the same `*_env` / `env:` pattern if the user prefers.
 
-For known service types, use these minimum fields (literal or `*_env` / `env:` for each):
+For known service types, use these minimum fields (literal or `*_env` / `env:` for each).
+Use the **exact** OpenMetadata connection JSON keys for that connector — the apply script does not rename fields.
 
 - `Snowflake`: `username`, `password`, `account`, `warehouse`
 - `Postgres`: `username`, `password`, `hostPort`, `database`
-- `Mysql`: `username`, `password`, `hostPort`, `database`
+- `Mysql`: `username`, `password`, `hostPort`, `databaseName` (not `database`; see [OM MySQL connector](https://docs.open-metadata.org/connectors/database/mysql))
 - `Mssql`: `username`, `password`, `hostPort`, `database`
 - `Oracle`: `username`, `password`, `hostPort`, `serviceName`
 
@@ -94,7 +95,7 @@ Example `connection_config` for MySQL (password only via `.env`):
   "username": "om_reader",
   "password_env": "MYSQL_RETAIL_PROD_PASSWORD",
   "hostPort": "mysql.example.com:3306",
-  "database": "retail_erp"
+  "databaseName": "retail_erp"
 }
 ```
 
@@ -143,7 +144,7 @@ Write to `.cursor/flat/onboard_plan_<service_name>.json`. Never commit this file
     "username": "om_reader",
     "password_env": "MYSQL_RETAIL_PROD_PASSWORD",
     "hostPort": "mysql.example.com:3306",
-    "database": "retail_erp"
+    "databaseName": "retail_erp"
   },
   "include_schemas": ["retail_erp"],
   "analyzer_json": ".cursor/flat/schema_mysql_retail_erp.json",

@@ -42,8 +42,8 @@ rsync -av --exclude='.git' "${_RSYNC_CACHE_EXCLUDES[@]}" \
   "${DBT_SRC}/" \
   /tmp/dbt-sync-target/
 
-# Platform scripts
-rsync -av --delete --exclude='.git' "${_RSYNC_CACHE_EXCLUDES[@]}" \
+# Platform scripts (--delete-excluded drops stale __pycache__ already on dbtproject)
+rsync -av --delete --delete-excluded --exclude='.git' "${_RSYNC_CACHE_EXCLUDES[@]}" \
   "${ROOT_DIR}/scripts/" \
   /tmp/dbt-sync-target/scripts/
 
@@ -51,7 +51,7 @@ rsync -av --delete --exclude='.git' "${_RSYNC_CACHE_EXCLUDES[@]}" \
 cp "${ROOT_DIR}/requirements.txt" /tmp/dbt-sync-target/requirements.txt
 
 # Cursor skills — exclude bulky test snapshots, run artefacts, and bytecode caches
-rsync -av --delete \
+rsync -av --delete --delete-excluded \
   --exclude='.git' \
   --exclude='tests/results/snapshots/' \
   --exclude='tests/results/runs/' \
@@ -60,7 +60,7 @@ rsync -av --delete \
   /tmp/dbt-sync-target/.cursor/skills/
 
 # Cursor rules
-rsync -av --delete --exclude='.git' "${_RSYNC_CACHE_EXCLUDES[@]}" \
+rsync -av --delete --delete-excluded --exclude='.git' "${_RSYNC_CACHE_EXCLUDES[@]}" \
   "${ROOT_DIR}/.cursor/rules/" \
   /tmp/dbt-sync-target/.cursor/rules/
 

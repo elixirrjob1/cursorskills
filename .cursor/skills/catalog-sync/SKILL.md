@@ -165,7 +165,7 @@ Rules for the plan file:
 
 ### Apply step
 
-Run: `python scripts/catalog_onboard_apply.py .cursor/flat/onboard_plan_<service_name>.json`
+Run: `python .cursor/skills/catalog-sync/scripts/catalog_onboard_apply.py .cursor/flat/onboard_plan_<service_name>.json`
 
 The script enforces these guardrails — if any fails, it exits before creating anything:
 - Password env var resolves to a non-empty value after loading `.env` / Key Vault.
@@ -182,15 +182,16 @@ Ingestion polls for up to 10 minutes. If it times out, apply exits with a manual
 If the password env var is not in `.env` directly but is stored in Azure Key Vault:
 - `KEYVAULT_NAME` must be set in `.env`.
 - The secret name in Key Vault uses hyphens: `MYSQL-RETAIL-PROD-PASSWORD`.
-- The variable name must appear in the `ENV_VARS` list in `scripts/keyvault_loader.py`.
+- The variable name must appear in the `ENV_VARS` list in the shared `scripts/keyvault_loader.py`
+  (repo-root scripts — this allowlist is centrally maintained, not bundled per skill).
   If it does not, the apply script will exit with a clear diagnostic and instructions to add it.
 
 ### Rollback step
 
-Run: `python scripts/catalog_onboard_rollback.py .cursor/flat/onboard_plan_<service_name>.json`
+Run: `python .cursor/skills/catalog-sync/scripts/catalog_onboard_rollback.py .cursor/flat/onboard_plan_<service_name>.json`
 
 Add `--dry-run` to preview what would be deleted without making any changes:
-`python scripts/catalog_onboard_rollback.py .cursor/flat/onboard_plan_<service_name>.json --dry-run`
+`python .cursor/skills/catalog-sync/scripts/catalog_onboard_rollback.py .cursor/flat/onboard_plan_<service_name>.json --dry-run`
 
 The script enforces these guardrails — if any fails, it exits and deletes nothing:
 - The service FQN to be deleted is not in `existing_service_fqns_snapshot`.
@@ -309,7 +310,7 @@ Validated on **Claude Sonnet** (default Cursor agent tier) for MCP-heavy runs: m
 | Version | Tracks repo `main`; onboard scripts at `scripts/catalog_onboard_*.py` |
 | Lifecycle stage | **Test / Deploy** — active; iterate via skill-reviewer after changes |
 | Last evaluated | `2026-05-29T073125Z` (PASS — skill-reviewer) |
-| Dependencies | `user-openmetadata` MCP, `scripts/catalog_onboard_apply.py`, `scripts/catalog_onboard_rollback.py`, `.env` / Key Vault for `OM_*` and connection secrets |
+| Dependencies | `user-openmetadata` MCP, `scripts/catalog_onboard_apply.py` + `scripts/catalog_onboard_rollback.py` (skill-local) + bundled `scripts/om_auth.py`, shared root `scripts/keyvault_loader.py` (ENV_VARS allowlist), `.env` / Key Vault for `OM_*` and connection secrets |
 | Source | `.cursor/skills/catalog-sync/` in cursorskills repo |
 
 **Versioning:** Consumers pin to the skill folder at a given git commit. Roll back by reverting `SKILL.md` and re-running `pytest .cursor/skills/catalog-sync/tests/`.

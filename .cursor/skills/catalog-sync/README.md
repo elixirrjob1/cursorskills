@@ -59,7 +59,7 @@ Configure database services in OpenMetadata, run metadata ingestion, inspect cat
 5. Inspect with `list_databases` / `list_schemas` / `list_tables` / `get_table`
 6. Assign glossary or tags; re-read entity to confirm
 
-**New source:** Onboard route — interview → `.cursor/flat/onboard_plan_<name>.json` → approve → `python scripts/catalog_onboard_apply.py <plan>`
+**New source:** Onboard route — interview → `.cursor/flat/onboard_plan_<name>.json` → approve → `python .cursor/skills/catalog-sync/scripts/catalog_onboard_apply.py <plan>`
 
 ## Skill Triggers
 
@@ -78,8 +78,10 @@ Catalog sync, metadata import, data-catalog setup, OpenMetadata ingestion, onboa
 
 ```
 SKILL.md                               ← agent instructions
-scripts/catalog_onboard_apply.py       ← onboard apply (repo root)
-scripts/catalog_onboard_rollback.py    ← onboard rollback (repo root)
+scripts/catalog_onboard_apply.py       ← onboard apply (skill-local)
+scripts/catalog_onboard_rollback.py    ← onboard rollback (skill-local)
+scripts/om_auth.py                     ← bundled OM auth helper
+(shared) scripts/keyvault_loader.py    ← repo-root secret allowlist (not bundled)
 tests/test-cases.md                    ← behavioural assertions
 tests/test_skill.py                    ← eval suite stubs
 tests/test_apply_script.py             ← guardrail pytest

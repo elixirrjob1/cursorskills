@@ -3,7 +3,7 @@
 Apply a catalog onboard plan: create OM service + pipeline, run ingestion, verify tables.
 
 Usage:
-    python scripts/catalog_onboard_apply.py <plan_file>
+    python .cursor/skills/catalog-sync/scripts/catalog_onboard_apply.py <plan_file>
 
 The plan file is written by the catalog-sync onboard route (plan step).
 It must live in .cursor/flat/ and follow the onboard_plan_<source>.json naming convention.
@@ -25,12 +25,37 @@ import sys
 import time
 from pathlib import Path
 
-_SCRIPTS = Path(__file__).resolve().parent
-if str(_SCRIPTS) not in sys.path:
-    sys.path.insert(0, str(_SCRIPTS))
+_HERE = Path(__file__).resolve().parent
+if str(_HERE) not in sys.path:
+    sys.path.insert(0, str(_HERE))
 
-from keyvault_loader import load_env  # noqa: E402
+# om_auth is bundled alongside this script (skill-local copy).
 from om_auth import om_api_url, om_bearer_headers  # noqa: E402
+
+
+def _add_shared_scripts_to_path() -> None:
+    """Locate the repo-root scripts/ that holds the shared keyvault_loader.
+
+    keyvault_loader carries the centrally-maintained ENV_VARS secret allowlist,
+    so it is NOT bundled per-skill — there must be exactly one canonical copy.
+    """
+    for parent in _HERE.parents:
+        if (parent / "scripts" / "keyvault_loader.py").is_file():
+            shared = str(parent / "scripts")
+            if shared not in sys.path:
+                sys.path.append(shared)
+            return
+    print(
+        "ERROR: Could not locate shared scripts/keyvault_loader.py. "
+        "Run this from within the cursorskills repo so the shared secret "
+        "allowlist (ENV_VARS) is available.",
+        file=sys.stderr,
+    )
+    sys.exit(1)
+
+
+_add_shared_scripts_to_path()
+from keyvault_loader import load_env  # noqa: E402
 
 try:
     from urllib import request as _urllib_request, error as _urllib_error

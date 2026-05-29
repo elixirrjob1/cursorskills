@@ -20,7 +20,8 @@ import pytest
 
 TESTS_DIR = Path(__file__).resolve().parent
 FIXTURES_DIR = TESTS_DIR / "fixtures"
-SCRIPTS_DIR = TESTS_DIR.parent.parent.parent.parent / "scripts"  # repo root / scripts
+SCRIPTS_DIR = TESTS_DIR.parent / "scripts"  # .cursor/skills/catalog-sync/scripts
+REPO_SCRIPTS_DIR = TESTS_DIR.parent.parent.parent.parent / "scripts"  # repo root / scripts (shared keyvault_loader)
 
 APPLY_SCRIPT = SCRIPTS_DIR / "catalog_onboard_apply.py"
 ROLLBACK_SCRIPT = SCRIPTS_DIR / "catalog_onboard_rollback.py"
@@ -107,6 +108,21 @@ class TestScriptFiles:
 
     def test_rollback_script_exists(self):
         assert ROLLBACK_SCRIPT.exists(), f"catalog_onboard_rollback.py not found at {ROLLBACK_SCRIPT}"
+
+    def test_scripts_live_in_skill_folder(self):
+        assert SCRIPTS_DIR.name == "scripts"
+        assert SCRIPTS_DIR.parent.name == "catalog-sync", \
+            "Onboard scripts must live in the skill folder, not repo-root scripts/"
+
+    def test_om_auth_is_bundled_in_skill(self):
+        assert (SCRIPTS_DIR / "om_auth.py").exists(), \
+            "om_auth.py must be bundled alongside the onboard scripts"
+
+    def test_keyvault_loader_not_bundled(self):
+        assert not (SCRIPTS_DIR / "keyvault_loader.py").exists(), \
+            "keyvault_loader.py carries a shared ENV_VARS allowlist and must NOT be bundled per-skill"
+        assert (REPO_SCRIPTS_DIR / "keyvault_loader.py").exists(), \
+            "keyvault_loader.py must remain in repo-root scripts/ as the single canonical copy"
 
     def test_apply_script_has_guardrail_functions(self):
         content = APPLY_SCRIPT.read_text(encoding="utf-8")

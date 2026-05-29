@@ -42,3 +42,6 @@ models:
     enriched:
       +materialized: table
       +schema: enriched
+    retail:
+      +schema: retail
+      +tags: ["scd2", "retail"]

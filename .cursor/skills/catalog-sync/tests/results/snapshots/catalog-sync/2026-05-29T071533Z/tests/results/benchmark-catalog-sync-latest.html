@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Benchmark Report: catalog-sync</title>
+  <style>
+    body { font-family: system-ui, sans-serif; font-size: 14px; margin: 24px; background: #fff; color: #222; }
+    h1 { font-size: 1.35rem; margin-bottom: 0.25rem; }
+    h2 { font-size: 1.1rem; margin-top: 2rem; margin-bottom: 0.75rem; border-bottom: 1px solid #ccc; padding-bottom: 0.25rem; }
+    .meta { color: #555; margin-bottom: 1.5rem; }
+    table { border-collapse: collapse; width: 100%; margin: 0.5rem 0 1rem; }
+    th, td { border: 1px solid #ccc; padding: 8px 10px; text-align: left; }
+    tr:nth-child(even) { background: #f9f9f9; }
+    th { background: #eee; font-weight: 600; }
+    .pass { background: #d4edda; color: #155724; }
+    .fail { background: #f8d7da; color: #721c24; }
+    .skip { background: #fff3cd; color: #856404; }
+    .bar-track { display: inline-block; width: 120px; height: 10px; background: #e0e0e0; border-radius: 2px; vertical-align: middle; margin-right: 8px; }
+    .bar-fill { height: 100%; background: #28a745; border-radius: 2px; }
+    .note { color: #444; font-style: italic; margin: 0.5rem 0; }
+    code { font-size: 13px; background: #f4f4f4; padding: 1px 4px; border-radius: 2px; }
+  </style>
+</head>
+<body>
+  <h1>Benchmark Report: catalog-sync</h1>
+  <p class="meta">Generated: 2026-05-29T07:15:33Z UTC · First full review</p>
+
+  <h2>Summary</h2>
+  <table>
+    <tr><th>Metric</th><th>Value</th></tr>
+    <tr><td>Overall Verdict</td><td class="fail">FAIL</td></tr>
+    <tr><td>Unit Tests</td><td>10 / 12 passed (83%)</td></tr>
+    <tr><td>Assertions</td><td>45 / 48 (94%)</td></tr>
+    <tr><td>Categories</td><td>10 / 13 passed</td></tr>
+    <tr><td>High Failures</td><td>—</td></tr>
+    <tr><td>Medium Failures</td><td>6 (rolled up)</td></tr>
+    <tr><td>Comparator</td><td class="skip">— (first review)</td></tr>
+  </table>
+
+  <h2>Unit Test Results</h2>
+  <table>
+    <thead>
+      <tr><th>#</th><th>Test</th><th>Type</th><th>Result</th><th>Assertions</th><th>Evidence</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>1</td><td>Postgres sync + PII tag</td><td>should-trigger</td><td class="pass">✅ PASS</td><td>4/4</td><td></td></tr>
+      <tr><td>2</td><td>Snowflake sync + inspect</td><td>should-trigger</td><td class="pass">✅ PASS</td><td>4/4</td><td></td></tr>
+      <tr><td>3</td><td>MySQL onboard</td><td>should-trigger</td><td class="pass">✅ PASS</td><td>4/4</td><td></td></tr>
+      <tr><td>4</td><td>Postgres re-run pipeline</td><td>should-trigger</td><td class="pass">✅ PASS</td><td>4/4</td><td></td></tr>
+      <tr><td>5</td><td>Glossary on orders</td><td>should-trigger</td><td class="pass">✅ PASS</td><td>4/4</td><td></td></tr>
+      <tr><td>6</td><td>Oracle new source</td><td>should-trigger</td><td class="pass">✅ PASS</td><td>4/4</td><td></td></tr>
+      <tr><td>7</td><td>Vocab publish routing</td><td>should-not-trigger</td><td class="pass">✅ PASS</td><td>4/4</td><td></td></tr>
+      <tr><td>8</td><td>AI glossary routing</td><td>should-not-trigger</td><td class="pass">✅ PASS</td><td>4/4</td><td></td></tr>
+      <tr><td>9</td><td>dbt lineage routing</td><td>should-not-trigger</td><td class="pass">✅ PASS</td><td>4/4</td><td></td></tr>
+      <tr><td>10</td><td>password_env edge</td><td>edge-case</td><td class="pass">✅ PASS</td><td>4/4</td><td></td></tr>
+      <tr><td>11</td><td>duplicate service edge</td><td>edge-case</td><td class="fail">❌ FAIL</td><td>3/4</td><td></td></tr>
+      <tr><td>12</td><td>vague fix catalog</td><td>edge-case</td><td class="fail">❌ FAIL</td><td>2/4</td><td></td></tr>
+    </tbody>
+  </table>
+
+  <h2>Assertion Detail</h2>
+  <p class="note">Full assertion-by-assertion roll-up below (Step 3b). The table is required in every benchmark; do not replace this section with only links to JSON files.</p>
+  <table>
+    <thead>
+      <tr><th>Eval</th><th>Assertion</th><th>Passed</th><th>Evidence</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>1</td><td>Response references OpenMetadata MCP tools such as run_ingestion_pipeline or assign_tags_to_table</td><td class="pass">Yes</td><td>Lists test_connection, run_ingestion_pipeline, assign_tags_to_table, get_table verification.</td></tr>
+      <tr><td>1</td><td>Response does NOT describe inventing custom HTTP/API calls outside MCP</td><td class="pass">Yes</td><td>Orchestration via OpenMetadata MCP tools only.</td></tr>
+      <tr><td>1</td><td>Response mentions Postgres or database service configuration</td><td class="pass">Yes</td><td>Reuses test_postgres_retail_erp Postgres service.</td></tr>
+      <tr><td>1</td><td>Response includes a step to confirm tag assignment landed (re-read table or verify)</td><td class="pass">Yes</td><td>Step 8 get_table confirms PII.Sensitive tag landed.</td></tr>
+      <tr><td>2</td><td>Response mentions test_connection or connectivity validation as first step</td><td class="pass">Yes</td><td>Opens with test_connection / connectivity check.</td></tr>
+      <tr><td>2</td><td>Response mentions run_ingestion_pipeline or get_ingestion_status</td><td class="pass">Yes</td><td>run_ingestion_pipeline on snowflake_fivetran_metadata.</td></tr>
+      <tr><td>2</td><td>Response mentions list_schemas or list_tables for inspection</td><td class="pass">Yes</td><td>Lists databases, schemas, and 41 tables.</td></tr>
+      <tr><td>2</td><td>Response references Snowflake as service_type</td><td class="pass">Yes</td><td>Names snowflake_fivetran and Snowflake serviceType.</td></tr>
+      <tr><td>3</td><td>Response references Onboard Source System or onboard_plan plan file path</td><td class="pass">Yes</td><td>References Onboard Source System and onboard_plan JSON path.</td></tr>
+      <tr><td>3</td><td>Response mentions catalog_onboard_apply.py or apply script</td><td class="pass">Yes</td><td>Mentions catalog_onboard_apply.py apply command.</td></tr>
+      <tr><td>3</td><td>Response asks interview questions (service name, host, database, password env var name)</td><td class="pass">Yes</td><td>Numbered interview for service name, host, password env var, etc.</td></tr>
+      <tr><td>3</td><td>Response states user must approve plan before apply writes to OpenMetadata</td><td class="pass">Yes</td><td>States nothing written until user approves summary.</td></tr>
+      <tr><td>4</td><td>Response uses update_metadata_ingestion_pipeline or run_ingestion_pipeline</td><td class="pass">Yes</td><td>Uses run_ingestion_pipeline on existing pipeline.</td></tr>
+      <tr><td>4</td><td>Response does NOT recommend create_database_service for an existing service</td><td class="pass">Yes</td><td>Reuses existing service; no create_database_service.</td></tr>
+      <tr><td>4</td><td>Response mentions get_ingestion_status or pipeline status check</td><td class="pass">Yes</td><td>Describes ingestion run and catalog inspection.</td></tr>
+      <tr><td>4</td><td>Response references Postgres service_type explicitly</td><td class="pass">Yes</td><td>References test_postgres_retail_erp Postgres service.</td></tr>
+      <tr><td>5</td><td>Response mentions assign_glossary_term_to_table or assign_glossary_term_to_column</td><td class="pass">Yes</td><td>Applied RetailDomainGlossary.Customer via glossary assignment.</td></tr>
+      <tr><td>5</td><td>Response distinguishes glossary terms from classification tags</td><td class="pass">Yes</td><td>Glossary term described separately from classification tags.</td></tr>
+      <tr><td>5</td><td>Response includes re-read or confirm step after assignment</td><td class="pass">Yes</td><td>Re-read table to confirm assignment.</td></tr>
+      <tr><td>5</td><td>Response does NOT use assign_tags for a glossary-only request</td><td class="pass">Yes</td><td>No assign_tags_to_table for glossary request.</td></tr>
+      <tr><td>6</td><td>Response routes to onboard/new source registration flow</td><td class="pass">Yes</td><td>First-time registration via onboard interview.</td></tr>
+      <tr><td>6</td><td>Response asks for password .env variable name not the secret value</td><td class="pass">Yes</td><td>Asks for .env variable name only for password.</td></tr>
+      <tr><td>6</td><td>Response mentions Oracle in connection minimum fields or service_type</td><td class="pass">Yes</td><td>Oracle serviceName and connection fields documented.</td></tr>
+      <tr><td>6</td><td>Response references existing_service_fqns_snapshot or list_database_services before create</td><td class="pass">Yes</td><td>Lists existing snowflake_fivetran and test_postgres_retail_erp services.</td></tr>
+      <tr><td>7</td><td>Response recommends catalog-vocab-publisher or vocabulary publishing skill</td><td class="pass">Yes</td><td>Directs to catalog-vocab-publisher skill.</td></tr>
+      <tr><td>7</td><td>Response does NOT start database service creation or metadata ingestion pipeline setup</td><td class="pass">Yes</td><td>No database service or ingestion pipeline setup.</td></tr>
+      <tr><td>7</td><td>Response mentions Classifications and Tags API or governance vocabulary</td><td class="pass">Yes</td><td>Mentions Classifications and Tags / Govern section.</td></tr>
+      <tr><td>7</td><td>Response does NOT reference catalog_onboard_apply.py</td><td class="pass">Yes</td><td>No catalog_onboard_apply.py reference.</td></tr>
+      <tr><td>8</td><td>Response recommends catalog-glossary-tagger skill</td><td class="pass">Yes</td><td>Recommends catalog-glossary-tagger.</td></tr>
+      <tr><td>8</td><td>Response does NOT describe full database service onboarding from scratch</td><td class="pass">Yes</td><td>No onboard or create_database_service flow.</td></tr>
+      <tr><td>8</td><td>Response focuses on term assignment to existing catalog assets</td><td class="pass">Yes</td><td>Focus on term assignment to existing assets.</td></tr>
+      <tr><td>8</td><td>Response does NOT reference catalog_onboard_apply.py</td><td class="pass">Yes</td><td>No onboard plan file.</td></tr>
+      <tr><td>9</td><td>Response recommends governance-import-dbt-lineage or dbt lineage import skill</td><td class="pass">Yes</td><td>Routed to governance-import-dbt-lineage.</td></tr>
+      <tr><td>9</td><td>Response mentions manifest artifacts or lineage import</td><td class="pass">Yes</td><td>Manifest lineage import described.</td></tr>
+      <tr><td>9</td><td>Response does NOT start metadata ingestion pipeline configuration</td><td class="pass">Yes</td><td>No metadata ingestion pipeline configuration.</td></tr>
+      <tr><td>9</td><td>Response does NOT reference onboard_plan JSON files</td><td class="pass">Yes</td><td>No onboard_plan JSON.</td></tr>
+      <tr><td>10</td><td>Response references password_env or env:MYSQL_RETAIL_PROD_PASSWORD pattern</td><td class="pass">Yes</td><td>Plan uses password_env MYSQL_RETAIL_PROD_PASSWORD.</td></tr>
+      <tr><td>10</td><td>Response does NOT ask the user to paste or type the password value</td><td class="pass">Yes</td><td>Explicitly will not ask for password value.</td></tr>
+      <tr><td>10</td><td>Response mentions grep or confirm variable name exists without printing value</td><td class="pass">Yes</td><td>Notes name-only .env check without printing secret.</td></tr>
+      <tr><td>10</td><td>Response states plan file must not contain literal password</td><td class="pass">Yes</td><td>States no literal password in plan file.</td></tr>
+      <tr><td>11</td><td>Response states service already exists and refuses create_database_service</td><td class="fail">No</td><td>Response says mysql_retail_erp is NOT in OpenMetadata (404), not that it already exists.</td></tr>
+      <tr><td>11</td><td>Response references onboard guardrail or apply script refusal when service exists</td><td class="pass">Yes</td><td>Documents apply script and onboard guardrails when name is taken.</td></tr>
+      <tr><td>11</td><td>Response does NOT proceed with create_database_service or apply script</td><td class="pass">Yes</td><td>Does not run create or apply.</td></tr>
+      <tr><td>11</td><td>Response suggests using standard workflow to update/re-run instead of onboard create</td><td class="pass">Yes</td><td>Points to standard workflow with run_ingestion_pipeline.</td></tr>
+      <tr><td>12</td><td>Response asks clarifying question about desired action OR lists sync/onboard/tag options</td><td class="fail">No</td><td>Immediately triggered ingestion and pushed descriptions without first asking what to fix.</td></tr>
+      <tr><td>12</td><td>Response mentions OpenMetadata as the supported catalog platform</td><td class="pass">Yes</td><td>References OpenMetadata URL and services.</td></tr>
+      <tr><td>12</td><td>Response does NOT immediately run ingestion without clarification</td><td class="fail">No</td><td>Ran run_ingestion_pipeline on both pipelines before clarifying user intent.</td></tr>
+      <tr><td>12</td><td>Response does NOT route to unrelated skills like dbt or vocab publisher as default</td><td class="pass">Yes</td><td>Does not default to vocab publisher or dbt lineage skills.</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Category Grades</h2>
+  <table>
+    <thead>
+      <tr><th>#</th><th>Category</th><th>Grade</th><th>Explanation</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>1</td><td>Triggering (Description Quality)</td><td class="pass">PASS</td><td>Description states catalog sync, tagging, OpenMetadata triggers.</td></tr>
+      <tr><td>2</td><td>Anatomy & Structure</td><td class="pass">PASS</td><td>252-line SKILL.md; valid YAML; tests/ present.</td></tr>
+      <tr><td>3</td><td>Instructions Clarity</td><td class="pass">PASS</td><td>Onboard vs standard workflow clearly separated.</td></tr>
+      <tr><td>4</td><td>Output Quality</td><td class="pass">PASS</td><td>Plan JSON schema and tagging rules templated.</td></tr>
+      <tr><td>5</td><td>Testability</td><td class="pass">PASS</td><td>Eval suite + apply-script pytest fixtures.</td></tr>
+      <tr><td>6</td><td>Resource Efficiency</td><td class="pass">PASS</td><td>Deterministic apply/rollback scripts invoked explicitly.</td></tr>
+      <tr><td>7</td><td>Security & Trust</td><td class="pass">PASS</td><td>No secrets in chat; script guardrails audited.</td></tr>
+      <tr><td>8</td><td>Coexistence & Recall</td><td class="pass">PASS</td><td>Peer skills document boundaries; routing evals pass.</td></tr>
+      <tr><td>9</td><td>Model Compatibility</td><td class="fail">FAIL</td><td>No model tier documentation in SKILL.md.</td></tr>
+      <tr><td>10</td><td>Workflow & Feedback Loops</td><td class="pass">PASS</td><td>Plan-apply-rollback and post-assign verification.</td></tr>
+      <tr><td>11</td><td>Maintainability & Lifecycle</td><td class="fail">FAIL</td><td>Missing Registry, lifecycle, versioning in SKILL.md.</td></tr>
+      <tr><td>12</td><td>Gotchas / Lessons Learned</td><td class="fail">FAIL</td><td>No Gotchas section despite rich guardrails.</td></tr>
+      <tr><td>13</td><td>Anti-Pattern Audit</td><td class="pass">PASS</td><td>Unix paths; documented timeouts; explicit installs.</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Version Comparison</h2>
+<p class="note">Not run — first review; no prior snapshot.</p>
+
+  <h2>History (all reviews)</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Reviewed at (UTC)</th>
+        <th>Date</th>
+        <th>Unit Tests</th>
+        <th>Assertions</th>
+        <th>Categories</th>
+        <th>Verdict</th>
+        <th>Notes</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>2026-05-29T07:15:33Z</td><td>2026-05-29</td><td><span class="bar-track"><span class="bar-fill" style="width:83%"></span></span>83%</td><td>94%</td><td>77%</td><td class="fail">FAIL</td><td>First review</td></tr>
+    </tbody>
+  </table>
+  <p class="note">Full narrative: <code>review-catalog-sync-2026-05-29T071533Z.md</code></p>
+</body>
+</html>

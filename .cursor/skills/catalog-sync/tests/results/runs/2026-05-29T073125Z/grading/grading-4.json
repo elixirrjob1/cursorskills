@@ -1,0 +1,27 @@
+{
+  "eval_id": 4,
+  "prompt_short": "Configure OpenMetadata ingestion for an existing Postgres service and re-run the",
+  "overall_result": "PASS",
+  "assertions": [
+    {
+      "text": "Response uses update_metadata_ingestion_pipeline or run_ingestion_pipeline",
+      "passed": true,
+      "evidence": "Uses run_ingestion_pipeline on existing pipeline."
+    },
+    {
+      "text": "Response does NOT recommend create_database_service for an existing service",
+      "passed": true,
+      "evidence": "Reuses existing service; no create_database_service."
+    },
+    {
+      "text": "Response mentions get_ingestion_status or pipeline status check",
+      "passed": true,
+      "evidence": "Describes ingestion run and catalog inspection."
+    },
+    {
+      "text": "Response references Postgres service_type explicitly",
+      "passed": true,
+      "evidence": "References test_postgres_retail_erp Postgres service."
+    }
+  ]
+}

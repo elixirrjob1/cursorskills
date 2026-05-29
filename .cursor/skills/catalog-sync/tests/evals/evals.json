@@ -1,0 +1,150 @@
+{
+  "skill_name": "catalog-sync",
+  "generated_date": "2026-05-29",
+  "evals": [
+    {
+      "id": 1,
+      "type": "should-trigger",
+      "prompt": "Sync my Postgres database into OpenMetadata and assign the PII classification tag to the customers table.",
+      "expected_behavior": "Uses OpenMetadata MCP tools for sync and tag assignment; no ad hoc REST API invention.",
+      "assertions": [
+        "Response references OpenMetadata MCP tools such as run_ingestion_pipeline or assign_tags_to_table",
+        "Response does NOT describe inventing custom HTTP/API calls outside MCP",
+        "Response mentions Postgres or database service configuration",
+        "Response includes a step to confirm tag assignment landed (re-read table or verify)"
+      ]
+    },
+    {
+      "id": 2,
+      "type": "should-trigger",
+      "prompt": "Run catalog metadata sync for Snowflake and show me imported schemas and tables.",
+      "expected_behavior": "Workflow: test_connection, ingestion run/status, list_schemas/list_tables.",
+      "assertions": [
+        "Response mentions test_connection or connectivity validation as first step",
+        "Response mentions run_ingestion_pipeline or get_ingestion_status",
+        "Response mentions list_schemas or list_tables for inspection",
+        "Response references Snowflake as service_type"
+      ]
+    },
+    {
+      "id": 3,
+      "type": "should-trigger",
+      "prompt": "Onboard a new MySQL source to the catalog for the first time.",
+      "expected_behavior": "Onboard route with interview, plan file, apply script.",
+      "assertions": [
+        "Response references Onboard Source System or onboard_plan plan file path",
+        "Response mentions catalog_onboard_apply.py or apply script",
+        "Response asks interview questions (service name, host, database, password env var name)",
+        "Response states user must approve plan before apply writes to OpenMetadata"
+      ]
+    },
+    {
+      "id": 4,
+      "type": "should-trigger",
+      "prompt": "Configure OpenMetadata ingestion for an existing Postgres service and re-run the pipeline.",
+      "expected_behavior": "Standard workflow update/run; no duplicate service creation.",
+      "assertions": [
+        "Response uses update_metadata_ingestion_pipeline or run_ingestion_pipeline",
+        "Response does NOT recommend create_database_service for an existing service",
+        "Response mentions get_ingestion_status or pipeline status check",
+        "Response references Postgres service_type explicitly"
+      ]
+    },
+    {
+      "id": 5,
+      "type": "should-trigger",
+      "prompt": "Assign glossary term Customer to the orders table in OpenMetadata.",
+      "expected_behavior": "Uses assign_glossary_term_to_table and confirms assignment.",
+      "assertions": [
+        "Response mentions assign_glossary_term_to_table or assign_glossary_term_to_column",
+        "Response distinguishes glossary terms from classification tags",
+        "Response includes re-read or confirm step after assignment",
+        "Response does NOT use assign_tags for a glossary-only request"
+      ]
+    },
+    {
+      "id": 6,
+      "type": "should-trigger",
+      "prompt": "Set up catalog ingestion for a new Oracle database we have never registered in OpenMetadata.",
+      "expected_behavior": "Onboard route for first-time registration.",
+      "assertions": [
+        "Response routes to onboard/new source registration flow",
+        "Response asks for password .env variable name not the secret value",
+        "Response mentions Oracle in connection minimum fields or service_type",
+        "Response references existing_service_fqns_snapshot or list_database_services before create"
+      ]
+    },
+    {
+      "id": 7,
+      "type": "should-not-trigger",
+      "prompt": "Push our governance vocabulary Markdown file to OpenMetadata classifications and tags.",
+      "expected_behavior": "Routes to catalog-vocab-publisher, not catalog-sync.",
+      "assertions": [
+        "Response recommends catalog-vocab-publisher or vocabulary publishing skill",
+        "Response does NOT start database service creation or metadata ingestion pipeline setup",
+        "Response mentions Classifications and Tags API or governance vocabulary",
+        "Response does NOT reference catalog_onboard_apply.py"
+      ]
+    },
+    {
+      "id": 8,
+      "type": "should-not-trigger",
+      "prompt": "Use AI to map business glossary terms onto already-catalogued Snowflake tables.",
+      "expected_behavior": "Routes to catalog-glossary-tagger.",
+      "assertions": [
+        "Response recommends catalog-glossary-tagger skill",
+        "Response does NOT describe full database service onboarding from scratch",
+        "Response focuses on term assignment to existing catalog assets",
+        "Response does NOT reference catalog_onboard_apply.py"
+      ]
+    },
+    {
+      "id": 9,
+      "type": "should-not-trigger",
+      "prompt": "Import dbt manifest lineage into OpenMetadata.",
+      "expected_behavior": "Routes to governance-import-dbt-lineage.",
+      "assertions": [
+        "Response recommends governance-import-dbt-lineage or dbt lineage import skill",
+        "Response mentions manifest artifacts or lineage import",
+        "Response does NOT start metadata ingestion pipeline configuration",
+        "Response does NOT reference onboard_plan JSON files"
+      ]
+    },
+    {
+      "id": 10,
+      "type": "edge-case",
+      "prompt": "Onboard mysql_retail_erp — the password is already in .env as MYSQL_RETAIL_PROD_PASSWORD.",
+      "expected_behavior": "Uses password_env; never asks for or prints secret value.",
+      "assertions": [
+        "Response references password_env or env:MYSQL_RETAIL_PROD_PASSWORD pattern",
+        "Response does NOT ask the user to paste or type the password value",
+        "Response mentions grep or confirm variable name exists without printing value",
+        "Response states plan file must not contain literal password"
+      ]
+    },
+    {
+      "id": 11,
+      "type": "edge-case",
+      "prompt": "Onboard mysql_retail_erp but that service already exists in OpenMetadata.",
+      "expected_behavior": "get_database_service first; hard stop if exists; mismatch message if 404; no apply.",
+      "assertions": [
+        "Response calls or references user-openmetadata:get_database_service before any onboard apply",
+        "Response does NOT run catalog_onboard_apply.py or create_database_service in this turn",
+        "Response either hard-stops because service exists OR reports name mismatch with list_database_services if not found",
+        "Response points to standard Workflow (run_ingestion_pipeline) instead of onboard create when service exists"
+      ]
+    },
+    {
+      "id": 12,
+      "type": "edge-case",
+      "prompt": "Fix my data catalog.",
+      "expected_behavior": "Clarify-first per Vague requests section; no ingestion in first reply.",
+      "assertions": [
+        "Response asks a clarifying question about desired outcome before executing MCP tools",
+        "Response lists at least two scoped options (e.g. re-sync, onboard, tagging, pipeline filter)",
+        "Response does NOT mention run_ingestion_pipeline or triggering ingestion in the first reply",
+        "Response mentions OpenMetadata and does NOT default to catalog-vocab-publisher or dbt lineage"
+      ]
+    }
+  ]
+}

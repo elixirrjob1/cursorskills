@@ -1,0 +1,27 @@
+{
+  "eval_id": 12,
+  "prompt_short": "Fix my data catalog.",
+  "overall_result": "PASS",
+  "assertions": [
+    {
+      "text": "Response asks a clarifying question about desired outcome before executing MCP tools",
+      "passed": true,
+      "evidence": "Opens asking what outcome they need; won't run until user picks."
+    },
+    {
+      "text": "Response lists at least two scoped options (e.g. re-sync, onboard, tagging, pipeline filter)",
+      "passed": true,
+      "evidence": "Lists five numbered paths including re-sync and onboard."
+    },
+    {
+      "text": "Response does NOT mention run_ingestion_pipeline or triggering ingestion in the first reply",
+      "passed": true,
+      "evidence": "No ingestion trigger; only describes paths."
+    },
+    {
+      "text": "Response mentions OpenMetadata and does NOT default to catalog-vocab-publisher or dbt lineage",
+      "passed": true,
+      "evidence": "OpenMetadata-focused options; no vocab publisher or dbt default."
+    }
+  ]
+}

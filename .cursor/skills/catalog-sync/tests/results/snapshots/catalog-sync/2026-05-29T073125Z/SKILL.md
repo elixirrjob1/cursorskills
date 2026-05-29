@@ -308,7 +308,7 @@ Validated on **Claude Sonnet** (default Cursor agent tier) for MCP-heavy runs: m
 | Reviewer | Peer review required before merging `SKILL.md` changes to `main` |
 | Version | Tracks repo `main`; onboard scripts at `scripts/catalog_onboard_*.py` |
 | Lifecycle stage | **Test / Deploy** — active; iterate via skill-reviewer after changes |
-| Last evaluated | `2026-05-29T073125Z` (PASS — skill-reviewer) |
+| Last evaluated | `2026-05-29T071533Z` (re-run after this patch) |
 | Dependencies | `user-openmetadata` MCP, `scripts/catalog_onboard_apply.py`, `scripts/catalog_onboard_rollback.py`, `.env` / Key Vault for `OM_*` and connection secrets |
 | Source | `.cursor/skills/catalog-sync/` in cursorskills repo |
 

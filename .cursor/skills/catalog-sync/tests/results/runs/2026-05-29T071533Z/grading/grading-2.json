@@ -1,0 +1,27 @@
+{
+  "eval_id": 2,
+  "prompt_short": "Run catalog metadata sync for Snowflake and show me imported schemas and tables.",
+  "overall_result": "PASS",
+  "assertions": [
+    {
+      "text": "Response mentions test_connection or connectivity validation as first step",
+      "passed": true,
+      "evidence": "Opens with test_connection / connectivity check."
+    },
+    {
+      "text": "Response mentions run_ingestion_pipeline or get_ingestion_status",
+      "passed": true,
+      "evidence": "run_ingestion_pipeline on snowflake_fivetran_metadata."
+    },
+    {
+      "text": "Response mentions list_schemas or list_tables for inspection",
+      "passed": true,
+      "evidence": "Lists databases, schemas, and 41 tables."
+    },
+    {
+      "text": "Response references Snowflake as service_type",
+      "passed": true,
+      "evidence": "Names snowflake_fivetran and Snowflake serviceType."
+    }
+  ]
+}

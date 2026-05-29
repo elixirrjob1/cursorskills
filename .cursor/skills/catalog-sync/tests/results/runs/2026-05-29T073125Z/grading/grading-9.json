@@ -1,0 +1,27 @@
+{
+  "eval_id": 9,
+  "prompt_short": "Import dbt manifest lineage into OpenMetadata.",
+  "overall_result": "PASS",
+  "assertions": [
+    {
+      "text": "Response recommends governance-import-dbt-lineage or dbt lineage import skill",
+      "passed": true,
+      "evidence": "Routed to governance-import-dbt-lineage."
+    },
+    {
+      "text": "Response mentions manifest artifacts or lineage import",
+      "passed": true,
+      "evidence": "Manifest lineage import described."
+    },
+    {
+      "text": "Response does NOT start metadata ingestion pipeline configuration",
+      "passed": true,
+      "evidence": "No metadata ingestion pipeline configuration."
+    },
+    {
+      "text": "Response does NOT reference onboard_plan JSON files",
+      "passed": true,
+      "evidence": "No onboard_plan JSON."
+    }
+  ]
+}

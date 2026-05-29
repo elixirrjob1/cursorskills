@@ -1,6 +1,6 @@
 ---
 name: catalog-sync
-description: Configure any supported database service in a data catalog, run metadata sync, inspect imported databases/schemas/tables/columns, and assign glossary terms or classification tags. Currently supports OpenMetadata; designed to extend to Azure Purview, Databricks Unity Catalog, and others. Use when the user wants catalog sync, metadata import, data-catalog setup, OpenMetadata ingestion, or metadata tagging instead of doing those steps manually.
+description: Configure any supported database service in a data catalog, run metadata sync, inspect imported databases/schemas/tables/columns, and assign glossary terms or classification tags. Currently supports OpenMetadata; designed to extend to Azure Purview, Databricks Unity Catalog, and others. Use when the user wants Cursor to orchestrate catalog sync and metadata tagging instead of doing those steps manually.
 ---
 
 # OpenMetadata Sync
@@ -12,8 +12,6 @@ Use this skill when the task is to:
 - assign glossary terms or classification tags to tables and columns
 
 This skill assumes the repo-local OpenMetadata MCP server is the execution surface. It should orchestrate OpenMetadata through MCP tools, not by inventing ad hoc API calls in the chat response.
-
-**MCP server:** `user-openmetadata` (Cursor may also show `openmetadata` in `mcp.json`). Always invoke tools as `user-openmetadata:<tool_name>` — for example `user-openmetadata:test_connection`, not bare `test_connection`.
 
 ## Prerequisites
 
@@ -31,32 +29,32 @@ If the MCP server is not set up yet, use the repo scripts:
 
 ## Workflow
 
-1. Validate connectivity with `user-openmetadata:test_connection`.
-2. Discover whether the database service already exists with `user-openmetadata:list_database_services` or `user-openmetadata:get_database_service`.
+1. Validate connectivity with `test_connection`.
+2. Discover whether the database service already exists with `list_database_services` or `get_database_service`.
 3. Create or update the service with:
-   - `user-openmetadata:create_database_service`
-   - `user-openmetadata:update_database_service`
+   - `create_database_service`
+   - `update_database_service`
 4. Create or update the metadata ingestion pipeline with:
-   - `user-openmetadata:create_metadata_ingestion_pipeline`
-   - `user-openmetadata:update_metadata_ingestion_pipeline`
-5. Run sync with `user-openmetadata:run_ingestion_pipeline`, then inspect status with `user-openmetadata:get_ingestion_status`.
+   - `create_metadata_ingestion_pipeline`
+   - `update_metadata_ingestion_pipeline`
+5. Run sync with `run_ingestion_pipeline`, then inspect status with `get_ingestion_status`.
 6. Inspect imported assets with:
-   - `user-openmetadata:list_databases`
-   - `user-openmetadata:list_schemas`
-   - `user-openmetadata:list_tables`
-   - `user-openmetadata:get_table`
-   - `user-openmetadata:get_column`
+   - `list_databases`
+   - `list_schemas`
+   - `list_tables`
+   - `get_table`
+   - `get_column`
 7. Inspect approved governance metadata with:
-   - `user-openmetadata:list_glossaries`
-   - `user-openmetadata:list_glossary_terms`
-   - `user-openmetadata:list_classifications`
-   - `user-openmetadata:list_tags`
+   - `list_glossaries`
+   - `list_glossary_terms`
+   - `list_classifications`
+   - `list_tags`
 8. Apply metadata directly in OpenMetadata with:
-   - `user-openmetadata:assign_glossary_term_to_table`
-   - `user-openmetadata:assign_glossary_term_to_column`
-   - `user-openmetadata:assign_tags_to_table`
-   - `user-openmetadata:assign_tags_to_column`
-9. Re-read the updated table or column with `user-openmetadata:get_table` or `user-openmetadata:get_column` to confirm the assignment landed.
+   - `assign_glossary_term_to_table`
+   - `assign_glossary_term_to_column`
+   - `assign_tags_to_table`
+   - `assign_tags_to_column`
+9. Re-read the updated table or column to confirm the assignment landed.
 
 ## Service Configuration Rules
 
@@ -159,7 +157,7 @@ Write to `.cursor/flat/onboard_plan_<service_name>.json`. Never commit this file
 Rules for the plan file:
 - `connection_config` must contain `password_env` (variable name). Never a literal `password` value.
 - `existing_service_fqns_snapshot` must list every service FQN currently in OM at plan time
-  (call `user-openmetadata:list_database_services` to get these).
+  (call `list_database_services` to get these).
 - `expected_tables` is populated from `analyzer_json` if provided; otherwise left empty.
 - `created` starts with both fields null. Apply fills them in as each entity is created.
 
@@ -217,21 +215,12 @@ Widen the existing Snowflake-Fivetran pipeline filter instead:
 Always read the current filter before patching. The patch replaces the list — merging must
 happen in step 2, not in the script.
 
-### Existing service on onboard route (hard stop)
-
-When the user asks to **onboard** a service name that **already exists** in OpenMetadata:
-
-1. Call `user-openmetadata:get_database_service` for that name **before** any plan or apply step.
-2. If the service exists: **stop immediately**. State clearly that the service already exists and the onboard create path is blocked. Do **not** call `user-openmetadata:create_database_service`, write a plan file for create, or run `catalog_onboard_apply.py`.
-3. Offer the **standard Workflow** instead: `user-openmetadata:update_database_service` / `user-openmetadata:update_metadata_ingestion_pipeline` (if config changed), then `user-openmetadata:run_ingestion_pipeline` → `user-openmetadata:get_ingestion_status`.
-4. If the user insists the name exists but `get_database_service` returns 404: report the mismatch (name not found in OM) and ask whether they meant a different service name or an existing FQN from `user-openmetadata:list_database_services`.
-
 ### Guardrails (hard stops — no bypass)
 
-- NEVER call `user-openmetadata:create_database_service` if a service with that name already exists.
-- NEVER call `user-openmetadata:create_metadata_ingestion_pipeline` if a pipeline already exists for the service.
-- NEVER call `user-openmetadata:update_database_service` or `user-openmetadata:update_metadata_ingestion_pipeline` from this route.
-- NEVER call any `user-openmetadata:assign_*` tool from this route.
+- NEVER call `create_database_service` if a service with that name already exists.
+- NEVER call `create_metadata_ingestion_pipeline` if a pipeline already exists for the service.
+- NEVER call `update_database_service` or `update_metadata_ingestion_pipeline` from this route.
+- NEVER call any `assign_*` tool from this route.
 - NEVER delete a service or pipeline whose FQN is in `existing_service_fqns_snapshot`.
 - NEVER rollback if any table under the service has a tag, glossary term, or non-empty description.
 - NEVER patch a pipeline filter without first reading the current filter and merging, not replacing.
@@ -252,64 +241,10 @@ When the analyzer runs after this workflow:
 
 The analyzer output can keep technical metadata such as column type and generated technical description, but business metadata should come from OpenMetadata.
 
-## Vague or broad requests ("fix my data catalog")
-
-Do **not** run ingestion, tagging, or onboard apply until intent is clear.
-
-1. **Ask first** (one short message): what outcome do they need — refresh metadata, register a new source, fix connection/config, add descriptions/tags, or widen a pipeline schema filter?
-2. **Offer scoped options** tied to this skill:
-   - **Re-sync** existing service → standard Workflow (`run_ingestion_pipeline`, then inspect)
-   - **New source** → Onboard route (interview → plan → approved apply)
-   - **Governance on assets** → tagging steps in Workflow, or `catalog-glossary-tagger` for AI matching at scale
-   - **Vocabulary definitions** → `catalog-vocab-publisher` (not this skill)
-3. Only after the user picks (or their reply implies one path), call MCP tools or scripts.
-
 ## Guardrails
 
 - Never ask for or print secret **values** in chat (only `.env` variable **names**).
 - Never print secrets in the final response.
 - Do not create duplicate services or pipelines when an existing one can be reused.
 - Do not treat glossary and classification tags as the same thing.
-- If ingestion fails, report the failing service, pipeline, and MCP tool step clearly (use `user-openmetadata:<tool>` names).
-
-## Gotchas / Common Mistakes
-
-- **`run_ingestion_pipeline` needs the pipeline FQN**, not the short pipeline name alone (e.g. `service_name.service_name_metadata`, not just `metadata`).
-- **Onboard vs standard Workflow:** first-time registration uses plan + `catalog_onboard_apply.py`; re-sync on an existing connector uses Workflow only — never `create_database_service` for a name that already exists.
-- **Extend pipeline filter:** `patch_pipeline_filter.py` replaces the includes list — merge current schemas in step 2 before calling the script; then `/deploy` and `/trigger` are both required or Airflow keeps a stale DAG.
-- **Glossary vs tags:** business terms use `assign_glossary_term_*`; policy/classifications use `assign_tags_*` — do not swap them.
-- **User says service exists but OM returns 404:** list services with `user-openmetadata:list_database_services` and reconcile the name before attempting create.
-- **Ingestion timeout (600 s):** apply script may exit with a manual-check message while ingestion still runs — use `user-openmetadata:get_ingestion_status` before re-triggering.
-
-## Coexistence & Routing
-
-| Skill | Purpose |
-|---|---|
-| `catalog-sync` | Database service setup, metadata ingestion, inspect assets, assign tags/glossary via MCP. |
-| `catalog-vocab-publisher` | Publish a governance vocabulary `.md` to OpenMetadata Classifications/Tags. Not database ingestion. |
-| `catalog-glossary-tagger` | AI-driven glossary matching on **already-catalogued** tables/columns. Not full connector setup. |
-| `governance-import-dbt-lineage` | Import dbt `manifest.json` lineage edges. Not metadata ingestion pipelines. |
-| `stm-to-catalog-enricher` | Enrich Snowflake tables from STM markdown after dbt lands — uses catalog-sync primitives plus STM loop. |
-| `source-system-analyser` | Produces `schema_*.json` used for post-onboard table verification — not OpenMetadata writes. |
-
-**Trigger precision:** Fires on catalog sync, metadata import, OpenMetadata ingestion, onboard/register new database source, assign classification/glossary to catalog assets. Does **not** fire on publish vocabulary `.md`, AI glossary mapping at scale, or dbt lineage import.
-
-## Model Compatibility
-
-Validated on **Claude Sonnet** (default Cursor agent tier) for MCP-heavy runs: multi-step ingestion, tagging, and onboard apply. Routing-only cases (should-not-trigger adjacent skills, vague-request clarification) spot-checked on **Claude Haiku**.
-
-**Note:** Haiku may skip `user-openmetadata:` prefixes or clarification-first steps — prefer Sonnet when the task chains more than three MCP calls or uses the onboard plan/apply path.
-
-## Registry
-
-| Field | Value |
-|-------|-------|
-| Owner | Platform / Data Engineering |
-| Reviewer | Peer review required before merging `SKILL.md` changes to `main` |
-| Version | Tracks repo `main`; onboard scripts at `scripts/catalog_onboard_*.py` |
-| Lifecycle stage | **Test / Deploy** — active; iterate via skill-reviewer after changes |
-| Last evaluated | `2026-05-29T073125Z` (PASS — skill-reviewer) |
-| Dependencies | `user-openmetadata` MCP, `scripts/catalog_onboard_apply.py`, `scripts/catalog_onboard_rollback.py`, `.env` / Key Vault for `OM_*` and connection secrets |
-| Source | `.cursor/skills/catalog-sync/` in cursorskills repo |
-
-**Versioning:** Consumers pin to the skill folder at a given git commit. Roll back by reverting `SKILL.md` and re-running `pytest .cursor/skills/catalog-sync/tests/`.
+- If ingestion fails, report the failing service, pipeline, and API step clearly.

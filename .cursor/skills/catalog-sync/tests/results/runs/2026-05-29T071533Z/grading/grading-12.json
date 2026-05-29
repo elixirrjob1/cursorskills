@@ -1,0 +1,27 @@
+{
+  "eval_id": 12,
+  "prompt_short": "Fix my data catalog.",
+  "overall_result": "FAIL",
+  "assertions": [
+    {
+      "text": "Response asks clarifying question about desired action OR lists sync/onboard/tag options",
+      "passed": false,
+      "evidence": "Immediately triggered ingestion and pushed descriptions without first asking what to fix."
+    },
+    {
+      "text": "Response mentions OpenMetadata as the supported catalog platform",
+      "passed": true,
+      "evidence": "References OpenMetadata URL and services."
+    },
+    {
+      "text": "Response does NOT immediately run ingestion without clarification",
+      "passed": false,
+      "evidence": "Ran run_ingestion_pipeline on both pipelines before clarifying user intent."
+    },
+    {
+      "text": "Response does NOT route to unrelated skills like dbt or vocab publisher as default",
+      "passed": true,
+      "evidence": "Does not default to vocab publisher or dbt lineage skills."
+    }
+  ]
+}

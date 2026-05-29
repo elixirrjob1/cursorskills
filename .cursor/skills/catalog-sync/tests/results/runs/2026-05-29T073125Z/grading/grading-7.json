@@ -1,0 +1,27 @@
+{
+  "eval_id": 7,
+  "prompt_short": "Push our governance vocabulary Markdown file to OpenMetadata classifications and",
+  "overall_result": "PASS",
+  "assertions": [
+    {
+      "text": "Response recommends catalog-vocab-publisher or vocabulary publishing skill",
+      "passed": true,
+      "evidence": "Directs to catalog-vocab-publisher skill."
+    },
+    {
+      "text": "Response does NOT start database service creation or metadata ingestion pipeline setup",
+      "passed": true,
+      "evidence": "No database service or ingestion pipeline setup."
+    },
+    {
+      "text": "Response mentions Classifications and Tags API or governance vocabulary",
+      "passed": true,
+      "evidence": "Mentions Classifications and Tags / Govern section."
+    },
+    {
+      "text": "Response does NOT reference catalog_onboard_apply.py",
+      "passed": true,
+      "evidence": "No catalog_onboard_apply.py reference."
+    }
+  ]
+}

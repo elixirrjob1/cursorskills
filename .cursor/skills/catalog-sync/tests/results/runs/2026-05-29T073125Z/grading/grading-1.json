@@ -1,0 +1,27 @@
+{
+  "eval_id": 1,
+  "prompt_short": "Sync my Postgres database into OpenMetadata and assign the PII classification ta",
+  "overall_result": "PASS",
+  "assertions": [
+    {
+      "text": "Response references OpenMetadata MCP tools such as run_ingestion_pipeline or assign_tags_to_table",
+      "passed": true,
+      "evidence": "Lists test_connection, run_ingestion_pipeline, assign_tags_to_table, get_table verification."
+    },
+    {
+      "text": "Response does NOT describe inventing custom HTTP/API calls outside MCP",
+      "passed": true,
+      "evidence": "Orchestration via OpenMetadata MCP tools only."
+    },
+    {
+      "text": "Response mentions Postgres or database service configuration",
+      "passed": true,
+      "evidence": "Reuses test_postgres_retail_erp Postgres service."
+    },
+    {
+      "text": "Response includes a step to confirm tag assignment landed (re-read table or verify)",
+      "passed": true,
+      "evidence": "Step 8 get_table confirms PII.Sensitive tag landed."
+    }
+  ]
+}

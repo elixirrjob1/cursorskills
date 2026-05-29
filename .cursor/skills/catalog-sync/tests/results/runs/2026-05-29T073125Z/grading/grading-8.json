@@ -1,0 +1,27 @@
+{
+  "eval_id": 8,
+  "prompt_short": "Use AI to map business glossary terms onto already-catalogued Snowflake tables.",
+  "overall_result": "PASS",
+  "assertions": [
+    {
+      "text": "Response recommends catalog-glossary-tagger skill",
+      "passed": true,
+      "evidence": "Recommends catalog-glossary-tagger."
+    },
+    {
+      "text": "Response does NOT describe full database service onboarding from scratch",
+      "passed": true,
+      "evidence": "No onboard or create_database_service flow."
+    },
+    {
+      "text": "Response focuses on term assignment to existing catalog assets",
+      "passed": true,
+      "evidence": "Focus on term assignment to existing assets."
+    },
+    {
+      "text": "Response does NOT reference catalog_onboard_apply.py",
+      "passed": true,
+      "evidence": "No onboard plan file."
+    }
+  ]
+}

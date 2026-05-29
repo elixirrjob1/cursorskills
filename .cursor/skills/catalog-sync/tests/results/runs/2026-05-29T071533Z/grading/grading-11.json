@@ -1,0 +1,27 @@
+{
+  "eval_id": 11,
+  "prompt_short": "Onboard mysql_retail_erp but that service already exists in OpenMetadata.",
+  "overall_result": "FAIL",
+  "assertions": [
+    {
+      "text": "Response states service already exists and refuses create_database_service",
+      "passed": false,
+      "evidence": "Response says mysql_retail_erp is NOT in OpenMetadata (404), not that it already exists."
+    },
+    {
+      "text": "Response references onboard guardrail or apply script refusal when service exists",
+      "passed": true,
+      "evidence": "Documents apply script and onboard guardrails when name is taken."
+    },
+    {
+      "text": "Response does NOT proceed with create_database_service or apply script",
+      "passed": true,
+      "evidence": "Does not run create or apply."
+    },
+    {
+      "text": "Response suggests using standard workflow to update/re-run instead of onboard create",
+      "passed": true,
+      "evidence": "Points to standard workflow with run_ingestion_pipeline."
+    }
+  ]
+}

@@ -85,17 +85,6 @@ class TestSkillMd:
         assert "onboard" in content.lower()
         assert "new source" in content.lower()
 
-    def test_skill_uses_mcp_server_prefix(self):
-        content = SKILL_MD.read_text(encoding="utf-8")
-        assert "user-openmetadata:test_connection" in content
-        assert "user-openmetadata:run_ingestion_pipeline" in content
-
-    def test_skill_has_gotchas_and_registry(self):
-        content = SKILL_MD.read_text(encoding="utf-8")
-        assert "Gotchas" in content or "Common Mistakes" in content
-        assert "## Registry" in content
-        assert "## Model Compatibility" in content
-
 
 # ---------------------------------------------------------------------------
 # Script existence tests

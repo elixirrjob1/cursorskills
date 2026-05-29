@@ -1,0 +1,27 @@
+{
+  "eval_id": 5,
+  "prompt_short": "Assign glossary term Customer to the orders table in OpenMetadata.",
+  "overall_result": "PASS",
+  "assertions": [
+    {
+      "text": "Response mentions assign_glossary_term_to_table or assign_glossary_term_to_column",
+      "passed": true,
+      "evidence": "Applied RetailDomainGlossary.Customer via glossary assignment."
+    },
+    {
+      "text": "Response distinguishes glossary terms from classification tags",
+      "passed": true,
+      "evidence": "Glossary term described separately from classification tags."
+    },
+    {
+      "text": "Response includes re-read or confirm step after assignment",
+      "passed": true,
+      "evidence": "Re-read table to confirm assignment."
+    },
+    {
+      "text": "Response does NOT use assign_tags for a glossary-only request",
+      "passed": true,
+      "evidence": "No assign_tags_to_table for glossary request."
+    }
+  ]
+}

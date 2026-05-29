@@ -1,0 +1,27 @@
+{
+  "eval_id": 3,
+  "prompt_short": "Onboard a new MySQL source to the catalog for the first time.",
+  "overall_result": "PASS",
+  "assertions": [
+    {
+      "text": "Response references Onboard Source System or onboard_plan plan file path",
+      "passed": true,
+      "evidence": "References Onboard Source System and onboard_plan JSON path."
+    },
+    {
+      "text": "Response mentions catalog_onboard_apply.py or apply script",
+      "passed": true,
+      "evidence": "Mentions catalog_onboard_apply.py apply command."
+    },
+    {
+      "text": "Response asks interview questions (service name, host, database, password env var name)",
+      "passed": true,
+      "evidence": "Numbered interview for service name, host, password env var, etc."
+    },
+    {
+      "text": "Response states user must approve plan before apply writes to OpenMetadata",
+      "passed": true,
+      "evidence": "States nothing written until user approves summary."
+    }
+  ]
+}

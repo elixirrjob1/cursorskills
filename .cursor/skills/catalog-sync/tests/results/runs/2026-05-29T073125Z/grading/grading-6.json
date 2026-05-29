@@ -1,0 +1,27 @@
+{
+  "eval_id": 6,
+  "prompt_short": "Set up catalog ingestion for a new Oracle database we have never registered in O",
+  "overall_result": "PASS",
+  "assertions": [
+    {
+      "text": "Response routes to onboard/new source registration flow",
+      "passed": true,
+      "evidence": "First-time registration via onboard interview."
+    },
+    {
+      "text": "Response asks for password .env variable name not the secret value",
+      "passed": true,
+      "evidence": "Asks for .env variable name only for password."
+    },
+    {
+      "text": "Response mentions Oracle in connection minimum fields or service_type",
+      "passed": true,
+      "evidence": "Oracle serviceName and connection fields documented."
+    },
+    {
+      "text": "Response references existing_service_fqns_snapshot or list_database_services before create",
+      "passed": true,
+      "evidence": "Lists existing snowflake_fivetran and test_postgres_retail_erp services."
+    }
+  ]
+}

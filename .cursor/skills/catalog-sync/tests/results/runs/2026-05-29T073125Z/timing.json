@@ -1,0 +1,91 @@
+{
+  "review_date": "2026-05-29",
+  "reviewed_at": "2026-05-29T07:31:25Z",
+  "run_slug": "2026-05-29T073125Z",
+  "runs": [
+    {
+      "eval_id": 1,
+      "test_type": "should-trigger",
+      "prompt_short": "Sync my Postgres database into OpenMetadata and assign the PII classification ta",
+      "result": "PASS",
+      "carried_from": "runs/2026-05-29T071533Z/grading/grading-1.json"
+    },
+    {
+      "eval_id": 2,
+      "test_type": "should-trigger",
+      "prompt_short": "Run catalog metadata sync for Snowflake and show me imported schemas and tables.",
+      "result": "PASS",
+      "carried_from": "runs/2026-05-29T071533Z/grading/grading-2.json"
+    },
+    {
+      "eval_id": 3,
+      "test_type": "should-trigger",
+      "prompt_short": "Onboard a new MySQL source to the catalog for the first time.",
+      "result": "PASS",
+      "carried_from": "runs/2026-05-29T071533Z/grading/grading-3.json"
+    },
+    {
+      "eval_id": 4,
+      "test_type": "should-trigger",
+      "prompt_short": "Configure OpenMetadata ingestion for an existing Postgres service and re-run the",
+      "result": "PASS",
+      "carried_from": "runs/2026-05-29T071533Z/grading/grading-4.json"
+    },
+    {
+      "eval_id": 5,
+      "test_type": "should-trigger",
+      "prompt_short": "Assign glossary term Customer to the orders table in OpenMetadata.",
+      "result": "PASS",
+      "carried_from": "runs/2026-05-29T071533Z/grading/grading-5.json"
+    },
+    {
+      "eval_id": 6,
+      "test_type": "should-trigger",
+      "prompt_short": "Set up catalog ingestion for a new Oracle database we have never registered in O",
+      "result": "PASS",
+      "carried_from": "runs/2026-05-29T071533Z/grading/grading-6.json"
+    },
+    {
+      "eval_id": 7,
+      "test_type": "should-not-trigger",
+      "prompt_short": "Push our governance vocabulary Markdown file to OpenMetadata classifications and",
+      "result": "PASS",
+      "carried_from": "runs/2026-05-29T071533Z/grading/grading-7.json"
+    },
+    {
+      "eval_id": 8,
+      "test_type": "should-not-trigger",
+      "prompt_short": "Use AI to map business glossary terms onto already-catalogued Snowflake tables.",
+      "result": "PASS",
+      "carried_from": "runs/2026-05-29T071533Z/grading/grading-8.json"
+    },
+    {
+      "eval_id": 9,
+      "test_type": "should-not-trigger",
+      "prompt_short": "Import dbt manifest lineage into OpenMetadata.",
+      "result": "PASS",
+      "carried_from": "runs/2026-05-29T071533Z/grading/grading-9.json"
+    },
+    {
+      "eval_id": 10,
+      "test_type": "edge-case",
+      "prompt_short": "Onboard mysql_retail_erp \u2014 the password is already in .env as MYSQL_RETAIL_PROD_",
+      "result": "PASS",
+      "carried_from": "runs/2026-05-29T071533Z/grading/grading-10.json"
+    },
+    {
+      "eval_id": 11,
+      "test_type": "edge-case",
+      "prompt_short": "Onboard mysql_retail_erp but that service already exists in OpenMetadata.",
+      "result": "PASS",
+      "carried_from": null
+    },
+    {
+      "eval_id": 12,
+      "test_type": "edge-case",
+      "prompt_short": "Fix my data catalog.",
+      "result": "PASS",
+      "carried_from": null
+    }
+  ]
+}

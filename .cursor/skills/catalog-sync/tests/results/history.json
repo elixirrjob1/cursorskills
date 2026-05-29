@@ -1,0 +1,64 @@
+{
+  "history": [
+    {
+      "reviewed_at": "2026-05-29T07:15:33Z",
+      "date": "2026-05-29",
+      "run_slug": "2026-05-29T071533Z",
+      "skill_version": "2175a76",
+      "unit_tests": {
+        "passed": 10,
+        "total": 12,
+        "pass_rate": 0.83
+      },
+      "assertions": {
+        "passed": 45,
+        "total": 48,
+        "pass_rate": 0.94
+      },
+      "categories": {
+        "passed": 10,
+        "total": 13,
+        "pass_rate": 0.77
+      },
+      "verdict": "FAIL",
+      "high_failures": [],
+      "review_file": "runs/2026-05-29T071533Z/review-catalog-sync-2026-05-29T071533Z.md",
+      "timing_file": "runs/2026-05-29T071533Z/timing.json",
+      "benchmark_md": "runs/2026-05-29T071533Z/benchmark-catalog-sync-2026-05-29T071533Z.md",
+      "benchmark_html": "runs/2026-05-29T071533Z/benchmark-catalog-sync-2026-05-29T071533Z.html",
+      "snapshot_dir": "snapshots/catalog-sync/2026-05-29T071533Z",
+      "comparison_file": null,
+      "readme": null
+    },
+    {
+      "reviewed_at": "2026-05-29T07:31:25Z",
+      "date": "2026-05-29",
+      "run_slug": "2026-05-29T073125Z",
+      "skill_version": "2175a76",
+      "unit_tests": {
+        "passed": 12,
+        "total": 12,
+        "pass_rate": 1.0
+      },
+      "assertions": {
+        "passed": 48,
+        "total": 48,
+        "pass_rate": 1.0
+      },
+      "categories": {
+        "passed": 13,
+        "total": 13,
+        "pass_rate": 1.0
+      },
+      "verdict": "PASS",
+      "high_failures": [],
+      "review_file": "runs/2026-05-29T073125Z/review-catalog-sync-2026-05-29T073125Z.md",
+      "timing_file": "runs/2026-05-29T073125Z/timing.json",
+      "benchmark_md": "runs/2026-05-29T073125Z/benchmark-catalog-sync-2026-05-29T073125Z.md",
+      "benchmark_html": "runs/2026-05-29T073125Z/benchmark-catalog-sync-2026-05-29T073125Z.html",
+      "snapshot_dir": "snapshots/catalog-sync/2026-05-29T073125Z",
+      "comparison_file": null,
+      "readme": "README.md"
+    }
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "eval_id": 11,
+  "prompt_short": "Onboard mysql_retail_erp but that service already exists in OpenMetadata.",
+  "overall_result": "PASS",
+  "assertions": [
+    {
+      "text": "Response calls or references user-openmetadata:get_database_service before any onboard apply",
+      "passed": true,
+      "evidence": "Opens with get_database_service returned 404 before any plan/apply."
+    },
+    {
+      "text": "Response does NOT run catalog_onboard_apply.py or create_database_service in this turn",
+      "passed": true,
+      "evidence": "Explicitly did not write plan or run apply."
+    },
+    {
+      "text": "Response either hard-stops because service exists OR reports name mismatch with list_database_services if not found",
+      "passed": true,
+      "evidence": "Reports mismatch and tables snowflake_fivetran and test_postgres_retail_erp."
+    },
+    {
+      "text": "Response points to standard Workflow (run_ingestion_pipeline) instead of onboard create when service exists",
+      "passed": true,
+      "evidence": "Option 1 lists run_ingestion_pipeline standard workflow for existing connector."
+    }
+  ]
+}
